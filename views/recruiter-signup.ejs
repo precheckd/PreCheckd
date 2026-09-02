@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Become a Founding Recruiter - Sign Up</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f7f2; color: #1a1a1a; }
+
+    .signup-container { max-width: 520px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .signup-header { text-align: center; margin-bottom: 3rem; border-bottom: 0.5px solid #e5e1d8; padding-bottom: 2rem; }
+    .signup-header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.5rem; }
+    .signup-header p { font-size: 15px; color: #666; line-height: 1.6; }
+
+    .progress-bar { margin-bottom: 2rem; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 0.75rem; font-weight: 500; }
+    .progress-track { background: #f0ede8; height: 4px; border-radius: 2px; overflow: hidden; }
+    .progress-fill { background: #378ADD; height: 100%; transition: width 0.3s ease; }
+
+    .form-step { display: none; }
+    .form-step.active { display: block; animation: slideIn 0.2s ease-out; }
+    @keyframes slideIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .form-step h2 { font-size: 20px; font-weight: 500; margin-bottom: 0.5rem; }
+    .form-step > p { font-size: 14px; color: #666; margin-bottom: 2rem; line-height: 1.6; }
+
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 0.5rem; color: #1a1a1a; }
+    .form-group input { width: 100%; padding: 11px 12px; font-size: 16px; border: 0.5px solid #e5e1d8; border-radius: 6px; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-group input:hover { border-color: #d1cec6; }
+    .form-group input:focus { outline: none; border-color: #378ADD; box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.1); }
+    .form-group input:disabled { background: #f0ede8; color: #999; cursor: not-allowed; }
+
+    .form-group.error input { border-color: #e24b4a; }
+    .form-error-msg { font-size: 13px; color: #e24b4a; margin-top: 0.5rem; display: none; }
+    .form-group.error .form-error-msg { display: block; }
+
+    .form-group.optional-label label::after { content: " (optional)"; font-weight: 400; color: #666; }
+
+    .form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
+    .btn { padding: 11px 20px; font-size: 16px; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #378ADD; color: white; flex: 1; }
+    .btn-primary:hover { background: #2a6fb3; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { background: #f0ede8; color: #999; cursor: not-allowed; }
+
+    .form-error { background: #fcebeb; border: 0.5px solid #e24b4a; border-radius: 6px; padding: 1rem; font-size: 14px; color: #e24b4a; margin-bottom: 1.5rem; display: none; line-height: 1.6; }
+    .form-error.visible { display: block; }
+
+    .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .form-footer { text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 0.5px solid #e5e1d8; font-size: 13px; color: #666; }
+    .form-footer a { color: #378ADD; text-decoration: none; }
+    .form-footer a:hover { text-decoration: underline; }
+
+    .resend-button { background: none; border: none; color: #378ADD; cursor: pointer; font-size: 13px; text-decoration: underline; padding: 0; font-family: inherit; }
+    .resend-button:hover { text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="signup-container">
+  <div class="signup-header">
+    <h1>Become a Founding Recruiter</h1>
+    <p>Get verified, build trust with candidates. Verification takes about 24 hours.</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-label">
+      <span id="progress-text">Step 1 of 3</span>
+      <span id="progress-percent">33%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 33%;"></div>
+    </div>
+  </div>
+
+  <div id="form-error" class="form-error"></div>
+
+  <section id="step-signup" class="form-step active">
+    <h2>Your details</h2>
+    <p>We'll verify your identity and corporate email to create your verified profile.</p>
+    <form id="signup-form">
+      <div class="form-group">
+        <label for="firstName">First name</label>
+        <input type="text" id="firstName" name="firstName" required>
+        <div class="form-error-msg">First name is required</div>
+      </div>
+      <div class="form-group">
+        <label for="lastName">Last name</label>
+        <input type="text" id="lastName" name="lastName" required>
+        <div class="form-error-msg">Last name is required</div>
+      </div>
+      <div class="form-group">
+        <label for="email">Corporate email</label>
+        <input type="email" id="email" name="email" placeholder="you@company.com" required>
+        <div class="form-error-msg">Valid corporate email is required</div>
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" name="phone" placeholder="(555) 555-0123" required>
+        <div class="form-error-msg">Valid phone number is required</div>
+      </div>
+      <div class="form-group optional-label">
+        <label for="company">Company</label>
+        <input type="text" id="company" name="company" placeholder="TechCorp Recruiting">
+        <div class="form-error-msg"></div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="step-phone" class="form-step">
+    <h2>Verify your phone</h2>
+    <p>We sent a 6-digit code to the phone number you provided. Enter it below.</p>
+    <form id="phone-form">
+      <div class="form-group">
+        <label for="code">Verification code</label>
+        <input type="text" id="code" name="code" inputmode="numeric" maxlength="6" placeholder="000000" required>
+        <div class="form-error-msg">Enter the 6-digit code</div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Verify</button>
+      </div>
+      <p style="font-size: 13px; color: #666; text-align: center; margin-top: 1rem;">Didn't receive a code? <button type="button" id="resend-btn" class="resend-button">Send again</button></p>
+    </form>
+  </section>
+
+  <section id="step-payment" class="form-step">
+    <h2>Complete your verification</h2>
+    <p>You're almost done. Click below to verify your identity and activate your profile. You'll be securely redirected to complete the process.</p>
+    <form id="payment-form">
+      <div class="form-actions">
+        <button id="checkout-button" type="button" class="btn btn-primary">Verify identity</button>
+      </div>
+      <p style="font-size: 13px; color: #666; text-align: center; margin-top: 1rem;">This step is powered by Stripe Identity and takes 1-2 minutes.</p>
+    </form>
+  </section>
+
+  <div class="form-footer">
+    <p>By signing up, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</p>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // Pass Stripe key to recruiter-signup.js
+  window.stripePublishableKey = '<%= stripePublishableKey %>';
+</script>
+<script src="/js/recruiter-signup.js"></script>
+
+</body>
+</html>

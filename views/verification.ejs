@@ -1,0 +1,24 @@
+<main class="page">
+  <h1>Verify Your Identity</h1>
+  <p>Payment received. Complete identity verification below to activate your founding recruiter account.</p>
+
+  <div id="sumsub-websdk-container"></div>
+</main>
+
+<script src="https://static.sumsub.com/idensic/static/sns-websdk-builder.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const snsWebSdkInstance = snsWebSdk
+      .init(
+        '<%= sumsubAccessToken %>',
+        () => Promise.resolve('<%= sumsubAccessToken %>')
+      )
+      .withConf({ lang: 'en' })
+      .on('idCheck.onApplicantStatusChanged', (payload) => {
+        console.log('Sumsub status changed:', payload);
+      })
+      .build();
+
+    snsWebSdkInstance.launch('#sumsub-websdk-container');
+  });
+</script>

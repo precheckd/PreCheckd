@@ -1,0 +1,35 @@
+<main class="page">
+  <h1>Become a Founding Recruiter</h1>
+  <p>Sign up, verify your phone number, and complete payment to join PreCheckd as a founding recruiter.</p>
+
+  <section id="step-signup" class="form-step">
+    <h2>1. Your details</h2>
+    <form id="signup-form">
+      <label>First name<input type="text" name="firstName" required></label>
+      <label>Last name<input type="text" name="lastName" required></label>
+      <label>Email<input type="email" name="email" required></label>
+      <label>Phone<input type="tel" name="phone" placeholder="+15555550123" required></label>
+      <label>Company (optional)<input type="text" name="company"></label>
+      <button type="submit">Continue</button>
+    </form>
+  </section>
+
+  <section id="step-phone" class="form-step" hidden>
+    <h2>2. Verify your phone</h2>
+    <p>We texted you a 6-digit code.</p>
+    <form id="phone-form">
+      <label>Verification code<input type="text" name="code" inputmode="numeric" required></label>
+      <button type="submit">Verify</button>
+    </form>
+  </section>
+
+  <section id="step-payment" class="form-step" hidden>
+    <h2>3. Complete payment</h2>
+    <p>You'll be redirected to Stripe to complete your founding recruiter payment securely.</p>
+    <button id="checkout-button" type="button">Continue to payment</button>
+  </section>
+
+  <p id="form-error" class="form-error" hidden></p>
+</main>
+
+<script src="/js/founding-recruiter.js"></script>
