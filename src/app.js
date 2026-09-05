@@ -9,6 +9,7 @@ const MongoStore = require('connect-mongo').default;
 const { assertEnv } = require('./config/env');
 const routes = require('./routes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const recruiterProfileRoutes = require('./routes/recruiter-profile');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 assertEnv();
@@ -48,6 +49,11 @@ app.use('/webhooks', webhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root domain redirect
+app.get('/', (req, res) => {
+  res.redirect('/founding-recruiter');
+});
+
 // Landing page for founding recruiters
 app.get('/founding-recruiter-landing', (req, res) => {
   res.render('founding-recruiter-landing');
@@ -57,6 +63,9 @@ app.get('/founding-recruiter-landing', (req, res) => {
 app.get('/founding-recruiter', (req, res) => {
   res.render('recruiter-signup');
 });
+
+// Recruiter profile pages
+app.use('/recruiter', recruiterProfileRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

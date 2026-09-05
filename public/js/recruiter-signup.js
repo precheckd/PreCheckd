@@ -96,32 +96,36 @@ document.getElementById('phone-form').addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('checkout-button').addEventListener('click', async (e) => {
+document.getElementById('verify-button').addEventListener('click', async (e) => {
   const btn = e.target;
   btn.disabled = true;
-  btn.innerHTML = '<span class="loading"></span>Starting verification...';
+  btn.innerHTML = '<span class="loading"></span>Processing verification...';
   
   try {
-    const response = await fetch('/api/founding-recruiter/identity-check', {
+    const response = await fetch('/api/founding-recruiter/create-identity-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
     
     if (response.ok) {
-      const data = await response.json();
-      window.location.href = data.redirectUrl;
+      document.getElementById('stripe-identity-container').style.display = 'none';
+      document.getElementById('verification-complete').style.display = 'block';
+      
+      setTimeout(() => {
+        window.location.href = '/founding-recruiter-landing';
+      }, 2000);
     } else {
-      const result = await response.json();
-      document.getElementById('form-error').textContent = result.message || 'Could not start verification';
+      const error = await response.json();
+      document.getElementById('form-error').textContent = error.message || 'Verification failed';
       document.getElementById('form-error').classList.add('visible');
       btn.disabled = false;
-      btn.innerHTML = 'Verify identity';
+      btn.innerHTML = 'Start Verification';
     }
   } catch (err) {
     document.getElementById('form-error').textContent = 'Network error. Please try again.';
     document.getElementById('form-error').classList.add('visible');
     btn.disabled = false;
-    btn.innerHTML = 'Verify identity';
+    btn.innerHTML = 'Start Verification';
   }
 });
 

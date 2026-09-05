@@ -1,166 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Become a Founding Recruiter - PreCheckd</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); color: var(--text-primary, #1a1a1a); line-height: 1.6; background: var(--surface-0, #f9f7f2); }
-    a { color: var(--text-accent, #378ADD); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .section { padding: 3rem 2rem; max-width: 100%; }
-    .container { max-width: 680px; margin: 0 auto; }
-    h1 { font-size: 32px; font-weight: 500; margin-bottom: 1rem; line-height: 1.2; }
-    h2 { font-size: 24px; font-weight: 500; margin-bottom: 1.5rem; }
-    h3 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; }
-    p { font-size: 16px; margin-bottom: 1rem; color: var(--text-primary, #1a1a1a); line-height: 1.8; }
-    .subtext { color: var(--text-secondary, #666); font-size: 15px; }
-    .stat { font-size: 28px; font-weight: 500; color: var(--text-accent, #378ADD); }
-    .hero { background: var(--surface-2, #fff); border-bottom: 1px solid var(--border, #e5e1d8); }
-    .hero-content { display: flex; flex-direction: column; gap: 2rem; }
-    .video-placeholder { background: var(--surface-1, #f0ede8); border: 0.5px solid var(--border, #e5e1d8); border-radius: 12px; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; color: var(--text-secondary, #666); font-size: 14px; margin: 1.5rem 0; }
-    .cta-button { display: inline-block; background: var(--fill-accent, #378ADD); color: white; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 16px; border: none; cursor: pointer; transition: background 0.2s; text-decoration: none; }
-    .cta-button:hover { background: #2a6fb3; text-decoration: none; }
-    .cta-section { text-align: center; margin: 2.5rem 0; }
-    .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
-    .problem-card { background: var(--surface-1, #f0ede8); padding: 1.5rem; border-radius: 12px; border: 0.5px solid var(--border, #e5e1d8); }
-    .problem-card .stat { display: block; margin-bottom: 0.5rem; }
-    .check-list { list-style: none; margin: 1.5rem 0; }
-    .check-list li { padding: 0.75rem 0; padding-left: 28px; position: relative; }
-    .check-list li:before { content: "✓"; position: absolute; left: 0; color: var(--text-accent, #378ADD); font-weight: bold; }
-    .feature-box { background: var(--surface-1, #f0ede8); padding: 1.5rem; border-radius: 12px; border: 0.5px solid var(--border, #e5e1d8); margin: 1.5rem 0; }
-    .feature-box h3 { margin-top: 0; }
-    .seal-demo { background: var(--surface-1, #f0ede8); padding: 2rem; border-radius: 12px; border: 2px solid var(--border-accent, #378ADD); text-align: center; margin: 2rem 0; }
-    .seal { font-size: 48px; margin-bottom: 1rem; }
-    .seal-label { font-size: 14px; color: var(--text-secondary, #666); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
-    .profile-preview { background: var(--surface-1, #f0ede8); padding: 1.5rem; border-radius: 12px; border: 0.5px solid var(--border, #e5e1d8); margin: 2rem 0; }
-    .profile-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border, #e5e1d8); padding-bottom: 1.5rem; }
-    .avatar { width: 48px; height: 48px; border-radius: 50%; background: #e6f1fb; display: flex; align-items: center; justify-content: center; color: #378ADD; font-weight: 500; font-size: 18px; }
-    .profile-info h3 { margin: 0 0 0.25rem 0; font-size: 16px; }
-    .profile-info p { margin: 0; font-size: 13px; color: var(--text-secondary, #666); }
-    .highlight { color: var(--text-accent, #378ADD); font-weight: 500; }
-    .bg-accent-light { background: #e6f1fb; border-color: #85b7eb; }
-    .bg-accent-light h3 { color: #378ADD; }
-  </style>
-</head>
-<body>
-
-<div class="hero section">
+<section class="hero">
   <div class="container">
-    <div class="hero-content">
+    <h1>Become a Verified Recruiter</h1>
+    <p>Build trust with candidates. Get verified by PreCheckd and access quality job seekers who trust your profile.</p>
+    <a href="/founding-recruiter" class="btn btn-large btn-primary">Start Your Verification</a>
+  </div>
+</section>
+
+<section class="section-alt" id="how-it-works">
+  <div class="container">
+    <h2 class="text-center mb-4">How It Works</h2>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>1. Sign Up</h3>
+        <p>Create your account with your corporate email and basic information. Takes 2 minutes.</p>
+      </div>
+      <div class="card">
+        <h3>2. Verify Identity</h3>
+        <p>Upload your government ID and take a selfie. We verify you're who you say you are. Usually 24 hours.</p>
+      </div>
+      <div class="card">
+        <h3>3. Go Live</h3>
+        <p>Your verified profile is public and SEO-indexed. Candidates can find and trust you immediately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="benefits">
+  <div class="container">
+    <h2 class="text-center mb-4">Why Recruiters Choose PreCheckd</h2>
+    <div class="grid grid-2">
       <div>
-        <p class="subtext">The recruiter trust problem</p>
-        <h1>Candidates can't tell if you're real.</h1>
-        <p style="font-size: 18px; color: var(--text-secondary, #666); margin-bottom: 2rem;">Fake recruiters run scams every day. When candidates Google your name, how do they know you're legitimate? PreCheckd gives you a verified profile that proves it.</p>
+        <h4>🔒 Build Trust</h4>
+        <p>Your verified status gives candidates confidence. PreCheckd verification is harder to fake than a LinkedIn badge.</p>
       </div>
-      <div class="video-placeholder">Synthesia Video: Candidate receives cold outreach, skeptical. Googles the recruiter's name. Finds their verified PreCheckd profile. Relief. (20s)</div>
+      <div>
+        <h4>📈 Improve SEO</h4>
+        <p>Your PreCheckd profile ranks in Google. When candidates search your name, they find your verified profile first.</p>
+      </div>
+      <div>
+        <h4>⭐ Stand Out</h4>
+        <p>Most recruiters aren't verified. Your verification seal makes you stand out to quality candidates.</p>
+      </div>
+      <div>
+        <h4>💼 Professional</h4>
+        <p>Show candidates you're serious about legitimate recruitment. Verification filters out bad actors.</p>
+      </div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="cta-section section">
+<section class="section-alt">
+  <div class="container text-center">
+    <h2 class="mb-3">Founding Recruiters</h2>
+    <p>Be in our first cohort of verified recruiters. Founding members verify for free and get special recognition.</p>
+    <p class="mb-4" style="color: #2ecc71; font-weight: 600;">Limited spots available</p>
+    <a href="/founding-recruiter" class="btn btn-large btn-primary">Apply Now</a>
+  </div>
+</section>
+
+<section class="section">
   <div class="container">
-    <a href="/founding-recruiter" class="cta-button">Become a founding recruiter</a>
-  </div>
-</div>
-
-<div class="section" style="background: var(--surface-1, #f0ede8);">
-  <div class="container">
-    <h2>Why candidates are skeptical of recruiters</h2>
-    <div class="problem-grid">
-      <div class="problem-card">
-        <span class="stat">74%</span>
-        <p class="subtext">of job seekers report receiving suspicious recruiter outreach</p>
+    <h2 class="text-center mb-4">What You Get</h2>
+    <div class="grid grid-2">
+      <div class="card">
+        <h4>✓ Verified Badge</h4>
+        <p>Display a verified recruiter badge on your profile. This badge is a symbol of trust.</p>
       </div>
-      <div class="problem-card">
-        <span class="stat">1 in 5</span>
-        <p class="subtext">candidate inquiries are scams (phishing, credential theft, fake jobs)</p>
+      <div class="card">
+        <h4>✓ Public Profile</h4>
+        <p>Your profile page is live and indexed by search engines. Candidates can find you.</p>
       </div>
-    </div>
-    <p style="margin-top: 2rem; color: var(--text-secondary, #666);">The result: when you reach out to a candidate, they're already skeptical. Your legitimacy is assumed to be fake until proven otherwise.</p>
-  </div>
-</div>
-
-<div class="section">
-  <div class="container">
-    <h2>Your verified PreCheckd profile</h2>
-    <p>When you join as a founding recruiter, we verify you and create a branded profile with your name and company. Here's what that means:</p>
-    
-    <div class="feature-box">
-      <h3 style="color: var(--text-accent, #378ADD); margin-top: 0;">Searchable by your name</h3>
-      <p>When candidates Google you or your company, your <span class="highlight">verified PreCheckd profile ranks in results</span>. They find you. They see the verification seal.</p>
-    </div>
-
-    <div class="feature-box">
-      <h3 style="color: var(--text-accent, #378ADD); margin-top: 0;">One link. Proof you're real.</h3>
-      <p>Include your PreCheckd profile URL in your outreach emails and LinkedIn. Candidates click it, see your verification, and know: <span class="highlight">this person is verified and trustworthy</span>.</p>
-    </div>
-
-    <div class="feature-box">
-      <h3 style="color: var(--text-accent, #378ADD); margin-top: 0;">Verification that sticks</h3>
-      <p>We verify three things: your corporate email (you work where you say), your phone (you're reachable), and your identity (you are who you claim). That seal is permanent.</p>
-    </div>
-
-    <h3 style="margin-top: 2.5rem;">Here's what candidates see:</h3>
-    <div class="profile-preview">
-      <div class="profile-header">
-        <div class="avatar">JD</div>
-        <div class="profile-info">
-          <h3>John Davis</h3>
-          <p>Senior Recruiter at TechCorp</p>
-        </div>
-        <div class="seal-demo" style="margin: 0; padding: 0.75rem 1rem; border: 1px solid #85b7eb; background: #e6f1fb;">
-          <div style="font-size: 16px;">✓</div>
-          <div style="font-size: 11px; color: #378ADD; font-weight: 500;">Verified</div>
-        </div>
+      <div class="card">
+        <h4>✓ Direct Access</h4>
+        <p>Connect directly with candidates who trust verified recruiters. No middlemen.</p>
       </div>
-      <div style="color: var(--text-secondary, #666); font-size: 14px; line-height: 1.6;">
-        <p><strong>Specializations:</strong> Cybersecurity, Cloud Engineering, DevOps</p>
-        <p><strong>Focus areas:</strong> Mid-Atlantic, remote-first roles</p>
-        <p style="margin-top: 1rem; color: #999; font-size: 13px;">Verified recruiter • Corporate email confirmed • Identity verified</p>
+      <div class="card">
+        <h4>✓ Professional Recognition</h4>
+        <p>Join a network of vetted, legitimate recruiters. Your reputation matters.</p>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="cta-section section">
-  <div class="container">
-    <a href="/founding-recruiter" class="cta-button">Become a founding recruiter</a>
+<section class="section-alt">
+  <div class="container text-center">
+    <h2 class="mb-3">Questions?</h2>
+    <p>Email us at <a href="mailto:hello@precheckd.com">hello@precheckd.com</a></p>
   </div>
-</div>
-
-<div class="section" style="background: var(--surface-1, #f0ede8);">
-  <div class="container">
-    <h2>Why join now? Founding recruiter program.</h2>
-    <p style="font-size: 18px; color: var(--text-secondary, #666); margin-bottom: 2rem;">Normally, a verified profile and SEO-indexed page would cost money. During the founding phase, it's free.</p>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0;">
-      <div class="feature-box" style="margin: 0;">
-        <h3 style="font-size: 16px; margin-top: 0;">What you get</h3>
-        <ul class="check-list" style="margin: 0;">
-          <li>Verified profile (branded with your name)</li>
-          <li>SEO ranking (candidates find you on Google)</li>
-          <li>Verification seal on your profile</li>
-          <li>Shareable profile link</li>
-        </ul>
-      </div>
-      <div class="feature-box bg-accent-light" style="margin: 0;">
-        <h3 style="font-size: 16px; margin-top: 0;">The catch</h3>
-        <p style="margin: 0; color: var(--text-secondary, #666); font-size: 14px;"><strong>Nothing during founding.</strong> You're part of the initial wave proving that verified recruiting works. Join before it changes.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="section">
-  <div class="container" style="text-align: center;">
-    <h2>Get verified. Build trust. Stand out.</h2>
-    <p style="color: var(--text-secondary, #666); margin-bottom: 2rem;">Join the founding group of verified recruiters. When candidates Google you, they'll find proof that you're real.</p>
-    <a href="/founding-recruiter" class="cta-button">Become a founding recruiter</a>
-    <p style="font-size: 13px; color: #999; margin-top: 1.5rem;">Verification takes 24 hours. Your profile ranks immediately.</p>
-  </div>
-</div>
-
-</body>
-</html>
+</section>

@@ -1,0 +1,386 @@
+<style>
+  .profile-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #fafaf8;
+    border-left: 6px solid #2ecc71;
+    border-right: 6px solid #2ecc71;
+  }
+
+  .profile-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .profile-card {
+    background: white;
+    border-radius: 8px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+  }
+
+  .profile-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #2d4a52;
+  }
+
+  .profile-header .company {
+    font-size: 1rem;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  .profile-info {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    background: #fafaf8;
+    border: 1px solid #e8e6e1;
+    padding: 1.5rem;
+    border-radius: 6px;
+  }
+
+  .info-item {
+    text-align: center;
+  }
+
+  .info-label {
+    color: #666;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .info-value {
+    color: #2d4a52;
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+
+  .intro-text {
+    text-align: center;
+    font-size: 1.15rem;
+    color: #555;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+    padding: 0 1rem;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .intro-text strong {
+    color: #2d4a52;
+    font-weight: 600;
+  }
+
+  .verification-section {
+    margin: 2rem auto;
+    max-width: 500px;
+  }
+
+  .verification-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d4a52;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .verification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .verification-item {
+    background: #fafaf8;
+    border: 1px solid #e8e6e1;
+    border-radius: 6px;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .verification-left {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex: 1;
+  }
+
+  .verification-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .verification-content {
+    flex: 1;
+  }
+
+  .verification-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0;
+  }
+
+  .verification-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d4a52;
+    margin-bottom: 0;
+  }
+
+  .info-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #2d4a52;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #2d4a52;
+    transition: all 0.2s;
+  }
+
+  .info-icon-wrapper:hover .info-icon {
+    background: #2d4a52;
+    color: white;
+  }
+
+  .tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d4a52;
+    color: white;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    z-index: 1000;
+    width: 250px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: normal;
+    font-weight: 400;
+  }
+
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2d4a52;
+  }
+
+  .info-icon-wrapper:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .verification-checkmark {
+    color: #2ecc71;
+    font-size: 1.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .cta-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e8e6e1;
+    text-align: center;
+  }
+
+  .cta-text {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .cta-text strong {
+    color: #2d4a52;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .profile-card {
+      padding: 1.5rem;
+    }
+
+    .profile-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .profile-info {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .verification-section {
+      max-width: 100%;
+    }
+
+    .verification-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .verification-left {
+      width: 100%;
+    }
+
+    .tooltip {
+      width: 200px;
+      font-size: 0.8rem;
+    }
+
+    .intro-text {
+      font-size: 1rem;
+    }
+
+    .profile-content {
+      border-left: 4px solid #2ecc71;
+      border-right: 4px solid #2ecc71;
+    }
+  }
+</style>
+
+<div class="profile-card">
+  <div class="profile-header">
+    <h1><%= recruiter.firstName %> <%= recruiter.lastName %></h1>
+    <% if (recruiter.company) { %>
+      <p class="company"><%= recruiter.company %></p>
+    <% } %>
+  </div>
+
+  <div class="profile-info">
+    <div class="info-item">
+      <span class="info-label">Verification Status</span>
+      <span class="info-value" style="color: #2e7d32;">✓ Fully Verified</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Member Since</span>
+      <span class="info-value"><%= recruiter.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+    </div>
+  </div>
+
+  <p class="intro-text"><strong><%= recruiter.firstName %> <%= recruiter.lastName %></strong> has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional.</p>
+
+  <div class="verification-section">
+    <h3>Verification Checks Completed</h3>
+
+    <div class="verification-list">
+      <div class="verification-item">
+        <div class="verification-left">
+          <div class="verification-icon">🔒</div>
+          <div class="verification-content">
+            <div class="verification-header">
+              <h4>Company Domain Verified</h4>
+              <div class="info-icon-wrapper">
+                <span class="info-icon">i</span>
+                <span class="tooltip">This recruiter's company domain is registered, legitimate, and verified through Whois records. Cross-checked against spam and fraud blocklists.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verification-checkmark">✓</div>
+      </div>
+
+      <div class="verification-item">
+        <div class="verification-left">
+          <div class="verification-icon">✉️</div>
+          <div class="verification-content">
+            <div class="verification-header">
+              <h4>Email Ownership</h4>
+              <div class="info-icon-wrapper">
+                <span class="info-icon">i</span>
+                <span class="tooltip">The recruiter clicked the verification link sent to their corporate email, proving they control that email address.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verification-checkmark">✓</div>
+      </div>
+
+      <div class="verification-item">
+        <div class="verification-left">
+          <div class="verification-icon">📱</div>
+          <div class="verification-content">
+            <div class="verification-header">
+              <h4>Phone Number</h4>
+              <div class="info-icon-wrapper">
+                <span class="info-icon">i</span>
+                <span class="tooltip">The recruiter's phone number was verified via SMS code, confirming they have access to that device.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verification-checkmark">✓</div>
+      </div>
+
+      <div class="verification-item">
+        <div class="verification-left">
+          <div class="verification-icon">🆔</div>
+          <div class="verification-content">
+            <div class="verification-header">
+              <h4>Government ID</h4>
+              <div class="info-icon-wrapper">
+                <span class="info-icon">i</span>
+                <span class="tooltip">The recruiter's government-issued ID was scanned and verified using facial recognition technology.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verification-checkmark">✓</div>
+      </div>
+
+      <div class="verification-item">
+        <div class="verification-left">
+          <div class="verification-icon">😊</div>
+          <div class="verification-content">
+            <div class="verification-header">
+              <h4>Facial Recognition</h4>
+              <div class="info-icon-wrapper">
+                <span class="info-icon">i</span>
+                <span class="tooltip">The recruiter's face was matched to their government ID document, confirming identity authenticity and that they're a real person.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verification-checkmark">✓</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <a href="/founding-recruiter-landing" class="btn btn-primary btn-large">Join PreCheckd</a>
+  </div>
+</div>

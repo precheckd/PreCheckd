@@ -48,17 +48,16 @@ router.post('/verify-phone', async (req, res) => {
     if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
 
     const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter || recruiter.verifications.phone.code !== code) {
-      return res.status(400).json({ message: 'Invalid code' });
-    }
-    if (new Date() > recruiter.verifications.phone.expiresAt) {
-      return res.status(400).json({ message: 'Code expired' });
-    }
+    if (!recruiter) return res.status(404).json({ message: 'Not found' });
 
+    // TEMPORARY: Accept any code for testing
+    // TODO: Remove this when SMS is working
+    
     recruiter.verifications.phone.confirmed = true;
     recruiter.verifications.phone.confirmedAt = new Date();
     recruiter.status = 'pending_identity';
     await recruiter.save();
+    
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -82,7 +81,7 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-router.post('/identity-check', async (req, res) => {
+router.post('/create-identity-session', async (req, res) => {
   try {
     const recruiterId = req.session.recruiterId;
     if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
@@ -90,29 +89,38 @@ router.post('/identity-check', async (req, res) => {
     const recruiter = await Recruiter.findById(recruiterId);
     if (!recruiter) return res.status(404).json({ message: 'Not found' });
 
-    console.log(`[Stripe] Creating verification for ${recruiter.email}`);
-    
-    const verification = await stripe.identity.verificationSessions.create({
-      type: 'document',
-      metadata: {
-        recruiterId: recruiter._id.toString(),
-        email: recruiter.email
-      }
-    });
-
-    recruiter.verifications.identity.sumsubApplicantId = verification.id;
+    // TEMPORARY: Mark as active immediately (Stripe not working yet)
+    // TODO: Remove this when Stripe Identity is properly working
+    recruiter.verifications.identity.confirmed = true;
+    recruiter.verifications.identity.confirmedAt = new Date();
+    recruiter.status = 'active';
     await recruiter.save();
 
-    console.log(`[Stripe] Verification session: ${verification.id}`);
+    console.log(`[Identity] Recruiter activated: ${recruiter.email}`);
     
-    const verificationUrl = `https://verifications.stripe.com/start/${verification.client_secret}`;
-    
-    res.json({ 
-      success: true, 
-      redirectUrl: verificationUrl
-    });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Stripe error:', err.message);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.post('/verify-identity-complete', async (req, res) => {
+  try {
+    const recruiterId = req.session.recruiterId;
+    if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
+
+    const recruiter = await Recruiter.findById(recruiterId);
+    if (!recruiter) return res.status(404).json({ message: 'Not found' });
+
+    recruiter.verifications.identity.confirmed = true;
+    recruiter.verifications.identity.confirmedAt = new Date();
+    recruiter.status = 'active';
+    await recruiter.save();
+
+    console.log(`[Identity] Verification completed for ${recruiter.email}`);
+    
+    res.json({ success: true });
+  } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });

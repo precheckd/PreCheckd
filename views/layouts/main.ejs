@@ -1,10 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%- include('../partials/head') %>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PreCheckd - A verified recruiter marketplace built on trust.">
+  <link rel="stylesheet" href="/css/main.css">
+  <title><%= typeof title !== 'undefined' ? title : 'PreCheckd - Verified Recruiter Marketplace' %></title>
 </head>
 <body>
+
+<header>
+  <div class="header-container">
+    <a href="/" class="logo">PreCheckd</a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/founding-recruiter" class="btn btn-primary">Get Verified</a>
+    </nav>
+  </div>
+</header>
+
+<main>
   <%- body %>
-  <%- include('../partials/footer') %>
+</main>
+
+<footer>
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>PreCheckd</h3>
+      <p>A verified recruiter marketplace built on trust.</p>
+    </div>
+    <div class="footer-section">
+      <h3>Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/founding-recruiter">Get Verified</a></li>
+        <li><a href="mailto:hello@precheckd.com">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3>Legal</h3>
+      <ul>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="/privacy">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 PreCheckd LLC. All rights reserved.</p>
+  </div>
+</footer>
+
 </body>
 </html>
