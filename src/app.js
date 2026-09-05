@@ -27,7 +27,7 @@ app.locals.stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 // app.use(helmet()); // Disabled for development
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
   store: new MongoStore({ 
