@@ -1,127 +1,199 @@
 const express = require('express');
 const router = express.Router();
 const Recruiter = require('../models/Recruiter');
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const smsService = require('../services/smsService');
 
-const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'us-east-1' });
-
-router.post('/signup', async (req, res) => {
+// Step 1: Create initial recruiter record
+router.post('/create-recruiter', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, company } = req.body;
-    const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com'];
-    const emailDomain = email.split('@')[1];
-    if (freeEmailDomains.includes(emailDomain.toLowerCase())) {
-      return res.status(400).json({ message: 'Please use your corporate email' });
+    const { firstName, lastName, corporateEmail, phone, company } = req.body;
+
+    if (!firstName || !lastName || !corporateEmail || !phone) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const recruiter = await Recruiter.create({
-      firstName, lastName, email, phone, company, status: 'pending_phone'
+    // Check if recruiter already exists
+    const existing = await Recruiter.findOne({ corporateEmail });
+    if (existing) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Create new recruiter (not yet verified)
+    const recruiter = new Recruiter({
+      firstName,
+      lastName,
+      corporateEmail,
+      phone,
+      company: company || 'Not provided',
+      isPhoneVerified: false,
+      isIdentityVerified: false,
+      isActive: false
     });
 
+    await recruiter.save();
+
+    // Store recruiter ID in session for this flow
     req.session.recruiterId = recruiter._id.toString();
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    req.session.phone = phone;
+
+    res.json({
+      success: true,
+      recruiterId: recruiter._id,
+      message: 'Recruiter created. Proceeding to phone verification.'
+    });
+  } catch (error) {
+    console.error('Error creating recruiter:', error);
+    res.status(500).json({ error: 'Failed to create recruiter' });
+  }
+});
+
+// Step 2: Send SMS OTP to phone
+router.post('/send-phone-otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
     
-    try {
-      await snsClient.send(new PublishCommand({
-        Message: `Your PreCheckd verification code is: ${code}`,
-        PhoneNumber: phone
-      }));
-      console.log(`[SNS] SMS sent: ${code}`);
-    } catch (e) {
-      console.log(`[DEV] Code: ${code}`);
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number required' });
     }
 
-    recruiter.verifications.phone.code = code;
-    recruiter.verifications.phone.expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await recruiter.save();
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    // Format phone number to E.164 format (+1XXXXXXXXXX)
+    const formattedPhone = phone.replace(/\D/g, '');
+    const phoneE164 = '+1' + formattedPhone.slice(-10);
+
+    // Send OTP via Message Central
+    const result = await smsService.sendOTP(phoneE164);
+
+    if (result.success) {
+      // Store requestId in session for validation
+      req.session.phoneOtpRequestId = result.requestId;
+      req.session.phoneNumber = phoneE164;
+      res.json({
+        success: true,
+        message: `OTP sent to ${phoneE164}`
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error('Error sending phone OTP:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
   }
 });
 
+// Step 3: Verify phone OTP
 router.post('/verify-phone', async (req, res) => {
   try {
-    const { code } = req.body;
+    const { otp } = req.body;
+    const requestId = req.session.phoneOtpRequestId;
     const recruiterId = req.session.recruiterId;
-    if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
 
-    const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter) return res.status(404).json({ message: 'Not found' });
+    if (!requestId || !otp) {
+      return res.status(400).json({ error: 'Missing request ID or OTP' });
+    }
 
-    // TEMPORARY: Accept any code for testing
-    // TODO: Remove this when SMS is working
-    
-    recruiter.verifications.phone.confirmed = true;
-    recruiter.verifications.phone.confirmedAt = new Date();
-    recruiter.status = 'pending_identity';
-    await recruiter.save();
-    
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    if (!recruiterId) {
+      return res.status(400).json({ error: 'No active recruiter session' });
+    }
+
+    // Validate OTP with Message Central
+    const result = await smsService.validateOTP(requestId, otp);
+
+    if (result.success) {
+      // Update recruiter as phone verified
+      await Recruiter.findByIdAndUpdate(recruiterId, {
+        isPhoneVerified: true
+      });
+
+      req.session.phoneVerified = true;
+      res.json({ 
+        success: true, 
+        message: 'Phone verified successfully' 
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid OTP'
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying phone OTP:', error);
+    res.status(500).json({ error: 'Failed to verify OTP' });
   }
 });
 
-router.post('/resend-code', async (req, res) => {
-  try {
-    const recruiterId = req.session.recruiterId;
-    if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
-
-    const recruiter = await Recruiter.findById(recruiterId);
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    recruiter.verifications.phone.code = code;
-    recruiter.verifications.phone.expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await recruiter.save();
-    console.log(`[DEV] Code: ${code}`);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
+// Step 4: Create Stripe Identity session for facial recognition (MOCKED for now)
+// TODO: Replace with real Stripe Identity when account is activated
 router.post('/create-identity-session', async (req, res) => {
   try {
     const recruiterId = req.session.recruiterId;
-    if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
 
+    if (!recruiterId) {
+      return res.status(400).json({ error: 'No active recruiter session' });
+    }
+
+    // TEMPORARY: Mock Stripe Identity response
+    // Once Stripe account is activated on Sept 7, replace with real Stripe API call
     const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter) return res.status(404).json({ message: 'Not found' });
+    if (!recruiter) {
+      return res.status(404).json({ error: 'Recruiter not found' });
+    }
 
-    // TEMPORARY: Mark as active immediately (Stripe not working yet)
-    // TODO: Remove this when Stripe Identity is properly working
-    recruiter.verifications.identity.confirmed = true;
-    recruiter.verifications.identity.confirmedAt = new Date();
-    recruiter.status = 'active';
+    // Mark as identity verified (temporarily mocked)
+    recruiter.isIdentityVerified = true;
+    recruiter.isActive = true; // Recruiter is now fully verified
     await recruiter.save();
 
-    console.log(`[Identity] Recruiter activated: ${recruiter.email}`);
-    
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    req.session.identityVerified = true;
+
+    res.json({
+      success: true,
+      message: 'Identity verification complete. Recruiter profile activated.',
+      recruiter: {
+        id: recruiter._id,
+        name: `${recruiter.firstName} ${recruiter.lastName}`,
+        email: recruiter.corporateEmail,
+        isActive: recruiter.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Error creating identity session:', error);
+    res.status(500).json({ error: 'Failed to create identity session' });
   }
 });
 
-router.post('/verify-identity-complete', async (req, res) => {
+// Get recruiter status
+router.get('/recruiter-status', async (req, res) => {
   try {
     const recruiterId = req.session.recruiterId;
-    if (!recruiterId) return res.status(401).json({ message: 'Session expired' });
+
+    if (!recruiterId) {
+      return res.status(400).json({ error: 'No active recruiter session' });
+    }
 
     const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter) return res.status(404).json({ message: 'Not found' });
+    if (!recruiter) {
+      return res.status(404).json({ error: 'Recruiter not found' });
+    }
 
-    recruiter.verifications.identity.confirmed = true;
-    recruiter.verifications.identity.confirmedAt = new Date();
-    recruiter.status = 'active';
-    await recruiter.save();
-
-    console.log(`[Identity] Verification completed for ${recruiter.email}`);
-    
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.json({
+      success: true,
+      recruiter: {
+        id: recruiter._id,
+        name: `${recruiter.firstName} ${recruiter.lastName}`,
+        email: recruiter.corporateEmail,
+        company: recruiter.company,
+        isPhoneVerified: recruiter.isPhoneVerified,
+        isIdentityVerified: recruiter.isIdentityVerified,
+        isActive: recruiter.isActive,
+        createdAt: recruiter.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error getting recruiter status:', error);
+    res.status(500).json({ error: 'Failed to get recruiter status' });
   }
 });
 
