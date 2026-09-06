@@ -163,6 +163,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
   .verification-text h4 {
@@ -170,6 +171,12 @@
     font-weight: 600;
     color: #2d4a52;
     margin: 0;
+  }
+
+  .verification-date {
+    font-size: 0.85rem;
+    color: #999;
+    display: block;
   }
 
   .info-icon-wrapper {
@@ -342,6 +349,9 @@
                     <span class="tooltip">Company domain is registered, legitimate, and verified through Whois records.</span>
                   </div>
                 </div>
+                <% if (recruiter.domainVerifiedAt) { %>
+                  <span class="verification-date">Verified <%= recruiter.domainVerifiedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                <% } %>
               </div>
             </div>
             <div class="verification-checkmark">✓</div>
@@ -358,6 +368,9 @@
                     <span class="tooltip">Recruiter verified their corporate email address.</span>
                   </div>
                 </div>
+                <% if (recruiter.emailVerifiedAt) { %>
+                  <span class="verification-date">Verified <%= recruiter.emailVerifiedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                <% } %>
               </div>
             </div>
             <div class="verification-checkmark">✓</div>
@@ -374,6 +387,9 @@
                     <span class="tooltip">Phone number verified via SMS code.</span>
                   </div>
                 </div>
+                <% if (recruiter.phoneVerifiedAt) { %>
+                  <span class="verification-date">Verified <%= recruiter.phoneVerifiedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                <% } %>
               </div>
             </div>
             <div class="verification-checkmark">✓</div>
@@ -390,6 +406,9 @@
                     <span class="tooltip">Government ID scanned and verified.</span>
                   </div>
                 </div>
+                <% if (recruiter.identityVerifiedAt) { %>
+                  <span class="verification-date">Verified <%= recruiter.identityVerifiedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                <% } %>
               </div>
             </div>
             <div class="verification-checkmark">✓</div>
@@ -406,6 +425,9 @@
                     <span class="tooltip">Face matched to government ID document.</span>
                   </div>
                 </div>
+                <% if (recruiter.facialRecognitionVerifiedAt) { %>
+                  <span class="verification-date">Verified <%= recruiter.facialRecognitionVerifiedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                <% } %>
               </div>
             </div>
             <div class="verification-checkmark">✓</div>

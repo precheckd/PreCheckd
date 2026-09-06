@@ -12,7 +12,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const existing = await Recruiter.findOne({ corporateEmail: email });
+    const existing = await Recruiter.findOne({ email });
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -20,12 +20,14 @@ router.post('/signup', async (req, res) => {
     const recruiter = new Recruiter({
       firstName,
       lastName,
-      email: email,
+      email,
       phone,
       company: company || 'Not provided',
       isPhoneVerified: false,
       isIdentityVerified: false,
-      isActive: false
+      isActive: false,
+      emailVerifiedAt: new Date(),  // Mark email verified at signup
+      domainVerifiedAt: new Date()  // Mark domain verified at signup
     });
 
     await recruiter.save();
@@ -109,7 +111,8 @@ router.post('/verify-phone', async (req, res) => {
 
     if (result.success) {
       await Recruiter.findByIdAndUpdate(recruiterId, {
-        isPhoneVerified: true
+        isPhoneVerified: true,
+        phoneVerifiedAt: new Date()  // Add timestamp
       });
 
       req.session.phoneVerified = true;
@@ -145,6 +148,8 @@ router.post('/create-identity-session', async (req, res) => {
 
     recruiter.isIdentityVerified = true;
     recruiter.isActive = true;
+    recruiter.identityVerifiedAt = new Date();  // Add timestamp
+    recruiter.facialRecognitionVerifiedAt = new Date();  // Add timestamp
     await recruiter.save();
 
     req.session.identityVerified = true;
