@@ -4,38 +4,6 @@ const BASE_URL = process.env.MESSAGE_CENTRAL_BASE_URL;
 const CUSTOMER_ID = process.env.MESSAGE_CENTRAL_CUSTOMER_ID;
 const AUTH_TOKEN = process.env.MESSAGE_CENTRAL_AUTH_TOKEN;
 
-// Store the verification token (changes per request)
-let verificationAuthToken = null;
-
-// Generate a new auth token
-async function getAuthToken() {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}auth/v1/authentication/token`,
-      {
-        params: {
-          customerId: CUSTOMER_ID,
-          key: AUTH_TOKEN,
-          scope: 'NEW'
-        },
-        headers: {
-          'accept': '*/*'
-        }
-      }
-    );
-
-    if (response.data.data && response.data.data.authToken) {
-      verificationAuthToken = response.data.data.authToken;
-      return verificationAuthToken;
-    } else {
-      throw new Error('No auth token in response');
-    }
-  } catch (error) {
-    console.error('Error getting auth token:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
 // Generate a random 6-digit OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -44,13 +12,9 @@ function generateOTP() {
 // Send OTP via Message Central
 async function sendOTP(phoneNumber) {
   try {
-    // Get fresh auth token
-    const authToken = await getAuthToken();
-    
-    // Remove any non-digits and format
+    // Remove any non-digits
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     
-    // Message Central expects the phone number in the request
     const response = await axios.post(
       `${BASE_URL}verification/v3/send`,
       null,  // No body
@@ -60,10 +24,10 @@ async function sendOTP(phoneNumber) {
           mobileNumber: cleanPhone,
           flowType: 'SMS',
           otpLength: 6,
-          countryCode: '1'  // US country code
+          countryCode: '1'
         },
         headers: {
-          'authToken': authToken,
+          'authToken': AUTH_TOKEN,
           'accept': '*/*'
         }
       }
@@ -93,11 +57,6 @@ async function sendOTP(phoneNumber) {
 // Validate OTP
 async function validateOTP(verificationId, otp) {
   try {
-    // Use the stored auth token
-    if (!verificationAuthToken) {
-      verificationAuthToken = await getAuthToken();
-    }
-
     const response = await axios.post(
       `${BASE_URL}verification/v3/validateOtp`,
       null,  // No body
@@ -108,7 +67,7 @@ async function validateOTP(verificationId, otp) {
           flowType: 'SMS'
         },
         headers: {
-          'authToken': verificationAuthToken,
+          'authToken': AUTH_TOKEN,
           'accept': '*/*'
         }
       }
