@@ -24,16 +24,42 @@
       background: #C8E6C9;
     }
 
-    .signup-content {
-      max-width: 600px;
+    .signup-layout {
+      max-width: 1600px;
       margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
     }
 
-    .signup-container {
+    .left-section {
+      background: white;
+      border-radius: 8px;
+      min-height: 500px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .center-section {
       background: white;
       border-radius: 8px;
       padding: 3rem 2rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .right-section {
+      position: sticky;
+      top: 2rem;
+      height: fit-content;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
     }
 
     .signup-header {
@@ -166,26 +192,6 @@
       background: #27ae60;
     }
 
-    .btn-secondary {
-      background: transparent;
-      color: #2ecc71;
-      border: 1px solid #2ecc71;
-    }
-
-    .btn-secondary:hover {
-      background: #f0f0f0;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .button-group .btn {
-      flex: 1;
-    }
-
     .resend-container {
       text-align: center;
       margin-top: 1.5rem;
@@ -244,12 +250,109 @@
       background: #fafaf8;
     }
 
+    /* FAQ Styles */
+    .faq-container {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .faq-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2d4a52;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .faq-item {
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #e8e6e1;
+      padding-bottom: 1rem;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 0.75rem;
+      margin: -0.75rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .faq-question:hover {
+      background: #f5f5f5;
+    }
+
+    .faq-question-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #2d4a52;
+      flex: 1;
+    }
+
+    .faq-caret {
+      font-size: 1.2rem;
+      color: #2ecc71;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+
+    .faq-caret.open {
+      transform: rotate(-180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .faq-answer.open {
+      max-height: 500px;
+      padding-top: 1rem;
+    }
+
+    @media (max-width: 1400px) {
+      .signup-layout {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .left-section {
+        display: none;
+      }
+
+      .right-section {
+        position: static;
+        max-height: none;
+      }
+    }
+
     @media (max-width: 768px) {
       .signup-wrapper {
         padding: 1rem;
       }
 
-      .signup-container {
+      .signup-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .center-section {
         padding: 1.5rem 1rem;
       }
 
@@ -257,8 +360,13 @@
         font-size: 1.5rem;
       }
 
-      .button-group {
-        flex-direction: column;
+      .left-section {
+        display: flex;
+      }
+
+      .right-section {
+        position: static;
+        max-height: none;
       }
     }
   </style>
@@ -266,8 +374,14 @@
 <body>
 
 <div class="signup-wrapper">
-  <div class="signup-content">
-    <div class="signup-container">
+  <div class="signup-layout">
+    <!-- Left Section (Placeholder for future content) -->
+    <div class="left-section">
+      Coming soon: Video tutorials and testimonials
+    </div>
+
+    <!-- Center Section (Form) -->
+    <div class="center-section">
       <div class="signup-header">
         <h1>Become a Verified Recruiter</h1>
         <p>Get verified, build trust with candidates. Verification is free for founding members and takes about 24 hours.</p>
@@ -356,10 +470,86 @@
         By signing up, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
       </div>
     </div>
+
+    <!-- Right Section (FAQ) -->
+    <div class="right-section">
+      <div class="faq-container">
+        <div class="faq-title">Frequently Asked Questions</div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">How long does verification take?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            Most verifications are completed within 24 hours. You'll receive an email confirmation once your profile is live and ready to use.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">What do I need to verify?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            You'll need a valid government ID (driver's license, passport, or national ID) and a recent photo. We use facial recognition to match your ID to ensure authenticity.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">Is there a cost to join?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            Verification is completely free for founding members. No hidden fees, no subscriptions. You only pay when you start connecting with candidates.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">When can I access candidates?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            Once your verification is complete and your profile is live, you'll immediately have access to our candidate network and can start posting jobs or connecting with candidates.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">How is my data protected?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            We use bank-level encryption and industry-standard security measures to protect your data. Your information is never shared without consent, and we comply with all data protection regulations.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-text">Can I edit my profile after verification?</div>
+            <div class="faq-caret">^</div>
+          </div>
+          <div class="faq-answer">
+            Yes! Once your profile is live, you can update your bio, specialties, and other information anytime. Your verification badge stays intact as long as your information remains current.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script src="/js/recruiter-signup.js"></script>
+<script>
+  function toggleFaq(element) {
+    const answer = element.nextElementSibling;
+    const caret = element.querySelector('.faq-caret');
+    
+    answer.classList.toggle('open');
+    caret.classList.toggle('open');
+  }
+</script>
 
 </body>
 </html>
