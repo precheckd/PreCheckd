@@ -4,16 +4,16 @@ let currentStep = 1;
 let phoneNumber = '';
 
 // Step 1: Form Submission
-const form = document.getElementById('recruiter-form');
-if (form) {
-  form.addEventListener('submit', async (e) => {
+const signupForm = document.getElementById('signup-form');
+if (signupForm) {
+  signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const firstName = document.querySelector('input[name="firstName"]').value;
-    const lastName = document.querySelector('input[name="lastName"]').value;
-    const email = document.querySelector('input[name="email"]').value;
-    const phone = document.querySelector('input[name="phone"]').value;
-    const company = document.querySelector('input[name="company"]').value;
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const company = document.getElementById('company').value;
 
     if (!firstName || !lastName || !email || !phone) {
       alert('Please fill in all required fields');
@@ -33,8 +33,8 @@ if (form) {
 
       if (result.success) {
         currentStep = 2;
-        document.querySelector('.step-1').style.display = 'none';
-        document.querySelector('.step-2').style.display = 'block';
+        document.getElementById('step-signup').classList.remove('active');
+        document.getElementById('step-phone').classList.add('active');
         updateProgressBar(67);
       } else {
         alert(result.error || 'Signup failed');
@@ -46,11 +46,13 @@ if (form) {
   });
 }
 
-// Verify Code Button
-const verifyBtn = document.getElementById('verify-code-btn');
-if (verifyBtn) {
-  verifyBtn.addEventListener('click', async () => {
-    const code = document.querySelector('input[name="verificationCode"]').value;
+// Phone Verification Form
+const phoneForm = document.getElementById('phone-form');
+if (phoneForm) {
+  phoneForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const code = document.getElementById('code').value;
 
     if (!code) {
       alert('Please enter the verification code');
@@ -68,8 +70,8 @@ if (verifyBtn) {
 
       if (result.success) {
         currentStep = 3;
-        document.querySelector('.step-2').style.display = 'none';
-        document.querySelector('.step-3').style.display = 'block';
+        document.getElementById('step-phone').classList.remove('active');
+        document.getElementById('step-payment').classList.add('active');
         updateProgressBar(100);
       } else {
         alert(result.message || 'Invalid code');
@@ -81,10 +83,11 @@ if (verifyBtn) {
   });
 }
 
-// Resend Code
-const resendBtn = document.getElementById('resend-code-btn');
+// Resend Code Button
+const resendBtn = document.getElementById('resend-btn');
 if (resendBtn) {
-  resendBtn.addEventListener('click', async () => {
+  resendBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
     try {
       const response = await fetch('/api/founding-recruiter/resend-code', {
         method: 'POST',
@@ -98,10 +101,10 @@ if (resendBtn) {
   });
 }
 
-// Complete Verification
-const completeBtn = document.getElementById('complete-verification-btn');
-if (completeBtn) {
-  completeBtn.addEventListener('click', async () => {
+// Complete Verification Button
+const verifyBtn = document.getElementById('verify-button');
+if (verifyBtn) {
+  verifyBtn.addEventListener('click', async () => {
     try {
       const response = await fetch('/api/founding-recruiter/create-identity-session', {
         method: 'POST',
@@ -121,6 +124,15 @@ if (completeBtn) {
 }
 
 function updateProgressBar(percentage) {
-  const bar = document.querySelector('.progress-bar');
+  const bar = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  const percent = document.getElementById('progress-percent');
+  
   if (bar) bar.style.width = percentage + '%';
+  if (percent) percent.textContent = percentage + '%';
+  if (text) {
+    if (percentage === 33) text.textContent = 'Step 1 of 3';
+    else if (percentage === 67) text.textContent = 'Step 2 of 3';
+    else if (percentage === 100) text.textContent = 'Step 3 of 3';
+  }
 }
