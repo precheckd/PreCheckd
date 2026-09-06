@@ -4,6 +4,38 @@ const BASE_URL = process.env.MESSAGE_CENTRAL_BASE_URL;
 const CUSTOMER_ID = process.env.MESSAGE_CENTRAL_CUSTOMER_ID;
 const AUTH_TOKEN = process.env.MESSAGE_CENTRAL_AUTH_TOKEN;
 
+// Store the verification token (changes per request)
+let verificationAuthToken = null;
+
+// Generate a new auth token
+async function getAuthToken() {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}auth/v1/authentication/token`,
+      {
+        params: {
+          customerId: CUSTOMER_ID,
+          key: AUTH_TOKEN,
+          scope: 'NEW'
+        },
+        headers: {
+          'accept': '*/*'
+        }
+      }
+    );
+
+    if (response.data.data && response.data.data.authToken) {
+      verificationAuthToken = response.data.data.authToken;
+      return verificationAuthToken;
+    } else {
+      throw new Error('No auth token in response');
+    }
+  } catch (error) {
+    console.error('Error getting auth token:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // Generate a random 6-digit OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -12,31 +44,43 @@ function generateOTP() {
 // Send OTP via Message Central
 async function sendOTP(phoneNumber) {
   try {
-    const otp = generateOTP();
+    // Get fresh auth token
+    const authToken = await getAuthToken();
     
-    // Message Central OTP endpoint
+    // Remove any non-digits and format
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    
+    // Message Central expects the phone number in the request
     const response = await axios.post(
       `${BASE_URL}verification/v3/send`,
+      null,  // No body
       {
-        customerId: CUSTOMER_ID,
-        phoneNumber: phoneNumber,
-        otp: otp,
-        otpLength: 6
-      },
-      {
+        params: {
+          customerId: CUSTOMER_ID,
+          mobileNumber: cleanPhone,
+          flowType: 'SMS',
+          otpLength: 6,
+          countryCode: '1'  // US country code
+        },
         headers: {
-          'Authorization': `Bearer ${AUTH_TOKEN}`,
-          'Content-Type': 'application/json'
+          'authToken': authToken,
+          'accept': '*/*'
         }
       }
     );
 
-    return {
-      success: true,
-      otp: otp,
-      requestId: response.data.requestId,
-      message: 'OTP sent successfully'
-    };
+    if (response.data.data && response.data.data.verificationId) {
+      return {
+        success: true,
+        requestId: response.data.data.verificationId,
+        message: 'OTP sent successfully'
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.message || 'Failed to send OTP'
+      };
+    }
   } catch (error) {
     console.error('Error sending OTP:', error.response?.data || error.message);
     return {
@@ -47,27 +91,40 @@ async function sendOTP(phoneNumber) {
 }
 
 // Validate OTP
-async function validateOTP(requestId, otp) {
+async function validateOTP(verificationId, otp) {
   try {
+    // Use the stored auth token
+    if (!verificationAuthToken) {
+      verificationAuthToken = await getAuthToken();
+    }
+
     const response = await axios.post(
       `${BASE_URL}verification/v3/validateOtp`,
+      null,  // No body
       {
-        customerId: CUSTOMER_ID,
-        requestId: requestId,
-        otp: otp
-      },
-      {
+        params: {
+          verificationId: verificationId,
+          code: otp,
+          flowType: 'SMS'
+        },
         headers: {
-          'Authorization': `Bearer ${AUTH_TOKEN}`,
-          'Content-Type': 'application/json'
+          'authToken': verificationAuthToken,
+          'accept': '*/*'
         }
       }
     );
 
-    return {
-      success: response.data.isValid || false,
-      message: response.data.message || 'Validation complete'
-    };
+    if (response.data.responseCode === 200 || response.data.data?.verificationStatus === 'VERIFICATION_COMPLETED') {
+      return {
+        success: true,
+        message: 'OTP validated successfully'
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.message || 'Invalid OTP'
+      };
+    }
   } catch (error) {
     console.error('Error validating OTP:', error.response?.data || error.message);
     return {
