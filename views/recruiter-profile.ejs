@@ -1,16 +1,277 @@
+<style>
+  .profile-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #fafaf8;
+    border-left: 6px solid #2ecc71;
+    border-right: 6px solid #2ecc71;
+  }
+
+  .profile-wrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .profile-sidebar {
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+  }
+
+  .profile-photo {
+    width: 100%;
+    height: 300px;
+    background: #e8e6e1;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+  }
+
+  .profile-sidebar-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .sidebar-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d4a52;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-stat {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e8e6e1;
+  }
+
+  .sidebar-stat:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    color: #2d4a52;
+    font-weight: 600;
+  }
+
+  .verification-badge {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e8e6e1;
+    font-size: 0.9rem;
+    color: #2e7d32;
+    font-weight: 600;
+  }
+
+  .profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .profile-section {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .profile-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d4a52;
+    margin-bottom: 1.5rem;
+  }
+
+  .intro-text {
+    font-size: 1.05rem;
+    color: #555;
+    line-height: 1.7;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .intro-text strong {
+    color: #2d4a52;
+    font-weight: 600;
+  }
+
+  .verification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .verification-item {
+    background: #fafaf8;
+    border: 1px solid #e8e6e1;
+    border-radius: 6px;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .verification-left {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    flex: 1;
+  }
+
+  .verification-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .verification-content {
+    flex: 1;
+  }
+
+  .verification-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .verification-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d4a52;
+    margin: 0;
+  }
+
+  .info-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+  }
+
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #2d4a52;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #2d4a52;
+  }
+
+  .info-icon-wrapper:hover .info-icon {
+    background: #2d4a52;
+    color: white;
+  }
+
+  .tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d4a52;
+    color: white;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    z-index: 1000;
+    width: 250px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: normal;
+    font-weight: 400;
+  }
+
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2d4a52;
+  }
+
+  .info-icon-wrapper:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .verification-checkmark {
+    color: #2ecc71;
+    font-size: 1.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .cta-section {
+    text-align: center;
+  }
+
+  .cta-text {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 1024px) {
+    .profile-wrapper {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-sidebar {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .profile-content {
+      padding: 1rem;
+      border-left: 4px solid #2ecc71;
+      border-right: 4px solid #2ecc71;
+    }
+
+    .profile-section {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
 <div class="profile-content">
   <div class="profile-wrapper">
-    <!-- Sticky Sidebar on LEFT -->
+    <!-- Sidebar LEFT -->
     <div class="profile-sidebar">
       <div class="profile-photo">Photo</div>
       
       <div class="profile-sidebar-card">
-        <div>
-          <div class="sidebar-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
-          <% if (recruiter.company) { %>
-            <div class="sidebar-company"><%= recruiter.company %></div>
-          <% } %>
-        </div>
+        <div class="sidebar-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
+        <% if (recruiter.company) { %>
+          <div style="font-size: 0.95rem; color: #666; margin-bottom: 1.5rem; font-weight: 500;"><%= recruiter.company %></div>
+        <% } %>
 
         <div class="sidebar-stat">
           <div class="stat-label">Verification Status</div>
@@ -34,26 +295,21 @@
 
         <div class="sidebar-stat">
           <div class="stat-label">Bio</div>
-          <div class="stat-value" style="font-size: 0.9rem;">Complete your profile to display your bio.</div>
+          <div class="stat-value" style="font-size: 0.9rem;">Complete your profile to display.</div>
         </div>
 
-        <div class="verification-badge">
-          ✓ PreCheckd Verified
-        </div>
+        <div class="verification-badge">✓ PreCheckd Verified</div>
       </div>
     </div>
 
-    <!-- Main Content on RIGHT -->
+    <!-- Main Content RIGHT -->
     <div class="profile-main">
-      <!-- Intro Section -->
       <div class="profile-section">
         <p class="intro-text"><strong><%= recruiter.firstName %> <%= recruiter.lastName %></strong> has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional.</p>
       </div>
 
-      <!-- Verification Section -->
       <div class="profile-section">
         <h3>Verification Checks Completed</h3>
-
         <div class="verification-list">
           <div class="verification-item">
             <div class="verification-left">
@@ -63,7 +319,7 @@
                   <h4>Company Domain Verified</h4>
                   <div class="info-icon-wrapper">
                     <span class="info-icon">i</span>
-                    <span class="tooltip">This recruiter's company domain is registered, legitimate, and verified through Whois records. Cross-checked against spam and fraud blocklists.</span>
+                    <span class="tooltip">Company domain is registered, legitimate, and verified through Whois records.</span>
                   </div>
                 </div>
               </div>
@@ -79,7 +335,7 @@
                   <h4>Email Ownership</h4>
                   <div class="info-icon-wrapper">
                     <span class="info-icon">i</span>
-                    <span class="tooltip">The recruiter clicked the verification link sent to their corporate email, proving they control that email address.</span>
+                    <span class="tooltip">Recruiter verified their corporate email address.</span>
                   </div>
                 </div>
               </div>
@@ -95,7 +351,7 @@
                   <h4>Phone Number</h4>
                   <div class="info-icon-wrapper">
                     <span class="info-icon">i</span>
-                    <span class="tooltip">The recruiter's phone number was verified via SMS code, confirming they have access to that device.</span>
+                    <span class="tooltip">Phone number verified via SMS code.</span>
                   </div>
                 </div>
               </div>
@@ -111,7 +367,7 @@
                   <h4>Government ID</h4>
                   <div class="info-icon-wrapper">
                     <span class="info-icon">i</span>
-                    <span class="tooltip">The recruiter's government-issued ID was scanned and verified using facial recognition technology.</span>
+                    <span class="tooltip">Government ID scanned and verified.</span>
                   </div>
                 </div>
               </div>
@@ -127,7 +383,7 @@
                   <h4>Facial Recognition</h4>
                   <div class="info-icon-wrapper">
                     <span class="info-icon">i</span>
-                    <span class="tooltip">The recruiter's face was matched to their government ID document, confirming identity authenticity and that they're a real person.</span>
+                    <span class="tooltip">Face matched to government ID document.</span>
                   </div>
                 </div>
               </div>
@@ -137,9 +393,8 @@
         </div>
       </div>
 
-      <!-- CTA Section -->
       <div class="profile-section cta-section">
-        <p class="cta-text"><strong>Ready to connect with verified candidates?</strong> Join PreCheckd and start building trust-based hiring relationships today.</p>
+        <p class="cta-text"><strong>Ready to connect with verified candidates?</strong> Join PreCheckd today.</p>
         <a href="/founding-recruiter-landing" class="btn btn-primary btn-large">Join PreCheckd</a>
       </div>
     </div>
