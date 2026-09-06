@@ -1,155 +1,176 @@
-const steps = ['step-signup', 'step-phone', 'step-payment'];
-let currentStep = 0;
+const express = require('express');
+const router = express.Router();
+const Recruiter = require('../models/Recruiter');
+const smsService = require('../services/smsService');
 
-function updateProgress() {
-  const percent = Math.round(((currentStep + 1) / steps.length) * 100);
-  document.getElementById('progress-text').textContent = `Step ${currentStep + 1} of ${steps.length}`;
-  document.getElementById('progress-percent').textContent = `${percent}%`;
-  document.getElementById('progress-fill').style.width = `${percent}%`;
-}
-
-function showStep(index) {
-  steps.forEach((step, i) => {
-    const el = document.getElementById(step);
-    el.classList.toggle('active', i === index);
-  });
-  currentStep = index;
-  updateProgress();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function formatPhoneNumber(value) {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-}
-
-function phoneToE164(value) {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length !== 10) return null;
-  return `+1${digits}`;
-}
-
-document.getElementById('phone').addEventListener('input', (e) => {
-  e.target.value = formatPhoneNumber(e.target.value);
-});
-
-document.getElementById('signup-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const phoneInput = document.getElementById('phone').value;
-  const phone = phoneToE164(phoneInput);
-  
-  if (!phone) {
-    document.getElementById('form-error').textContent = 'Phone number must be 10 digits';
-    document.getElementById('form-error').classList.add('visible');
-    return;
-  }
-  
-  const data = {
-    firstName: document.getElementById('firstName').value,
-    lastName: document.getElementById('lastName').value,
-    email: document.getElementById('email').value,
-    phone: phone,
-    company: document.getElementById('company').value
-  };
-  
+// Step 1: Create initial recruiter record
+router.post('/signup', async (req, res) => {
   try {
-    const response = await fetch('/api/founding-recruiter/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (response.ok) {
-      showStep(1);
-    } else {
-      const result = await response.json();
-      document.getElementById('form-error').textContent = result.message || 'Error during signup';
-      document.getElementById('form-error').classList.add('visible');
+    const { firstName, lastName, email, phone, company } = req.body;
+
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
-  } catch (err) {
-    document.getElementById('form-error').textContent = 'Network error. Please try again.';
-    document.getElementById('form-error').classList.add('visible');
-  }
-});
 
-document.getElementById('phone-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const code = document.getElementById('code').value;
-  
-  try {
-    const response = await fetch('/api/founding-recruiter/verify-phone', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
-    });
-    if (response.ok) {
-      showStep(2);
-    } else {
-      const data = await response.json();
-      document.getElementById('form-error').textContent = data.message || 'Verification failed';
-      document.getElementById('form-error').classList.add('visible');
+    // Check if recruiter already exists
+    const existing = await Recruiter.findOne({ corporateEmail: email });
+    if (existing) {
+      return res.status(400).json({ error: 'Email already registered' });
     }
-  } catch (err) {
-    document.getElementById('form-error').textContent = 'Network error. Please try again.';
-    document.getElementById('form-error').classList.add('visible');
+
+    // Create new recruiter (not yet verified)
+    const recruiter = new Recruiter({
+      firstName,
+      lastName,
+      corporateEmail: email,
+      phone,
+      company: company || 'Not provided',
+      isPhoneVerified: false,
+      isIdentityVerified: false,
+      isActive: false
+    });
+
+    await recruiter.save();
+
+    // Store recruiter ID in session for this flow
+    req.session.recruiterId = recruiter._id.toString();
+    req.session.phone = phone;
+
+    // Send SMS OTP immediately after signup
+    const formattedPhone = phone.replace(/\D/g, '');
+    const phoneE164 = '+1' + formattedPhone.slice(-10);
+
+    const smsResult = await smsService.sendOTP(phoneE164);
+
+    if (smsResult.success) {
+      req.session.phoneOtpRequestId = smsResult.requestId;
+      req.session.phoneNumber = phoneE164;
+      res.json({
+        success: true,
+        recruiterId: recruiter._id,
+        message: `OTP sent to ${phoneE164}`
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to send verification code'
+      });
+    }
+  } catch (error) {
+    console.error('Error during signup:', error);
+    res.status(500).json({ error: 'Failed to complete signup' });
   }
 });
 
-document.getElementById('verify-button').addEventListener('click', async (e) => {
-  const btn = e.target;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading"></span>Processing verification...';
-  
+// Resend OTP code
+router.post('/resend-code', async (req, res) => {
   try {
-    const response = await fetch('/api/founding-recruiter/create-identity-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const phone = req.session.phone;
     
-    if (response.ok) {
-      document.getElementById('stripe-identity-container').style.display = 'none';
-      document.getElementById('verification-complete').style.display = 'block';
-      
-      setTimeout(() => {
-        window.location.href = '/founding-recruiter-landing';
-      }, 2000);
+    if (!phone) {
+      return res.status(400).json({ error: 'No phone on file' });
+    }
+
+    // Format and send OTP
+    const formattedPhone = phone.replace(/\D/g, '');
+    const phoneE164 = '+1' + formattedPhone.slice(-10);
+
+    const smsResult = await smsService.sendOTP(phoneE164);
+
+    if (smsResult.success) {
+      req.session.phoneOtpRequestId = smsResult.requestId;
+      res.json({
+        success: true,
+        message: `OTP resent to ${phoneE164}`
+      });
     } else {
-      const error = await response.json();
-      document.getElementById('form-error').textContent = error.message || 'Verification failed';
-      document.getElementById('form-error').classList.add('visible');
-      btn.disabled = false;
-      btn.innerHTML = 'Start Verification';
+      res.status(400).json({
+        success: false,
+        error: 'Failed to resend code'
+      });
     }
-  } catch (err) {
-    document.getElementById('form-error').textContent = 'Network error. Please try again.';
-    document.getElementById('form-error').classList.add('visible');
-    btn.disabled = false;
-    btn.innerHTML = 'Start Verification';
+  } catch (error) {
+    console.error('Error resending code:', error);
+    res.status(500).json({ error: 'Failed to resend code' });
   }
 });
 
-document.getElementById('resend-btn')?.addEventListener('click', async (e) => {
-  e.preventDefault();
-  const btn = e.target;
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
-  
+// Verify phone OTP
+router.post('/verify-phone', async (req, res) => {
   try {
-    const response = await fetch('/api/founding-recruiter/resend-code', {
-      method: 'POST'
-    });
-    if (response.ok) {
-      btn.textContent = 'Code sent!';
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = 'Send again';
-      }, 3000);
+    const { code } = req.body;
+    const requestId = req.session.phoneOtpRequestId;
+    const recruiterId = req.session.recruiterId;
+
+    if (!requestId || !code) {
+      return res.status(400).json({ error: 'Missing request ID or code' });
     }
-  } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'Send again';
+
+    if (!recruiterId) {
+      return res.status(400).json({ error: 'No active recruiter session' });
+    }
+
+    // Validate OTP with Message Central
+    const result = await smsService.validateOTP(requestId, code);
+
+    if (result.success) {
+      // Update recruiter as phone verified
+      await Recruiter.findByIdAndUpdate(recruiterId, {
+        isPhoneVerified: true
+      });
+
+      req.session.phoneVerified = true;
+      res.json({ 
+        success: true, 
+        message: 'Phone verified successfully' 
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid verification code'
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying phone OTP:', error);
+    res.status(500).json({ error: 'Failed to verify code' });
   }
 });
 
-updateProgress();
+// Create Stripe Identity session (MOCKED for now)
+router.post('/create-identity-session', async (req, res) => {
+  try {
+    const recruiterId = req.session.recruiterId;
+
+    if (!recruiterId) {
+      return res.status(400).json({ error: 'No active recruiter session' });
+    }
+
+    const recruiter = await Recruiter.findById(recruiterId);
+    if (!recruiter) {
+      return res.status(404).json({ error: 'Recruiter not found' });
+    }
+
+    // Mark as identity verified (temporarily mocked)
+    recruiter.isIdentityVerified = true;
+    recruiter.isActive = true;
+    await recruiter.save();
+
+    req.session.identityVerified = true;
+
+    res.json({
+      success: true,
+      message: 'Identity verification complete. Welcome!',
+      recruiter: {
+        id: recruiter._id,
+        name: `${recruiter.firstName} ${recruiter.lastName}`,
+        email: recruiter.corporateEmail,
+        isActive: recruiter.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Error creating identity session:', error);
+    res.status(500).json({ error: 'Failed to complete verification' });
+  }
+});
+
+module.exports = router;
