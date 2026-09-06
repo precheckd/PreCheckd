@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
     const recruiter = new Recruiter({
       firstName,
       lastName,
-      corporateEmail: email,
+      email: email,
       phone,
       company: company || 'Not provided',
       isPhoneVerified: false,
@@ -155,7 +155,7 @@ router.post('/create-identity-session', async (req, res) => {
       recruiter: {
         id: recruiter._id,
         name: `${recruiter.firstName} ${recruiter.lastName}`,
-        email: recruiter.corporateEmail,
+        email: recruiter.email,
         isActive: recruiter.isActive
       }
     });
