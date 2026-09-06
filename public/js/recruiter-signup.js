@@ -1,176 +1,144 @@
-const express = require('express');
-const router = express.Router();
-const Recruiter = require('../models/Recruiter');
-const smsService = require('../services/smsService');
+// Recruiter Signup Flow - Step 1, 2, 3
 
-// Step 1: Create initial recruiter record
-router.post('/signup', async (req, res) => {
+let currentStep = 1;
+let phoneNumber = '';
+
+// Step 1: Form Submission
+document.getElementById('recruiter-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const firstName = document.querySelector('input[name="firstName"]')?.value;
+  const lastName = document.querySelector('input[name="lastName"]')?.value;
+  const email = document.querySelector('input[name="email"]')?.value;
+  const phone = document.querySelector('input[name="phone"]')?.value;
+  const company = document.querySelector('input[name="company"]')?.value;
+
+  if (!firstName || !lastName || !email || !phone) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  phoneNumber = phone;
+
   try {
-    const { firstName, lastName, email, phone, company } = req.body;
-
-    if (!firstName || !lastName || !email || !phone) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Check if recruiter already exists
-    const existing = await Recruiter.findOne({ corporateEmail: email });
-    if (existing) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    // Create new recruiter (not yet verified)
-    const recruiter = new Recruiter({
-      firstName,
-      lastName,
-      corporateEmail: email,
-      phone,
-      company: company || 'Not provided',
-      isPhoneVerified: false,
-      isIdentityVerified: false,
-      isActive: false
+    const response = await fetch('/api/founding-recruiter/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phone,
+        company
+      })
     });
 
-    await recruiter.save();
+    const result = await response.json();
 
-    // Store recruiter ID in session for this flow
-    req.session.recruiterId = recruiter._id.toString();
-    req.session.phone = phone;
-
-    // Send SMS OTP immediately after signup
-    const formattedPhone = phone.replace(/\D/g, '');
-    const phoneE164 = '+1' + formattedPhone.slice(-10);
-
-    const smsResult = await smsService.sendOTP(phoneE164);
-
-    if (smsResult.success) {
-      req.session.phoneOtpRequestId = smsResult.requestId;
-      req.session.phoneNumber = phoneE164;
-      res.json({
-        success: true,
-        recruiterId: recruiter._id,
-        message: `OTP sent to ${phoneE164}`
-      });
+    if (result.success) {
+      // Move to Step 2: Phone Verification
+      currentStep = 2;
+      document.querySelector('.step-1')?.style.display = 'none';
+      document.querySelector('.step-2')?.style.display = 'block';
+      updateProgressBar(67);
     } else {
-      res.status(400).json({
-        success: false,
-        error: 'Failed to send verification code'
-      });
+      alert(result.error || 'Signup failed');
     }
   } catch (error) {
     console.error('Error during signup:', error);
-    res.status(500).json({ error: 'Failed to complete signup' });
+    alert('An error occurred during signup');
   }
 });
 
-// Resend OTP code
-router.post('/resend-code', async (req, res) => {
+// Step 2: Verify Phone Code
+document.getElementById('verify-code-btn')?.addEventListener('click', async () => {
+  const code = document.querySelector('input[name="verificationCode"]')?.value;
+
+  if (!code) {
+    alert('Please enter the verification code');
+    return;
+  }
+
   try {
-    const phone = req.session.phone;
-    
-    if (!phone) {
-      return res.status(400).json({ error: 'No phone on file' });
-    }
+    const response = await fetch('/api/founding-recruiter/verify-phone', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code })
+    });
 
-    // Format and send OTP
-    const formattedPhone = phone.replace(/\D/g, '');
-    const phoneE164 = '+1' + formattedPhone.slice(-10);
+    const result = await response.json();
 
-    const smsResult = await smsService.sendOTP(phoneE164);
-
-    if (smsResult.success) {
-      req.session.phoneOtpRequestId = smsResult.requestId;
-      res.json({
-        success: true,
-        message: `OTP resent to ${phoneE164}`
-      });
+    if (result.success) {
+      // Move to Step 3: Identity Verification
+      currentStep = 3;
+      document.querySelector('.step-2')?.style.display = 'none';
+      document.querySelector('.step-3')?.style.display = 'block';
+      updateProgressBar(100);
     } else {
-      res.status(400).json({
-        success: false,
-        error: 'Failed to resend code'
-      });
+      alert(result.message || 'Invalid verification code');
+    }
+  } catch (error) {
+    console.error('Error verifying code:', error);
+    alert('An error occurred');
+  }
+});
+
+// Step 2: Resend Code
+document.getElementById('resend-code-btn')?.addEventListener('click', async () => {
+  try {
+    const response = await fetch('/api/founding-recruiter/resend-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(result.message);
+    } else {
+      alert(result.error || 'Failed to resend code');
     }
   } catch (error) {
     console.error('Error resending code:', error);
-    res.status(500).json({ error: 'Failed to resend code' });
+    alert('An error occurred');
   }
 });
 
-// Verify phone OTP
-router.post('/verify-phone', async (req, res) => {
+// Step 3: Complete Verification
+document.getElementById('complete-verification-btn')?.addEventListener('click', async () => {
   try {
-    const { code } = req.body;
-    const requestId = req.session.phoneOtpRequestId;
-    const recruiterId = req.session.recruiterId;
-
-    if (!requestId || !code) {
-      return res.status(400).json({ error: 'Missing request ID or code' });
-    }
-
-    if (!recruiterId) {
-      return res.status(400).json({ error: 'No active recruiter session' });
-    }
-
-    // Validate OTP with Message Central
-    const result = await smsService.validateOTP(requestId, code);
-
-    if (result.success) {
-      // Update recruiter as phone verified
-      await Recruiter.findByIdAndUpdate(recruiterId, {
-        isPhoneVerified: true
-      });
-
-      req.session.phoneVerified = true;
-      res.json({ 
-        success: true, 
-        message: 'Phone verified successfully' 
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid verification code'
-      });
-    }
-  } catch (error) {
-    console.error('Error verifying phone OTP:', error);
-    res.status(500).json({ error: 'Failed to verify code' });
-  }
-});
-
-// Create Stripe Identity session (MOCKED for now)
-router.post('/create-identity-session', async (req, res) => {
-  try {
-    const recruiterId = req.session.recruiterId;
-
-    if (!recruiterId) {
-      return res.status(400).json({ error: 'No active recruiter session' });
-    }
-
-    const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter) {
-      return res.status(404).json({ error: 'Recruiter not found' });
-    }
-
-    // Mark as identity verified (temporarily mocked)
-    recruiter.isIdentityVerified = true;
-    recruiter.isActive = true;
-    await recruiter.save();
-
-    req.session.identityVerified = true;
-
-    res.json({
-      success: true,
-      message: 'Identity verification complete. Welcome!',
-      recruiter: {
-        id: recruiter._id,
-        name: `${recruiter.firstName} ${recruiter.lastName}`,
-        email: recruiter.corporateEmail,
-        isActive: recruiter.isActive
+    const response = await fetch('/api/founding-recruiter/create-identity-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       }
     });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert('Congratulations! Your profile is verified.');
+      // Redirect or show success message
+      window.location.href = `/recruiter/${result.recruiter.id}`;
+    } else {
+      alert(result.error || 'Verification failed');
+    }
   } catch (error) {
-    console.error('Error creating identity session:', error);
-    res.status(500).json({ error: 'Failed to complete verification' });
+    console.error('Error completing verification:', error);
+    alert('An error occurred');
   }
 });
 
-module.exports = router;
+// Update progress bar
+function updateProgressBar(percentage) {
+  const progressBar = document.querySelector('.progress-bar');
+  if (progressBar) {
+    progressBar.style.width = percentage + '%';
+  }
+}
