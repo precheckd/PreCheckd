@@ -49,11 +49,6 @@ app.use('/webhooks', webhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root domain redirect
-app.get('/', (req, res) => {
-  res.redirect('/founding-recruiter');
-});
-
 // Landing page for founding recruiters
 app.get('/founding-recruiter-landing', (req, res) => {
   res.render('founding-recruiter-landing');
