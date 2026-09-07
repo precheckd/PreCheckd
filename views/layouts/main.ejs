@@ -56,22 +56,10 @@
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 1rem;
     }
 
-    .nav-link {
-      color: #2d4a52;
-      text-decoration: none;
-      font-size: 0.95rem;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .nav-link:hover {
-      color: #2ecc71;
-    }
-
-    .btn-get-verified {
+    .nav-btn {
       background: #2ecc71;
       color: white;
       padding: 0.75rem 1.5rem;
@@ -85,24 +73,8 @@
       transition: background 0.2s;
     }
 
-    .btn-get-verified:hover {
+    .nav-btn:hover {
       background: #27ae60;
-    }
-
-    .btn-portal {
-      color: #2d4a52;
-      text-decoration: none;
-      font-size: 0.95rem;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border: 1px solid #2d4a52;
-      border-radius: 4px;
-      transition: all 0.2s;
-    }
-
-    .btn-portal:hover {
-      background: #2d4a52;
-      color: white;
     }
 
     main {
@@ -170,8 +142,7 @@
       .header-nav {
         width: 100%;
         flex-wrap: wrap;
-        gap: 1rem;
-        justify-content: flex-start;
+        gap: 0.75rem;
       }
 
       .logo-text {
@@ -182,13 +153,7 @@
         font-size: 0.8rem;
       }
 
-      .nav-link,
-      .btn-portal {
-        font-size: 0.85rem;
-        padding: 0.5rem 0.75rem;
-      }
-
-      .btn-get-verified {
+      .nav-btn {
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
       }
@@ -204,10 +169,10 @@
       <div class="logo-tagline">Fixing hiring one verification at a time</div>
     </a>
     <nav class="header-nav">
-      <a href="/recruiters" class="nav-link">Browse Recruiters</a>
-      <a href="/get-verified" class="btn-get-verified">Get Verified</a>
-      <a href="/candidate-portal" class="btn-portal">Candidate Portal</a>
-      <a href="/recruiter-portal" class="btn-portal">Recruiter Portal</a>
+      <a href="/recruiters" class="nav-btn">Browse Recruiters</a>
+      <a href="/get-verified" class="nav-btn">Get Verified</a>
+      <a href="/candidate-portal" class="nav-btn">Candidate Portal</a>
+      <a href="/recruiter-portal" class="nav-btn">Recruiter Portal</a>
     </nav>
   </div>
 </header>
