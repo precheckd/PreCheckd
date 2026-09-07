@@ -196,4 +196,9 @@ router.get('/recruiter/:name', async (req, res) => {
   }
 });
 
+// Candidate landing page
+router.get('/candidate-landing', (req, res) => {
+  res.render('candidate-landing');
+});
+
 module.exports = router;

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PreCheckd - For Job Seekers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #C8E6C9 0%, #E8F5E9 100%);
+      min-height: 100vh;
+    }
+
+    main {
+      padding: 4rem 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-section {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2d4a52;
+      margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: #666;
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-cta {
+      background: #2ecc71;
+      color: white;
+      padding: 1rem 2.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+
+    .hero-cta:hover {
+      background: #27ae60;
+    }
+
+    .section {
+      margin-bottom: 4rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2d4a52;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .value-props {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .prop-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .prop-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .prop-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2d4a52;
+      margin-bottom: 0.5rem;
+    }
+
+    .prop-text {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2ecc71;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2d4a52;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-description {
+      color: #666;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .waitlist-section {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .waitlist-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #2d4a52;
+      margin-bottom: 1rem;
+    }
+
+    .waitlist-text {
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .waitlist-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .waitlist-form input {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .waitlist-form input:focus {
+      outline: none;
+      border-color: #2ecc71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+    }
+
+    .waitlist-form button {
+      background: #2ecc71;
+      color: white;
+      padding: 0.875rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .waitlist-form button:hover {
+      background: #27ae60;
+    }
+
+    .coming-soon-badge {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        padding: 2rem 1rem;
+      }
+
+      .hero-title {
+        font-size: 1.75rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+      }
+
+      .value-props,
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .waitlist-section {
+        padding: 2rem 1.5rem;
+      }
+
+      .waitlist-form {
+        gap: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <div class="hero-section">
+    <h1 class="hero-title">Find Verified Recruiters You Can Trust</h1>
+    <p class="hero-subtitle">PreCheckd is building a new way for job seekers to connect with legitimate, verified recruiting professionals. Coming soon to a device near you.</p>
+    <button class="hero-cta" onclick="document.querySelector('.waitlist-section').scrollIntoView({behavior: 'smooth'});">Join the Waitlist</button>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Why PreCheckd for Candidates</h2>
+    <div class="value-props">
+      <div class="prop-card">
+        <div class="prop-icon">✓</div>
+        <h3 class="prop-title">Verified Recruiters</h3>
+        <p class="prop-text">Every recruiter on PreCheckd is verified and vetted. Know who you're talking to.</p>
+      </div>
+      <div class="prop-card">
+        <div class="prop-icon">🔒</div>
+        <h3 class="prop-title">Your Data is Safe</h3>
+        <p class="prop-text">Bank-level security protects your information. Your privacy is our priority.</p>
+      </div>
+      <div class="prop-card">
+        <div class="prop-icon">⚡</div>
+        <h3 class="prop-title">Direct Connections</h3>
+        <p class="prop-text">Skip the spam. Connect directly with quality recruiters actively hiring.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">What's Coming</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-number">01</div>
+        <h3 class="feature-title">Candidate Profiles</h3>
+        <p class="feature-description">Build your verified profile and showcase your skills to vetted recruiters.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">02</div>
+        <h3 class="feature-title">Recruiter Directory</h3>
+        <p class="feature-description">Browse and search verified recruiters by industry, specialty, and experience.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">03</div>
+        <h3 class="feature-title">Direct Messaging</h3>
+        <p class="feature-description">Connect directly with recruiters in a safe, verified messaging environment.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">04</div>
+        <h3 class="feature-title">Job Matching</h3>
+        <p class="feature-description">Get matched with opportunities that fit your skills and career goals.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">05</div>
+        <h3 class="feature-title">Recruiter Reviews</h3>
+        <p class="feature-description">See what other candidates think. Rate your experience and help others.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">06</div>
+        <h3 class="feature-title">Opportunity Alerts</h3>
+        <p class="feature-description">Get notified about relevant roles from verified recruiters in your field.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="waitlist-section">
+      <h2 class="waitlist-title">Get on the Waitlist</h2>
+      <p class="waitlist-text">Be among the first to know when PreCheckd launches for candidates. We're building something special and can't wait to share it with you.</p>
+      <form class="waitlist-form">
+        <input type="email" placeholder="Enter your email" required>
+        <button type="submit">Join the Waitlist</button>
+      </form>
+      <div class="coming-soon-badge">🚀 Coming Soon</div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
