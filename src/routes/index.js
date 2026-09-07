@@ -1,3 +1,7 @@
+router.get('/', (req, res) => {
+  res.render('home');
+});
+
 const express = require('express');
 const founderRoutes = require('./founderRoutes');
 const smsRoutes = require('./smsRoutes');
