@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PreCheckd - Recruiters</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #C8E6C9 0%, #E8F5E9 100%);
+      min-height: 100vh;
+    }
+
+    main {
+      padding: 4rem 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .intro-section {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .intro-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2d4a52;
+      margin-bottom: 1rem;
+    }
+
+    .intro-text {
+      font-size: 1.1rem;
+      color: #666;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .path-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 3rem;
+    }
+
+    .path-card {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s, box-shadow 0.3s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .path-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .path-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .path-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #2d4a52;
+      margin-bottom: 1rem;
+    }
+
+    .path-description {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+
+    .path-benefits {
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .benefit-icon {
+      color: #2ecc71;
+      font-weight: bold;
+      margin-right: 0.75rem;
+      font-size: 1.25rem;
+    }
+
+    .path-cta {
+      background: #2ecc71;
+      color: white;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .path-cta:hover {
+      background: #27ae60;
+    }
+
+    .coming-soon {
+      opacity: 0.7;
+    }
+
+    .coming-soon-badge {
+      display: inline-block;
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        padding: 2rem 1rem;
+      }
+
+      .intro-title {
+        font-size: 1.75rem;
+      }
+
+      .intro-text {
+        font-size: 1rem;
+      }
+
+      .path-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .path-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .path-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <div class="intro-section">
+    <h1 class="intro-title">Recruiters</h1>
+    <p class="intro-text">Choose how you want to use PreCheckd to build trust and scale your hiring.</p>
+  </div>
+
+  <div class="path-container">
+    <!-- Individual Recruiter -->
+    <a href="/founding-recruiter" class="path-card">
+      <div class="path-icon">🎯</div>
+      <h2 class="path-title">Individual Recruiter</h2>
+      <p class="path-description">Get verified and access our network of verified candidates. Build your profile and start connecting.</p>
+      <div class="path-benefits">
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Get verified in 24 hours</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Access verified candidates</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Free for founding members</span>
+        </div>
+      </div>
+      <button class="path-cta">Get Verified</button>
+    </a>
+
+    <!-- Bulk Candidate Verification -->
+    <div class="path-card coming-soon">
+      <div class="path-icon">📋</div>
+      <h2 class="path-title">Bulk Candidate Verification</h2>
+      <p class="path-description">Verify your entire candidate roster and give them verified badges. Scale trust across your team.</p>
+      <div class="path-benefits">
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Verify multiple candidates</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Team management tools</span>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✓</span>
+          <span>Flexible pricing</span>
+        </div>
+      </div>
+      <button class="path-cta" disabled style="opacity: 0.5; cursor: not-allowed;">Coming Soon</button>
+      <div class="coming-soon-badge">🔨 In Development</div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

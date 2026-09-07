@@ -172,6 +172,11 @@ router.post('/api/founding-recruiter/create-identity-session', async (req, res) 
   }
 });
 
+// Recruiter landing page
+router.get('/recruiter-landing', (req, res) => {
+  res.render('recruiter-landing');
+});
+
 // Recruiter profile page
 router.get('/recruiter/:name', async (req, res) => {
   try {
