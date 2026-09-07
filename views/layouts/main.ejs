@@ -56,7 +56,19 @@
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 2rem;
+    }
+
+    .nav-link {
+      color: #2d4a52;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: #2ecc71;
     }
 
     .btn-get-verified {
@@ -75,6 +87,22 @@
 
     .btn-get-verified:hover {
       background: #27ae60;
+    }
+
+    .btn-portal {
+      color: #2d4a52;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border: 1px solid #2d4a52;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-portal:hover {
+      background: #2d4a52;
+      color: white;
     }
 
     main {
@@ -141,7 +169,9 @@
 
       .header-nav {
         width: 100%;
-        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: flex-start;
       }
 
       .logo-text {
@@ -150,6 +180,17 @@
 
       .logo-tagline {
         font-size: 0.8rem;
+      }
+
+      .nav-link,
+      .btn-portal {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .btn-get-verified {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -163,7 +204,10 @@
       <div class="logo-tagline">Fixing hiring one verification at a time</div>
     </a>
     <nav class="header-nav">
-      <a href="/founding-recruiter" class="btn-get-verified">Get Verified</a>
+      <a href="/recruiters" class="nav-link">Browse Recruiters</a>
+      <a href="/get-verified" class="btn-get-verified">Get Verified</a>
+      <a href="/candidate-portal" class="btn-portal">Candidate Portal</a>
+      <a href="/recruiter-portal" class="btn-portal">Recruiter Portal</a>
     </nav>
   </div>
 </header>
@@ -182,7 +226,7 @@
       <h3>Links</h3>
       <ul>
         <li><a href="/">Home</a></li>
-        <li><a href="/founding-recruiter">Get Verified</a></li>
+        <li><a href="/get-verified">Get Verified</a></li>
         <li><a href="mailto:hello@precheckd.com">Contact</a></li>
       </ul>
     </div>
