@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Recruiter = require('../models/Recruiter');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Step 1: Signup and mock SMS send
 router.post('/signup', async (req, res) => {
@@ -111,7 +110,7 @@ router.post('/verify-phone', async (req, res) => {
   }
 });
 
-// Create Stripe Identity Session (REAL - actual Stripe integration)
+// Create Stripe Identity Session (REAL - actual Stripe integration with logging)
 router.post('/create-identity-session', async (req, res) => {
   try {
     const recruiterId = req.session.recruiterId;
@@ -125,7 +124,14 @@ router.post('/create-identity-session', async (req, res) => {
       return res.status(404).json({ error: 'Recruiter not found' });
     }
 
+    // Log to check if Stripe key is loaded
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    console.log('Stripe Key loaded:', stripeKey ? 'YES' : 'NO - KEY MISSING');
+
+    const stripe = require('stripe')(stripeKey);
+
     // Create actual Stripe Identity Verification Session
+    console.log('Creating Stripe Identity session for:', recruiter.email);
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: 'document',
       metadata: {
@@ -134,6 +140,8 @@ router.post('/create-identity-session', async (req, res) => {
         name: `${recruiter.firstName} ${recruiter.lastName}`
       }
     });
+
+    console.log('Stripe session created:', verificationSession.id);
 
     // Store the verification session ID in the recruiter record for later verification
     recruiter.stripeVerificationSessionId = verificationSession.id;
@@ -147,7 +155,7 @@ router.post('/create-identity-session', async (req, res) => {
       sessionId: verificationSession.id
     });
   } catch (error) {
-    console.error('Error creating Stripe Identity session:', error);
+    console.error('Error creating identity session:', error);
     res.status(500).json({ error: 'Failed to create identity verification session' });
   }
 });
@@ -161,6 +169,9 @@ router.post('/verify-identity-session', async (req, res) => {
     if (!recruiterId || !sessionId) {
       return res.status(400).json({ error: 'Missing recruiter or session ID' });
     }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripe = require('stripe')(stripeKey);
 
     // Retrieve the verification session from Stripe
     const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId);
