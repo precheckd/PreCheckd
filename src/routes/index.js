@@ -8,7 +8,42 @@ router.get('/', (req, res) => {
   res.render('home');
 });
 
-// Founding recruiter routes
+// Recruiter landing page
+router.get('/recruiter-landing', (req, res) => {
+  res.render('recruiter-landing');
+});
+
+// Recruiter search/browse page
+router.get('/recruiter-search', (req, res) => {
+  res.render('recruiter-search');
+});
+
+// Candidate landing page
+router.get('/candidate-landing', (req, res) => {
+  res.render('candidate-landing');
+});
+
+// Candidate signup page
+router.get('/candidate-signup', (req, res) => {
+  res.render('candidate-signup');
+});
+
+// Login page
+router.get('/login', (req, res) => {
+  res.render('login');
+});
+
+// Terms of Service
+router.get('/terms', (req, res) => {
+  res.render('terms');
+});
+
+// Privacy Policy
+router.get('/privacy', (req, res) => {
+  res.render('privacy');
+});
+
+// Founding recruiter signup
 router.post('/api/founding-recruiter/signup', async (req, res) => {
   try {
     const { firstName, lastName, email, phone, company } = req.body;
@@ -172,11 +207,6 @@ router.post('/api/founding-recruiter/create-identity-session', async (req, res) 
   }
 });
 
-// Recruiter landing page
-router.get('/recruiter-landing', (req, res) => {
-  res.render('recruiter-landing');
-});
-
 // Recruiter profile page
 router.get('/recruiter/:name', async (req, res) => {
   try {
@@ -196,9 +226,9 @@ router.get('/recruiter/:name', async (req, res) => {
   }
 });
 
-// Candidate landing page
-router.get('/candidate-landing', (req, res) => {
-  res.render('candidate-landing');
+// Candidate profile page
+router.get('/candidate/:name', (req, res) => {
+  res.render('candidate-profile');
 });
 
 module.exports = router;
