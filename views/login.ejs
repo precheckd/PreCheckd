@@ -16,12 +16,15 @@
       background: linear-gradient(135deg, #C8E6C9 0%, #E8F5E9 100%);
       min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
     }
 
     main {
-      padding: 1.5rem;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
       width: 100%;
     }
 
@@ -31,7 +34,7 @@
       padding: 3rem 2rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       max-width: 500px;
-      margin: 0 auto;
+      width: 100%;
       text-align: center;
     }
 
@@ -75,8 +78,18 @@
       font-size: 0.95rem;
     }
 
-    .content-text:last-child {
+    .content-text:last-of-type {
       margin-bottom: 0;
+    }
+
+    .feature-list {
+      margin-left: 1.5rem;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    .feature-list li {
+      margin-bottom: 0.5rem;
     }
 
     .badge {
@@ -91,6 +104,10 @@
     }
 
     @media (max-width: 768px) {
+      main {
+        padding: 2rem 1rem;
+      }
+
       .login-container {
         padding: 2rem 1.5rem;
       }
@@ -117,7 +134,7 @@
       <h2 class="content-title">Coming Soon</h2>
       <p class="content-text">Members-only login is currently under development. We're building a secure authentication system for recruiters and candidates to access their accounts.</p>
       <p class="content-text">Once launched, you'll be able to:</p>
-      <ul style="margin-left: 1.5rem; color: #555; line-height: 1.8;">
+      <ul class="feature-list">
         <li>Access your personal dashboard</li>
         <li>Manage your verified profile</li>
         <li>Message with other verified members</li>
