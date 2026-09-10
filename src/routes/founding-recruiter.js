@@ -1,6 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const Recruiter = require('../models/Recruiter');
+
+function makeSlug(firstName, lastName) {
+  const base = `${firstName}-${lastName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  const suffix = crypto.randomBytes(3).toString('hex');
+  return `${base}-${suffix}`;
+}
 
 // Step 1: Signup and mock SMS send
 router.post('/signup', async (req, res) => {
@@ -16,9 +26,12 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    const slug = makeSlug(firstName, lastName);
+
     const recruiter = new Recruiter({
       firstName,
       lastName,
+      slug,
       email,
       phone,
       company: company || 'Not provided',
@@ -134,6 +147,11 @@ router.post('/create-identity-session', async (req, res) => {
     console.log('Creating Stripe Identity session for:', recruiter.email);
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: 'document',
+      options: {
+        document: {
+          require_matching_selfie: true
+        }
+      },
       metadata: {
         recruiterId: recruiterId,
         email: recruiter.email,
@@ -198,7 +216,8 @@ router.post('/verify-identity-session', async (req, res) => {
           id: recruiter._id,
           name: `${recruiter.firstName} ${recruiter.lastName}`,
           email: recruiter.email,
-          isActive: recruiter.isActive
+          isActive: recruiter.isActive,
+          slug: recruiter.slug
         }
       });
     } else if (verificationSession.status === 'requires_input') {

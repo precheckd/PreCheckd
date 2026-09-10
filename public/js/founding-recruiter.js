@@ -106,9 +106,7 @@
       });
 
       if (response.success) {
-        const firstName = response.recruiter.name.split(' ')[0];
-        const lastName = response.recruiter.name.split(' ')[1];
-        window.location.href = `/recruiter/${firstName}-${lastName}`;
+        window.location.href = `/recruiter/${response.recruiter.slug}`;
       } else {
         showError(response.message || 'Verification is still processing. Please check back shortly.');
       }
