@@ -6,8 +6,8 @@
 
   let recruiterId = null;
   let stripeSessionId = null;
+  let stripeClientSecret = null;
   let stripe = null;
-  let identityElement = null;
 
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
@@ -15,7 +15,6 @@
   }
 
   function showError(message) {
-    console.error('showError called:', message);
     errorEl.textContent = message;
     errorEl.classList.remove('hidden');
   }
@@ -39,9 +38,7 @@
 
   function initStripe() {
     if (!stripe) {
-      console.log('Initializing Stripe...');
       stripe = Stripe('pk_live_E1pK6AiEqLaRjlb8MhJ0ixud8p6sH8Dkqwu4a0L7PqJ9oO0rK');
-      console.log('Stripe initialized:', stripe);
     }
   }
 
@@ -65,69 +62,45 @@
       const code = new FormData(phoneForm).get('code');
       await postJson('/api/founding-recruiter/verify-phone', { code });
       showStep('step-payment');
-      setupStripeIdentity();
+      await prepareIdentitySession();
     } catch (err) {
       showError(err.message);
     }
   });
 
-  async function setupStripeIdentity() {
-    console.log('setupStripeIdentity called');
+  async function prepareIdentitySession() {
     try {
       initStripe();
-
-      console.log('Requesting identity session...');
       const sessionResponse = await postJson('/api/founding-recruiter/create-identity-session', {});
-      console.log('Session response:', sessionResponse);
       stripeSessionId = sessionResponse.sessionId;
-      const clientSecret = sessionResponse.clientSecret;
-
-      console.log('Creating elements with clientSecret:', clientSecret);
-      const elements = stripe.elements({ clientSecret });
-      console.log('Elements created:', elements);
-
-      identityElement = elements.create('identityDocument');
-      console.log('identityDocument element created:', identityElement);
-
-      identityElement.mount('#stripe-element');
-      console.log('identityElement.mount() called');
-
-      identityElement.on('loaderror', (event) => {
-        console.error('loaderror event:', event);
-        showError('Failed to load verification form. Please try again.');
-      });
-
-      identityElement.on('ready', () => {
-        console.log('identityElement ready event fired');
-      });
+      stripeClientSecret = sessionResponse.clientSecret;
     } catch (err) {
-      console.error('setupStripeIdentity error:', err);
       showError(err.message);
     }
   }
 
   checkoutButton.addEventListener('click', async () => {
-    console.log('checkoutButton clicked, identityElement is:', identityElement);
-    if (!identityElement) {
-      showError('Verification form not loaded. Please refresh and try again.');
+    if (!stripeClientSecret) {
+      showError('Verification session not ready. Please refresh and try again.');
       return;
     }
 
     hideError();
     checkoutButton.disabled = true;
-    checkoutButton.textContent = 'Verifying...';
+    checkoutButton.textContent = 'Opening verification...';
 
     try {
-      const result = await identityElement.submit();
-      console.log('identityElement.submit() result:', result);
+      const result = await stripe.verifyIdentity(stripeClientSecret);
+
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Complete verification';
 
       if (result.error) {
-        showError(result.error.message || 'Verification failed');
-        checkoutButton.disabled = false;
-        checkoutButton.textContent = 'Complete verification';
+        showError(result.error.message || 'Verification was not completed.');
         return;
       }
 
+      // Verification modal closed successfully; confirm status with backend
       const response = await postJson('/api/founding-recruiter/verify-identity-session', {
         sessionId: stripeSessionId,
       });
@@ -137,15 +110,12 @@
         const lastName = response.recruiter.name.split(' ')[1];
         window.location.href = `/recruiter/${firstName}-${lastName}`;
       } else {
-        showError(response.message || 'Verification failed');
-        checkoutButton.disabled = false;
-        checkoutButton.textContent = 'Complete verification';
+        showError(response.message || 'Verification is still processing. Please check back shortly.');
       }
     } catch (err) {
-      console.error('checkoutButton click error:', err);
-      showError(err.message || 'An error occurred during verification');
       checkoutButton.disabled = false;
       checkoutButton.textContent = 'Complete verification';
+      showError(err.message || 'An error occurred during verification');
     }
   });
 })();
