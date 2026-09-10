@@ -56,7 +56,7 @@ app.get('/founding-recruiter-landing', (req, res) => {
 
 // Signup form for founding recruiters
 app.get('/founding-recruiter', (req, res) => {
-  res.render('recruiter-signup');
+  res.render('founding-recruiter');
 });
 
 // Recruiter profile pages
