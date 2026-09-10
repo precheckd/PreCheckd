@@ -9,7 +9,7 @@ router.get('/:slug', async (req, res) => {
     const parts = slug.split('-');
     
     if (parts.length < 2) {
-      return res.status(404).render('404', { message: 'Recruiter not found' });
+      return res.status(404).send('Recruiter not found');
     }
 
     // Reconstruct name (e.g., "john-smith-jr" = John Smith Jr)
@@ -20,11 +20,11 @@ router.get('/:slug', async (req, res) => {
     const recruiter = await Recruiter.findOne({
       firstName: { $regex: `^${firstName}$`, $options: 'i' },
       lastName: { $regex: `^${lastName}$`, $options: 'i' },
-      status: 'active'
+      isActive: true
     });
 
     if (!recruiter) {
-      return res.status(404).render('404', { message: 'Recruiter not found' });
+      return res.status(404).send('Recruiter not found');
     }
 
     // Render profile
@@ -35,7 +35,7 @@ router.get('/:slug', async (req, res) => {
 
   } catch (err) {
     console.error('Profile error:', err);
-    res.status(500).render('500', { message: 'Server error' });
+    res.status(500).send('Server error');
   }
 });
 
