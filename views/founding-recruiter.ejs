@@ -18,7 +18,7 @@
       padding: 2rem 1.5rem;
     }
 
-    main {
+    .page-grid {
       max-width: 1400px;
       margin: 0 auto;
       display: grid;
@@ -193,7 +193,7 @@
     }
 
     @media (max-width: 1400px) {
-      main {
+      .page-grid {
         grid-template-columns: 1fr 1fr;
       }
 
@@ -203,7 +203,7 @@
     }
 
     @media (max-width: 768px) {
-      main {
+      .page-grid {
         grid-template-columns: 1fr;
       }
 
@@ -215,7 +215,7 @@
 </head>
 <body>
 
-<main>
+<div class="page-grid">
   <section class="content-section left-column">
     Coming soon: Video tutorials and testimonials
   </section>
@@ -288,7 +288,7 @@
       <div class="faq-answer">Yes. You can update your profile, specialties, and bio anytime from your members dashboard.</div>
     </div>
   </section>
-</main>
+</div>
 
 <script src="https://js.stripe.com/v3"></script>
 <script src="/js/founding-recruiter.js"></script>
