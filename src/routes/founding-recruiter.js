@@ -1,221 +1,121 @@
-const express = require('express');
-const router = express.Router();
-const Recruiter = require('../models/Recruiter');
+(function () {
+  const signupForm = document.getElementById('signup-form');
+  const phoneForm = document.getElementById('phone-form');
+  const checkoutButton = document.getElementById('checkout-button');
+  const errorEl = document.getElementById('form-error');
 
-// Step 1: Signup and mock SMS send
-router.post('/signup', async (req, res) => {
-  try {
-    const { firstName, lastName, email, phone, company } = req.body;
+  let recruiterId = null;
+  let stripeSessionId = null;
+  let stripeClientSecret = null;
+  let stripe = null;
 
-    if (!firstName || !lastName || !email || !phone) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const existing = await Recruiter.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    const recruiter = new Recruiter({
-      firstName,
-      lastName,
-      email,
-      phone,
-      company: company || 'Not provided',
-      isPhoneVerified: false,
-      isIdentityVerified: false,
-      isActive: false,
-      emailVerifiedAt: new Date(),
-      domainVerifiedAt: new Date()
-    });
-
-    await recruiter.save();
-
-    req.session.recruiterId = recruiter._id.toString();
-    req.session.phone = phone;
-
-    // MOCKED: Pretend SMS was sent successfully
-    req.session.phoneOtpRequestId = 'mock-request-' + Date.now();
-    req.session.phoneNumber = phone;
-
-    res.json({
-      success: true,
-      recruiterId: recruiter._id,
-      message: `OTP sent to ${phone} (TEST MODE - enter any 6-digit code)`
-    });
-  } catch (error) {
-    console.error('Error during signup:', error);
-    res.status(500).json({ error: 'Failed to complete signup' });
+  function showStep(id) {
+    document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
   }
-});
 
-// Resend OTP (mocked)
-router.post('/resend-code', async (req, res) => {
-  try {
-    const phone = req.session.phone;
-    
-    if (!phone) {
-      return res.status(400).json({ error: 'No phone on file' });
-    }
-
-    // MOCKED: Pretend SMS was resent successfully
-    req.session.phoneOtpRequestId = 'mock-request-' + Date.now();
-
-    res.json({
-      success: true,
-      message: `OTP resent to ${phone} (TEST MODE - enter any 6-digit code)`
-    });
-  } catch (error) {
-    console.error('Error resending code:', error);
-    res.status(500).json({ error: 'Failed to resend code' });
+  function showError(message) {
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
   }
-});
 
-// Verify phone OTP (mocked - accepts any code)
-router.post('/verify-phone', async (req, res) => {
-  try {
-    const { code } = req.body;
-    const recruiterId = req.session.recruiterId;
-
-    if (!code) {
-      return res.status(400).json({ error: 'Missing code' });
-    }
-
-    if (!recruiterId) {
-      return res.status(400).json({ error: 'No active recruiter session' });
-    }
-
-    // MOCKED: Accept any 6-digit code
-    if (!/^\d{6}$/.test(code)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please enter a valid 6-digit code'
-      });
-    }
-
-    // Mark as verified
-    await Recruiter.findByIdAndUpdate(recruiterId, {
-      isPhoneVerified: true,
-      phoneVerifiedAt: new Date()
-    });
-
-    req.session.phoneVerified = true;
-    res.json({ 
-      success: true, 
-      message: 'Phone verified successfully (TEST MODE)' 
-    });
-  } catch (error) {
-    console.error('Error verifying phone OTP:', error);
-    res.status(500).json({ error: 'Failed to verify code' });
+  function hideError() {
+    errorEl.classList.add('hidden');
   }
-});
 
-// Create Stripe Identity Session (REAL - actual Stripe integration with logging)
-router.post('/create-identity-session', async (req, res) => {
-  try {
-    const recruiterId = req.session.recruiterId;
-
-    if (!recruiterId) {
-      return res.status(400).json({ error: 'No active recruiter session' });
-    }
-
-    const recruiter = await Recruiter.findById(recruiterId);
-    if (!recruiter) {
-      return res.status(404).json({ error: 'Recruiter not found' });
-    }
-
-    // Log to check if Stripe key is loaded
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    console.log('Stripe Key loaded:', stripeKey ? 'YES' : 'NO - KEY MISSING');
-
-    const stripe = require('stripe')(stripeKey);
-
-    // Create actual Stripe Identity Verification Session
-    console.log('Creating Stripe Identity session for:', recruiter.email);
-    const verificationSession = await stripe.identity.verificationSessions.create({
-      type: 'document',
-      metadata: {
-        recruiterId: recruiterId,
-        email: recruiter.email,
-        name: `${recruiter.firstName} ${recruiter.lastName}`
-      }
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
-
-    console.log('Stripe session created:', verificationSession.id);
-
-    // Store the verification session ID in the recruiter record for later verification
-    recruiter.stripeVerificationSessionId = verificationSession.id;
-    await recruiter.save();
-
-    // Return the client secret to the frontend
-    res.json({
-      success: true,
-      message: 'Identity verification session created',
-      clientSecret: verificationSession.client_secret,
-      sessionId: verificationSession.id
-    });
-  } catch (error) {
-    console.error('Error creating identity session:', error);
-    res.status(500).json({ error: 'Failed to create identity verification session' });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error((data.error || (data.errors && data.errors[0].msg)) || 'Something went wrong');
+    }
+    return data;
   }
-});
 
-// Verify Stripe Identity Session result
-router.post('/verify-identity-session', async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    const recruiterId = req.session.recruiterId;
+  function initStripe() {
+    if (!stripe) {
+      stripe = Stripe('pk_live_E1pK6AiEqLaRjlb8MhJ0ixud8p6sH8Dkqwu4a0L7PqJ9oO0rK');
+    }
+  }
 
-    if (!recruiterId || !sessionId) {
-      return res.status(400).json({ error: 'Missing recruiter or session ID' });
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    try {
+      const formData = Object.fromEntries(new FormData(signupForm).entries());
+      const response = await postJson('/api/founding-recruiter/signup', formData);
+      recruiterId = response.recruiterId;
+      showStep('step-phone');
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  phoneForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    try {
+      const code = new FormData(phoneForm).get('code');
+      await postJson('/api/founding-recruiter/verify-phone', { code });
+      showStep('step-payment');
+      await prepareIdentitySession();
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  async function prepareIdentitySession() {
+    try {
+      initStripe();
+      const sessionResponse = await postJson('/api/founding-recruiter/create-identity-session', {});
+      stripeSessionId = sessionResponse.sessionId;
+      stripeClientSecret = sessionResponse.clientSecret;
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  checkoutButton.addEventListener('click', async () => {
+    if (!stripeClientSecret) {
+      showError('Verification session not ready. Please refresh and try again.');
+      return;
     }
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const stripe = require('stripe')(stripeKey);
+    hideError();
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = 'Opening verification...';
 
-    // Retrieve the verification session from Stripe
-    const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId);
+    try {
+      const result = await stripe.verifyIdentity(stripeClientSecret);
 
-    // Check if verification was successful
-    if (verificationSession.status === 'verified') {
-      const recruiter = await Recruiter.findById(recruiterId);
-      if (!recruiter) {
-        return res.status(404).json({ error: 'Recruiter not found' });
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Complete verification';
+
+      if (result.error) {
+        showError(result.error.message || 'Verification was not completed.');
+        return;
       }
 
-      recruiter.isIdentityVerified = true;
-      recruiter.isActive = true;
-      recruiter.identityVerifiedAt = new Date();
-      recruiter.facialRecognitionVerifiedAt = new Date();
-      await recruiter.save();
+      // Verification modal closed successfully; confirm status with backend
+      const response = await postJson('/api/founding-recruiter/verify-identity-session', {
+        sessionId: stripeSessionId,
+      });
 
-      req.session.identityVerified = true;
-
-      res.json({
-        success: true,
-        message: 'Identity verification complete. Welcome!',
-        recruiter: {
-          id: recruiter._id,
-          name: `${recruiter.firstName} ${recruiter.lastName}`,
-          email: recruiter.email,
-          isActive: recruiter.isActive
-        }
-      });
-    } else if (verificationSession.status === 'requires_input') {
-      res.status(400).json({
-        success: false,
-        message: 'Verification incomplete. Please try again.'
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: `Verification failed with status: ${verificationSession.status}`
-      });
+      if (response.success) {
+        const firstName = response.recruiter.name.split(' ')[0];
+        const lastName = response.recruiter.name.split(' ')[1];
+        window.location.href = `/recruiter/${firstName}-${lastName}`;
+      } else {
+        showError(response.message || 'Verification is still processing. Please check back shortly.');
+      }
+    } catch (err) {
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Complete verification';
+      showError(err.message || 'An error occurred during verification');
     }
-  } catch (error) {
-    console.error('Error verifying identity session:', error);
-    res.status(500).json({ error: 'Failed to verify identity session' });
-  }
-});
-
-module.exports = router;
+  });
+})();
