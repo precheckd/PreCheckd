@@ -49,8 +49,6 @@
 
     .right-column {
       order: 2;
-      max-height: 800px;
-      overflow-y: auto;
     }
 
     h1 {
@@ -174,6 +172,16 @@
       font-size: 0.9rem;
       cursor: pointer;
       user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq-question::after {
+      content: '▼';
+      font-size: 0.7rem;
+      margin-left: 0.5rem;
+      flex-shrink: 0;
     }
 
     .faq-answer {
@@ -205,10 +213,6 @@
     @media (max-width: 768px) {
       .page-grid {
         grid-template-columns: 1fr;
-      }
-
-      .right-column {
-        max-height: none;
       }
     }
   </style>
