@@ -15,8 +15,13 @@
   }
 
   function showError(message) {
+    console.error('showError called:', message);
     errorEl.textContent = message;
-    errorEl.hidden = false;
+    errorEl.classList.remove('hidden');
+  }
+
+  function hideError() {
+    errorEl.classList.add('hidden');
   }
 
   async function postJson(url, body) {
@@ -34,13 +39,15 @@
 
   function initStripe() {
     if (!stripe) {
+      console.log('Initializing Stripe...');
       stripe = Stripe('pk_live_E1pK6AiEqLaRjlb8MhJ0ixud8p6sH8Dkqwu4a0L7PqJ9oO0rK');
+      console.log('Stripe initialized:', stripe);
     }
   }
 
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorEl.hidden = true;
+    hideError();
     try {
       const formData = Object.fromEntries(new FormData(signupForm).entries());
       const response = await postJson('/api/founding-recruiter/signup', formData);
@@ -53,7 +60,7 @@
 
   phoneForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorEl.hidden = true;
+    hideError();
     try {
       const code = new FormData(phoneForm).get('code');
       await postJson('/api/founding-recruiter/verify-phone', { code });
@@ -65,37 +72,54 @@
   });
 
   async function setupStripeIdentity() {
+    console.log('setupStripeIdentity called');
     try {
       initStripe();
 
+      console.log('Requesting identity session...');
       const sessionResponse = await postJson('/api/founding-recruiter/create-identity-session', {});
+      console.log('Session response:', sessionResponse);
       stripeSessionId = sessionResponse.sessionId;
       const clientSecret = sessionResponse.clientSecret;
 
+      console.log('Creating elements with clientSecret:', clientSecret);
       const elements = stripe.elements({ clientSecret });
-      identityElement = elements.create('identityDocument');
-      identityElement.mount('#stripe-element');
+      console.log('Elements created:', elements);
 
-      identityElement.on('loaderror', () => {
+      identityElement = elements.create('identityDocument');
+      console.log('identityDocument element created:', identityElement);
+
+      identityElement.mount('#stripe-element');
+      console.log('identityElement.mount() called');
+
+      identityElement.on('loaderror', (event) => {
+        console.error('loaderror event:', event);
         showError('Failed to load verification form. Please try again.');
       });
+
+      identityElement.on('ready', () => {
+        console.log('identityElement ready event fired');
+      });
     } catch (err) {
+      console.error('setupStripeIdentity error:', err);
       showError(err.message);
     }
   }
 
   checkoutButton.addEventListener('click', async () => {
+    console.log('checkoutButton clicked, identityElement is:', identityElement);
     if (!identityElement) {
       showError('Verification form not loaded. Please refresh and try again.');
       return;
     }
 
-    errorEl.hidden = true;
+    hideError();
     checkoutButton.disabled = true;
     checkoutButton.textContent = 'Verifying...';
 
     try {
       const result = await identityElement.submit();
+      console.log('identityElement.submit() result:', result);
 
       if (result.error) {
         showError(result.error.message || 'Verification failed');
@@ -118,6 +142,7 @@
         checkoutButton.textContent = 'Complete verification';
       }
     } catch (err) {
+      console.error('checkoutButton click error:', err);
       showError(err.message || 'An error occurred during verification');
       checkoutButton.disabled = false;
       checkoutButton.textContent = 'Complete verification';
