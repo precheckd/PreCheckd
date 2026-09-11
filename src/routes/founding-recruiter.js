@@ -204,7 +204,8 @@ router.post('/verify-identity-session', async (req, res) => {
         return res.status(404).json({ error: 'Recruiter not found' });
       }
 
-      const docFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
+      const rawDocFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
+      const docFirstName = rawDocFirstName.split(/\s+/)[0] || '';
       const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();
 
       // If Stripe extracted a name from the ID, that becomes the recruiter's
