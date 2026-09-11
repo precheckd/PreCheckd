@@ -6,6 +6,74 @@
     min-height: 100vh;
   }
 
+  .profile-header {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    background: #2A4750;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid #3B5860;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .header-photo {
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+    background: #2A4750;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .avatar-circle {
+    width: 160px;
+    height: 160px;
+    background: #2ECC71;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.25rem;
+    font-weight: 600;
+    color: #1F363C;
+  }
+
+  .header-info {
+    flex: 1;
+  }
+
+  .intro-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .intro-company {
+    font-size: 1.05rem;
+    color: #8FA6AC;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+
+  .intro-bio {
+    font-size: 0.95rem;
+    color: #C7D1CF;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .intro-text {
+    font-size: 1rem;
+    color: #C7D1CF;
+    line-height: 1.7;
+  }
+
   .profile-wrapper {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -18,32 +86,6 @@
     position: sticky;
     top: 20px;
     height: fit-content;
-  }
-
-  .profile-photo {
-    width: 100%;
-    height: 300px;
-    background: #2A4750;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
-    border: 1px solid #3B5860;
-  }
-
-  .avatar-circle {
-    width: 200px;
-    height: 200px;
-    background: #2ECC71;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4rem;
-    font-weight: 600;
-    color: #1F363C;
   }
 
   .profile-sidebar-card {
@@ -109,26 +151,6 @@
     font-weight: 600;
     color: #F2F4F3;
     margin-bottom: 1.5rem;
-  }
-
-  .intro-name {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #F2F4F3;
-    margin-bottom: 0.35rem;
-  }
-
-  .intro-company {
-    font-size: 1.05rem;
-    color: #8FA6AC;
-    font-weight: 500;
-    margin-bottom: 1rem;
-  }
-
-  .intro-text {
-    font-size: 1rem;
-    color: #C7D1CF;
-    line-height: 1.7;
   }
 
   .verification-list {
@@ -237,14 +259,22 @@
       padding: 1rem;
     }
 
+    .profile-header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
     .profile-section {
       padding: 1.5rem;
     }
 
+    .header-photo,
     .avatar-circle {
-      width: 150px;
-      height: 150px;
-      font-size: 3rem;
+      width: 120px;
+      height: 120px;
+      font-size: 2.5rem;
     }
 
     .intro-name {
@@ -266,21 +296,35 @@
     : `${displayFirstName} ${displayLastName}`;
 
   const hasCompany = recruiter.company && recruiter.company !== 'Not provided';
+  const hasBio = recruiter.bio && recruiter.bio.trim();
 
   const dateOpts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/New_York' };
   const memberSinceOpts = { year: 'numeric', month: 'short', timeZone: 'America/New_York' };
 %>
 
 <div class="profile-content">
+  <!-- Header: photo + identity -->
+  <div class="profile-header">
+    <div class="header-photo">
+      <div class="avatar-circle">
+        <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
+      </div>
+    </div>
+    <div class="header-info">
+      <div class="intro-name"><%= displayName %></div>
+      <% if (hasCompany) { %>
+        <div class="intro-company"><%= recruiter.company %></div>
+      <% } %>
+      <% if (hasBio) { %>
+        <p class="intro-bio"><%= recruiter.bio %></p>
+      <% } %>
+      <p class="intro-text">This recruiter has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
+    </div>
+  </div>
+
   <div class="profile-wrapper">
     <!-- Sidebar LEFT -->
     <div class="profile-sidebar">
-      <div class="profile-photo">
-        <div class="avatar-circle">
-          <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
-        </div>
-      </div>
-      
       <div class="profile-sidebar-card">
         <div class="sidebar-stat">
           <div class="stat-label">Verification Status</div>
@@ -302,25 +346,12 @@
           <div class="stat-value">Coming Soon</div>
         </div>
 
-        <div class="sidebar-stat">
-          <div class="stat-label">Bio</div>
-          <div class="stat-value" style="font-size: 0.9rem;">Complete your profile to display.</div>
-        </div>
-
         <div class="verification-badge">✓ PreCheckd Verified</div>
       </div>
     </div>
 
     <!-- Main Content RIGHT -->
     <div class="profile-main">
-      <div class="profile-section">
-        <div class="intro-name"><%= displayName %></div>
-        <% if (hasCompany) { %>
-          <div class="intro-company"><%= recruiter.company %></div>
-        <% } %>
-        <p class="intro-text">This recruiter has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
-      </div>
-
       <div class="profile-section">
         <h3>Verification Checks Completed</h3>
         <div class="verification-list">
