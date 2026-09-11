@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { PinpointSMSVoiceV2Client, SendTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
+const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
 
 const smsClient = new PinpointSMSVoiceV2Client({
@@ -11,6 +11,9 @@ const smsClient = new PinpointSMSVoiceV2Client({
     secretAccessKey: process.env.AWS_SMS_SECRET_ACCESS_KEY,
   },
 });
+
+const NOTIFY_CONFIGURATION_ID = process.env.AWS_NOTIFY_CONFIGURATION_ID;
+const NOTIFY_TEMPLATE_ID = process.env.AWS_NOTIFY_TEMPLATE_ID;
 
 function makeSlug(firstName, lastName) {
   const base = `${firstName}-${lastName}`
@@ -25,7 +28,16 @@ function generateSixDigitCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
-// Step 1: Signup and send real SMS code
+async function sendVerificationCode(phone, code) {
+  return smsClient.send(new SendNotifyTextMessageCommand({
+    NotifyConfigurationId: NOTIFY_CONFIGURATION_ID,
+    DestinationPhoneNumber: phone,
+    TemplateId: NOTIFY_TEMPLATE_ID,
+    TemplateVariables: { code },
+  }));
+}
+
+// Step 1: Signup and send real SMS code via AWS Notify
 router.post('/signup', async (req, res) => {
   try {
     const { firstName, lastName, nickname, email, phone, company } = req.body;
@@ -61,17 +73,12 @@ router.post('/signup', async (req, res) => {
     req.session.recruiterId = recruiter._id.toString();
     req.session.phone = phone;
 
-    // Generate and send a real SMS verification code
     const code = generateSixDigitCode();
     req.session.phoneVerificationCode = code;
     req.session.phoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     try {
-      await smsClient.send(new SendTextMessageCommand({
-        DestinationPhoneNumber: phone,
-        MessageBody: `Your PreCheckd verification code is: ${code}`,
-        MessageType: 'TRANSACTIONAL',
-      }));
+      await sendVerificationCode(phone, code);
       console.log('SMS sent successfully to', phone);
     } catch (smsError) {
       console.error('Failed to send SMS:', smsError);
@@ -102,11 +109,7 @@ router.post('/resend-code', async (req, res) => {
     req.session.phoneVerificationCode = code;
     req.session.phoneVerificationExpires = Date.now() + 10 * 60 * 1000;
 
-    await smsClient.send(new SendTextMessageCommand({
-      DestinationPhoneNumber: phone,
-      MessageBody: `Your PreCheckd verification code is: ${code}`,
-      MessageType: 'TRANSACTIONAL',
-    }));
+    await sendVerificationCode(phone, code);
 
     res.json({
       success: true,
@@ -155,7 +158,6 @@ router.post('/verify-phone', async (req, res) => {
       });
     }
 
-    // Mark as verified
     await Recruiter.findByIdAndUpdate(recruiterId, {
       isPhoneVerified: true,
       phoneVerifiedAt: new Date()
