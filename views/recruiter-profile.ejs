@@ -284,6 +284,12 @@
   }
 </style>
 
+<%
+  const displayName = recruiter.nickname
+    ? `${recruiter.firstName} "${recruiter.nickname}" ${recruiter.lastName}`
+    : `${recruiter.firstName} ${recruiter.lastName}`;
+%>
+
 <div class="profile-content">
   <div class="profile-wrapper">
     <!-- Sidebar LEFT -->
@@ -295,7 +301,7 @@
       </div>
       
       <div class="profile-sidebar-card">
-        <div class="sidebar-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
+        <div class="sidebar-name"><%= displayName %></div>
         <% if (recruiter.company) { %>
           <div style="font-size: 0.95rem; color: #666; margin-bottom: 1.5rem; font-weight: 500;"><%= recruiter.company %></div>
         <% } %>
@@ -332,7 +338,7 @@
     <!-- Main Content RIGHT -->
     <div class="profile-main">
       <div class="profile-section">
-        <p class="intro-text"><strong><%= recruiter.firstName %> <%= recruiter.lastName %></strong> has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
+        <p class="intro-text"><strong><%= displayName %></strong> has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
       </div>
 
       <div class="profile-section">

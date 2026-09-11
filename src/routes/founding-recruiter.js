@@ -15,7 +15,7 @@ function makeSlug(firstName, lastName) {
 // Step 1: Signup and mock SMS send
 router.post('/signup', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, company } = req.body;
+    const { firstName, lastName, nickname, email, phone, company } = req.body;
 
     if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -31,6 +31,7 @@ router.post('/signup', async (req, res) => {
     const recruiter = new Recruiter({
       firstName,
       lastName,
+      nickname: nickname && nickname.trim() ? nickname.trim() : null,
       slug,
       email,
       phone,
@@ -203,21 +204,26 @@ router.post('/verify-identity-session', async (req, res) => {
         return res.status(404).json({ error: 'Recruiter not found' });
       }
 
-      const docFirstName = (verificationSession.verified_outputs?.first_name || '').trim().toLowerCase();
-      const docLastName = (verificationSession.verified_outputs?.last_name || '').trim().toLowerCase();
-      const formFirstName = recruiter.firstName.trim().toLowerCase();
-      const formLastName = recruiter.lastName.trim().toLowerCase();
+      const docFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
+      const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();
 
-      const nameMatches = docFirstName === formFirstName && docLastName === formLastName;
+      // If Stripe extracted a name from the ID, that becomes the recruiter's
+      // permanent legal name on file, regardless of what was typed at signup.
+      if (docFirstName && docLastName) {
+        const formFirstName = recruiter.firstName.trim();
+        const formLastName = recruiter.lastName.trim();
 
-      if (!nameMatches) {
-        console.warn(
-          `Name mismatch for recruiter ${recruiterId}: form="${recruiter.firstName} ${recruiter.lastName}" doc="${verificationSession.verified_outputs?.first_name} ${verificationSession.verified_outputs?.last_name}"`
-        );
-        return res.status(400).json({
-          success: false,
-          message: 'The name on your ID does not match the name you entered. Please contact support.'
-        });
+        if (
+          docFirstName.toLowerCase() !== formFirstName.toLowerCase() ||
+          docLastName.toLowerCase() !== formLastName.toLowerCase()
+        ) {
+          console.warn(
+            `Auto-correcting recruiter ${recruiterId} name: form="${formFirstName} ${formLastName}" -> ID="${docFirstName} ${docLastName}"`
+          );
+        }
+
+        recruiter.firstName = docFirstName;
+        recruiter.lastName = docLastName;
       }
 
       recruiter.isIdentityVerified = true;

@@ -9,6 +9,10 @@ const recruiterSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  nickname: {
+    type: String,
+    default: null
+  },
   slug: {
     type: String,
     required: true,

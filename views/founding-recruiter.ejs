@@ -99,6 +99,12 @@
       font-size: 0.9rem;
     }
 
+    .label-hint {
+      font-weight: 400;
+      color: #999;
+      font-size: 0.8rem;
+    }
+
     input {
       padding: 0.6rem;
       border: 1px solid #ddd;
@@ -239,6 +245,7 @@
       <form id="signup-form">
         <label>First name<input type="text" name="firstName" required></label>
         <label>Last name<input type="text" name="lastName" required></label>
+        <label>Nickname <span class="label-hint">(optional, shown on your public profile)</span><input type="text" name="nickname"></label>
         <label>Email<input type="email" name="email" required></label>
         <label>Phone<input type="tel" name="phone" placeholder="+15555550123" required></label>
         <label>Company (optional)<input type="text" name="company"></label>
