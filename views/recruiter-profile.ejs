@@ -2,7 +2,7 @@
   .profile-content {
     flex: 1;
     padding: 2rem 1.5rem;
-    background: #C8E6C9;
+    background: #F5F6F4;
     min-height: 100vh;
   }
 
@@ -29,13 +29,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.06);
+    border: 1px solid #E5E7E4;
   }
 
   .avatar-circle {
     width: 200px;
     height: 200px;
-    background: #2ecc71;
+    background: #2d4a52;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -49,7 +50,8 @@
     background: white;
     border-radius: 8px;
     padding: 1.75rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.06);
+    border: 1px solid #E5E7E4;
   }
 
   .sidebar-name {
@@ -62,7 +64,7 @@
   .sidebar-stat {
     margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e8e6e1;
+    border-bottom: 1px solid #E5E7E4;
   }
 
   .sidebar-stat:last-child {
@@ -73,9 +75,10 @@
 
   .stat-label {
     font-size: 0.85rem;
-    color: #666;
+    color: #7A7F7C;
     font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
     margin-bottom: 0.5rem;
   }
 
@@ -88,9 +91,9 @@
   .verification-badge {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #e8e6e1;
+    border-top: 1px solid #E5E7E4;
     font-size: 0.9rem;
-    color: #2e7d32;
+    color: #1E8449;
     font-weight: 600;
   }
 
@@ -104,7 +107,8 @@
     background: white;
     border-radius: 8px;
     padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.06);
+    border: 1px solid #E5E7E4;
   }
 
   .profile-section h3 {
@@ -116,7 +120,7 @@
 
   .intro-text {
     font-size: 1.05rem;
-    color: #555;
+    color: #4a4a4a;
     line-height: 1.7;
     font-family: Georgia, 'Times New Roman', serif;
   }
@@ -133,8 +137,8 @@
   }
 
   .verification-item {
-    background: #fafaf8;
-    border: 1px solid #e8e6e1;
+    background: #FAFAF9;
+    border: 1px solid #E5E7E4;
     border-radius: 6px;
     padding: 1.25rem;
     display: flex;
@@ -175,7 +179,7 @@
 
   .verification-date {
     font-size: 0.85rem;
-    color: #999;
+    color: #9A9F9C;
     display: block;
   }
 
@@ -240,7 +244,7 @@
   }
 
   .verification-checkmark {
-    color: #2ecc71;
+    color: #1E8449;
     font-size: 1.75rem;
     font-weight: bold;
     flex-shrink: 0;
@@ -252,9 +256,25 @@
 
   .cta-text {
     font-size: 0.95rem;
-    color: #666;
+    color: #4a4a4a;
     margin-bottom: 1.5rem;
     line-height: 1.6;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    background: #2d4a52;
+    color: white;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: #1f363c;
   }
 
   @media (max-width: 1024px) {
@@ -306,12 +326,12 @@
       <div class="profile-sidebar-card">
         <div class="sidebar-name"><%= displayName %></div>
         <% if (recruiter.company) { %>
-          <div style="font-size: 0.95rem; color: #666; margin-bottom: 1.5rem; font-weight: 500;"><%= recruiter.company %></div>
+          <div style="font-size: 0.95rem; color: #7A7F7C; margin-bottom: 1.5rem; font-weight: 500;"><%= recruiter.company %></div>
         <% } %>
 
         <div class="sidebar-stat">
           <div class="stat-label">Verification Status</div>
-          <div class="stat-value" style="color: #2e7d32;">✓ Verified</div>
+          <div class="stat-value" style="color: #1E8449;">✓ Verified</div>
         </div>
 
         <div class="sidebar-stat">
@@ -446,7 +466,7 @@
 
       <div class="profile-section cta-section">
         <p class="cta-text"><strong>Ready to connect with verified candidates?</strong> Join PreCheckd today.</p>
-        <a href="/founding-recruiter-landing" class="btn btn-primary btn-large">Join PreCheckd</a>
+        <a href="/founding-recruiter-landing" class="btn-primary">Join PreCheckd</a>
       </div>
     </div>
   </div>
