@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const { PinpointSMSVoiceV2Client, SendTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
+
+const smsClient = new PinpointSMSVoiceV2Client({
+  region: process.env.AWS_SMS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_SMS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SMS_SECRET_ACCESS_KEY,
+  },
+});
 
 function makeSlug(firstName, lastName) {
   const base = `${firstName}-${lastName}`
@@ -12,7 +21,11 @@ function makeSlug(firstName, lastName) {
   return `${base}-${suffix}`;
 }
 
-// Step 1: Signup and mock SMS send
+function generateSixDigitCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+}
+
+// Step 1: Signup and send real SMS code
 router.post('/signup', async (req, res) => {
   try {
     const { firstName, lastName, nickname, email, phone, company } = req.body;
@@ -48,14 +61,27 @@ router.post('/signup', async (req, res) => {
     req.session.recruiterId = recruiter._id.toString();
     req.session.phone = phone;
 
-    // MOCKED: Pretend SMS was sent successfully
-    req.session.phoneOtpRequestId = 'mock-request-' + Date.now();
-    req.session.phoneNumber = phone;
+    // Generate and send a real SMS verification code
+    const code = generateSixDigitCode();
+    req.session.phoneVerificationCode = code;
+    req.session.phoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    try {
+      await smsClient.send(new SendTextMessageCommand({
+        DestinationPhoneNumber: phone,
+        MessageBody: `Your PreCheckd verification code is: ${code}`,
+        MessageType: 'TRANSACTIONAL',
+      }));
+      console.log('SMS sent successfully to', phone);
+    } catch (smsError) {
+      console.error('Failed to send SMS:', smsError);
+      return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
+    }
 
     res.json({
       success: true,
       recruiterId: recruiter._id,
-      message: `OTP sent to ${phone} (TEST MODE - enter any 6-digit code)`
+      message: `Verification code sent to ${phone}`
     });
   } catch (error) {
     console.error('Error during signup:', error);
@@ -63,21 +89,28 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// Resend OTP (mocked)
+// Resend OTP (real)
 router.post('/resend-code', async (req, res) => {
   try {
     const phone = req.session.phone;
-    
+
     if (!phone) {
       return res.status(400).json({ error: 'No phone on file' });
     }
 
-    // MOCKED: Pretend SMS was resent successfully
-    req.session.phoneOtpRequestId = 'mock-request-' + Date.now();
+    const code = generateSixDigitCode();
+    req.session.phoneVerificationCode = code;
+    req.session.phoneVerificationExpires = Date.now() + 10 * 60 * 1000;
+
+    await smsClient.send(new SendTextMessageCommand({
+      DestinationPhoneNumber: phone,
+      MessageBody: `Your PreCheckd verification code is: ${code}`,
+      MessageType: 'TRANSACTIONAL',
+    }));
 
     res.json({
       success: true,
-      message: `OTP resent to ${phone} (TEST MODE - enter any 6-digit code)`
+      message: `Verification code resent to ${phone}`
     });
   } catch (error) {
     console.error('Error resending code:', error);
@@ -85,11 +118,13 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Verify phone OTP (mocked - accepts any code)
+// Verify phone OTP (real)
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
     const recruiterId = req.session.recruiterId;
+    const expectedCode = req.session.phoneVerificationCode;
+    const expiresAt = req.session.phoneVerificationExpires;
 
     if (!code) {
       return res.status(400).json({ error: 'Missing code' });
@@ -99,11 +134,24 @@ router.post('/verify-phone', async (req, res) => {
       return res.status(400).json({ error: 'No active recruiter session' });
     }
 
-    // MOCKED: Accept any 6-digit code
-    if (!/^\d{6}$/.test(code)) {
+    if (!expectedCode || !expiresAt) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid 6-digit code'
+        message: 'No verification code on file. Please request a new one.'
+      });
+    }
+
+    if (Date.now() > expiresAt) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new one.'
+      });
+    }
+
+    if (code !== expectedCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Incorrect verification code. Please try again.'
       });
     }
 
@@ -114,9 +162,12 @@ router.post('/verify-phone', async (req, res) => {
     });
 
     req.session.phoneVerified = true;
-    res.json({ 
-      success: true, 
-      message: 'Phone verified successfully (TEST MODE)' 
+    delete req.session.phoneVerificationCode;
+    delete req.session.phoneVerificationExpires;
+
+    res.json({
+      success: true,
+      message: 'Phone verified successfully'
     });
   } catch (error) {
     console.error('Error verifying phone OTP:', error);
@@ -138,13 +189,11 @@ router.post('/create-identity-session', async (req, res) => {
       return res.status(404).json({ error: 'Recruiter not found' });
     }
 
-    // Log to check if Stripe key is loaded
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     console.log('Stripe Key loaded:', stripeKey ? 'YES' : 'NO - KEY MISSING');
 
     const stripe = require('stripe')(stripeKey);
 
-    // Create actual Stripe Identity Verification Session
     console.log('Creating Stripe Identity session for:', recruiter.email);
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: 'document',
@@ -162,11 +211,9 @@ router.post('/create-identity-session', async (req, res) => {
 
     console.log('Stripe session created:', verificationSession.id);
 
-    // Store the verification session ID in the recruiter record for later verification
     recruiter.stripeVerificationSessionId = verificationSession.id;
     await recruiter.save();
 
-    // Return the client secret to the frontend
     res.json({
       success: true,
       message: 'Identity verification session created',
@@ -192,12 +239,10 @@ router.post('/verify-identity-session', async (req, res) => {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     const stripe = require('stripe')(stripeKey);
 
-    // Retrieve the verification session from Stripe, expanding the extracted name
     const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId, {
       expand: ['verified_outputs']
     });
 
-    // Check if verification was successful
     if (verificationSession.status === 'verified') {
       const recruiter = await Recruiter.findById(recruiterId);
       if (!recruiter) {
@@ -208,21 +253,7 @@ router.post('/verify-identity-session', async (req, res) => {
       const docFirstName = rawDocFirstName.split(/\s+/)[0] || '';
       const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();
 
-      // If Stripe extracted a name from the ID, that becomes the recruiter's
-      // permanent legal name on file, regardless of what was typed at signup.
       if (docFirstName && docLastName) {
-        const formFirstName = recruiter.firstName.trim();
-        const formLastName = recruiter.lastName.trim();
-
-        if (
-          docFirstName.toLowerCase() !== formFirstName.toLowerCase() ||
-          docLastName.toLowerCase() !== formLastName.toLowerCase()
-        ) {
-          console.warn(
-            `Auto-correcting recruiter ${recruiterId} name: form="${formFirstName} ${formLastName}" -> ID="${docFirstName} ${docLastName}"`
-          );
-        }
-
         recruiter.firstName = docFirstName;
         recruiter.lastName = docLastName;
       }
