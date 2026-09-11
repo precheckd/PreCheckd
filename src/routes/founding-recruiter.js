@@ -191,14 +191,33 @@ router.post('/verify-identity-session', async (req, res) => {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     const stripe = require('stripe')(stripeKey);
 
-    // Retrieve the verification session from Stripe
-    const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId);
+    // Retrieve the verification session from Stripe, expanding the extracted name
+    const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId, {
+      expand: ['verified_outputs']
+    });
 
     // Check if verification was successful
     if (verificationSession.status === 'verified') {
       const recruiter = await Recruiter.findById(recruiterId);
       if (!recruiter) {
         return res.status(404).json({ error: 'Recruiter not found' });
+      }
+
+      const docFirstName = (verificationSession.verified_outputs?.first_name || '').trim().toLowerCase();
+      const docLastName = (verificationSession.verified_outputs?.last_name || '').trim().toLowerCase();
+      const formFirstName = recruiter.firstName.trim().toLowerCase();
+      const formLastName = recruiter.lastName.trim().toLowerCase();
+
+      const nameMatches = docFirstName === formFirstName && docLastName === formLastName;
+
+      if (!nameMatches) {
+        console.warn(
+          `Name mismatch for recruiter ${recruiterId}: form="${recruiter.firstName} ${recruiter.lastName}" doc="${verificationSession.verified_outputs?.first_name} ${verificationSession.verified_outputs?.last_name}"`
+        );
+        return res.status(400).json({
+          success: false,
+          message: 'The name on your ID does not match the name you entered. Please contact support.'
+        });
       }
 
       recruiter.isIdentityVerified = true;
