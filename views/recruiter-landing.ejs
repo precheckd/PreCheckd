@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #C8E6C9 0%, #E8F5E9 100%);
+      background: #1F363C;
       min-height: 100vh;
     }
 
@@ -31,13 +31,13 @@
     .intro-title {
       font-size: 2.5rem;
       font-weight: 700;
-      color: #2d4a52;
+      color: #F2F4F3;
       margin-bottom: 1rem;
     }
 
     .intro-text {
       font-size: 1.1rem;
-      color: #666;
+      color: #C7D1CF;
       line-height: 1.6;
       max-width: 600px;
       margin: 0 auto;
@@ -51,10 +51,11 @@
     }
 
     .path-card {
-      background: white;
+      background: #2A4750;
+      border: 1px solid #3B5860;
       border-radius: 12px;
       padding: 3rem 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       transition: transform 0.3s, box-shadow 0.3s;
@@ -64,24 +65,32 @@
 
     .path-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border-color: #4A6F7B;
     }
 
     .path-icon {
-      font-size: 3rem;
+      width: 48px;
+      height: 48px;
       margin-bottom: 1rem;
+      color: #4ADE80;
+    }
+
+    .path-icon svg {
+      width: 100%;
+      height: 100%;
     }
 
     .path-title {
       font-size: 1.75rem;
       font-weight: 700;
-      color: #2d4a52;
+      color: #F2F4F3;
       margin-bottom: 1rem;
     }
 
     .path-description {
       font-size: 1rem;
-      color: #666;
+      color: #C7D1CF;
       margin-bottom: 2rem;
       line-height: 1.6;
       flex-grow: 1;
@@ -97,19 +106,19 @@
       align-items: center;
       margin-bottom: 0.75rem;
       font-size: 0.95rem;
-      color: #555;
+      color: #C7D1CF;
     }
 
     .benefit-icon {
-      color: #2ecc71;
+      color: #4ADE80;
       font-weight: bold;
       margin-right: 0.75rem;
       font-size: 1.25rem;
     }
 
     .path-cta {
-      background: #2ecc71;
-      color: white;
+      background: #2ECC71;
+      color: #1F363C;
       padding: 1rem 2rem;
       border: none;
       border-radius: 6px;
@@ -122,17 +131,18 @@
     }
 
     .path-cta:hover {
-      background: #27ae60;
+      background: #4ADE80;
     }
 
     .coming-soon {
-      opacity: 0.7;
+      opacity: 0.85;
     }
 
     .coming-soon-badge {
       display: inline-block;
-      background: #fff3cd;
-      color: #856404;
+      background: #24404A;
+      border: 1px solid #3B5860;
+      color: #4ADE80;
       padding: 0.5rem 1rem;
       border-radius: 4px;
       font-size: 0.85rem;
@@ -179,7 +189,9 @@
   <div class="path-container">
     <!-- Individual Recruiter -->
     <a href="/founding-recruiter" class="path-card">
-      <div class="path-icon">🎯</div>
+      <div class="path-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
       <h2 class="path-title">Individual Recruiter</h2>
       <p class="path-description">Get verified and access our network of verified candidates. Build your profile and start connecting.</p>
       <div class="path-benefits">
@@ -201,7 +213,9 @@
 
     <!-- Bulk Candidate Verification -->
     <div class="path-card coming-soon">
-      <div class="path-icon">📋</div>
+      <div class="path-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+      </div>
       <h2 class="path-title">Bulk Candidate Verification</h2>
       <p class="path-description">Verify your entire candidate roster and give them verified badges. Scale trust across your team.</p>
       <div class="path-benefits">

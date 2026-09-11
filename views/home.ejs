@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #C8E6C9 0%, #E8F5E9 100%);
+      background: #1F363C;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -36,14 +36,14 @@
     .hero-title {
       font-size: 3rem;
       font-weight: 700;
-      color: #2d4a52;
+      color: #F2F4F3;
       margin-bottom: 1rem;
       line-height: 1.2;
     }
 
     .hero-subtitle {
       font-size: 1.25rem;
-      color: #666;
+      color: #C7D1CF;
       margin-bottom: 3rem;
       line-height: 1.6;
     }
@@ -56,10 +56,11 @@
     }
 
     .path-card {
-      background: white;
+      background: #2A4750;
+      border: 1px solid #3B5860;
       border-radius: 12px;
       padding: 3rem 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       transition: transform 0.3s, box-shadow 0.3s;
@@ -69,24 +70,32 @@
 
     .path-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border-color: #4A6F7B;
     }
 
     .path-icon {
-      font-size: 3rem;
+      width: 48px;
+      height: 48px;
       margin-bottom: 1rem;
+      color: #4ADE80;
+    }
+
+    .path-icon svg {
+      width: 100%;
+      height: 100%;
     }
 
     .path-title {
       font-size: 1.75rem;
       font-weight: 700;
-      color: #2d4a52;
+      color: #F2F4F3;
       margin-bottom: 1rem;
     }
 
     .path-description {
       font-size: 1rem;
-      color: #666;
+      color: #C7D1CF;
       margin-bottom: 2rem;
       line-height: 1.6;
       flex-grow: 1;
@@ -102,19 +111,19 @@
       align-items: center;
       margin-bottom: 0.75rem;
       font-size: 0.95rem;
-      color: #555;
+      color: #C7D1CF;
     }
 
     .benefit-icon {
-      color: #2ecc71;
+      color: #4ADE80;
       font-weight: bold;
       margin-right: 0.75rem;
       font-size: 1.25rem;
     }
 
     .path-cta {
-      background: #2ecc71;
-      color: white;
+      background: #2ECC71;
+      color: #1F363C;
       padding: 1rem 2rem;
       border: none;
       border-radius: 6px;
@@ -127,7 +136,7 @@
     }
 
     .path-cta:hover {
-      background: #27ae60;
+      background: #4ADE80;
     }
 
     @media (max-width: 768px) {
@@ -168,7 +177,9 @@
     <div class="path-container">
       <!-- Recruiter Path -->
       <a href="/recruiter-landing" class="path-card">
-        <div class="path-icon">👔</div>
+        <div class="path-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
+        </div>
         <h2 class="path-title">I'm a Recruiter</h2>
         <p class="path-description">Build trust with verified candidates and access a curated network of job seekers ready to connect with you.</p>
         <div class="path-benefits">
@@ -190,7 +201,9 @@
 
       <!-- Candidate Path -->
       <a href="/candidate-landing" class="path-card">
-        <div class="path-icon">💼</div>
+        <div class="path-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+        </div>
         <h2 class="path-title">I'm a Job Seeker</h2>
         <p class="path-description">Connect with verified recruiters you can trust. Build your verified profile and discover verified opportunities.</p>
         <div class="path-benefits">
