@@ -28,6 +28,21 @@ function generateSixDigitCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
+function normalizePhoneToE164(rawPhone) {
+  const digitsOnly = rawPhone.replace(/\D/g, '');
+
+  if (digitsOnly.length === 10) {
+    return `+1${digitsOnly}`;
+  }
+  if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+    return `+${digitsOnly}`;
+  }
+  if (rawPhone.trim().startsWith('+')) {
+    return rawPhone.trim();
+  }
+  return null; // couldn't confidently normalize
+}
+
 async function sendVerificationCode(phone, code) {
   return smsClient.send(new SendNotifyTextMessageCommand({
     NotifyConfigurationId: NOTIFY_CONFIGURATION_ID,
@@ -46,6 +61,11 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const normalizedPhone = normalizePhoneToE164(phone);
+    if (!normalizedPhone) {
+      return res.status(400).json({ error: 'Please enter a valid US phone number.' });
+    }
+
     const existing = await Recruiter.findOne({ email });
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
@@ -59,7 +79,7 @@ router.post('/signup', async (req, res) => {
       nickname: nickname && nickname.trim() ? nickname.trim() : null,
       slug,
       email,
-      phone,
+      phone: normalizedPhone,
       company: company || 'Not provided',
       isPhoneVerified: false,
       isIdentityVerified: false,
@@ -71,15 +91,15 @@ router.post('/signup', async (req, res) => {
     await recruiter.save();
 
     req.session.recruiterId = recruiter._id.toString();
-    req.session.phone = phone;
+    req.session.phone = normalizedPhone;
 
     const code = generateSixDigitCode();
     req.session.phoneVerificationCode = code;
     req.session.phoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     try {
-      await sendVerificationCode(phone, code);
-      console.log('SMS sent successfully to', phone);
+      await sendVerificationCode(normalizedPhone, code);
+      console.log('SMS sent successfully to', normalizedPhone);
     } catch (smsError) {
       console.error('Failed to send SMS:', smsError);
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
@@ -88,7 +108,7 @@ router.post('/signup', async (req, res) => {
     res.json({
       success: true,
       recruiterId: recruiter._id,
-      message: `Verification code sent to ${phone}`
+      message: `Verification code sent to ${normalizedPhone}`
     });
   } catch (error) {
     console.error('Error during signup:', error);
