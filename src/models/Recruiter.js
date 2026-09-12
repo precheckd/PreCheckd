@@ -65,6 +65,16 @@ const recruiterSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+
+  // Email verification token flow
+  emailVerificationToken: {
+    type: String,
+    default: null
+  },
+  emailVerificationExpires: {
+    type: Date,
+    default: null
+  },
   
   // Profile Information (for future use)
   bio: {

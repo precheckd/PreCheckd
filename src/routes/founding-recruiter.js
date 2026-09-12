@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
+const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
 
 const smsClient = new PinpointSMSVoiceV2Client({
   region: process.env.AWS_SMS_REGION,
@@ -72,6 +73,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const slug = makeSlug(firstName, lastName);
+    const emailToken = generateVerificationToken();
 
     const recruiter = new Recruiter({
       firstName,
@@ -84,8 +86,10 @@ router.post('/signup', async (req, res) => {
       isPhoneVerified: false,
       isIdentityVerified: false,
       isActive: false,
-      emailVerifiedAt: new Date(),
-      domainVerifiedAt: new Date()
+      emailVerifiedAt: null,
+      emailVerificationToken: emailToken,
+      emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 hours
+      domainVerifiedAt: new Date() // still hardcoded — domain verification not built yet
     });
 
     await recruiter.save();
@@ -104,6 +108,11 @@ router.post('/signup', async (req, res) => {
       console.error('Failed to send SMS:', smsError);
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
     }
+
+    // Fire the verification email in the background — never blocks signup
+    sendVerificationEmail(email, firstName, emailToken).catch((emailError) => {
+      console.error('Failed to send verification email:', emailError);
+    });
 
     res.json({
       success: true,
@@ -194,6 +203,45 @@ router.post('/verify-phone', async (req, res) => {
   } catch (error) {
     console.error('Error verifying phone OTP:', error);
     res.status(500).json({ error: 'Failed to verify code' });
+  }
+});
+
+// Verify email via clicked link (real)
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).send('Missing verification token.');
+    }
+
+    const recruiter = await Recruiter.findOne({ emailVerificationToken: token });
+
+    if (!recruiter) {
+      return res.status(400).send('Invalid or already-used verification link.');
+    }
+
+    if (recruiter.emailVerificationExpires && Date.now() > recruiter.emailVerificationExpires) {
+      return res.status(400).send('This verification link has expired. Please request a new one from your profile.');
+    }
+
+    recruiter.emailVerifiedAt = new Date();
+    recruiter.emailVerificationToken = null;
+    recruiter.emailVerificationExpires = null;
+    await recruiter.save();
+
+    res.send(`
+      <div style="font-family: -apple-system, sans-serif; background:#1F363C; color:#F2F4F3; min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center;">
+        <div>
+          <h1 style="color:#4ADE80;">Email verified &#10003;</h1>
+          <p>You're all set. This badge is now live on your PreCheckd profile.</p>
+          <a href="/recruiter/${recruiter.slug}" style="color:#2ECC71;">View your profile</a>
+        </div>
+      </div>
+    `);
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    res.status(500).send('Something went wrong verifying your email.');
   }
 });
 
