@@ -1,15 +1,7 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const crypto = require('crypto');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function generateVerificationToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -18,8 +10,8 @@ function generateVerificationToken() {
 async function sendVerificationEmail(toEmail, firstName, token) {
   const verifyUrl = `${process.env.APP_BASE_URL}/founding-recruiter/verify-email?token=${token}`;
 
-  return transporter.sendMail({
-    from: `"PreCheckd" <${process.env.SMTP_USER}>`,
+  return resend.emails.send({
+    from: 'onboarding@resend.dev',
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
     html: `
