@@ -14,89 +14,88 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: #1F363C;
+      color: #C7D1CF;
+      line-height: 1.7;
       min-height: 100vh;
     }
 
     main {
-      padding: 4rem 1.5rem;
-      max-width: 1000px;
+      padding: 3rem 1.5rem 5rem;
+      max-width: 800px;
       margin: 0 auto;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
     .page-title {
-      font-size: 2.5rem;
+      font-size: 2.25rem;
       font-weight: 700;
       color: #F2F4F3;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
-    .page-subtitle {
-      font-size: 1.1rem;
-      color: #C7D1CF;
+    .updated-date {
+      font-size: 0.9rem;
+      color: #8FA6AC;
+      margin-bottom: 2.5rem;
     }
 
     .content-card {
       background: #2A4750;
       border: 1px solid #3B5860;
       border-radius: 12px;
-      padding: 3rem 2rem;
+      padding: 2.5rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
-      text-align: center;
     }
 
-    .content-icon {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 1rem;
-      color: #4ADE80;
-    }
-
-    .content-icon svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .content-title {
-      font-size: 1.5rem;
+    h2 {
+      font-size: 1.35rem;
       font-weight: 600;
       color: #F2F4F3;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    h2:first-child {
+      margin-top: 0;
+    }
+
+    p {
       margin-bottom: 1rem;
-    }
-
-    .content-text {
-      font-size: 1rem;
-      color: #C7D1CF;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      color: #4ADE80;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      font-weight: 600;
       font-size: 0.95rem;
+    }
+
+    ul {
+      margin: 0 0 1rem 1.25rem;
+      font-size: 0.95rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    a {
+      color: #4ADE80;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    strong {
+      color: #F2F4F3;
     }
 
     @media (max-width: 768px) {
       main {
-        padding: 2rem 1rem;
+        padding: 2rem 1rem 3rem;
+      }
+
+      .content-card {
+        padding: 1.5rem;
       }
 
       .page-title {
         font-size: 1.75rem;
-      }
-
-      .content-card {
-        padding: 2rem 1.5rem;
       }
     }
   </style>
@@ -104,19 +103,47 @@
 <body>
 
 <main>
-  <div class="page-header">
-    <h1 class="page-title">Terms of Service</h1>
-    <p class="page-subtitle">Legal terms and conditions for using PreCheckd</p>
-  </div>
+  <h1 class="page-title">Terms of Service</h1>
+  <p class="updated-date">Last updated September 11, 2026</p>
 
   <div class="content-card">
-    <div class="content-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-    </div>
-    <h2 class="content-title">Coming Soon</h2>
-    <p class="content-text">Our comprehensive Terms of Service document is currently being drafted by our legal team. This document will outline all the terms, conditions, and policies governing the use of PreCheckd's services.</p>
-    <p class="content-text">In the meantime, please contact us at hello@precheckd.com if you have any legal questions or concerns.</p>
-    <div class="badge">🚀 Coming Soon</div>
+    <h2>1. Acceptance of Terms</h2>
+    <p>By accessing or using PreCheckd ("we," "us," "our," or "PreCheckd"), you agree to be bound by these Terms of Service and our <a href="/privacy">Privacy Policy</a>. If you do not agree, please do not use our services.</p>
+
+    <h2>2. Our Service</h2>
+    <p>PreCheckd is a verified recruiter marketplace that verifies the identity, phone number, and company affiliation of recruiting professionals to help build trust between recruiters and job candidates.</p>
+
+    <h2>3. SMS Communications and Opt-In</h2>
+    <p>By providing your phone number and clicking "Continue" during signup, you consent to receive SMS text messages from PreCheckd for the purpose of verifying your phone number. Subscribers opt in via precheckd.com to receive verification messages from PreCheckd, powered by AWS Notify.</p>
+    <ul>
+      <li>Message frequency may vary per user.</li>
+      <li>Message and data rates may apply for any messages sent to you from us and to us from you.</li>
+      <li>Text <strong>HELP</strong> for help. Text <strong>STOP</strong> to cancel.</li>
+      <li>Carriers are not liable for delayed or undelivered messages.</li>
+      <li>If you have any questions about your text plan or data plan, contact your wireless provider.</li>
+    </ul>
+    <p>For all questions about the services provided, you can email us at <a href="mailto:hello@precheckd.com">hello@precheckd.com</a>.</p>
+
+    <h2>4. Identity Verification</h2>
+    <p>To become a verified recruiter, you must complete identity verification, including submitting a government-issued ID and a live selfie for facial matching. This verification is processed through our third-party identity verification partner, Stripe Identity.</p>
+
+    <h2>5. Account Accuracy</h2>
+    <p>You agree to provide accurate, current, and complete information during signup. If the name extracted from your submitted identification does not match the name you entered, your profile will display the verified legal name from your identification document.</p>
+
+    <h2>6. Founding Recruiter Program</h2>
+    <p>Founding recruiters may verify at no cost and receive complimentary profile hosting for a limited introductory period, as described at signup. PreCheckd may introduce paid subscription plans for future members.</p>
+
+    <h2>7. Prohibited Conduct</h2>
+    <p>You agree not to misrepresent your identity, impersonate another person or company, or attempt to circumvent our verification processes.</p>
+
+    <h2>8. Termination</h2>
+    <p>We reserve the right to suspend or terminate accounts that violate these terms or that we reasonably believe pose a risk to the integrity of our platform.</p>
+
+    <h2>9. Changes to These Terms</h2>
+    <p>We may update these Terms of Service from time to time. Continued use of PreCheckd after changes are posted constitutes acceptance of the updated terms.</p>
+
+    <h2>10. Contact Us</h2>
+    <p>Questions about these terms? Email us at <a href="mailto:hello@precheckd.com">hello@precheckd.com</a>. See also our <a href="/privacy">Privacy Policy</a>.</p>
   </div>
 </main>
 
