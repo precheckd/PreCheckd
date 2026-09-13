@@ -5,6 +5,8 @@ const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws
 const Recruiter = require('../models/Recruiter');
 const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
 
+const MOCK_SMS = process.env.MOCK_SMS === 'true';
+
 const smsClient = new PinpointSMSVoiceV2Client({
   region: process.env.AWS_SMS_REGION,
   credentials: {
@@ -45,6 +47,11 @@ function normalizePhoneToE164(rawPhone) {
 }
 
 async function sendVerificationCode(phone, code) {
+  if (MOCK_SMS) {
+    console.log(`[MOCK SMS] Would send code ${code} to ${phone}`);
+    return { mock: true };
+  }
+
   return smsClient.send(new SendNotifyTextMessageCommand({
     NotifyConfigurationId: NOTIFY_CONFIGURATION_ID,
     DestinationPhoneNumber: phone,
@@ -103,7 +110,11 @@ router.post('/signup', async (req, res) => {
 
     try {
       await sendVerificationCode(normalizedPhone, code);
-      console.log('SMS sent successfully to', normalizedPhone);
+      if (MOCK_SMS) {
+        console.log(`SMS mocked for ${normalizedPhone} — use code ${code} or 123456`);
+      } else {
+        console.log('SMS sent successfully to', normalizedPhone);
+      }
     } catch (smsError) {
       console.error('Failed to send SMS:', smsError);
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
@@ -117,7 +128,9 @@ router.post('/signup', async (req, res) => {
     res.json({
       success: true,
       recruiterId: recruiter._id,
-      message: `Verification code sent to ${normalizedPhone}`
+      message: MOCK_SMS
+        ? `[TEST MODE] Verification code sent to ${normalizedPhone} (use 123456)`
+        : `Verification code sent to ${normalizedPhone}`
     });
   } catch (error) {
     console.error('Error during signup:', error);
@@ -142,7 +155,9 @@ router.post('/resend-code', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Verification code resent to ${phone}`
+      message: MOCK_SMS
+        ? `[TEST MODE] Verification code resent to ${phone} (use 123456)`
+        : `Verification code resent to ${phone}`
     });
   } catch (error) {
     console.error('Error resending code:', error);
@@ -150,7 +165,7 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Verify phone OTP (real)
+// Verify phone OTP (real, with mock bypass)
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
@@ -180,7 +195,9 @@ router.post('/verify-phone', async (req, res) => {
       });
     }
 
-    if (code !== expectedCode) {
+    const isMockBypass = MOCK_SMS && code === '123456';
+
+    if (code !== expectedCode && !isMockBypass) {
       return res.status(400).json({
         success: false,
         message: 'Incorrect verification code. Please try again.'
