@@ -4,6 +4,26 @@
   const checkoutButton = document.getElementById('checkout-button');
   const errorEl = document.getElementById('form-error');
 
+  // Keep this list in sync with src/utils/blockedEmailDomains.js on the server
+  const BLOCKED_EMAIL_DOMAINS = [
+    'gmail.com',
+    'yahoo.com',
+    'outlook.com',
+    'hotmail.com',
+    'live.com',
+    'aol.com',
+    'icloud.com',
+    'me.com',
+    'msn.com',
+    'protonmail.com',
+    'proton.me',
+    'mail.com',
+    'gmx.com',
+    'yandex.com',
+    'zoho.com',
+    'inbox.com'
+  ];
+
   let recruiterId = null;
   let stripeSessionId = null;
   let stripeClientSecret = null;
@@ -21,6 +41,11 @@
 
   function hideError() {
     errorEl.classList.add('hidden');
+  }
+
+  function isBlockedEmailDomain(email) {
+    const domain = (email.split('@')[1] || '').trim().toLowerCase();
+    return BLOCKED_EMAIL_DOMAINS.includes(domain);
   }
 
   async function postJson(url, body) {
@@ -45,8 +70,15 @@
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
+
+    const formData = Object.fromEntries(new FormData(signupForm).entries());
+
+    if (isBlockedEmailDomain(formData.email)) {
+      showError('Please use your company email address. Personal email providers (Gmail, Yahoo, Outlook, etc.) are not accepted for recruiter accounts.');
+      return;
+    }
+
     try {
-      const formData = Object.fromEntries(new FormData(signupForm).entries());
       const response = await postJson('/api/founding-recruiter/signup', formData);
       recruiterId = response.recruiterId;
       showStep('step-phone');

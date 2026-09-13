@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
 const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
+const { isBlockedEmailDomain } = require('../utils/blockedEmailDomains');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
 
@@ -67,6 +68,10 @@ router.post('/signup', async (req, res) => {
 
     if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (isBlockedEmailDomain(email)) {
+      return res.status(400).json({ error: 'Please use your company email address. Personal email providers (Gmail, Yahoo, Outlook, etc.) are not accepted for recruiter accounts.' });
     }
 
     const normalizedPhone = normalizePhoneToE164(phone);
