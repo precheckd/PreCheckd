@@ -5,6 +5,7 @@ const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws
 const Recruiter = require('../models/Recruiter');
 const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
 const { isBlockedEmailDomain } = require('../utils/blockedEmailDomains');
+const { checkDomainAge } = require('../utils/domainAgeCheck');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
 
@@ -87,6 +88,11 @@ router.post('/signup', async (req, res) => {
     const slug = makeSlug(firstName, lastName);
     const emailToken = generateVerificationToken();
 
+    // Company Domain check — leaves domainVerifiedAt null (Pending) unless the domain clears the age threshold
+    const domain = email.split('@')[1];
+    const domainCheck = await checkDomainAge(domain);
+    const domainVerifiedAt = domainCheck.verified ? new Date() : null;
+
     const recruiter = new Recruiter({
       firstName,
       lastName,
@@ -101,7 +107,7 @@ router.post('/signup', async (req, res) => {
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 hours
-      domainVerifiedAt: new Date() // still hardcoded — domain verification not built yet
+      domainVerifiedAt: domainVerifiedAt
     });
 
     await recruiter.save();
