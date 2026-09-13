@@ -123,15 +123,6 @@
     font-weight: 600;
   }
 
-  .verification-badge {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #3B5860;
-    font-size: 0.9rem;
-    color: #4ADE80;
-    font-weight: 600;
-  }
-
   .profile-main {
     display: flex;
     flex-direction: column;
@@ -310,6 +301,14 @@
 
   const VERIFIED_COLOR = '#4ADE80';
   const PENDING_COLOR = '#F87171';
+
+  const allVerified = Boolean(
+    recruiter.domainVerifiedAt &&
+    recruiter.emailVerifiedAt &&
+    recruiter.phoneVerifiedAt &&
+    recruiter.identityVerifiedAt &&
+    recruiter.facialRecognitionVerifiedAt
+  );
 %>
 
 <div class="profile-content">
@@ -338,7 +337,7 @@
       <div class="profile-sidebar-card">
         <div class="sidebar-stat">
           <div class="stat-label">Verification Status</div>
-          <div class="stat-value" style="color: #4ADE80;">✓ Verified</div>
+          <div class="stat-value" style="color: <%= allVerified ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= allVerified ? '✓ Verified' : '✗ PENDING VERIFICATION' %></div>
         </div>
 
         <div class="sidebar-stat">
@@ -355,8 +354,6 @@
           <div class="stat-label">Specialties</div>
           <div class="stat-value">Pending</div>
         </div>
-
-        <div class="verification-badge">✓ PreCheckd Verified</div>
       </div>
     </div>
 
@@ -468,7 +465,7 @@
       </div>
 
       <div class="profile-section cta-section">
-        <p class="cta-text"><strong>Ready to connect with verified candidates?</strong> Join PreCheckd today.</p>
+        <p class="cta-text"><strong>Ready to become a trusted, verified recruiter?</strong> Join PreCheckd today.</p>
         <a href="/founding-recruiter-landing" class="btn-primary">Join PreCheckd</a>
       </div>
     </div>
