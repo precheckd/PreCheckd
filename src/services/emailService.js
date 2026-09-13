@@ -11,7 +11,7 @@ async function sendVerificationEmail(toEmail, firstName, token) {
   const verifyUrl = `${process.env.APP_BASE_URL}/founding-recruiter/verify-email?token=${token}`;
 
   return resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
     html: `
