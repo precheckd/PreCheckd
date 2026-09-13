@@ -181,7 +181,6 @@
     flex-shrink: 0;
     width: 40px;
     height: 40px;
-    color: #4ADE80;
     margin-top: 2px;
   }
 
@@ -220,7 +219,6 @@
   }
 
   .verification-checkmark {
-    color: #4ADE80;
     font-size: 1.75rem;
     font-weight: bold;
     flex-shrink: 0;
@@ -309,6 +307,9 @@
 
   const dateOpts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/New_York' };
   const memberSinceOpts = { year: 'numeric', month: 'short', timeZone: 'America/New_York' };
+
+  const VERIFIED_COLOR = '#4ADE80';
+  const PENDING_COLOR = '#F87171';
 %>
 
 <div class="profile-content">
@@ -366,7 +367,7 @@
         <div class="verification-list">
           <div class="verification-item">
             <div class="verification-left">
-              <div class="verification-icon">
+              <div class="verification-icon" style="color: <%= recruiter.domainVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </div>
               <div class="verification-content">
@@ -376,15 +377,17 @@
                 <p class="verification-description">Company domain is registered, legitimate, and verified through Whois records.</p>
                 <% if (recruiter.domainVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.domainVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+                <% } else { %>
+                  <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
                 <% } %>
               </div>
             </div>
-            <div class="verification-checkmark">✓</div>
+            <div class="verification-checkmark" style="color: <%= recruiter.domainVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= recruiter.domainVerifiedAt ? '✓' : '✗' %></div>
           </div>
 
           <div class="verification-item">
             <div class="verification-left">
-              <div class="verification-icon">
+              <div class="verification-icon" style="color: <%= recruiter.emailVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
               </div>
               <div class="verification-content">
@@ -394,15 +397,17 @@
                 <p class="verification-description">Recruiter verified their corporate email address.</p>
                 <% if (recruiter.emailVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.emailVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+                <% } else { %>
+                  <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
                 <% } %>
               </div>
             </div>
-            <div class="verification-checkmark">✓</div>
+            <div class="verification-checkmark" style="color: <%= recruiter.emailVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= recruiter.emailVerifiedAt ? '✓' : '✗' %></div>
           </div>
 
           <div class="verification-item">
             <div class="verification-left">
-              <div class="verification-icon">
+              <div class="verification-icon" style="color: <%= recruiter.phoneVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2a9 9 0 0 1 9 9"/><path d="M13 6a5 5 0 0 1 5 5"/><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
               </div>
               <div class="verification-content">
@@ -412,15 +417,17 @@
                 <p class="verification-description">Phone number verified via SMS code.</p>
                 <% if (recruiter.phoneVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.phoneVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+                <% } else { %>
+                  <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
                 <% } %>
               </div>
             </div>
-            <div class="verification-checkmark">✓</div>
+            <div class="verification-checkmark" style="color: <%= recruiter.phoneVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= recruiter.phoneVerifiedAt ? '✓' : '✗' %></div>
           </div>
 
           <div class="verification-item">
             <div class="verification-left">
-              <div class="verification-icon">
+              <div class="verification-icon" style="color: <%= recruiter.identityVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 19a4 4 0 00-8 0"/><path d="M16 10h2"/><path d="M16 14h2"/><circle cx="9" cy="12" r="3"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
               </div>
               <div class="verification-content">
@@ -430,15 +437,17 @@
                 <p class="verification-description">Government ID scanned and verified.</p>
                 <% if (recruiter.identityVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.identityVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+                <% } else { %>
+                  <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
                 <% } %>
               </div>
             </div>
-            <div class="verification-checkmark">✓</div>
+            <div class="verification-checkmark" style="color: <%= recruiter.identityVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= recruiter.identityVerifiedAt ? '✓' : '✗' %></div>
           </div>
 
           <div class="verification-item">
             <div class="verification-left">
-              <div class="verification-icon">
+              <div class="verification-icon" style="color: <%= recruiter.facialRecognitionVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15H6a4 4 0 0 0-4 4v2"/><path d="M22 17.5c0 2.499-1.75 3.749-3.83 4.474a.5.5 0 0 1-.335-.005c-2.085-.72-3.835-1.97-3.835-4.47V14a.5.5 0 0 1 .5-.499c1 0 2.25-.6 3.12-1.36a.6.6 0 0 1 .76-.001c.875.765 2.12 1.36 3.12 1.36a.5.5 0 0 1 .5.5z"/><circle cx="9" cy="7" r="4"/></svg>
               </div>
               <div class="verification-content">
@@ -448,10 +457,12 @@
                 <p class="verification-description">Face matched to government ID document.</p>
                 <% if (recruiter.facialRecognitionVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.facialRecognitionVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+                <% } else { %>
+                  <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
                 <% } %>
               </div>
             </div>
-            <div class="verification-checkmark">✓</div>
+            <div class="verification-checkmark" style="color: <%= recruiter.facialRecognitionVerifiedAt ? VERIFIED_COLOR : PENDING_COLOR %>;"><%= recruiter.facialRecognitionVerifiedAt ? '✓' : '✗' %></div>
           </div>
         </div>
       </div>
