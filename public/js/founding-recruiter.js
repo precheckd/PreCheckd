@@ -67,10 +67,15 @@
     }
   }
 
-  // Runs the 5-item checklist animation in sequence, staggered by delayMs each.
-  // Purely cosmetic — resolves once every item has visually completed.
-  function runVerifyingAnimation(delayMs) {
+  // Runs the 5-item checklist animation in sequence, each with its own
+  // duration so it feels like real, uneven backend work rather than a
+  // uniform pretty animation. Purely cosmetic — resolves once every
+  // item has visually completed.
+  function runVerifyingAnimation() {
     const items = document.querySelectorAll('#step-verifying .verify-item');
+    // One duration per step, in order — tweak freely.
+    const durations = [1400, 2200, 1100, 1900, 1600];
+
     return new Promise((resolve) => {
       let i = 0;
       function next() {
@@ -82,9 +87,12 @@
           resolve();
           return;
         }
+        const bar = items[i].querySelector('.verify-bar-fill');
+        bar.style.animationDuration = `${durations[i]}ms`;
         items[i].classList.add('active');
+        const wait = durations[i];
         i++;
-        setTimeout(next, delayMs);
+        setTimeout(next, wait);
       }
       next();
     });
@@ -110,7 +118,7 @@
     resetVerifyingAnimation();
     showStep('step-verifying');
 
-    const animationDone = runVerifyingAnimation(900);
+    const animationDone = runVerifyingAnimation();
     const signupDone = postJson('/api/founding-recruiter/signup', formData);
 
     try {

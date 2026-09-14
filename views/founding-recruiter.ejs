@@ -278,7 +278,9 @@
     }
 
     .verify-item.active .verify-bar-fill {
-      animation: fillBar 0.9s ease-out forwards;
+      animation-name: fillBar;
+      animation-timing-function: ease-out;
+      animation-fill-mode: forwards;
     }
 
     .verify-item.done .verify-bar-fill {
