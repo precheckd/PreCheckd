@@ -92,6 +92,7 @@ router.post('/signup', async (req, res) => {
     const domain = email.split('@')[1];
     const domainCheck = await checkDomainAge(domain);
     const domainVerifiedAt = domainCheck.verified ? new Date() : null;
+    const domainRegisteredYear = domainCheck.verified ? domainCheck.registeredYear : null;
 
     const recruiter = new Recruiter({
       firstName,
@@ -107,7 +108,8 @@ router.post('/signup', async (req, res) => {
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 hours
-      domainVerifiedAt: domainVerifiedAt
+      domainVerifiedAt: domainVerifiedAt,
+      domainRegisteredYear: domainRegisteredYear
     });
 
     await recruiter.save();

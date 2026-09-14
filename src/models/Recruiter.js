@@ -61,6 +61,10 @@ const recruiterSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  domainRegisteredYear: {
+    type: Number,
+    default: null
+  },
   facialRecognitionVerifiedAt: {
     type: Date,
     default: null

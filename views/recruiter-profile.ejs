@@ -309,6 +309,10 @@
     recruiter.identityVerifiedAt &&
     recruiter.facialRecognitionVerifiedAt
   );
+
+  const domainDescription = recruiter.domainVerifiedAt && recruiter.domainRegisteredYear
+    ? `This recruiter's company domain was verified against public registration records. The domain has been active since ${recruiter.domainRegisteredYear}.`
+    : `This recruiter's company domain was verified against public registration records.`;
 %>
 
 <div class="profile-content">
@@ -371,7 +375,7 @@
                 <div class="verification-header">
                   <h4>Company Domain Verified</h4>
                 </div>
-                <p class="verification-description">Company domain is registered, legitimate, and verified through Whois records.</p>
+                <p class="verification-description"><%= domainDescription %></p>
                 <% if (recruiter.domainVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.domainVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>
@@ -391,7 +395,7 @@
                 <div class="verification-header">
                   <h4>Email Ownership</h4>
                 </div>
-                <p class="verification-description">Recruiter verified their corporate email address.</p>
+                <p class="verification-description">This recruiter confirmed ownership of their corporate email address via a secure verification link.</p>
                 <% if (recruiter.emailVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.emailVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>
@@ -411,7 +415,7 @@
                 <div class="verification-header">
                   <h4>Phone Number</h4>
                 </div>
-                <p class="verification-description">Phone number verified via SMS code.</p>
+                <p class="verification-description">This recruiter confirmed their phone number by entering a one-time code sent via SMS.</p>
                 <% if (recruiter.phoneVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.phoneVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>
@@ -431,7 +435,7 @@
                 <div class="verification-header">
                   <h4>Government ID</h4>
                 </div>
-                <p class="verification-description">Government ID scanned and verified.</p>
+                <p class="verification-description">This recruiter's government-issued ID was scanned and verified for authenticity.</p>
                 <% if (recruiter.identityVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.identityVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>
@@ -451,7 +455,7 @@
                 <div class="verification-header">
                   <h4>Facial Recognition</h4>
                 </div>
-                <p class="verification-description">Face matched to government ID document.</p>
+                <p class="verification-description">Facial recognition was used to match this recruiter's live facial scan to their ID in order to confirm their identity.</p>
                 <% if (recruiter.facialRecognitionVerifiedAt) { %>
                   <span class="verification-date">Verified <%= recruiter.facialRecognitionVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>

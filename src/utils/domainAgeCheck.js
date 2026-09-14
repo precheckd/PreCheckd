@@ -23,10 +23,11 @@ async function checkDomainAge(domain) {
     }
 
     const createdDate = new Date(createdDateStr);
+    const registeredYear = createdDate.getFullYear();
     const ageInDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (ageInDays >= MINIMUM_DOMAIN_AGE_DAYS) {
-      return { verified: true, ageInDays, createdDate };
+      return { verified: true, ageInDays, createdDate, registeredYear };
     } else {
       console.log(`Domain ${domain} is only ${ageInDays} days old — leaving as pending`);
       return { verified: false, reason: 'too_new', ageInDays };
