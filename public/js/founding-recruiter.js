@@ -67,6 +67,35 @@
     }
   }
 
+  // Runs the 5-item checklist animation in sequence, staggered by delayMs each.
+  // Purely cosmetic — resolves once every item has visually completed.
+  function runVerifyingAnimation(delayMs) {
+    const items = document.querySelectorAll('#step-verifying .verify-item');
+    return new Promise((resolve) => {
+      let i = 0;
+      function next() {
+        if (i > 0) {
+          items[i - 1].classList.remove('active');
+          items[i - 1].classList.add('done');
+        }
+        if (i >= items.length) {
+          resolve();
+          return;
+        }
+        items[i].classList.add('active');
+        i++;
+        setTimeout(next, delayMs);
+      }
+      next();
+    });
+  }
+
+  function resetVerifyingAnimation() {
+    document.querySelectorAll('#step-verifying .verify-item').forEach((el) => {
+      el.classList.remove('active', 'done');
+    });
+  }
+
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
@@ -78,11 +107,18 @@
       return;
     }
 
+    resetVerifyingAnimation();
+    showStep('step-verifying');
+
+    const animationDone = runVerifyingAnimation(900);
+    const signupDone = postJson('/api/founding-recruiter/signup', formData);
+
     try {
-      const response = await postJson('/api/founding-recruiter/signup', formData);
+      const [, response] = await Promise.all([animationDone, signupDone]);
       recruiterId = response.recruiterId;
       showStep('step-phone');
     } catch (err) {
+      showStep('step-signup');
       showError(err.message);
     }
   });

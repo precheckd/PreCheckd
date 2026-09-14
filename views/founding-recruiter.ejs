@@ -220,6 +220,76 @@
       display: none;
     }
 
+    /* Verification loading interstitial */
+    .verify-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      margin-top: 1.5rem;
+    }
+
+    .verify-item {
+      opacity: 0.45;
+      transition: opacity 0.3s ease;
+    }
+
+    .verify-item.active,
+    .verify-item.done {
+      opacity: 1;
+    }
+
+    .verify-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.45rem;
+    }
+
+    .verify-label {
+      font-size: 0.9rem;
+      color: #E8EBEA;
+    }
+
+    .verify-check {
+      color: #2ECC71;
+      font-weight: bold;
+      font-size: 1rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .verify-item.done .verify-check {
+      opacity: 1;
+    }
+
+    .verify-bar {
+      height: 6px;
+      background: #24404A;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid #3B5860;
+    }
+
+    .verify-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #2ECC71;
+      border-radius: 3px;
+    }
+
+    .verify-item.active .verify-bar-fill {
+      animation: fillBar 0.9s ease-out forwards;
+    }
+
+    .verify-item.done .verify-bar-fill {
+      width: 100%;
+    }
+
+    @keyframes fillBar {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
     @media (max-width: 1400px) {
       .page-grid {
         grid-template-columns: 1fr 1fr;
@@ -261,6 +331,47 @@
         <label>Company (optional)<input type="text" name="company"></label>
         <button type="submit">Continue</button>
       </form>
+    </section>
+
+    <section id="step-verifying" class="form-step hidden">
+      <h2>Verifying your information...</h2>
+      <div class="verify-list">
+        <div class="verify-item">
+          <div class="verify-row">
+            <span class="verify-label">Verifying corporate domain</span>
+            <span class="verify-check">✓</span>
+          </div>
+          <div class="verify-bar"><div class="verify-bar-fill"></div></div>
+        </div>
+        <div class="verify-item">
+          <div class="verify-row">
+            <span class="verify-label">Loading email verification</span>
+            <span class="verify-check">✓</span>
+          </div>
+          <div class="verify-bar"><div class="verify-bar-fill"></div></div>
+        </div>
+        <div class="verify-item">
+          <div class="verify-row">
+            <span class="verify-label">Preparing SMS verification</span>
+            <span class="verify-check">✓</span>
+          </div>
+          <div class="verify-bar"><div class="verify-bar-fill"></div></div>
+        </div>
+        <div class="verify-item">
+          <div class="verify-row">
+            <span class="verify-label">Configuring ID verification</span>
+            <span class="verify-check">✓</span>
+          </div>
+          <div class="verify-bar"><div class="verify-bar-fill"></div></div>
+        </div>
+        <div class="verify-item">
+          <div class="verify-row">
+            <span class="verify-label">Allocating facial recognition resources</span>
+            <span class="verify-check">✓</span>
+          </div>
+          <div class="verify-bar"><div class="verify-bar-fill"></div></div>
+        </div>
+      </div>
     </section>
 
     <section id="step-phone" class="form-step hidden">
