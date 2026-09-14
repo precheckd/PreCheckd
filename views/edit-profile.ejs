@@ -1,0 +1,175 @@
+<style>
+  .edit-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .edit-container {
+    max-width: 700px;
+    width: 100%;
+  }
+
+  .edit-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .edit-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .edit-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .edit-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    color: #E8EBEA;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .label-hint {
+    font-weight: 400;
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+  }
+
+  input,
+  textarea {
+    padding: 0.75rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    background: #24404A;
+    color: #F2F4F3;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #7A9096;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  button {
+    padding: 0.75rem 1.75rem;
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:hover {
+    background: #4ADE80;
+  }
+
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.75rem;
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-cancel:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  @media (max-width: 768px) {
+    .edit-content {
+      padding: 1rem;
+    }
+
+    .edit-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="edit-content">
+  <div class="edit-container">
+    <div class="edit-header">
+      <h1>Edit Your Profile</h1>
+      <p>These details appear on your public PreCheckd profile.</p>
+    </div>
+
+    <div class="edit-card">
+      <form action="/recruiter/<%= recruiter.slug %>/edit" method="POST">
+        <label>
+          Bio
+          <textarea name="bio" placeholder="Tell candidates a bit about your background and approach..."><%= recruiter.bio || '' %></textarea>
+          <span class="label-hint">A short introduction shown at the top of your profile.</span>
+        </label>
+
+        <label>
+          Years of experience
+          <input type="number" name="yearsOfExperience" min="0" max="80" value="<%= recruiter.yearsOfExperience || '' %>" placeholder="e.g. 8">
+        </label>
+
+        <label>
+          Specialties
+          <input type="text" name="specialties" value="<%= recruiter.specialties && recruiter.specialties.length ? recruiter.specialties.join(', ') : '' %>" placeholder="e.g. Software Engineering, DevOps, Cybersecurity">
+          <span class="label-hint">Separate multiple specialties with commas.</span>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit">Save Changes</button>
+          <a href="/recruiter/<%= recruiter.slug %>" class="btn-cancel">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
