@@ -36,6 +36,16 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
   }
 
+  .form-error {
+    background: #3A2020;
+    color: #FF8A8A;
+    padding: 0.85rem;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    border-left: 4px solid #E53E3E;
+    font-size: 0.9rem;
+  }
+
   form {
     display: flex;
     flex-direction: column;
@@ -85,6 +95,32 @@
     outline: none;
     border-color: #2ECC71;
     box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  input[type="file"] {
+    padding: 0.5rem;
+    cursor: pointer;
+  }
+
+  .current-photo-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .current-photo-preview img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #4A6F7B;
+  }
+
+  .current-photo-preview span {
+    font-size: 0.85rem;
+    color: #8FA6AC;
+    font-weight: 400;
   }
 
   .form-actions {
@@ -147,7 +183,23 @@
     </div>
 
     <div class="edit-card">
-      <form action="/recruiter/<%= recruiter.slug %>/edit" method="POST">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="form-error"><%= error %></p>
+      <% } %>
+
+      <form action="/recruiter/<%= recruiter.slug %>/edit" method="POST" enctype="multipart/form-data">
+        <label>
+          Profile photo
+          <% if (recruiter.profilePhotoUrl) { %>
+            <div class="current-photo-preview">
+              <img src="<%= recruiter.profilePhotoUrl %>" alt="Current profile photo">
+              <span>Current photo — upload a new one to replace it</span>
+            </div>
+          <% } %>
+          <input type="file" name="profilePhoto" accept="image/jpeg,image/png,image/webp">
+          <span class="label-hint">JPEG, PNG, or WebP. Max 5MB.</span>
+        </label>
+
         <label>
           Bio
           <textarea name="bio" placeholder="Tell candidates a bit about your background and approach..."><%= recruiter.bio || '' %></textarea>

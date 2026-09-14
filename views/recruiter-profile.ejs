@@ -81,6 +81,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+  }
+
+  .header-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
 
   .avatar-circle {
@@ -390,9 +398,13 @@
   <!-- Header: photo + identity -->
   <div class="profile-header">
     <div class="header-photo">
-      <div class="avatar-circle">
-        <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
-      </div>
+      <% if (recruiter.profilePhotoUrl) { %>
+        <img src="<%= recruiter.profilePhotoUrl %>" alt="<%= displayName %>">
+      <% } else { %>
+        <div class="avatar-circle">
+          <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
+        </div>
+      <% } %>
     </div>
     <div class="header-info">
       <div class="intro-name"><%= displayName %></div>

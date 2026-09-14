@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const Recruiter = require('../models/Recruiter');
+const { uploadProfilePhoto, deleteProfilePhoto } = require('../utils/s3Upload');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB, matches s3Upload.js validation
+});
 
 // GET /recruiter/:slug (e.g. /recruiter/john-doe-a1b2c3)
 router.get('/:slug', async (req, res) => {
@@ -56,7 +63,8 @@ router.get('/:slug/edit', async (req, res) => {
 
     res.render('edit-profile', {
       recruiter: recruiter,
-      title: `Edit Profile | PreCheckd`
+      title: `Edit Profile | PreCheckd`,
+      error: null
     });
 
   } catch (err) {
@@ -66,7 +74,7 @@ router.get('/:slug/edit', async (req, res) => {
 });
 
 // POST /recruiter/:slug/edit — save changes, owner-only
-router.post('/:slug/edit', async (req, res) => {
+router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
   try {
     const slug = req.params.slug;
 
@@ -92,6 +100,21 @@ router.post('/:slug/edit', async (req, res) => {
     recruiter.specialties = specialties
       ? specialties.split(',').map((s) => s.trim()).filter(Boolean)
       : [];
+
+    if (req.file) {
+      try {
+        const oldPhotoUrl = recruiter.profilePhotoUrl;
+        const newPhotoUrl = await uploadProfilePhoto(recruiter._id.toString(), req.file);
+        recruiter.profilePhotoUrl = newPhotoUrl;
+        await deleteProfilePhoto(oldPhotoUrl);
+      } catch (uploadError) {
+        return res.status(400).render('edit-profile', {
+          recruiter: recruiter,
+          title: `Edit Profile | PreCheckd`,
+          error: uploadError.message
+        });
+      }
+    }
 
     await recruiter.save();
 
