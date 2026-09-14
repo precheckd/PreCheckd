@@ -23,4 +23,20 @@ async function sendVerificationEmail(toEmail, firstName, token) {
   });
 }
 
-module.exports = { sendVerificationEmail, generateVerificationToken };
+async function sendLoginEmail(toEmail, firstName, token) {
+  const loginUrl = `${process.env.APP_BASE_URL}/login/verify?token=${token}`;
+
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Your PreCheckd login link',
+    html: `
+      <p>Hi ${firstName},</p>
+      <p>Click the link below to log in to your PreCheckd account:</p>
+      <p><a href="${loginUrl}">${loginUrl}</a></p>
+      <p>This link expires in 15 minutes and can only be used once. If you didn't request this, you can safely ignore this email.</p>
+    `,
+  });
+}
+
+module.exports = { sendVerificationEmail, generateVerificationToken, sendLoginEmail };

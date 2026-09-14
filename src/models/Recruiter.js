@@ -79,6 +79,16 @@ const recruiterSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+
+  // Magic-link login token flow
+  loginToken: {
+    type: String,
+    default: null
+  },
+  loginTokenExpires: {
+    type: Date,
+    default: null
+  },
   
   // Profile Information (for future use)
   bio: {
