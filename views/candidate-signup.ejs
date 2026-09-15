@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PreCheckd - Get Verified as a Candidate</title>
+  <title>PreCheckd - Get Verified</title>
   <style>
     * {
       margin: 0;
@@ -15,140 +15,196 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: #1F363C;
       min-height: 100vh;
+      padding: 2rem 1.5rem;
     }
 
-    main {
-      padding: 4rem 1.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .coming-soon-container {
-      text-align: center;
-      background: #2A4750;
-      border: 1px solid #3B5860;
-      border-radius: 12px;
-      padding: 4rem 2rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    .page-wrap {
       max-width: 600px;
       margin: 0 auto;
     }
 
-    .coming-soon-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 1rem;
-      color: #4ADE80;
-    }
-
-    .coming-soon-icon svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .coming-soon-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #F2F4F3;
-      margin-bottom: 1rem;
-    }
-
-    .coming-soon-text {
-      font-size: 1.1rem;
-      color: #C7D1CF;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-
-    .coming-soon-features {
-      text-align: left;
-      background: #24404A;
-      border: 1px solid #3B5860;
+    .content-section {
+      background: #2A4750;
       border-radius: 8px;
       padding: 2rem;
-      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+      border: 1px solid #3B5860;
     }
 
-    .coming-soon-features h3 {
+    h1 {
+      font-size: 1.75rem;
+      color: #F2F4F3;
+      margin-bottom: 0.5rem;
+    }
+
+    .intro-text {
+      color: #C7D1CF;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .form-step {
+      margin-bottom: 0;
+    }
+
+    .form-step h2 {
       font-size: 1.1rem;
       color: #F2F4F3;
       margin-bottom: 1rem;
       font-weight: 600;
     }
 
-    .feature-list {
-      list-style: none;
-    }
-
-    .feature-list li {
-      padding: 0.5rem 0;
+    .form-step p {
       color: #C7D1CF;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    form {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
-    .feature-list li:before {
-      content: "✓";
-      color: #4ADE80;
-      font-weight: bold;
-      margin-right: 0.75rem;
-      font-size: 1.25rem;
+    label {
+      display: flex;
+      flex-direction: column;
+      color: #E8EBEA;
+      font-weight: 500;
+      font-size: 0.9rem;
     }
 
-    .badge {
-      display: inline-block;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      color: #4ADE80;
-      padding: 0.75rem 1.5rem;
+    .label-hint {
+      font-weight: 400;
+      color: #8FA6AC;
+      font-size: 0.8rem;
+    }
+
+    input {
+      padding: 0.6rem;
+      border: 1px solid #4A6F7B;
       border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+      background: #24404A;
+      color: #F2F4F3;
+      transition: border-color 0.2s;
     }
 
-    @media (max-width: 768px) {
-      main {
-        padding: 2rem 1rem;
-      }
+    input::placeholder {
+      color: #7A9096;
+    }
 
-      .coming-soon-container {
-        padding: 2rem 1.5rem;
-      }
+    input:focus {
+      outline: none;
+      border-color: #2ECC71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+    }
 
-      .coming-soon-title {
-        font-size: 1.5rem;
-      }
+    button {
+      padding: 0.75rem;
+      background: #2ECC71;
+      color: #1F363C;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
 
-      .coming-soon-text {
-        font-size: 1rem;
-      }
+    button:hover:not(:disabled) {
+      background: #4ADE80;
+    }
+
+    button:disabled {
+      background: #5C7278;
+      color: #B9C7CA;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .form-error {
+      background: #3A2020;
+      color: #FF8A8A;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border-left: 4px solid #E53E3E;
+      font-size: 0.9rem;
+    }
+
+    .success-box {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .success-box svg {
+      width: 48px;
+      height: 48px;
+      color: #4ADE80;
+      margin-bottom: 1rem;
+    }
+
+    .success-box h2 {
+      font-size: 1.25rem;
+      color: #F2F4F3;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-box p {
+      color: #C7D1CF;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-<main>
-  <div class="coming-soon-container">
-    <div class="coming-soon-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-    </div>
-    <h1 class="coming-soon-title">Get Verified</h1>
-    <p class="coming-soon-text">Build your verified profile and connect with legitimate recruiters on PreCheckd.</p>
+<div class="page-wrap">
+  <section class="content-section">
+    <h1>Get Verified</h1>
+    <p class="intro-text">Verify your email and phone to start connecting with verified recruiters on PreCheckd.</p>
 
-    <div class="coming-soon-features">
-      <h3>Candidate Verification Includes</h3>
-      <ul class="feature-list">
-        <li>Identity verification (24-hour turnaround)</li>
-        <li>Background screening</li>
-        <li>Verified profile badge</li>
-        <li>Public recruiter directory access</li>
-        <li>Direct messaging with verified recruiters</li>
-      </ul>
-    </div>
+    <p id="form-error" class="form-error hidden"></p>
 
-    <div class="badge">🚀 Coming Soon</div>
-  </div>
-</main>
+    <section id="step-signup" class="form-step">
+      <h2>1. Your details</h2>
+      <form id="candidate-signup-form">
+        <label>First name<input type="text" name="firstName" required></label>
+        <label>Last name<input type="text" name="lastName" required></label>
+        <label>Email<input type="email" name="email" required></label>
+        <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
+        <label>LinkedIn profile URL<input type="url" name="linkedinUrl" placeholder="https://linkedin.com/in/yourname" required></label>
+        <button type="submit">Continue</button>
+      </form>
+    </section>
+
+    <section id="step-phone" class="form-step hidden">
+      <h2>2. Verify your phone</h2>
+      <p>We texted you a 6-digit code.</p>
+      <form id="candidate-phone-form">
+        <label>Verification code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
+        <button type="submit">Verify</button>
+      </form>
+    </section>
+
+    <section id="step-done" class="form-step hidden">
+      <div class="success-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <h2>Phone verified!</h2>
+        <p>Check your email for a link to verify your email address too. Once both are confirmed, you're ready to browse and contact verified recruiters.</p>
+      </div>
+    </section>
+  </section>
+</div>
+
+<script src="/js/candidate-signup.js"></script>
 
 </body>
 </html>

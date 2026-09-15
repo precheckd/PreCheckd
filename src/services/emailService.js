@@ -39,4 +39,25 @@ async function sendLoginEmail(toEmail, firstName, token) {
   });
 }
 
-module.exports = { sendVerificationEmail, generateVerificationToken, sendLoginEmail };
+async function sendCandidateVerificationEmail(toEmail, firstName, token) {
+  const verifyUrl = `${process.env.APP_BASE_URL}/api/candidate/verify-email?token=${token}`;
+
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Verify your email for PreCheckd',
+    html: `
+      <p>Hi ${firstName},</p>
+      <p>Click the link below to verify your email address and continue setting up your PreCheckd account:</p>
+      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+      <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
+    `,
+  });
+}
+
+module.exports = {
+  sendVerificationEmail,
+  generateVerificationToken,
+  sendLoginEmail,
+  sendCandidateVerificationEmail
+};
