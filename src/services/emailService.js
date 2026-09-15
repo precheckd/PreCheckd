@@ -69,11 +69,57 @@ async function sendCandidateLoginCode(toEmail, firstName, code) {
   });
 }
 
+async function sendNewConnectionRequestEmail(recruiterEmail, recruiterFirstName, candidateName, candidateLinkedInUrl, note) {
+  const dashboardUrl = `${process.env.APP_BASE_URL}/recruiter-dashboard/requests`;
+
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: recruiterEmail,
+    subject: 'New connection request on PreCheckd',
+    html: `
+      <p>Hi ${recruiterFirstName},</p>
+      <p><strong>${candidateName}</strong> would like to connect with you on PreCheckd.</p>
+      <p>LinkedIn: <a href="${candidateLinkedInUrl}">${candidateLinkedInUrl}</a></p>
+      ${note ? `<p>Note from ${candidateName}: "${note}"</p>` : ''}
+      <p><a href="${dashboardUrl}">Review this request</a></p>
+    `,
+  });
+}
+
+async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, recruiterName, recruiterEmail) {
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidateEmail,
+    subject: `${recruiterName} accepted your connection request!`,
+    html: `
+      <p>Hi ${candidateFirstName},</p>
+      <p>Good news — <strong>${recruiterName}</strong> accepted your connection request on PreCheckd.</p>
+      <p>You can reach them directly at: <a href="mailto:${recruiterEmail}">${recruiterEmail}</a></p>
+    `,
+  });
+}
+
+async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, recruiterName) {
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidateEmail,
+    subject: `Update on your PreCheckd connection request`,
+    html: `
+      <p>Hi ${candidateFirstName},</p>
+      <p><strong>${recruiterName}</strong> was not able to connect at this time.</p>
+      <p>You're welcome to reach out to other verified recruiters on PreCheckd.</p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   generateVerificationToken,
   sendLoginEmail,
   sendCandidateVerificationCode,
   sendCandidateLoginCode,
-  generateSixDigitCode
+  generateSixDigitCode,
+  sendNewConnectionRequestEmail,
+  sendConnectionAcceptedEmail,
+  sendConnectionDeclinedEmail
 };

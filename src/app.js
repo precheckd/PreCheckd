@@ -12,6 +12,7 @@ const webhookRoutes = require('./routes/webhookRoutes');
 const recruiterProfileRoutes = require('./routes/recruiter-profile');
 const authRoutes = require('./routes/auth');
 const candidateRoutes = require('./routes/candidate');
+const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 assertEnv();
@@ -67,6 +68,7 @@ app.use('/recruiter', recruiterProfileRoutes);
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);
 app.use('/api/candidate', candidateRoutes);
+app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/', authRoutes);
 app.use('/', routes);
 app.use(notFoundHandler);

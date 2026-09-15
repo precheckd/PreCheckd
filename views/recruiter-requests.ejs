@@ -1,0 +1,207 @@
+<style>
+  .requests-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .requests-header {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .requests-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .requests-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .requests-list {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .request-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .request-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .request-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #F2F4F3;
+  }
+
+  .request-date {
+    font-size: 0.8rem;
+    color: #8FA6AC;
+  }
+
+  .request-linkedin {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .request-note {
+    background: #24404A;
+    border-left: 3px solid #4A6F7B;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  .request-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .request-actions form {
+    display: inline;
+  }
+
+  .btn-accept {
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-accept:hover {
+    background: #4ADE80;
+  }
+
+  .btn-decline {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-decline:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .status-accepted {
+    background: #1E3A2E;
+    color: #4ADE80;
+  }
+
+  .status-declined {
+    background: #3A2020;
+    color: #FF8A8A;
+  }
+
+  .empty-state {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    color: #8FA6AC;
+    padding: 3rem 1.5rem;
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .requests-content {
+      padding: 1rem;
+    }
+
+    .request-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="requests-content">
+  <div class="requests-header">
+    <h1>Connection Requests</h1>
+    <p>Candidates who want to connect with you on PreCheckd.</p>
+  </div>
+
+  <% if (requests.length === 0) { %>
+    <div class="empty-state">
+      <p>No connection requests yet.</p>
+    </div>
+  <% } else { %>
+    <div class="requests-list">
+      <% requests.forEach(function(request) { %>
+        <% const candidate = request.candidateId; %>
+        <div class="request-card">
+          <div class="request-top">
+            <div>
+              <div class="request-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
+              <div class="request-date">Requested <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+            </div>
+            <% if (request.status === 'accepted') { %>
+              <span class="status-badge status-accepted">Accepted</span>
+            <% } else if (request.status === 'declined') { %>
+              <span class="status-badge status-declined">Declined</span>
+            <% } %>
+          </div>
+
+          <a href="<%= candidate.linkedinUrl %>" target="_blank" rel="noopener" class="request-linkedin">View LinkedIn Profile →</a>
+
+          <% if (request.note) { %>
+            <div class="request-note"><%= request.note %></div>
+          <% } %>
+
+          <% if (request.status === 'pending') { %>
+            <div class="request-actions">
+              <form action="/recruiter-dashboard/requests/<%= request._id %>/accept" method="POST">
+                <button type="submit" class="btn-accept">Accept</button>
+              </form>
+              <form action="/recruiter-dashboard/requests/<%= request._id %>/decline" method="POST">
+                <button type="submit" class="btn-decline">Decline</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

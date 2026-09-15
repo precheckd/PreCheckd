@@ -28,6 +28,7 @@
   .owner-banner-actions {
     display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .owner-banner-actions a {
@@ -46,6 +47,16 @@
 
   .btn-edit:hover {
     background: #4ADE80;
+  }
+
+  .btn-requests {
+    background: transparent;
+    color: #4ADE80;
+    border: 1px solid #2ECC71;
+  }
+
+  .btn-requests:hover {
+    background: #2A4750;
   }
 
   .btn-logout {
@@ -426,6 +437,7 @@
       <span class="owner-banner-text">You're viewing your own profile.</span>
       <div class="owner-banner-actions">
         <a href="/recruiter/<%= recruiter.slug %>/edit" class="btn-edit">Edit Profile</a>
+        <a href="/recruiter-dashboard/requests" class="btn-requests">Connection Requests</a>
         <a href="/logout" class="btn-logout">Log Out</a>
       </div>
     </div>
