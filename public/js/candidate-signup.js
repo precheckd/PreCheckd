@@ -122,15 +122,20 @@
   });
 
   // --- Connect confirmation ---
+  const connectForm = document.getElementById('connect-confirm-form');
   const connectButton = document.getElementById('connect-confirm-button');
-  if (connectButton) {
-    connectButton.addEventListener('click', async () => {
+
+  if (connectForm) {
+    connectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
       hideError();
       connectButton.disabled = true;
       connectButton.textContent = 'Sending...';
 
+      const note = new FormData(connectForm).get('note');
+
       try {
-        const result = await postJson('/api/candidate/connect', {});
+        const result = await postJson('/api/candidate/connect', { note });
         document.getElementById('connect-done-title').textContent = result.alreadySent
           ? 'Already sent'
           : 'Request sent!';

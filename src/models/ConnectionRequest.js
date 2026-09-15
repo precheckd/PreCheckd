@@ -11,6 +11,11 @@ const connectionRequestSchema = new mongoose.Schema({
     ref: 'Recruiter',
     required: true
   },
+  note: {
+    type: String,
+    default: null,
+    maxlength: 500
+  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'declined'],
@@ -26,7 +31,7 @@ const connectionRequestSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    default: () => Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days, matches original spec
+    default: () => Date.now() + 30 * 24 * 60 * 60 * 1000
   }
 });
 

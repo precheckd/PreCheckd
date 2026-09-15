@@ -383,6 +383,7 @@ router.post('/connect', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
     const recruiterSlug = req.session.candidateRecruiterSlug;
+    const { note } = req.body;
 
     if (!candidateId) {
       return res.status(400).json({ error: 'You must be logged in to send a connection request.' });
@@ -416,9 +417,12 @@ router.post('/connect', async (req, res) => {
       });
     }
 
+    const trimmedNote = note && note.trim() ? note.trim().slice(0, 500) : null;
+
     await ConnectionRequest.create({
       candidateId: candidate._id,
-      recruiterId: recruiter._id
+      recruiterId: recruiter._id,
+      note: trimmedNote
     });
 
     delete req.session.candidateRecruiterSlug;

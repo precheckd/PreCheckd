@@ -77,7 +77,8 @@
       font-size: 0.8rem;
     }
 
-    input {
+    input,
+    textarea {
       padding: 0.6rem;
       border: 1px solid #4A6F7B;
       border-radius: 6px;
@@ -86,6 +87,12 @@
       background: #24404A;
       color: #F2F4F3;
       transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
     }
 
     input::placeholder {
@@ -247,7 +254,12 @@
         Send a connection request to <strong id="connect-recruiter-name"></strong>?
       </div>
       <p>They'll be notified and can choose to share their contact info with you.</p>
-      <button id="connect-confirm-button" type="button">Send Connection Request</button>
+      <form id="connect-confirm-form">
+        <label>Why would you like to connect? <span class="label-hint">(optional, max 500 characters)</span>
+          <textarea id="connect-note" name="note" maxlength="500" rows="4" placeholder="e.g. Cloud security engineer, 4 years experience, interested in the roles you place"></textarea>
+        </label>
+        <button id="connect-confirm-button" type="submit">Send Connection Request</button>
+      </form>
     </section>
 
     <!-- Final success states -->
