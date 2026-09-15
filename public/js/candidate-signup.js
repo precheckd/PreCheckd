@@ -1,7 +1,6 @@
 (function () {
-  const signupForm = document.getElementById('candidate-signup-form');
-  const phoneForm = document.getElementById('candidate-phone-form');
   const errorEl = document.getElementById('form-error');
+  const recruiterContext = window.PRECHECKD_RECRUITER; // { slug, name } or null
 
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
@@ -30,10 +29,60 @@
     return data;
   }
 
+  // After any verification success, either show the connect-confirm step
+  // (if a recruiter is in context) or the generic "you're verified" screen.
+  function proceedAfterVerification() {
+    if (recruiterContext) {
+      document.getElementById('connect-recruiter-name').textContent = recruiterContext.name;
+      showStep('step-connect-confirm');
+    } else {
+      showStep('step-done');
+    }
+  }
+
+  // --- Step 0: Email gate ---
+  const emailGateForm = document.getElementById('email-gate-form');
+  emailGateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    const email = new FormData(emailGateForm).get('email');
+
+    try {
+      const result = await postJson('/api/candidate/check-email', {
+        email,
+        recruiterSlug: recruiterContext ? recruiterContext.slug : null
+      });
+
+      if (result.exists) {
+        showStep('step-login-code');
+      } else {
+        document.getElementById('signup-email-hidden').value = email;
+        showStep('step-signup');
+      }
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  // --- Returning candidate: login code ---
+  const loginCodeForm = document.getElementById('login-code-form');
+  loginCodeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    try {
+      const code = new FormData(loginCodeForm).get('code');
+      await postJson('/api/candidate/login-verify', { code });
+      proceedAfterVerification();
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  // --- New candidate: signup details ---
+  const signupForm = document.getElementById('candidate-signup-form');
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
-
     const formData = Object.fromEntries(new FormData(signupForm).entries());
 
     try {
@@ -44,15 +93,56 @@
     }
   });
 
+  // --- New candidate: phone code ---
+  const phoneForm = document.getElementById('candidate-phone-form');
   phoneForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
     try {
       const code = new FormData(phoneForm).get('code');
       await postJson('/api/candidate/verify-phone', { code });
-      showStep('step-done');
+      showStep('step-email-code');
     } catch (err) {
       showError(err.message);
     }
   });
+
+  // --- New candidate: email code ---
+  const emailCodeForm = document.getElementById('candidate-email-code-form');
+  emailCodeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+    try {
+      const code = new FormData(emailCodeForm).get('code');
+      await postJson('/api/candidate/verify-email-code', { code });
+      proceedAfterVerification();
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  // --- Connect confirmation ---
+  const connectButton = document.getElementById('connect-confirm-button');
+  if (connectButton) {
+    connectButton.addEventListener('click', async () => {
+      hideError();
+      connectButton.disabled = true;
+      connectButton.textContent = 'Sending...';
+
+      try {
+        const result = await postJson('/api/candidate/connect', {});
+        document.getElementById('connect-done-title').textContent = result.alreadySent
+          ? 'Already sent'
+          : 'Request sent!';
+        document.getElementById('connect-done-text').textContent = result.alreadySent
+          ? `You've already sent a connection request to ${result.recruiterName}.`
+          : `${result.recruiterName} will be notified and can choose to share their contact info with you.`;
+        showStep('step-connect-done');
+      } catch (err) {
+        connectButton.disabled = false;
+        connectButton.textContent = 'Send Connection Request';
+        showError(err.message);
+      }
+    });
+  }
 })();

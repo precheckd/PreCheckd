@@ -7,6 +7,10 @@ function generateVerificationToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+function generateSixDigitCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+}
+
 async function sendVerificationEmail(toEmail, firstName, token) {
   const verifyUrl = `${process.env.APP_BASE_URL}/api/founding-recruiter/verify-email?token=${token}`;
 
@@ -39,18 +43,28 @@ async function sendLoginEmail(toEmail, firstName, token) {
   });
 }
 
-async function sendCandidateVerificationEmail(toEmail, firstName, token) {
-  const verifyUrl = `${process.env.APP_BASE_URL}/api/candidate/verify-email?token=${token}`;
-
+async function sendCandidateVerificationCode(toEmail, firstName, code) {
   return resend.emails.send({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
-    subject: 'Verify your email for PreCheckd',
+    subject: 'Your PreCheckd verification code',
     html: `
       <p>Hi ${firstName},</p>
-      <p>Click the link below to verify your email address and continue setting up your PreCheckd account:</p>
-      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-      <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
+      <p>Your verification code is: <strong>${code}</strong></p>
+      <p>Enter this code to finish verifying your email address. This code expires in 10 minutes.</p>
+    `,
+  });
+}
+
+async function sendCandidateLoginCode(toEmail, firstName, code) {
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Your PreCheckd login code',
+    html: `
+      <p>Hi ${firstName},</p>
+      <p>Your login code is: <strong>${code}</strong></p>
+      <p>Enter this code to log back into PreCheckd. This code expires in 10 minutes.</p>
     `,
   });
 }
@@ -59,5 +73,7 @@ module.exports = {
   sendVerificationEmail,
   generateVerificationToken,
   sendLoginEmail,
-  sendCandidateVerificationEmail
+  sendCandidateVerificationCode,
+  sendCandidateLoginCode,
+  generateSixDigitCode
 };

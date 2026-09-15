@@ -3,7 +3,13 @@ const router = express.Router();
 const crypto = require('crypto');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
-const { sendCandidateVerificationEmail, generateVerificationToken } = require('../services/emailService');
+const Recruiter = require('../models/Recruiter');
+const ConnectionRequest = require('../models/ConnectionRequest');
+const {
+  sendCandidateVerificationCode,
+  sendCandidateLoginCode,
+  generateSixDigitCode
+} = require('../services/emailService');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
 
@@ -25,10 +31,6 @@ function makeSlug(firstName, lastName) {
     .replace(/(^-|-$)/g, '');
   const suffix = crypto.randomBytes(3).toString('hex');
   return `${base}-${suffix}`;
-}
-
-function generateSixDigitCode() {
-  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
 function normalizePhoneToE164(rawPhone) {
@@ -70,7 +72,90 @@ async function sendVerificationCode(phone, code) {
   }));
 }
 
-// Step 1: Candidate signup
+// Step 0: Check whether this email belongs to an existing candidate.
+// New candidates get routed to signup; existing ones get a login code.
+router.post('/check-email', async (req, res) => {
+  try {
+    const { email, recruiterSlug } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    if (recruiterSlug) {
+      req.session.candidateRecruiterSlug = recruiterSlug;
+    }
+
+    const candidate = await Candidate.findOne({ email });
+
+    if (!candidate) {
+      return res.json({ exists: false });
+    }
+
+    const code = generateSixDigitCode();
+    candidate.loginToken = code;
+    candidate.loginTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await candidate.save();
+
+    req.session.candidatePendingLoginId = candidate._id.toString();
+
+    sendCandidateLoginCode(candidate.email, candidate.firstName, code).catch((err) => {
+      console.error('Failed to send candidate login code:', err);
+    });
+
+    res.json({ exists: true, firstName: candidate.firstName });
+  } catch (error) {
+    console.error('Error checking candidate email:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
+// Verify the returning-candidate login code
+router.post('/login-verify', async (req, res) => {
+  try {
+    const { code } = req.body;
+    const candidateId = req.session.candidatePendingLoginId;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Missing code' });
+    }
+
+    if (!candidateId) {
+      return res.status(400).json({ error: 'No login attempt in progress. Please start over.' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+
+    if (!candidate || !candidate.loginToken || !candidate.loginTokenExpires) {
+      return res.status(400).json({ error: 'No code on file. Please request a new one.' });
+    }
+
+    if (Date.now() > candidate.loginTokenExpires) {
+      return res.status(400).json({ error: 'This code has expired. Please request a new one.' });
+    }
+
+    if (code !== candidate.loginToken) {
+      return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    }
+
+    candidate.loginToken = null;
+    candidate.loginTokenExpires = null;
+    await candidate.save();
+
+    req.session.candidateId = candidate._id.toString();
+    delete req.session.candidatePendingLoginId;
+
+    res.json({
+      success: true,
+      recruiterSlug: req.session.candidateRecruiterSlug || null
+    });
+  } catch (error) {
+    console.error('Error verifying candidate login code:', error);
+    res.status(500).json({ error: 'Failed to verify code' });
+  }
+});
+
+// Step 1: New candidate signup
 router.post('/signup', async (req, res) => {
   try {
     const { firstName, lastName, email, phone, linkedinUrl } = req.body;
@@ -94,7 +179,6 @@ router.post('/signup', async (req, res) => {
     }
 
     const slug = makeSlug(firstName, lastName);
-    const emailToken = generateVerificationToken();
 
     const candidate = new Candidate({
       firstName,
@@ -103,9 +187,7 @@ router.post('/signup', async (req, res) => {
       email,
       phone: normalizedPhone,
       linkedinUrl: linkedinUrl.trim(),
-      emailVerifiedAt: null,
-      emailVerificationToken: emailToken,
-      emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000 // 48 hours
+      emailVerifiedAt: null
     });
 
     await candidate.save();
@@ -115,7 +197,7 @@ router.post('/signup', async (req, res) => {
 
     const code = generateSixDigitCode();
     req.session.candidatePhoneVerificationCode = code;
-    req.session.candidatePhoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    req.session.candidatePhoneVerificationExpires = Date.now() + 10 * 60 * 1000;
 
     try {
       await sendVerificationCode(normalizedPhone, code);
@@ -128,10 +210,6 @@ router.post('/signup', async (req, res) => {
       console.error('Failed to send SMS:', smsError);
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
     }
-
-    sendCandidateVerificationEmail(email, firstName, emailToken).catch((emailError) => {
-      console.error('Failed to send candidate verification email:', emailError);
-    });
 
     res.json({
       success: true,
@@ -173,7 +251,7 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Verify phone OTP
+// Step 2: Verify phone OTP, then kick off email code
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
@@ -190,26 +268,17 @@ router.post('/verify-phone', async (req, res) => {
     }
 
     if (!expectedCode || !expiresAt) {
-      return res.status(400).json({
-        success: false,
-        message: 'No verification code on file. Please request a new one.'
-      });
+      return res.status(400).json({ success: false, message: 'No verification code on file. Please request a new one.' });
     }
 
     if (Date.now() > expiresAt) {
-      return res.status(400).json({
-        success: false,
-        message: 'Verification code has expired. Please request a new one.'
-      });
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new one.' });
     }
 
     const isMockBypass = MOCK_SMS && code === '123456';
 
     if (code !== expectedCode && !isMockBypass) {
-      return res.status(400).json({
-        success: false,
-        message: 'Incorrect verification code. Please try again.'
-      });
+      return res.status(400).json({ success: false, message: 'Incorrect verification code. Please try again.' });
     }
 
     const candidate = await Candidate.findByIdAndUpdate(candidateId, {
@@ -217,38 +286,81 @@ router.post('/verify-phone', async (req, res) => {
       phoneVerifiedAt: new Date()
     }, { new: true });
 
-    req.session.candidatePhoneVerified = true;
     delete req.session.candidatePhoneVerificationCode;
     delete req.session.candidatePhoneVerificationExpires;
 
-    res.json({
-      success: true,
-      message: 'Phone verified successfully',
-      slug: candidate.slug
+    // Kick off email verification code immediately
+    const emailCode = generateSixDigitCode();
+    candidate.emailVerificationToken = emailCode;
+    candidate.emailVerificationExpires = Date.now() + 10 * 60 * 1000;
+    await candidate.save();
+
+    sendCandidateVerificationCode(candidate.email, candidate.firstName, emailCode).catch((err) => {
+      console.error('Failed to send candidate email code:', err);
     });
+
+    res.json({ success: true, message: 'Phone verified successfully' });
   } catch (error) {
     console.error('Error verifying candidate phone OTP:', error);
     res.status(500).json({ error: 'Failed to verify code' });
   }
 });
 
-// Verify email via clicked link
-router.get('/verify-email', async (req, res) => {
+// Resend email code
+router.post('/resend-email-code', async (req, res) => {
   try {
-    const { token } = req.query;
-
-    if (!token) {
-      return res.status(400).send('Missing verification token.');
+    const candidateId = req.session.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ error: 'No active candidate session' });
     }
 
-    const candidate = await Candidate.findOne({ emailVerificationToken: token });
-
+    const candidate = await Candidate.findById(candidateId);
     if (!candidate) {
-      return res.status(400).send('Invalid or already-used verification link.');
+      return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    if (candidate.emailVerificationExpires && Date.now() > candidate.emailVerificationExpires) {
-      return res.status(400).send('This verification link has expired. Please request a new one.');
+    const emailCode = generateSixDigitCode();
+    candidate.emailVerificationToken = emailCode;
+    candidate.emailVerificationExpires = Date.now() + 10 * 60 * 1000;
+    await candidate.save();
+
+    await sendCandidateVerificationCode(candidate.email, candidate.firstName, emailCode);
+
+    res.json({ success: true, message: 'Verification code resent to your email' });
+  } catch (error) {
+    console.error('Error resending candidate email code:', error);
+    res.status(500).json({ error: 'Failed to resend code' });
+  }
+});
+
+// Step 3: Verify email code
+router.post('/verify-email-code', async (req, res) => {
+  try {
+    const { code } = req.body;
+    const candidateId = req.session.candidateId;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Missing code' });
+    }
+
+    if (!candidateId) {
+      return res.status(400).json({ error: 'No active candidate session' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+
+    if (!candidate || !candidate.emailVerificationToken || !candidate.emailVerificationExpires) {
+      return res.status(400).json({ error: 'No code on file. Please request a new one.' });
+    }
+
+    if (Date.now() > candidate.emailVerificationExpires) {
+      return res.status(400).json({ error: 'This code has expired. Please request a new one.' });
+    }
+
+    const isMockBypass = MOCK_SMS && code === '123456';
+
+    if (code !== candidate.emailVerificationToken && !isMockBypass) {
+      return res.status(400).json({ error: 'Incorrect code. Please try again.' });
     }
 
     candidate.emailVerifiedAt = new Date();
@@ -256,18 +368,69 @@ router.get('/verify-email', async (req, res) => {
     candidate.emailVerificationExpires = null;
     await candidate.save();
 
-    res.send(`
-      <div style="font-family: -apple-system, sans-serif; background:#1F363C; color:#F2F4F3; min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center;">
-        <div>
-          <h1 style="color:#4ADE80;">Email verified &#10003;</h1>
-          <p>You're all set. You can now browse and contact verified recruiters on PreCheckd.</p>
-          <a href="/recruiter-search" style="color:#2ECC71;">Browse Recruiters</a>
-        </div>
-      </div>
-    `);
+    res.json({
+      success: true,
+      recruiterSlug: req.session.candidateRecruiterSlug || null
+    });
   } catch (error) {
-    console.error('Error verifying candidate email:', error);
-    res.status(500).send('Something went wrong verifying your email.');
+    console.error('Error verifying candidate email code:', error);
+    res.status(500).json({ error: 'Failed to verify code' });
+  }
+});
+
+// Send a connection request to the recruiter remembered in this session
+router.post('/connect', async (req, res) => {
+  try {
+    const candidateId = req.session.candidateId;
+    const recruiterSlug = req.session.candidateRecruiterSlug;
+
+    if (!candidateId) {
+      return res.status(400).json({ error: 'You must be logged in to send a connection request.' });
+    }
+
+    if (!recruiterSlug) {
+      return res.status(400).json({ error: 'No recruiter selected.' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate || !candidate.isPhoneVerified || !candidate.emailVerifiedAt) {
+      return res.status(403).json({ error: 'Please complete verification before contacting recruiters.' });
+    }
+
+    const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
+    if (!recruiter) {
+      return res.status(404).json({ error: 'Recruiter not found.' });
+    }
+
+    const existingRequest = await ConnectionRequest.findOne({
+      candidateId: candidate._id,
+      recruiterId: recruiter._id,
+      status: { $in: ['pending', 'accepted'] }
+    });
+
+    if (existingRequest) {
+      return res.json({
+        success: true,
+        alreadySent: true,
+        recruiterName: `${recruiter.firstName} ${recruiter.lastName}`
+      });
+    }
+
+    await ConnectionRequest.create({
+      candidateId: candidate._id,
+      recruiterId: recruiter._id
+    });
+
+    delete req.session.candidateRecruiterSlug;
+
+    res.json({
+      success: true,
+      alreadySent: false,
+      recruiterName: `${recruiter.firstName} ${recruiter.lastName}`
+    });
+  } catch (error) {
+    console.error('Error creating connection request:', error);
+    res.status(500).json({ error: 'Failed to send connection request' });
   }
 });
 

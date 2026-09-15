@@ -184,6 +184,42 @@
     font-weight: 600;
   }
 
+  .contact-card {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+  }
+
+  .contact-card-inner {
+    background: #2A4750;
+    border: 1px solid #2ECC71;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .contact-card-text {
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+
+  .btn-contact {
+    display: inline-block;
+    background: #2ECC71;
+    color: #1F363C;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+  }
+
+  .btn-contact:hover {
+    background: #4ADE80;
+  }
+
   .profile-main {
     display: flex;
     flex-direction: column;
@@ -395,6 +431,15 @@
     </div>
   <% } %>
 
+  <% if (!isOwner) { %>
+    <div class="contact-card">
+      <div class="contact-card-inner">
+        <p class="contact-card-text">Interested in connecting with <%= displayFirstName %>? Send a verified connection request.</p>
+        <a href="/candidate-signup?recruiter=<%= recruiter.slug %>" class="btn-contact">Contact This Recruiter</a>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Header: photo + identity -->
   <div class="profile-header">
     <div class="header-photo">
@@ -551,10 +596,12 @@
         </div>
       </div>
 
+      <% if (isOwner) { %>
       <div class="profile-section cta-section">
         <p class="cta-text"><strong>Ready to become a trusted, verified recruiter?</strong> Join PreCheckd today.</p>
         <a href="/founding-recruiter-landing" class="btn-primary">Join PreCheckd</a>
       </div>
+      <% } %>
     </div>
   </div>
 </div>

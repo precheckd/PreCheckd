@@ -22,9 +22,24 @@ router.get('/candidate-landing', (req, res) => {
   res.render('candidate-landing');
 });
 
-// Candidate signup page
-router.get('/candidate-signup', (req, res) => {
-  res.render('candidate-signup');
+// Candidate signup / contact-a-recruiter entry point.
+// Optional ?recruiter=<slug> carries context through the whole flow.
+router.get('/candidate-signup', async (req, res) => {
+  try {
+    const recruiterSlug = req.query.recruiter;
+    let recruiter = null;
+
+    if (recruiterSlug) {
+      recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
+    }
+
+    res.render('candidate-signup', {
+      recruiter: recruiter
+    });
+  } catch (error) {
+    console.error('Error loading candidate signup page:', error);
+    res.render('candidate-signup', { recruiter: null });
+  }
 });
 
 // Login page

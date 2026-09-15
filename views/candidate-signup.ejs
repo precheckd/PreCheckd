@@ -44,10 +44,6 @@
       line-height: 1.6;
     }
 
-    .form-step {
-      margin-bottom: 0;
-    }
-
     .form-step h2 {
       font-size: 1.1rem;
       color: #F2F4F3;
@@ -159,6 +155,21 @@
       line-height: 1.6;
     }
 
+    .recruiter-callout {
+      background: #24404A;
+      border: 1px solid #3B5860;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #C7D1CF;
+      font-size: 0.9rem;
+    }
+
+    .recruiter-callout strong {
+      color: #F2F4F3;
+    }
+
     .hidden {
       display: none;
     }
@@ -168,25 +179,51 @@
 
 <div class="page-wrap">
   <section class="content-section">
-    <h1>Get Verified</h1>
-    <p class="intro-text">Verify your email and phone to start connecting with verified recruiters on PreCheckd.</p>
+    <% if (recruiter) { %>
+      <h1>Contact <%= recruiter.firstName %> <%= recruiter.lastName %></h1>
+      <p class="intro-text">Verify your email and phone to send a connection request to this recruiter.</p>
+    <% } else { %>
+      <h1>Get Verified</h1>
+      <p class="intro-text">Verify your email and phone to start connecting with verified recruiters on PreCheckd.</p>
+    <% } %>
 
     <p id="form-error" class="form-error hidden"></p>
 
-    <section id="step-signup" class="form-step">
-      <h2>1. Your details</h2>
+    <!-- Step 0: Email gate -->
+    <section id="step-email-gate" class="form-step">
+      <h2>Enter your email to get started</h2>
+      <form id="email-gate-form">
+        <label>Email<input type="email" name="email" required></label>
+        <button type="submit">Continue</button>
+      </form>
+    </section>
+
+    <!-- Returning candidate: login code -->
+    <section id="step-login-code" class="form-step hidden">
+      <h2>Welcome back</h2>
+      <p>We emailed you a 6-digit code.</p>
+      <form id="login-code-form">
+        <label>Login code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
+        <button type="submit">Verify</button>
+      </form>
+    </section>
+
+    <!-- New candidate: full details -->
+    <section id="step-signup" class="form-step hidden">
+      <h2>Your details</h2>
       <form id="candidate-signup-form">
         <label>First name<input type="text" name="firstName" required></label>
         <label>Last name<input type="text" name="lastName" required></label>
-        <label>Email<input type="email" name="email" required></label>
+        <input type="hidden" name="email" id="signup-email-hidden">
         <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
         <label>LinkedIn profile URL<input type="url" name="linkedinUrl" placeholder="https://linkedin.com/in/yourname" required></label>
         <button type="submit">Continue</button>
       </form>
     </section>
 
+    <!-- New candidate: phone code -->
     <section id="step-phone" class="form-step hidden">
-      <h2>2. Verify your phone</h2>
+      <h2>Verify your phone</h2>
       <p>We texted you a 6-digit code.</p>
       <form id="candidate-phone-form">
         <label>Verification code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
@@ -194,16 +231,47 @@
       </form>
     </section>
 
+    <!-- New candidate: email code -->
+    <section id="step-email-code" class="form-step hidden">
+      <h2>Verify your email</h2>
+      <p>We emailed you a 6-digit code.</p>
+      <form id="candidate-email-code-form">
+        <label>Verification code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
+        <button type="submit">Verify</button>
+      </form>
+    </section>
+
+    <!-- Connect confirmation (only shown when a recruiter is in context) -->
+    <section id="step-connect-confirm" class="form-step hidden">
+      <div class="recruiter-callout">
+        Send a connection request to <strong id="connect-recruiter-name"></strong>?
+      </div>
+      <p>They'll be notified and can choose to share their contact info with you.</p>
+      <button id="connect-confirm-button" type="button">Send Connection Request</button>
+    </section>
+
+    <!-- Final success states -->
     <section id="step-done" class="form-step hidden">
       <div class="success-box">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        <h2>Phone verified!</h2>
-        <p>Check your email for a link to verify your email address too. Once both are confirmed, you're ready to browse and contact verified recruiters.</p>
+        <h2>You're verified!</h2>
+        <p>You're ready to browse and contact verified recruiters on PreCheckd.</p>
+      </div>
+    </section>
+
+    <section id="step-connect-done" class="form-step hidden">
+      <div class="success-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <h2 id="connect-done-title">Request sent!</h2>
+        <p id="connect-done-text"></p>
       </div>
     </section>
   </section>
 </div>
 
+<script>
+  window.PRECHECKD_RECRUITER = <%- recruiter ? JSON.stringify({ slug: recruiter.slug, name: `${recruiter.firstName} ${recruiter.lastName}` }) : 'null' %>;
+</script>
 <script src="/js/candidate-signup.js"></script>
 
 </body>
