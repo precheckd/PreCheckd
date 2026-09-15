@@ -58,6 +58,7 @@
       display: flex;
       align-items: center;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .nav-btn {
@@ -76,6 +77,25 @@
 
     .nav-btn:hover {
       background: #27ae60;
+    }
+
+    .nav-btn-outline {
+      background: transparent;
+      color: #4ADE80;
+      border: 1px solid #2ecc71;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-btn-outline:hover {
+      background: #2A4750;
+      color: #F2F4F3;
     }
 
     main {
@@ -154,7 +174,8 @@
         font-size: 0.8rem;
       }
 
-      .nav-btn {
+      .nav-btn,
+      .nav-btn-outline {
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
       }
@@ -174,6 +195,8 @@
       <a href="/candidate-landing" class="nav-btn">Candidates</a>
       <a href="/recruiter-landing" class="nav-btn">Recruiters</a>
       <a href="/login" class="nav-btn">Members</a>
+      <a href="/login" class="nav-btn-outline">Recruiter Login</a>
+      <a href="/candidate-signup" class="nav-btn-outline">Candidate Login</a>
     </nav>
   </div>
 </header>
