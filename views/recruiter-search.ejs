@@ -179,13 +179,25 @@
       display: block;
     }
 
-    .empty-state {
+    .empty-state,
+    .prompt-state {
       text-align: center;
       color: #8FA6AC;
       padding: 4rem 1.5rem;
       background: #2A4750;
       border: 1px solid #3B5860;
       border-radius: 12px;
+    }
+
+    .prompt-state svg {
+      width: 40px;
+      height: 40px;
+      color: #4A6F7B;
+      margin-bottom: 1rem;
+    }
+
+    .prompt-state p {
+      font-size: 1rem;
     }
 
     .hidden {
@@ -212,78 +224,81 @@
 <main>
   <div class="page-header">
     <h1 class="page-title">Browse Verified Recruiters</h1>
-    <p class="page-subtitle">Every recruiter below has completed real identity, phone, email, and company domain verification.</p>
+    <p class="page-subtitle">Every recruiter on PreCheckd has completed real identity, phone, email, and company domain verification. Search by name, company, or specialty to find the right one.</p>
   </div>
 
   <div class="search-bar">
     <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty...">
   </div>
 
-  <% if (recruiters.length === 0) { %>
-    <div class="empty-state">
-      <p>No verified recruiters yet. Check back soon.</p>
-    </div>
-  <% } else { %>
-    <div class="recruiter-grid" id="recruiter-grid">
-      <% recruiters.forEach(function(recruiter) { %>
-        <%
-          const hasCompany = recruiter.company && recruiter.company !== 'Not provided';
-          const hasSpecialties = recruiter.specialties && recruiter.specialties.length > 0;
-          const allVerified = Boolean(
-            recruiter.domainVerifiedAt &&
-            recruiter.emailVerifiedAt &&
-            recruiter.phoneVerifiedAt &&
-            recruiter.identityVerifiedAt &&
-            recruiter.facialRecognitionVerifiedAt
-          );
-          const searchableText = [
-            recruiter.firstName,
-            recruiter.lastName,
-            recruiter.nickname,
-            hasCompany ? recruiter.company : '',
-            hasSpecialties ? recruiter.specialties.join(' ') : ''
-          ].join(' ').toLowerCase();
-        %>
-        <a href="/recruiter/<%= recruiter.slug %>" class="recruiter-card" data-search="<%= searchableText %>">
-          <div class="card-top">
-            <% if (recruiter.profilePhotoUrl) { %>
-              <div class="card-photo">
-                <img src="<%= recruiter.profilePhotoUrl %>" alt="<%= recruiter.firstName %> <%= recruiter.lastName %>">
-              </div>
-            <% } else { %>
-              <div class="card-avatar-circle">
-                <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
-              </div>
-            <% } %>
-            <div>
-              <div class="card-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
-              <% if (hasCompany) { %>
-                <div class="card-company"><%= recruiter.company %></div>
-              <% } %>
-            </div>
-          </div>
+  <div class="prompt-state" id="prompt-state">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <p>Start typing to search for a verified recruiter.</p>
+  </div>
 
-          <% if (allVerified) { %>
-            <div class="card-verified-badge">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-              PreCheckd Verified
+  <div class="empty-state hidden" id="empty-state">
+    <p>No recruiters match your search.</p>
+  </div>
+
+  <div class="recruiter-grid hidden" id="recruiter-grid">
+    <% recruiters.forEach(function(recruiter) { %>
+      <%
+        const hasCompany = recruiter.company && recruiter.company !== 'Not provided';
+        const hasSpecialties = recruiter.specialties && recruiter.specialties.length > 0;
+        const allVerified = Boolean(
+          recruiter.domainVerifiedAt &&
+          recruiter.emailVerifiedAt &&
+          recruiter.phoneVerifiedAt &&
+          recruiter.identityVerifiedAt &&
+          recruiter.facialRecognitionVerifiedAt
+        );
+        const searchableText = [
+          recruiter.firstName,
+          recruiter.lastName,
+          recruiter.nickname,
+          hasCompany ? recruiter.company : '',
+          hasSpecialties ? recruiter.specialties.join(' ') : ''
+        ].join(' ').toLowerCase();
+      %>
+      <a href="/recruiter/<%= recruiter.slug %>" class="recruiter-card" data-search="<%= searchableText %>">
+        <div class="card-top">
+          <% if (recruiter.profilePhotoUrl) { %>
+            <div class="card-photo">
+              <img src="<%= recruiter.profilePhotoUrl %>" alt="<%= recruiter.firstName %> <%= recruiter.lastName %>">
             </div>
           <% } else { %>
-            <div class="card-pending-badge">
-              Verification Pending
+            <div class="card-avatar-circle">
+              <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
             </div>
           <% } %>
+          <div>
+            <div class="card-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
+            <% if (hasCompany) { %>
+              <div class="card-company"><%= recruiter.company %></div>
+            <% } %>
+          </div>
+        </div>
 
-          <% if (hasSpecialties) { %>
-            <div class="card-specialties">
-              <span class="card-specialties-label">Specialties</span>
-              <%= recruiter.specialties.join(', ') %>
-            </div>
-          <% } %>
-        </a>
-      <% }); %>
-    </div>
-  <% } %>
+        <% if (allVerified) { %>
+          <div class="card-verified-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            PreCheckd Verified
+          </div>
+        <% } else { %>
+          <div class="card-pending-badge">
+            Verification Pending
+          </div>
+        <% } %>
+
+        <% if (hasSpecialties) { %>
+          <div class="card-specialties">
+            <span class="card-specialties-label">Specialties</span>
+            <%= recruiter.specialties.join(', ') %>
+          </div>
+        <% } %>
+      </a>
+    <% }); %>
+  </div>
 </main>
 
 <script src="/js/recruiter-search.js"></script>
