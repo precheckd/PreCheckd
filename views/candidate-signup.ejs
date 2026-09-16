@@ -95,11 +95,13 @@
       min-height: 80px;
     }
 
-    input::placeholder {
+    input::placeholder,
+    textarea::placeholder {
       color: #7A9096;
     }
 
-    input:focus {
+    input:focus,
+    textarea:focus {
       outline: none;
       border-color: #2ECC71;
       box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
@@ -160,6 +162,23 @@
       color: #C7D1CF;
       font-size: 0.9rem;
       line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .success-box a.hero-cta {
+      display: inline-block;
+      background: #2ECC71;
+      color: #1F363C;
+      padding: 0.75rem 1.75rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .success-box a.hero-cta:hover {
+      background: #4ADE80;
     }
 
     .recruiter-callout {
@@ -268,6 +287,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <h2>You're verified!</h2>
         <p>You're ready to browse and contact verified recruiters on PreCheckd.</p>
+        <a href="/recruiter-search" class="hero-cta">Browse Recruiters</a>
       </div>
     </section>
 
@@ -276,6 +296,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <h2 id="connect-done-title">Request sent!</h2>
         <p id="connect-done-text"></p>
+        <a href="/recruiter-search" class="hero-cta">Browse More Recruiters</a>
       </div>
     </section>
   </section>
