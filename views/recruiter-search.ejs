@@ -43,12 +43,14 @@
     }
 
     .search-bar {
-      max-width: 500px;
+      max-width: 550px;
       margin: 2rem auto 2.5rem;
+      display: flex;
+      gap: 0.75rem;
     }
 
     .search-bar input {
-      width: 100%;
+      flex: 1;
       padding: 0.85rem 1rem;
       border: 1px solid #4A6F7B;
       border-radius: 8px;
@@ -66,6 +68,23 @@
       outline: none;
       border-color: #2ECC71;
       box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+    }
+
+    .search-bar button {
+      background: #2ECC71;
+      color: #1F363C;
+      border: none;
+      padding: 0.85rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .search-bar button:hover {
+      background: #4ADE80;
     }
 
     .recruiter-grid {
@@ -213,6 +232,10 @@
         font-size: 1.75rem;
       }
 
+      .search-bar {
+        flex-direction: column;
+      }
+
       .recruiter-grid {
         grid-template-columns: 1fr;
       }
@@ -227,13 +250,14 @@
     <p class="page-subtitle">Every recruiter on PreCheckd has completed real identity, phone, email, and company domain verification. Search by name, company, or specialty to find the right one.</p>
   </div>
 
-  <div class="search-bar">
+  <form class="search-bar" id="recruiter-search-form">
     <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty...">
-  </div>
+    <button type="submit">Search</button>
+  </form>
 
   <div class="prompt-state" id="prompt-state">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <p>Start typing to search for a verified recruiter.</p>
+    <p>Search for a verified recruiter to get started.</p>
   </div>
 
   <div class="empty-state hidden" id="empty-state">

@@ -1,14 +1,17 @@
 (function () {
+  const searchForm = document.getElementById('recruiter-search-form');
   const searchInput = document.getElementById('recruiter-search-input');
   const promptState = document.getElementById('prompt-state');
   const emptyState = document.getElementById('empty-state');
   const grid = document.getElementById('recruiter-grid');
 
-  if (!searchInput) return;
+  if (!searchForm) return;
 
   const cards = document.querySelectorAll('.recruiter-card');
 
-  searchInput.addEventListener('input', () => {
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
     const query = searchInput.value.trim().toLowerCase();
 
     if (query === '') {
