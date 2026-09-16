@@ -77,7 +77,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
-      margin-bottom: 4rem;
     }
 
     .prop-card {
@@ -113,13 +112,13 @@
       line-height: 1.6;
     }
 
-    .features-grid {
+    .steps-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 2rem;
     }
 
-    .feature-card {
+    .step-card {
       background: #2A4750;
       border: 1px solid #3B5860;
       border-radius: 12px;
@@ -127,27 +126,27 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .feature-number {
+    .step-number {
       font-size: 2.5rem;
       font-weight: 700;
       color: #4ADE80;
       margin-bottom: 0.5rem;
     }
 
-    .feature-title {
+    .step-title {
       font-size: 1.25rem;
       font-weight: 600;
       color: #F2F4F3;
       margin-bottom: 0.75rem;
     }
 
-    .feature-description {
+    .step-description {
       color: #C7D1CF;
       line-height: 1.6;
       font-size: 0.95rem;
     }
 
-    .waitlist-section {
+    .final-cta-section {
       background: #2A4750;
       border: 1px solid #3B5860;
       border-radius: 12px;
@@ -158,71 +157,17 @@
       text-align: center;
     }
 
-    .waitlist-title {
+    .final-cta-title {
       font-size: 1.75rem;
       font-weight: 700;
       color: #F2F4F3;
       margin-bottom: 1rem;
     }
 
-    .waitlist-text {
+    .final-cta-text {
       color: #C7D1CF;
       margin-bottom: 2rem;
       line-height: 1.6;
-    }
-
-    .waitlist-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .waitlist-form input {
-      padding: 0.75rem;
-      border: 1px solid #4A6F7B;
-      border-radius: 6px;
-      font-size: 1rem;
-      background: #24404A;
-      color: #F2F4F3;
-      transition: border-color 0.2s;
-    }
-
-    .waitlist-form input::placeholder {
-      color: #7A9096;
-    }
-
-    .waitlist-form input:focus {
-      outline: none;
-      border-color: #2ECC71;
-      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
-    }
-
-    .waitlist-form button {
-      background: #2ECC71;
-      color: #1F363C;
-      padding: 0.875rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .waitlist-form button:hover {
-      background: #4ADE80;
-    }
-
-    .coming-soon-badge {
-      display: inline-block;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      color: #4ADE80;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-top: 1rem;
     }
 
     @media (max-width: 768px) {
@@ -243,16 +188,12 @@
       }
 
       .value-props,
-      .features-grid {
+      .steps-grid {
         grid-template-columns: 1fr;
       }
 
-      .waitlist-section {
+      .final-cta-section {
         padding: 2rem 1.5rem;
-      }
-
-      .waitlist-form {
-        gap: 0.75rem;
       }
     }
   </style>
@@ -262,8 +203,8 @@
 <main>
   <div class="hero-section">
     <h1 class="hero-title">Find Verified Recruiters You Can Trust</h1>
-    <p class="hero-subtitle">PreCheckd is building a new way for job seekers to connect with legitimate, verified recruiting professionals. Coming soon to a device near you.</p>
-    <button class="hero-cta" onclick="document.querySelector('.waitlist-section').scrollIntoView({behavior: 'smooth'});">Join the Waitlist</button>
+    <p class="hero-subtitle">Every recruiter on PreCheckd has completed real identity, phone, email, and company domain verification. Know exactly who you're talking to before you ever reach out.</p>
+    <a href="/recruiter-search" class="hero-cta">Browse Verified Recruiters</a>
   </div>
 
   <div class="section">
@@ -274,70 +215,51 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         </div>
         <h3 class="prop-title">Verified Recruiters</h3>
-        <p class="prop-text">Every recruiter on PreCheckd is verified and vetted. Know who you're talking to.</p>
+        <p class="prop-text">Every recruiter on PreCheckd is identity-verified and vetted. Know who you're talking to.</p>
       </div>
       <div class="prop-card">
         <div class="prop-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
-        <h3 class="prop-title">Your Data is Safe</h3>
-        <p class="prop-text">Bank-level security protects your information. Your privacy is our priority.</p>
+        <h3 class="prop-title">Your Info Stays Private</h3>
+        <p class="prop-text">Your contact details are only shared with a recruiter once you choose to connect with them.</p>
       </div>
       <div class="prop-card">
         <div class="prop-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         </div>
         <h3 class="prop-title">Direct Connections</h3>
-        <p class="prop-text">Skip the spam. Connect directly with quality recruiters actively hiring.</p>
+        <p class="prop-text">Skip the spam. Connect directly with quality recruiters you choose.</p>
       </div>
     </div>
   </div>
 
   <div class="section">
-    <h2 class="section-title">What's Coming</h2>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-number">01</div>
-        <h3 class="feature-title">Candidate Profiles</h3>
-        <p class="feature-description">Build your verified profile and showcase your skills to vetted recruiters.</p>
+    <h2 class="section-title">How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <h3 class="step-title">Browse Recruiters</h3>
+        <p class="step-description">Search verified recruiters and review their background, specialties, and verification status.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-number">02</div>
-        <h3 class="feature-title">Recruiter Directory</h3>
-        <p class="feature-description">Browse and search verified recruiters by industry, specialty, and experience.</p>
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <h3 class="step-title">Verify in Minutes</h3>
+        <p class="step-description">Confirm your email and phone number to unlock the ability to contact recruiters directly.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-number">03</div>
-        <h3 class="feature-title">Direct Messaging</h3>
-        <p class="feature-description">Connect directly with recruiters in a safe, verified messaging environment.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-number">04</div>
-        <h3 class="feature-title">Job Matching</h3>
-        <p class="feature-description">Get matched with opportunities that fit your skills and career goals.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-number">05</div>
-        <h3 class="feature-title">Recruiter Reviews</h3>
-        <p class="feature-description">See what other candidates think. Rate your experience and help others.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-number">06</div>
-        <h3 class="feature-title">Opportunity Alerts</h3>
-        <p class="feature-description">Get notified about relevant roles from verified recruiters in your field.</p>
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <h3 class="step-title">Connect Directly</h3>
+        <p class="step-description">Send a connection request. If the recruiter accepts, you'll get their contact info directly.</p>
       </div>
     </div>
   </div>
 
   <div class="section">
-    <div class="waitlist-section">
-      <h2 class="waitlist-title">Get on the Waitlist</h2>
-      <p class="waitlist-text">Be among the first to know when PreCheckd launches for candidates. We're building something special and can't wait to share it with you.</p>
-      <form class="waitlist-form">
-        <input type="email" placeholder="Enter your email" required>
-        <button type="submit">Join the Waitlist</button>
-      </form>
-      <div class="coming-soon-badge">🚀 Coming Soon</div>
+    <div class="final-cta-section">
+      <h2 class="final-cta-title">Ready to Get Started?</h2>
+      <p class="final-cta-text">Browse verified recruiters and find someone worth connecting with today.</p>
+      <a href="/recruiter-search" class="hero-cta">Browse Verified Recruiters</a>
     </div>
   </div>
 </main>
