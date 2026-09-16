@@ -153,6 +153,16 @@
       height: 14px;
     }
 
+    .card-pending-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #F87171;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+
     .card-specialties {
       color: #B9C7CA;
       font-size: 0.85rem;
@@ -219,6 +229,13 @@
         <%
           const hasCompany = recruiter.company && recruiter.company !== 'Not provided';
           const hasSpecialties = recruiter.specialties && recruiter.specialties.length > 0;
+          const allVerified = Boolean(
+            recruiter.domainVerifiedAt &&
+            recruiter.emailVerifiedAt &&
+            recruiter.phoneVerifiedAt &&
+            recruiter.identityVerifiedAt &&
+            recruiter.facialRecognitionVerifiedAt
+          );
           const searchableText = [
             recruiter.firstName,
             recruiter.lastName,
@@ -246,10 +263,16 @@
             </div>
           </div>
 
-          <div class="card-verified-badge">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            PreCheckd Verified
-          </div>
+          <% if (allVerified) { %>
+            <div class="card-verified-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              PreCheckd Verified
+            </div>
+          <% } else { %>
+            <div class="card-pending-badge">
+              Verification Pending
+            </div>
+          <% } %>
 
           <% if (hasSpecialties) { %>
             <div class="card-specialties">
