@@ -13,8 +13,14 @@ router.get('/recruiter-landing', (req, res) => {
 });
 
 // Recruiter search/browse page
-router.get('/recruiter-search', (req, res) => {
-  res.render('recruiter-search');
+router.get('/recruiter-search', async (req, res) => {
+  try {
+    const recruiters = await Recruiter.find({ isActive: true }).sort({ createdAt: -1 });
+    res.render('recruiter-search', { recruiters });
+  } catch (error) {
+    console.error('Error loading recruiter search page:', error);
+    res.render('recruiter-search', { recruiters: [] });
+  }
 });
 
 // Candidate landing page

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PreCheckd - Browse Recruiters</title>
+  <title>PreCheckd - Browse Verified Recruiters</title>
   <style>
     * {
       margin: 0;
@@ -18,92 +18,168 @@
     }
 
     main {
-      padding: 4rem 1.5rem;
+      padding: 3rem 1.5rem;
       max-width: 1200px;
       margin: 0 auto;
     }
 
-    .coming-soon-container {
+    .page-header {
       text-align: center;
-      background: #2A4750;
-      border: 1px solid #3B5860;
-      border-radius: 12px;
-      padding: 4rem 2rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+      margin-bottom: 2.5rem;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #F2F4F3;
+      margin-bottom: 0.75rem;
+    }
+
+    .page-subtitle {
+      color: #C7D1CF;
+      font-size: 1.05rem;
       max-width: 600px;
       margin: 0 auto;
     }
 
-    .coming-soon-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 1rem;
-      color: #4ADE80;
+    .search-bar {
+      max-width: 500px;
+      margin: 2rem auto 2.5rem;
     }
 
-    .coming-soon-icon svg {
+    .search-bar input {
       width: 100%;
-      height: 100%;
-    }
-
-    .coming-soon-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #F2F4F3;
-      margin-bottom: 1rem;
-    }
-
-    .coming-soon-text {
-      font-size: 1.1rem;
-      color: #C7D1CF;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-
-    .coming-soon-features {
-      text-align: left;
-      background: #24404A;
-      border: 1px solid #3B5860;
+      padding: 0.85rem 1rem;
+      border: 1px solid #4A6F7B;
       border-radius: 8px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .coming-soon-features h3 {
-      font-size: 1.1rem;
+      font-size: 1rem;
+      background: #24404A;
       color: #F2F4F3;
-      margin-bottom: 1rem;
-      font-weight: 600;
+      transition: border-color 0.2s;
     }
 
-    .feature-list {
-      list-style: none;
+    .search-bar input::placeholder {
+      color: #7A9096;
     }
 
-    .feature-list li {
-      padding: 0.5rem 0;
-      color: #C7D1CF;
+    .search-bar input:focus {
+      outline: none;
+      border-color: #2ECC71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+    }
+
+    .recruiter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .recruiter-card {
+      background: #2A4750;
+      border: 1px solid #3B5860;
+      border-radius: 12px;
+      padding: 1.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .recruiter-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .card-top {
       display: flex;
       align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
-    .feature-list li:before {
-      content: "✓";
-      color: #4ADE80;
-      font-weight: bold;
-      margin-right: 0.75rem;
-      font-size: 1.25rem;
+    .card-photo {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
     }
 
-    .badge {
-      display: inline-block;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      color: #4ADE80;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
+    .card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-avatar-circle {
+      width: 60px;
+      height: 60px;
+      background: #2ECC71;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
       font-weight: 600;
-      font-size: 0.95rem;
+      color: #1F363C;
+      flex-shrink: 0;
+    }
+
+    .card-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #F2F4F3;
+      margin-bottom: 0.2rem;
+    }
+
+    .card-company {
+      font-size: 0.85rem;
+      color: #8FA6AC;
+    }
+
+    .card-verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #4ADE80;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+
+    .card-verified-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .card-specialties {
+      color: #B9C7CA;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .card-specialties-label {
+      color: #8FA6AC;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 0.7rem;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #8FA6AC;
+      padding: 4rem 1.5rem;
+      background: #2A4750;
+      border: 1px solid #3B5860;
+      border-radius: 12px;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     @media (max-width: 768px) {
@@ -111,16 +187,12 @@
         padding: 2rem 1rem;
       }
 
-      .coming-soon-container {
-        padding: 2rem 1.5rem;
+      .page-title {
+        font-size: 1.75rem;
       }
 
-      .coming-soon-title {
-        font-size: 1.5rem;
-      }
-
-      .coming-soon-text {
-        font-size: 1rem;
+      .recruiter-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -128,27 +200,70 @@
 <body>
 
 <main>
-  <div class="coming-soon-container">
-    <div class="coming-soon-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    </div>
-    <h1 class="coming-soon-title">Browse Recruiters</h1>
-    <p class="coming-soon-text">Search and discover verified recruiters in your industry. Find the right hiring partner for your team.</p>
-
-    <div class="coming-soon-features">
-      <h3>What's Coming</h3>
-      <ul class="feature-list">
-        <li>Advanced recruiter search and filtering</li>
-        <li>View recruiter profiles and specialties</li>
-        <li>See verified badges and credentials</li>
-        <li>Direct messaging with recruiters</li>
-        <li>Recruiter ratings and reviews</li>
-      </ul>
-    </div>
-
-    <div class="badge">🚀 Coming Soon</div>
+  <div class="page-header">
+    <h1 class="page-title">Browse Verified Recruiters</h1>
+    <p class="page-subtitle">Every recruiter below has completed real identity, phone, email, and company domain verification.</p>
   </div>
+
+  <div class="search-bar">
+    <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty...">
+  </div>
+
+  <% if (recruiters.length === 0) { %>
+    <div class="empty-state">
+      <p>No verified recruiters yet. Check back soon.</p>
+    </div>
+  <% } else { %>
+    <div class="recruiter-grid" id="recruiter-grid">
+      <% recruiters.forEach(function(recruiter) { %>
+        <%
+          const hasCompany = recruiter.company && recruiter.company !== 'Not provided';
+          const hasSpecialties = recruiter.specialties && recruiter.specialties.length > 0;
+          const searchableText = [
+            recruiter.firstName,
+            recruiter.lastName,
+            recruiter.nickname,
+            hasCompany ? recruiter.company : '',
+            hasSpecialties ? recruiter.specialties.join(' ') : ''
+          ].join(' ').toLowerCase();
+        %>
+        <a href="/recruiter/<%= recruiter.slug %>" class="recruiter-card" data-search="<%= searchableText %>">
+          <div class="card-top">
+            <% if (recruiter.profilePhotoUrl) { %>
+              <div class="card-photo">
+                <img src="<%= recruiter.profilePhotoUrl %>" alt="<%= recruiter.firstName %> <%= recruiter.lastName %>">
+              </div>
+            <% } else { %>
+              <div class="card-avatar-circle">
+                <%= recruiter.firstName.charAt(0).toUpperCase() %><%= recruiter.lastName.charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+            <div>
+              <div class="card-name"><%= recruiter.firstName %> <%= recruiter.lastName %></div>
+              <% if (hasCompany) { %>
+                <div class="card-company"><%= recruiter.company %></div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="card-verified-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            PreCheckd Verified
+          </div>
+
+          <% if (hasSpecialties) { %>
+            <div class="card-specialties">
+              <span class="card-specialties-label">Specialties</span>
+              <%= recruiter.specialties.join(', ') %>
+            </div>
+          <% } %>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
 </main>
+
+<script src="/js/recruiter-search.js"></script>
 
 </body>
 </html>
