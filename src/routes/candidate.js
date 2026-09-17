@@ -12,6 +12,7 @@ const {
 } = require('../services/emailService');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
+const MOCK_IDENTITY = process.env.MOCK_IDENTITY === 'true';
 
 const smsClient = new PinpointSMSVoiceV2Client({
   region: process.env.AWS_SMS_REGION,
@@ -370,7 +371,7 @@ router.post('/verify-email-code', async (req, res) => {
   }
 });
 
-// Step 4: Create Stripe Identity session
+// Step 4: Create Stripe Identity session (or mock, based on MOCK_IDENTITY)
 router.post('/create-identity-session', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -382,6 +383,16 @@ router.post('/create-identity-session', async (req, res) => {
     const candidate = await Candidate.findById(candidateId);
     if (!candidate) {
       return res.status(404).json({ error: 'Candidate not found' });
+    }
+
+    if (MOCK_IDENTITY) {
+      console.log(`[MOCK IDENTITY] Skipping real Stripe session for ${candidate.email}`);
+      return res.json({
+        success: true,
+        mock: true,
+        clientSecret: null,
+        sessionId: 'mock-session'
+      });
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -415,14 +426,33 @@ router.post('/create-identity-session', async (req, res) => {
   }
 });
 
-// Step 4: Verify Stripe Identity session result
+// Step 4: Verify Stripe Identity session result (or mock, based on MOCK_IDENTITY)
 router.post('/verify-identity-session', async (req, res) => {
   try {
     const { sessionId } = req.body;
     const candidateId = req.session.candidateId;
 
-    if (!candidateId || !sessionId) {
-      return res.status(400).json({ error: 'Missing candidate or session ID' });
+    if (!candidateId) {
+      return res.status(400).json({ error: 'Missing candidate session' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+
+    if (MOCK_IDENTITY || sessionId === 'mock-session') {
+      console.log(`[MOCK IDENTITY] Marking ${candidate.email} as identity-verified without a real Stripe check`);
+      candidate.isIdentityVerified = true;
+      candidate.identityVerifiedAt = new Date();
+      candidate.facialRecognitionVerifiedAt = new Date();
+      candidate.status = 'candidate';
+      await candidate.save();
+
+      return res.json({
+        success: true,
+        slug: candidate.slug
+      });
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -433,11 +463,6 @@ router.post('/verify-identity-session', async (req, res) => {
     });
 
     if (verificationSession.status === 'verified') {
-      const candidate = await Candidate.findById(candidateId);
-      if (!candidate) {
-        return res.status(404).json({ error: 'Candidate not found' });
-      }
-
       const rawDocFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
       const docFirstName = rawDocFirstName.split(/\s+/)[0] || '';
       const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();

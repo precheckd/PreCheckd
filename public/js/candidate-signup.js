@@ -5,6 +5,7 @@
   let stripe = null;
   let stripeClientSecret = null;
   let stripeSessionId = null;
+  let isMockIdentity = false;
   let candidateSlug = null;
 
   function showStep(id) {
@@ -54,10 +55,21 @@
 
   async function prepareIdentitySession() {
     try {
-      initStripe();
       const sessionResponse = await postJson('/api/candidate/create-identity-session', {});
+      isMockIdentity = Boolean(sessionResponse.mock);
       stripeSessionId = sessionResponse.sessionId;
       stripeClientSecret = sessionResponse.clientSecret;
+
+      if (isMockIdentity) {
+        // No real Stripe modal — just show a quick note and let the
+        // existing button complete verification instantly.
+        const identitySection = document.getElementById('step-identity');
+        identitySection.querySelector('p').textContent =
+          '[TEST MODE] Identity verification is mocked. Click below to continue.';
+        document.getElementById('stripe-element').classList.add('hidden');
+      } else {
+        initStripe();
+      }
     } catch (err) {
       showError(err.message);
     }
@@ -155,13 +167,42 @@
   // --- Identity verification ---
   const identityButton = document.getElementById('identity-button');
   identityButton.addEventListener('click', async () => {
-    if (!stripeClientSecret) {
-      showError('Verification session not ready. Please refresh and try again.');
+    hideError();
+    identityButton.disabled = true;
+    identityButton.textContent = 'Verifying...';
+
+    // Mock mode: skip Stripe entirely, just call the backend to mark verified.
+    if (isMockIdentity) {
+      try {
+        const response = await postJson('/api/candidate/verify-identity-session', {
+          sessionId: stripeSessionId,
+        });
+
+        identityButton.disabled = false;
+        identityButton.textContent = 'Complete verification';
+
+        if (response.success) {
+          candidateSlug = response.slug;
+          proceedAfterIdentity();
+        } else {
+          showError(response.message || 'Something went wrong.');
+        }
+      } catch (err) {
+        identityButton.disabled = false;
+        identityButton.textContent = 'Complete verification';
+        showError(err.message);
+      }
       return;
     }
 
-    hideError();
-    identityButton.disabled = true;
+    // Real mode: open the actual Stripe Identity modal.
+    if (!stripeClientSecret) {
+      showError('Verification session not ready. Please refresh and try again.');
+      identityButton.disabled = false;
+      identityButton.textContent = 'Complete verification';
+      return;
+    }
+
     identityButton.textContent = 'Opening verification...';
 
     try {
