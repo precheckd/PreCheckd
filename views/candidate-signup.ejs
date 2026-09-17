@@ -19,7 +19,7 @@
     }
 
     .page-wrap {
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
@@ -130,6 +130,16 @@
       opacity: 0.8;
     }
 
+    .btn-secondary {
+      background: transparent;
+      color: #C7D1CF;
+      border: 1px solid #4A6F7B;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #24404A;
+    }
+
     .form-error {
       background: #3A2020;
       color: #FF8A8A;
@@ -204,6 +214,76 @@
       color: #F2F4F3;
     }
 
+    .resume-upload-box {
+      background: #24404A;
+      border: 1px dashed #4A6F7B;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .resume-upload-box p {
+      margin-bottom: 0.6rem;
+      font-size: 0.85rem;
+      color: #B9C7CA;
+      line-height: 1.5;
+    }
+
+    .entry-card {
+      background: #24404A;
+      border: 1px solid #3B5860;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+
+    .entry-card .remove-entry {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: transparent;
+      border: none;
+      color: #FF8A8A;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      width: auto;
+    }
+
+    .entry-card .remove-entry:hover {
+      background: transparent;
+      text-decoration: underline;
+    }
+
+    .add-entry-btn {
+      background: transparent;
+      border: 1px dashed #4A6F7B;
+      color: #8FA6AC;
+      font-size: 0.85rem;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .add-entry-btn:hover {
+      background: #24404A;
+      color: #F2F4F3;
+    }
+
+    .section-label {
+      color: #F2F4F3;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 1rem 0 0.5rem;
+    }
+
+    .loading-text {
+      text-align: center;
+      color: #8FA6AC;
+      font-size: 0.9rem;
+      padding: 1rem 0;
+    }
+
     .hidden {
       display: none;
     }
@@ -218,7 +298,7 @@
       <p class="intro-text">Verify your email and phone to send a connection request to this recruiter.</p>
     <% } else { %>
       <h1>Get Verified</h1>
-      <p class="intro-text">Verify your email and phone to start connecting with verified recruiters on PreCheckd.</p>
+      <p class="intro-text">Verify your identity to start connecting with verified recruiters on PreCheckd.</p>
     <% } %>
 
     <p id="form-error" class="form-error hidden"></p>
@@ -242,7 +322,7 @@
       </form>
     </section>
 
-    <!-- New candidate: full details -->
+    <!-- New candidate: full details + resume upload -->
     <section id="step-signup" class="form-step hidden">
       <h2>Your details</h2>
       <form id="candidate-signup-form">
@@ -250,6 +330,14 @@
         <label>Last name<input type="text" name="lastName" required></label>
         <input type="hidden" name="email" id="signup-email-hidden">
         <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
+
+        <div class="resume-upload-box">
+          <p><strong>Have a resume handy?</strong> Every job site makes you upload one, then re-type everything on it anyway. We think that's ridiculous — upload yours and we'll pull your work history and education automatically. You'll get a chance to review it before anything's saved. Prefer to type it manually? Skip this and you can add it later.</p>
+          <label>Resume <span class="label-hint">(optional — PDF or DOCX)</span>
+            <input type="file" name="resume" accept=".pdf,.docx">
+          </label>
+        </div>
+
         <button type="submit">Continue</button>
       </form>
     </section>
@@ -264,22 +352,40 @@
       </form>
     </section>
 
-    <!-- New candidate: email code -->
-    <section id="step-email-code" class="form-step hidden">
-      <h2>Verify your email</h2>
-      <p>We emailed you a 6-digit code.</p>
-      <form id="candidate-email-code-form">
-        <label>Verification code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
-        <button type="submit">Verify</button>
-      </form>
-    </section>
-
     <!-- New candidate: identity verification -->
     <section id="step-identity" class="form-step hidden">
       <h2>Verify your identity</h2>
       <p>Scan your government ID and take a quick selfie to complete verification.</p>
       <div id="stripe-element"></div>
       <button id="identity-button" type="button">Complete verification</button>
+    </section>
+
+    <!-- Waiting on resume parsing to finish (brief, only shown if needed) -->
+    <section id="step-parsing-wait" class="form-step hidden">
+      <p class="loading-text">Finishing up your profile details...</p>
+    </section>
+
+    <!-- Review/edit parsed (or blank manual) work + education + bio -->
+    <section id="step-review" class="form-step hidden">
+      <h2>Review your details</h2>
+      <p id="review-intro-text">Here's what we found — take a look and make any changes before continuing.</p>
+
+      <form id="review-form">
+        <div class="section-label">About You</div>
+        <label>Bio <span class="label-hint">(optional)</span>
+          <textarea id="review-bio" name="bio" rows="3" placeholder="A short summary of your background..."></textarea>
+        </label>
+
+        <div class="section-label">Work History</div>
+        <div id="work-entries"></div>
+        <button type="button" id="add-work-entry" class="add-entry-btn">+ Add work experience</button>
+
+        <div class="section-label">Education</div>
+        <div id="education-entries"></div>
+        <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
+
+        <button type="submit">Save and Continue</button>
+      </form>
     </section>
 
     <!-- Connect confirmation (only shown when a recruiter is in context) -->
@@ -301,7 +407,7 @@
       <div class="success-box">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <h2>You're verified!</h2>
-        <p>You're ready to browse and contact verified recruiters on PreCheckd.</p>
+        <p>You're ready to browse and contact verified recruiters on PreCheckd. We also sent a link to your email — click it whenever you get a chance to confirm your email address too.</p>
         <a id="view-profile-link" href="#" class="hero-cta">View Your Profile</a>
       </div>
     </section>

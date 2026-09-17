@@ -1,18 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const multer = require('multer');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const {
-  sendCandidateVerificationCode,
   sendCandidateLoginCode,
+  sendCandidateVerificationLink,
+  generateVerificationToken,
   generateSixDigitCode
 } = require('../services/emailService');
+const { uploadResume } = require('../utils/s3Upload');
+const { parseResume } = require('../utils/resumeParser');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
 const MOCK_IDENTITY = process.env.MOCK_IDENTITY === 'true';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 const smsClient = new PinpointSMSVoiceV2Client({
   region: process.env.AWS_SMS_REGION,
@@ -71,8 +80,36 @@ async function sendVerificationCode(phone, code) {
   }));
 }
 
+// Fire-and-forget resume parsing. Uploads to S3, then runs extraction in
+// the background so it doesn't block the signup response. Updates the
+// candidate record with results (or a failed status) whenever it finishes.
+async function processResumeInBackground(candidateId, file) {
+  try {
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) return;
+
+    const resumeUrl = await uploadResume(candidateId, file);
+    candidate.resumeUrl = resumeUrl;
+    await candidate.save();
+
+    const parsed = await parseResume(file);
+
+    candidate.bio = parsed.bio;
+    candidate.workHistory = parsed.workHistory;
+    candidate.educationHistory = parsed.educationHistory;
+    candidate.resumeParsingStatus = 'complete';
+    await candidate.save();
+  } catch (error) {
+    console.error('Resume parsing failed:', error);
+    try {
+      await Candidate.findByIdAndUpdate(candidateId, { resumeParsingStatus: 'failed' });
+    } catch (updateError) {
+      console.error('Failed to mark resume parsing as failed:', updateError);
+    }
+  }
+}
+
 // Step 0: Check whether this email belongs to an existing candidate.
-// New candidates get routed to signup; existing ones get a login code.
 router.post('/check-email', async (req, res) => {
   try {
     const { email, recruiterSlug } = req.body;
@@ -93,7 +130,7 @@ router.post('/check-email', async (req, res) => {
 
     const code = generateSixDigitCode();
     candidate.loginToken = code;
-    candidate.loginTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    candidate.loginTokenExpires = Date.now() + 10 * 60 * 1000;
     await candidate.save();
 
     req.session.candidatePendingLoginId = candidate._id.toString();
@@ -147,7 +184,7 @@ router.post('/login-verify', async (req, res) => {
     res.json({
       success: true,
       recruiterSlug: req.session.candidateRecruiterSlug || null,
-      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.emailVerifiedAt && candidate.isIdentityVerified),
+      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.isIdentityVerified),
       slug: candidate.slug
     });
   } catch (error) {
@@ -156,8 +193,8 @@ router.post('/login-verify', async (req, res) => {
   }
 });
 
-// Step 1: New candidate signup
-router.post('/signup', async (req, res) => {
+// Step 1: New candidate signup — details + optional resume upload
+router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
     const { firstName, lastName, email, phone } = req.body;
 
@@ -176,6 +213,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const slug = await makeSlug(firstName, lastName);
+    const emailToken = generateVerificationToken();
 
     const candidate = new Candidate({
       firstName,
@@ -183,7 +221,10 @@ router.post('/signup', async (req, res) => {
       slug,
       email,
       phone: normalizedPhone,
-      emailVerifiedAt: null
+      emailVerifiedAt: null,
+      emailVerificationToken: emailToken,
+      emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000,
+      resumeParsingStatus: req.file ? 'pending' : 'none'
     });
 
     await candidate.save();
@@ -207,9 +248,21 @@ router.post('/signup', async (req, res) => {
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
     }
 
+    // Email verification link, sent in the background — same pattern as recruiters.
+    // Non-blocking: candidate proceeds regardless of email send success.
+    sendCandidateVerificationLink(candidate.email, candidate.firstName, emailToken).catch((err) => {
+      console.error('Failed to send candidate verification email:', err);
+    });
+
+    // Resume parsing, if a file was uploaded, also runs in the background.
+    if (req.file) {
+      processResumeInBackground(candidate._id.toString(), req.file);
+    }
+
     res.json({
       success: true,
       candidateId: candidate._id,
+      hasResume: Boolean(req.file),
       message: MOCK_SMS
         ? `[TEST MODE] Verification code sent to ${normalizedPhone} (use 123456)`
         : `Verification code sent to ${normalizedPhone}`
@@ -247,7 +300,7 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Step 2: Verify phone OTP, then kick off email code
+// Step 2: Verify phone OTP — no longer chains into an email code step
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
@@ -277,23 +330,13 @@ router.post('/verify-phone', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Incorrect verification code. Please try again.' });
     }
 
-    const candidate = await Candidate.findByIdAndUpdate(candidateId, {
+    await Candidate.findByIdAndUpdate(candidateId, {
       isPhoneVerified: true,
       phoneVerifiedAt: new Date()
-    }, { new: true });
+    });
 
     delete req.session.candidatePhoneVerificationCode;
     delete req.session.candidatePhoneVerificationExpires;
-
-    // Kick off email verification code immediately
-    const emailCode = generateSixDigitCode();
-    candidate.emailVerificationToken = emailCode;
-    candidate.emailVerificationExpires = Date.now() + 10 * 60 * 1000;
-    await candidate.save();
-
-    sendCandidateVerificationCode(candidate.email, candidate.firstName, emailCode).catch((err) => {
-      console.error('Failed to send candidate email code:', err);
-    });
 
     res.json({ success: true, message: 'Phone verified successfully' });
   } catch (error) {
@@ -302,8 +345,44 @@ router.post('/verify-phone', async (req, res) => {
   }
 });
 
-// Resend email code
-router.post('/resend-email-code', async (req, res) => {
+// Verify email via clicked link — redirects straight to the candidate's
+// own profile page instead of a standalone confirmation screen.
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).send('Missing verification token.');
+    }
+
+    const candidate = await Candidate.findOne({ emailVerificationToken: token });
+
+    if (!candidate) {
+      return res.status(400).send('Invalid or already-used verification link.');
+    }
+
+    if (candidate.emailVerificationExpires && Date.now() > candidate.emailVerificationExpires) {
+      return res.status(400).send('This verification link has expired. Please request a new one from your profile.');
+    }
+
+    candidate.emailVerifiedAt = new Date();
+    candidate.emailVerificationToken = null;
+    candidate.emailVerificationExpires = null;
+    await candidate.save();
+
+    // Log them in via this link click (in case their session expired),
+    // then send them straight to their own profile.
+    req.session.candidateId = candidate._id.toString();
+    res.redirect(`/candidate/${candidate.slug}`);
+  } catch (error) {
+    console.error('Error verifying candidate email:', error);
+    res.status(500).send('Something went wrong verifying your email.');
+  }
+});
+
+// Poll for resume parsing status — frontend calls this after Identity
+// verification to decide whether to show the review screen.
+router.get('/resume-status', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
     if (!candidateId) {
@@ -315,63 +394,47 @@ router.post('/resend-email-code', async (req, res) => {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    const emailCode = generateSixDigitCode();
-    candidate.emailVerificationToken = emailCode;
-    candidate.emailVerificationExpires = Date.now() + 10 * 60 * 1000;
-    await candidate.save();
-
-    await sendCandidateVerificationCode(candidate.email, candidate.firstName, emailCode);
-
-    res.json({ success: true, message: 'Verification code resent to your email' });
+    res.json({
+      status: candidate.resumeParsingStatus,
+      bio: candidate.bio,
+      workHistory: candidate.workHistory,
+      educationHistory: candidate.educationHistory
+    });
   } catch (error) {
-    console.error('Error resending candidate email code:', error);
-    res.status(500).json({ error: 'Failed to resend code' });
+    console.error('Error checking resume status:', error);
+    res.status(500).json({ error: 'Failed to check resume status' });
   }
 });
 
-// Step 3: Verify email code
-router.post('/verify-email-code', async (req, res) => {
+// Save reviewed/edited work history, education, and bio — used both for
+// the post-parsing review screen and for manual entry with no resume.
+router.post('/save-profile-details', async (req, res) => {
   try {
-    const { code } = req.body;
     const candidateId = req.session.candidateId;
-
-    if (!code) {
-      return res.status(400).json({ error: 'Missing code' });
-    }
-
     if (!candidateId) {
       return res.status(400).json({ error: 'No active candidate session' });
     }
 
+    const { bio, workHistory, educationHistory } = req.body;
+
     const candidate = await Candidate.findById(candidateId);
-
-    if (!candidate || !candidate.emailVerificationToken || !candidate.emailVerificationExpires) {
-      return res.status(400).json({ error: 'No code on file. Please request a new one.' });
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    if (Date.now() > candidate.emailVerificationExpires) {
-      return res.status(400).json({ error: 'This code has expired. Please request a new one.' });
-    }
-
-    const isMockBypass = MOCK_SMS && code === '123456';
-
-    if (code !== candidate.emailVerificationToken && !isMockBypass) {
-      return res.status(400).json({ error: 'Incorrect code. Please try again.' });
-    }
-
-    candidate.emailVerifiedAt = new Date();
-    candidate.emailVerificationToken = null;
-    candidate.emailVerificationExpires = null;
+    candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
+    candidate.workHistory = Array.isArray(workHistory) ? workHistory : [];
+    candidate.educationHistory = Array.isArray(educationHistory) ? educationHistory : [];
     await candidate.save();
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error verifying candidate email code:', error);
-    res.status(500).json({ error: 'Failed to verify code' });
+    console.error('Error saving candidate profile details:', error);
+    res.status(500).json({ error: 'Failed to save profile details' });
   }
 });
 
-// Step 4: Create Stripe Identity session (or mock, based on MOCK_IDENTITY)
+// Step 3: Create Stripe Identity session (or mock, based on MOCK_IDENTITY)
 router.post('/create-identity-session', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -426,7 +489,7 @@ router.post('/create-identity-session', async (req, res) => {
   }
 });
 
-// Step 4: Verify Stripe Identity session result (or mock, based on MOCK_IDENTITY)
+// Step 3: Verify Stripe Identity session result (or mock)
 router.post('/verify-identity-session', async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -451,7 +514,8 @@ router.post('/verify-identity-session', async (req, res) => {
 
       return res.json({
         success: true,
-        slug: candidate.slug
+        slug: candidate.slug,
+        resumeParsingStatus: candidate.resumeParsingStatus
       });
     }
 
@@ -480,7 +544,8 @@ router.post('/verify-identity-session', async (req, res) => {
 
       res.json({
         success: true,
-        slug: candidate.slug
+        slug: candidate.slug,
+        resumeParsingStatus: candidate.resumeParsingStatus
       });
     } else if (verificationSession.status === 'requires_input') {
       res.status(400).json({
@@ -515,7 +580,7 @@ router.post('/connect', async (req, res) => {
     }
 
     const candidate = await Candidate.findById(candidateId);
-    if (!candidate || !candidate.isPhoneVerified || !candidate.emailVerifiedAt || !candidate.isIdentityVerified) {
+    if (!candidate || !candidate.isPhoneVerified || !candidate.isIdentityVerified) {
       return res.status(403).json({ error: 'Please complete verification before contacting recruiters.' });
     }
 

@@ -7,6 +7,8 @@
   let stripeSessionId = null;
   let isMockIdentity = false;
   let candidateSlug = null;
+  let workEntryCount = 0;
+  let educationEntryCount = 0;
 
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
@@ -35,15 +37,22 @@
     return data;
   }
 
+  async function getJson(url) {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Something went wrong');
+    }
+    return data;
+  }
+
   function initStripe() {
     if (!stripe) {
       stripe = Stripe(document.body.dataset.stripeKey);
     }
   }
 
-  // After Identity verification succeeds, either show the connect-confirm
-  // step (if a recruiter is in context) or the generic "you're verified" screen.
-  function proceedAfterIdentity() {
+  function proceedAfterReview() {
     if (recruiterContext) {
       document.getElementById('connect-recruiter-name').textContent = recruiterContext.name;
       showStep('step-connect-confirm');
@@ -53,26 +62,109 @@
     }
   }
 
-  async function prepareIdentitySession() {
-    try {
-      const sessionResponse = await postJson('/api/candidate/create-identity-session', {});
-      isMockIdentity = Boolean(sessionResponse.mock);
-      stripeSessionId = sessionResponse.sessionId;
-      stripeClientSecret = sessionResponse.clientSecret;
+  // --- Dynamic work/education entry cards ---
 
-      if (isMockIdentity) {
-        // No real Stripe modal — just show a quick note and let the
-        // existing button complete verification instantly.
-        const identitySection = document.getElementById('step-identity');
-        identitySection.querySelector('p').textContent =
-          '[TEST MODE] Identity verification is mocked. Click below to continue.';
-        document.getElementById('stripe-element').classList.add('hidden');
-      } else {
-        initStripe();
-      }
-    } catch (err) {
-      showError(err.message);
+  function addWorkEntry(data) {
+    const container = document.getElementById('work-entries');
+    const index = workEntryCount++;
+    const div = document.createElement('div');
+    div.className = 'entry-card';
+    div.dataset.workIndex = index;
+    div.innerHTML = `
+      <button type="button" class="remove-entry">Remove</button>
+      <label>Job title<input type="text" class="work-title" value="${data?.jobTitle || ''}" placeholder="e.g. Software Engineer"></label>
+      <label>Employer<input type="text" class="work-employer" value="${data?.employerName || ''}" placeholder="e.g. Acme Corp"></label>
+      <label>Start date <span class="label-hint">(YYYY-MM)</span><input type="text" class="work-start" value="${data?.startDate || ''}" placeholder="2022-03"></label>
+      <label>End date <span class="label-hint">(YYYY-MM, or leave blank if current)</span><input type="text" class="work-end" value="${data?.endDate || ''}" placeholder="2024-06"></label>
+    `;
+    div.querySelector('.remove-entry').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  function addEducationEntry(data) {
+    const container = document.getElementById('education-entries');
+    const index = educationEntryCount++;
+    const div = document.createElement('div');
+    div.className = 'entry-card';
+    div.dataset.educationIndex = index;
+    div.innerHTML = `
+      <button type="button" class="remove-entry">Remove</button>
+      <label>School<input type="text" class="edu-school" value="${data?.schoolName || ''}" placeholder="e.g. State University"></label>
+      <label>Degree<input type="text" class="edu-degree" value="${data?.degree || ''}" placeholder="e.g. BS Computer Science"></label>
+      <label>Graduation date <span class="label-hint">(YYYY-MM)</span><input type="text" class="edu-date" value="${data?.graduationDate || ''}" placeholder="2020-05"></label>
+    `;
+    div.querySelector('.remove-entry').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  document.getElementById('add-work-entry').addEventListener('click', () => addWorkEntry());
+  document.getElementById('add-education-entry').addEventListener('click', () => addEducationEntry());
+
+  function collectWorkEntries() {
+    return Array.from(document.querySelectorAll('#work-entries .entry-card')).map((card) => ({
+      jobTitle: card.querySelector('.work-title').value.trim(),
+      employerName: card.querySelector('.work-employer').value.trim(),
+      startDate: card.querySelector('.work-start').value.trim(),
+      endDate: card.querySelector('.work-end').value.trim() || null,
+    })).filter((entry) => entry.jobTitle && entry.employerName && entry.startDate);
+  }
+
+  function collectEducationEntries() {
+    return Array.from(document.querySelectorAll('#education-entries .entry-card')).map((card) => ({
+      schoolName: card.querySelector('.edu-school').value.trim(),
+      degree: card.querySelector('.edu-degree').value.trim(),
+      graduationDate: card.querySelector('.edu-date').value.trim(),
+    })).filter((entry) => entry.schoolName && entry.degree && entry.graduationDate);
+  }
+
+  // --- Poll resume parsing status, then show the review screen ---
+
+  async function waitForResumeAndShowReview(hasResume) {
+    if (!hasResume) {
+      // No resume was uploaded — go straight to a blank review/manual-entry screen.
+      document.getElementById('review-intro-text').textContent =
+        'Add your work history and education — you can always come back and update this later.';
+      showStep('step-review');
+      return;
     }
+
+    showStep('step-parsing-wait');
+
+    const maxAttempts = 10;
+    const delayMs = 1500;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const result = await getJson('/api/candidate/resume-status');
+
+        if (result.status === 'complete') {
+          document.getElementById('review-bio').value = result.bio || '';
+          (result.workHistory || []).forEach((entry) => addWorkEntry(entry));
+          (result.educationHistory || []).forEach((entry) => addEducationEntry(entry));
+          document.getElementById('review-intro-text').textContent =
+            "Here's what we found on your resume — take a look and make any changes before continuing.";
+          showStep('step-review');
+          return;
+        }
+
+        if (result.status === 'failed') {
+          document.getElementById('review-intro-text').textContent =
+            "We couldn't read your resume automatically — no problem, just add your details below.";
+          showStep('step-review');
+          return;
+        }
+
+        // still "pending" — wait and try again
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } catch (err) {
+        break;
+      }
+    }
+
+    // Gave up waiting — fall back to blank manual entry rather than stall forever.
+    document.getElementById('review-intro-text').textContent =
+      "Still working on your resume in the background — feel free to add your details below in the meantime.";
+    showStep('step-review');
   }
 
   // --- Step 0: Email gate ---
@@ -110,7 +202,7 @@
       candidateSlug = result.slug;
 
       if (result.isFullyVerified) {
-        proceedAfterIdentity();
+        proceedAfterReview();
       } else {
         showStep('step-identity');
         await prepareIdentitySession();
@@ -120,15 +212,27 @@
     }
   });
 
-  // --- New candidate: signup details ---
+  // --- New candidate: signup details + resume upload ---
   const signupForm = document.getElementById('candidate-signup-form');
+  let signupHadResume = false;
+
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
-    const formData = Object.fromEntries(new FormData(signupForm).entries());
+
+    const formData = new FormData(signupForm);
+    const resumeFile = formData.get('resume');
+    signupHadResume = Boolean(resumeFile && resumeFile.size > 0);
 
     try {
-      await postJson('/api/candidate/signup', formData);
+      const res = await fetch('/api/candidate/signup', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
       showStep('step-phone');
     } catch (err) {
       showError(err.message);
@@ -143,20 +247,6 @@
     try {
       const code = new FormData(phoneForm).get('code');
       await postJson('/api/candidate/verify-phone', { code });
-      showStep('step-email-code');
-    } catch (err) {
-      showError(err.message);
-    }
-  });
-
-  // --- New candidate: email code ---
-  const emailCodeForm = document.getElementById('candidate-email-code-form');
-  emailCodeForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError();
-    try {
-      const code = new FormData(emailCodeForm).get('code');
-      await postJson('/api/candidate/verify-email-code', { code });
       showStep('step-identity');
       await prepareIdentitySession();
     } catch (err) {
@@ -165,25 +255,43 @@
   });
 
   // --- Identity verification ---
+  async function prepareIdentitySession() {
+    try {
+      const sessionResponse = await postJson('/api/candidate/create-identity-session', {});
+      isMockIdentity = Boolean(sessionResponse.mock);
+      stripeSessionId = sessionResponse.sessionId;
+      stripeClientSecret = sessionResponse.clientSecret;
+
+      if (isMockIdentity) {
+        const identitySection = document.getElementById('step-identity');
+        identitySection.querySelector('p').textContent =
+          '[TEST MODE] Identity verification is mocked. Click below to continue.';
+        document.getElementById('stripe-element').classList.add('hidden');
+      } else {
+        initStripe();
+      }
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
   const identityButton = document.getElementById('identity-button');
   identityButton.addEventListener('click', async () => {
     hideError();
     identityButton.disabled = true;
     identityButton.textContent = 'Verifying...';
 
-    // Mock mode: skip Stripe entirely, just call the backend to mark verified.
     if (isMockIdentity) {
       try {
         const response = await postJson('/api/candidate/verify-identity-session', {
           sessionId: stripeSessionId,
         });
-
         identityButton.disabled = false;
         identityButton.textContent = 'Complete verification';
 
         if (response.success) {
           candidateSlug = response.slug;
-          proceedAfterIdentity();
+          await waitForResumeAndShowReview(signupHadResume);
         } else {
           showError(response.message || 'Something went wrong.');
         }
@@ -195,7 +303,6 @@
       return;
     }
 
-    // Real mode: open the actual Stripe Identity modal.
     if (!stripeClientSecret) {
       showError('Verification session not ready. Please refresh and try again.');
       identityButton.disabled = false;
@@ -222,7 +329,7 @@
 
       if (response.success) {
         candidateSlug = response.slug;
-        proceedAfterIdentity();
+        await waitForResumeAndShowReview(signupHadResume);
       } else {
         showError(response.message || 'Verification is still processing. Please check back shortly.');
       }
@@ -230,6 +337,24 @@
       identityButton.disabled = false;
       identityButton.textContent = 'Complete verification';
       showError(err.message || 'An error occurred during verification');
+    }
+  });
+
+  // --- Review/save profile details ---
+  const reviewForm = document.getElementById('review-form');
+  reviewForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const bio = document.getElementById('review-bio').value;
+    const workHistory = collectWorkEntries();
+    const educationHistory = collectEducationEntries();
+
+    try {
+      await postJson('/api/candidate/save-profile-details', { bio, workHistory, educationHistory });
+      proceedAfterReview();
+    } catch (err) {
+      showError(err.message);
     }
   });
 

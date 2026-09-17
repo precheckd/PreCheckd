@@ -26,6 +26,13 @@
   .cprofile-meta {
     color: #8FA6AC;
     font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .cprofile-bio {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.6;
   }
 
   .cprofile-wrapper {
@@ -159,12 +166,17 @@
     verificationRow('Employment History', candidate.employmentVerifiedAt),
     verificationRow('Education', candidate.educationVerifiedAt),
   ];
+
+  const hasBio = candidate.bio && candidate.bio.trim();
 %>
 
 <div class="cprofile-content">
   <div class="cprofile-header">
     <div class="cprofile-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
     <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
+    <% if (hasBio) { %>
+      <p class="cprofile-bio"><%= candidate.bio %></p>
+    <% } %>
   </div>
 
   <div class="cprofile-wrapper">

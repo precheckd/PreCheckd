@@ -37,6 +37,11 @@ const candidateSchema = new mongoose.Schema({
     required: true
   },
 
+  bio: {
+    type: String,
+    default: null
+  },
+
   // Work/education history — populated via resume parsing or manual entry
   workHistory: {
     type: [workHistorySchema],
@@ -49,6 +54,11 @@ const candidateSchema = new mongoose.Schema({
   resumeUrl: {
     type: String,
     default: null
+  },
+  resumeParsingStatus: {
+    type: String,
+    enum: ['none', 'pending', 'complete', 'failed'],
+    default: 'none'
   },
 
   isPhoneVerified: {
