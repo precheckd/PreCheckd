@@ -27,6 +27,7 @@ Extract the following from the resume text below:
 - "bio": A short professional summary/objective statement if one exists at the top of the resume (2-4 sentences max). If none exists, use null.
 - "workHistory": An array of jobs, each with "employerName", "jobTitle", "startDate" (format "YYYY-MM"), "endDate" (format "YYYY-MM", or null if current/present).
 - "educationHistory": An array of education entries, each with "schoolName", "degree", "graduationDate" (format "YYYY-MM").
+- "certifications": An array of professional certifications mentioned anywhere on the resume, each with just a "name" field (e.g., "AWS Certified Cloud Practitioner", "CompTIA Security+", "PMP"). Do NOT invent a credential ID — resumes rarely list one, so only include "name". If no certifications are mentioned, return an empty array.
 
 If a date only has a year (no month), use "01" as the month. If you cannot confidently determine a field, use null for that field rather than guessing.
 
@@ -35,7 +36,7 @@ Resume text:
 ${resumeText}
 ---
 
-Return only the JSON object with keys "bio", "workHistory", "educationHistory". No other text.`;
+Return only the JSON object with keys "bio", "workHistory", "educationHistory", "certifications". No other text.`;
 
   const response = await fetch(CLAUDE_API_URL, {
     method: 'POST',
@@ -68,10 +69,17 @@ Return only the JSON object with keys "bio", "workHistory", "educationHistory". 
     throw new Error('Could not understand the resume format. Please enter your information manually.');
   }
 
+  const certifications = Array.isArray(parsed.certifications)
+    ? parsed.certifications
+        .filter((cert) => cert && cert.name)
+        .map((cert) => ({ name: cert.name, credentialId: null, verified: false, verifiedAt: null }))
+    : [];
+
   return {
     bio: parsed.bio || null,
     workHistory: Array.isArray(parsed.workHistory) ? parsed.workHistory : [],
     educationHistory: Array.isArray(parsed.educationHistory) ? parsed.educationHistory : [],
+    certifications,
   };
 }
 

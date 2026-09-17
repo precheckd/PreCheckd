@@ -13,6 +13,13 @@ const educationHistorySchema = new mongoose.Schema({
   graduationDate: { type: String, required: true }, // "YYYY-MM", may be expected/future date
 }, { _id: false });
 
+const certificationSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  credentialId: { type: String, default: null }, // often not on the resume; candidate fills in on review
+  verified: { type: Boolean, default: false }, // flips true once the certification agent confirms it
+  verifiedAt: { type: Date, default: null },
+}, { _id: false });
+
 const candidateSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -49,6 +56,10 @@ const candidateSchema = new mongoose.Schema({
   },
   educationHistory: {
     type: [educationHistorySchema],
+    default: []
+  },
+  certifications: {
+    type: [certificationSchema],
     default: []
   },
   resumeUrl: {
@@ -122,14 +133,11 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
-  // Certifications — via existing AI agent
+  // Certifications — via existing AI agent (see `certifications` array above
+  // for per-certification data; this stays for an overall "batch checked" timestamp)
   certificationsVerifiedAt: {
     type: Date,
     default: null
-  },
-  verifiedCertifications: {
-    type: [String],
-    default: []
   },
 
   // Hard/soft skills — CoderByte assessment

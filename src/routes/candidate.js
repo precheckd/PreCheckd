@@ -97,6 +97,7 @@ async function processResumeInBackground(candidateId, file) {
     candidate.bio = parsed.bio;
     candidate.workHistory = parsed.workHistory;
     candidate.educationHistory = parsed.educationHistory;
+    candidate.certifications = parsed.certifications;
     candidate.resumeParsingStatus = 'complete';
     await candidate.save();
   } catch (error) {
@@ -248,13 +249,10 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       return res.status(500).json({ error: 'Failed to send verification code. Please check your phone number and try again.' });
     }
 
-    // Email verification link, sent in the background — same pattern as recruiters.
-    // Non-blocking: candidate proceeds regardless of email send success.
     sendCandidateVerificationLink(candidate.email, candidate.firstName, emailToken).catch((err) => {
       console.error('Failed to send candidate verification email:', err);
     });
 
-    // Resume parsing, if a file was uploaded, also runs in the background.
     if (req.file) {
       processResumeInBackground(candidate._id.toString(), req.file);
     }
@@ -300,7 +298,7 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Step 2: Verify phone OTP — no longer chains into an email code step
+// Step 2: Verify phone OTP
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
@@ -370,8 +368,6 @@ router.get('/verify-email', async (req, res) => {
     candidate.emailVerificationExpires = null;
     await candidate.save();
 
-    // Log them in via this link click (in case their session expired),
-    // then send them straight to their own profile.
     req.session.candidateId = candidate._id.toString();
     res.redirect(`/candidate/${candidate.slug}`);
   } catch (error) {
@@ -398,7 +394,8 @@ router.get('/resume-status', async (req, res) => {
       status: candidate.resumeParsingStatus,
       bio: candidate.bio,
       workHistory: candidate.workHistory,
-      educationHistory: candidate.educationHistory
+      educationHistory: candidate.educationHistory,
+      certifications: candidate.certifications
     });
   } catch (error) {
     console.error('Error checking resume status:', error);
@@ -406,8 +403,8 @@ router.get('/resume-status', async (req, res) => {
   }
 });
 
-// Save reviewed/edited work history, education, and bio — used both for
-// the post-parsing review screen and for manual entry with no resume.
+// Save reviewed/edited work history, education, bio, and certifications —
+// used both for the post-parsing review screen and for manual entry.
 router.post('/save-profile-details', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -415,7 +412,7 @@ router.post('/save-profile-details', async (req, res) => {
       return res.status(400).json({ error: 'No active candidate session' });
     }
 
-    const { bio, workHistory, educationHistory } = req.body;
+    const { bio, workHistory, educationHistory, certifications } = req.body;
 
     const candidate = await Candidate.findById(candidateId);
     if (!candidate) {
@@ -425,6 +422,34 @@ router.post('/save-profile-details', async (req, res) => {
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
     candidate.workHistory = Array.isArray(workHistory) ? workHistory : [];
     candidate.educationHistory = Array.isArray(educationHistory) ? educationHistory : [];
+
+    if (Array.isArray(certifications)) {
+      // Preserve verified status on any certification whose name still matches
+      // an already-verified entry; anything new/edited starts as unverified.
+      const existingByName = new Map(
+        (candidate.certifications || []).map((c) => [c.name.toLowerCase(), c])
+      );
+
+      candidate.certifications = certifications
+        .filter((c) => c && c.name && c.name.trim())
+        .map((c) => {
+          const existing = existingByName.get(c.name.trim().toLowerCase());
+          const credentialId = c.credentialId && c.credentialId.trim() ? c.credentialId.trim() : null;
+
+          if (existing && existing.credentialId === credentialId) {
+            // Unchanged name + credential ID — keep prior verification status.
+            return existing;
+          }
+
+          return {
+            name: c.name.trim(),
+            credentialId,
+            verified: false,
+            verifiedAt: null
+          };
+        });
+    }
+
     await candidate.save();
 
     res.json({ success: true });

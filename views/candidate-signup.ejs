@@ -285,6 +285,14 @@
       padding: 1rem 0;
     }
 
+    .cert-hint {
+      color: #8FA6AC;
+      font-size: 0.8rem;
+      margin-top: -0.4rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
     .page-header-text.hidden {
       display: none;
     }
@@ -372,7 +380,7 @@
       <p class="loading-text">Finishing up your profile details...</p>
     </section>
 
-    <!-- Review/edit parsed (or blank manual) work + education + bio -->
+    <!-- Review/edit parsed (or blank manual) work + education + bio + certifications -->
     <section id="step-review" class="form-step hidden">
       <h2>Review your details</h2>
       <p id="review-intro-text">Here's what we found — take a look and make any changes before continuing.</p>
@@ -390,6 +398,11 @@
         <div class="section-label">Education</div>
         <div id="education-entries"></div>
         <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
+
+        <div class="section-label">Certifications</div>
+        <p class="cert-hint">If you have a credential ID for any of these, add it now — we'll use it to independently verify the certification. Don't have it handy? Leave it blank and add it later from your profile.</p>
+        <div id="certification-entries"></div>
+        <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
 
         <button type="submit">Save and Continue</button>
       </form>
