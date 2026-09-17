@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+const workHistorySchema = new mongoose.Schema({
+  employerName: { type: String, required: true },
+  jobTitle: { type: String, required: true },
+  startDate: { type: String, required: true }, // stored as "YYYY-MM" for simplicity
+  endDate: { type: String, default: null }, // null or "Present" means current
+}, { _id: false });
+
+const educationHistorySchema = new mongoose.Schema({
+  schoolName: { type: String, required: true },
+  degree: { type: String, required: true },
+  graduationDate: { type: String, required: true }, // "YYYY-MM", may be expected/future date
+}, { _id: false });
+
 const candidateSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -23,9 +36,19 @@ const candidateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  linkedinUrl: {
+
+  // Work/education history — populated via resume parsing or manual entry
+  workHistory: {
+    type: [workHistorySchema],
+    default: []
+  },
+  educationHistory: {
+    type: [educationHistorySchema],
+    default: []
+  },
+  resumeUrl: {
     type: String,
-    required: true
+    default: null
   },
 
   isPhoneVerified: {
@@ -56,6 +79,68 @@ const candidateSchema = new mongoose.Schema({
   },
   loginTokenExpires: {
     type: Date,
+    default: null
+  },
+
+  // Identity verification (Stripe Identity — same pattern as recruiters)
+  isIdentityVerified: {
+    type: Boolean,
+    default: false
+  },
+  identityVerifiedAt: {
+    type: Date,
+    default: null
+  },
+  facialRecognitionVerifiedAt: {
+    type: Date,
+    default: null
+  },
+  stripeVerificationSessionId: {
+    type: String,
+    default: null
+  },
+
+  // Employment — manual/blocked for now (Work Number)
+  employmentVerifiedAt: {
+    type: Date,
+    default: null
+  },
+
+  // Education — manual phone verification (Clearinghouse)
+  educationVerifiedAt: {
+    type: Date,
+    default: null
+  },
+
+  // Certifications — via existing AI agent
+  certificationsVerifiedAt: {
+    type: Date,
+    default: null
+  },
+  verifiedCertifications: {
+    type: [String],
+    default: []
+  },
+
+  // Hard/soft skills — CoderByte assessment
+  skillsAssessmentCompletedAt: {
+    type: Date,
+    default: null
+  },
+  skillsAssessmentScore: {
+    type: Number,
+    default: null
+  },
+
+  // Background check — employer-triggered, not run at signup
+  backgroundCheckStatus: {
+    type: String,
+    default: null // null until an employer actually requests one
+  },
+
+  // Self-reported, never independently verified
+  securityClearance: {
+    type: String,
     default: null
   },
 
