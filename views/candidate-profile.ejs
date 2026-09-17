@@ -1,154 +1,217 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PreCheckd - Candidate Profile</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+<style>
+  .cprofile-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .cprofile-header {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    background: #2A4750;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid #3B5860;
+  }
+
+  .cprofile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .cprofile-meta {
+    color: #8FA6AC;
+    font-size: 0.9rem;
+  }
+
+  .cprofile-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .cprofile-section {
+    background: #2A4750;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid #3B5860;
+  }
+
+  .cprofile-section h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #F2F4F3;
+    margin-bottom: 1.25rem;
+  }
+
+  .verification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .verification-item {
+    background: #3B5F6A;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .verification-label {
+    color: #E8EBEA;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .verification-status {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .status-verified {
+    color: #4ADE80;
+  }
+
+  .status-pending {
+    color: #F87171;
+  }
+
+  .history-entry {
+    padding: 1rem 0;
+    border-bottom: 1px solid #3B5860;
+  }
+
+  .history-entry:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .history-entry:first-child {
+    padding-top: 0;
+  }
+
+  .history-title {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .history-sub {
+    color: #B9C7CA;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .history-dates {
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+  }
+
+  .empty-note {
+    color: #8FA6AC;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    .cprofile-content {
+      padding: 1rem;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #1F363C;
-      min-height: 100vh;
+    .cprofile-header,
+    .cprofile-section {
+      padding: 1.5rem;
     }
 
-    main {
-      padding: 4rem 1.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
+    .cprofile-name {
+      font-size: 1.5rem;
     }
+  }
+</style>
 
-    .coming-soon-container {
-      text-align: center;
-      background: #2A4750;
-      border: 1px solid #3B5860;
-      border-radius: 12px;
-      padding: 4rem 2rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
-      max-width: 600px;
-      margin: 0 auto;
-    }
+<%
+  const dateOpts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/New_York' };
+  const memberSinceOpts = { year: 'numeric', month: 'short', timeZone: 'America/New_York' };
 
-    .coming-soon-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 1rem;
-      color: #4ADE80;
-    }
+  function verificationRow(label, verifiedAt) {
+    return { label, verifiedAt };
+  }
 
-    .coming-soon-icon svg {
-      width: 100%;
-      height: 100%;
-    }
+  const verifications = [
+    verificationRow('Email Ownership', candidate.emailVerifiedAt),
+    verificationRow('Phone Number', candidate.phoneVerifiedAt),
+    verificationRow('Government ID', candidate.identityVerifiedAt),
+    verificationRow('Facial Recognition', candidate.facialRecognitionVerifiedAt),
+    verificationRow('Certifications', candidate.certificationsVerifiedAt),
+    verificationRow('Employment History', candidate.employmentVerifiedAt),
+    verificationRow('Education', candidate.educationVerifiedAt),
+  ];
+%>
 
-    .coming-soon-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #F2F4F3;
-      margin-bottom: 1rem;
-    }
-
-    .coming-soon-text {
-      font-size: 1.1rem;
-      color: #C7D1CF;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-
-    .coming-soon-features {
-      text-align: left;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      border-radius: 8px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .coming-soon-features h3 {
-      font-size: 1.1rem;
-      color: #F2F4F3;
-      margin-bottom: 1rem;
-      font-weight: 600;
-    }
-
-    .feature-list {
-      list-style: none;
-    }
-
-    .feature-list li {
-      padding: 0.5rem 0;
-      color: #C7D1CF;
-      display: flex;
-      align-items: center;
-    }
-
-    .feature-list li:before {
-      content: "✓";
-      color: #4ADE80;
-      font-weight: bold;
-      margin-right: 0.75rem;
-      font-size: 1.25rem;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #24404A;
-      border: 1px solid #3B5860;
-      color: #4ADE80;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    @media (max-width: 768px) {
-      main {
-        padding: 2rem 1rem;
-      }
-
-      .coming-soon-container {
-        padding: 2rem 1.5rem;
-      }
-
-      .coming-soon-title {
-        font-size: 1.5rem;
-      }
-
-      .coming-soon-text {
-        font-size: 1rem;
-      }
-    }
-  </style>
-</head>
-<body>
-
-<main>
-  <div class="coming-soon-container">
-    <div class="coming-soon-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
-    </div>
-    <h1 class="coming-soon-title">Candidate Profiles</h1>
-    <p class="coming-soon-text">View verified candidate profiles and connect with top talent.</p>
-
-    <div class="coming-soon-features">
-      <h3>Candidate Profiles Include</h3>
-      <ul class="feature-list">
-        <li>Verified identity badge</li>
-        <li>Skills and experience summary</li>
-        <li>Career history and achievements</li>
-        <li>Verification status and dates</li>
-        <li>Message directly with verified candidates</li>
-      </ul>
-    </div>
-
-    <div class="badge">🚀 Coming Soon</div>
+<div class="cprofile-content">
+  <div class="cprofile-header">
+    <div class="cprofile-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
+    <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
   </div>
-</main>
 
-</body>
-</html>
+  <div class="cprofile-wrapper">
+    <div class="cprofile-section">
+      <h3>Verification Status</h3>
+      <div class="verification-list">
+        <% verifications.forEach(function(v) { %>
+          <div class="verification-item">
+            <span class="verification-label"><%= v.label %></span>
+            <% if (v.verifiedAt) { %>
+              <span class="verification-status status-verified">✓ Verified <%= v.verifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+            <% } else { %>
+              <span class="verification-status status-pending">Pending</span>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <div class="cprofile-section">
+      <h3>Work History</h3>
+      <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
+        <% candidate.workHistory.forEach(function(job) { %>
+          <div class="history-entry">
+            <div class="history-title"><%= job.jobTitle %></div>
+            <div class="history-sub"><%= job.employerName %></div>
+            <div class="history-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p class="empty-note">No work history added yet.</p>
+      <% } %>
+    </div>
+
+    <div class="cprofile-section">
+      <h3>Education</h3>
+      <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
+        <% candidate.educationHistory.forEach(function(edu) { %>
+          <div class="history-entry">
+            <div class="history-title"><%= edu.degree %></div>
+            <div class="history-sub"><%= edu.schoolName %></div>
+            <div class="history-dates"><%= edu.graduationDate %></div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p class="empty-note">No education history added yet.</p>
+      <% } %>
+    </div>
+  </div>
+</div>

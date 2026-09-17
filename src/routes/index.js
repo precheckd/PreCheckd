@@ -63,9 +63,4 @@ router.get('/privacy', (req, res) => {
   res.render('privacy');
 });
 
-// Candidate profile page
-router.get('/candidate/:name', (req, res) => {
-  res.render('candidate-profile');
-});
-
 module.exports = router;

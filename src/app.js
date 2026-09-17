@@ -12,6 +12,7 @@ const webhookRoutes = require('./routes/webhookRoutes');
 const recruiterProfileRoutes = require('./routes/recruiter-profile');
 const authRoutes = require('./routes/auth');
 const candidateRoutes = require('./routes/candidate');
+const candidateProfileRoutes = require('./routes/candidate-profile');
 const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
@@ -64,6 +65,9 @@ app.get('/founding-recruiter', (req, res) => {
 
 // Recruiter profile pages
 app.use('/recruiter', recruiterProfileRoutes);
+
+// Candidate profile pages (private, owner-only)
+app.use('/candidate', candidateProfileRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

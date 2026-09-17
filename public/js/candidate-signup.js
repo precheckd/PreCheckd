@@ -2,6 +2,11 @@
   const errorEl = document.getElementById('form-error');
   const recruiterContext = window.PRECHECKD_RECRUITER; // { slug, name } or null
 
+  let stripe = null;
+  let stripeClientSecret = null;
+  let stripeSessionId = null;
+  let candidateSlug = null;
+
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
@@ -29,14 +34,32 @@
     return data;
   }
 
-  // After any verification success, either show the connect-confirm step
-  // (if a recruiter is in context) or the generic "you're verified" screen.
-  function proceedAfterVerification() {
+  function initStripe() {
+    if (!stripe) {
+      stripe = Stripe(document.body.dataset.stripeKey);
+    }
+  }
+
+  // After Identity verification succeeds, either show the connect-confirm
+  // step (if a recruiter is in context) or the generic "you're verified" screen.
+  function proceedAfterIdentity() {
     if (recruiterContext) {
       document.getElementById('connect-recruiter-name').textContent = recruiterContext.name;
       showStep('step-connect-confirm');
     } else {
+      document.getElementById('view-profile-link').href = `/candidate/${candidateSlug}`;
       showStep('step-done');
+    }
+  }
+
+  async function prepareIdentitySession() {
+    try {
+      initStripe();
+      const sessionResponse = await postJson('/api/candidate/create-identity-session', {});
+      stripeSessionId = sessionResponse.sessionId;
+      stripeClientSecret = sessionResponse.clientSecret;
+    } catch (err) {
+      showError(err.message);
     }
   }
 
@@ -71,8 +94,15 @@
     hideError();
     try {
       const code = new FormData(loginCodeForm).get('code');
-      await postJson('/api/candidate/login-verify', { code });
-      proceedAfterVerification();
+      const result = await postJson('/api/candidate/login-verify', { code });
+      candidateSlug = result.slug;
+
+      if (result.isFullyVerified) {
+        proceedAfterIdentity();
+      } else {
+        showStep('step-identity');
+        await prepareIdentitySession();
+      }
     } catch (err) {
       showError(err.message);
     }
@@ -115,9 +145,50 @@
     try {
       const code = new FormData(emailCodeForm).get('code');
       await postJson('/api/candidate/verify-email-code', { code });
-      proceedAfterVerification();
+      showStep('step-identity');
+      await prepareIdentitySession();
     } catch (err) {
       showError(err.message);
+    }
+  });
+
+  // --- Identity verification ---
+  const identityButton = document.getElementById('identity-button');
+  identityButton.addEventListener('click', async () => {
+    if (!stripeClientSecret) {
+      showError('Verification session not ready. Please refresh and try again.');
+      return;
+    }
+
+    hideError();
+    identityButton.disabled = true;
+    identityButton.textContent = 'Opening verification...';
+
+    try {
+      const result = await stripe.verifyIdentity(stripeClientSecret);
+
+      identityButton.disabled = false;
+      identityButton.textContent = 'Complete verification';
+
+      if (result.error) {
+        showError(result.error.message || 'Verification was not completed.');
+        return;
+      }
+
+      const response = await postJson('/api/candidate/verify-identity-session', {
+        sessionId: stripeSessionId,
+      });
+
+      if (response.success) {
+        candidateSlug = response.slug;
+        proceedAfterIdentity();
+      } else {
+        showError(response.message || 'Verification is still processing. Please check back shortly.');
+      }
+    } catch (err) {
+      identityButton.disabled = false;
+      identityButton.textContent = 'Complete verification';
+      showError(err.message || 'An error occurred during verification');
     }
   });
 

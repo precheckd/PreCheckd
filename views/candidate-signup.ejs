@@ -140,6 +140,14 @@
       font-size: 0.9rem;
     }
 
+    #stripe-element {
+      padding: 0.75rem;
+      border: 1px solid #4A6F7B;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      background: #24404A;
+    }
+
     .success-box {
       text-align: center;
       padding: 1rem 0;
@@ -201,7 +209,7 @@
     }
   </style>
 </head>
-<body>
+<body data-stripe-key="<%= stripePublishableKey %>">
 
 <div class="page-wrap">
   <section class="content-section">
@@ -266,6 +274,14 @@
       </form>
     </section>
 
+    <!-- New candidate: identity verification -->
+    <section id="step-identity" class="form-step hidden">
+      <h2>Verify your identity</h2>
+      <p>Scan your government ID and take a quick selfie to complete verification.</p>
+      <div id="stripe-element"></div>
+      <button id="identity-button" type="button">Complete verification</button>
+    </section>
+
     <!-- Connect confirmation (only shown when a recruiter is in context) -->
     <section id="step-connect-confirm" class="form-step hidden">
       <div class="recruiter-callout">
@@ -286,7 +302,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <h2>You're verified!</h2>
         <p>You're ready to browse and contact verified recruiters on PreCheckd.</p>
-        <a href="/recruiter-search" class="hero-cta">Browse Recruiters</a>
+        <a id="view-profile-link" href="#" class="hero-cta">View Your Profile</a>
       </div>
     </section>
 
@@ -304,6 +320,7 @@
 <script>
   window.PRECHECKD_RECRUITER = <%- recruiter ? JSON.stringify({ slug: recruiter.slug, name: `${recruiter.firstName} ${recruiter.lastName}` }) : 'null' %>;
 </script>
+<script src="https://js.stripe.com/v3"></script>
 <script src="/js/candidate-signup.js"></script>
 
 </body>

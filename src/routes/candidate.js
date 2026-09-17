@@ -137,7 +137,9 @@ router.post('/login-verify', async (req, res) => {
 
     res.json({
       success: true,
-      recruiterSlug: req.session.candidateRecruiterSlug || null
+      recruiterSlug: req.session.candidateRecruiterSlug || null,
+      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.emailVerifiedAt && candidate.isIdentityVerified),
+      slug: candidate.slug
     });
   } catch (error) {
     console.error('Error verifying candidate login code:', error);
@@ -353,13 +355,114 @@ router.post('/verify-email-code', async (req, res) => {
     candidate.emailVerificationExpires = null;
     await candidate.save();
 
-    res.json({
-      success: true,
-      recruiterSlug: req.session.candidateRecruiterSlug || null
-    });
+    res.json({ success: true });
   } catch (error) {
     console.error('Error verifying candidate email code:', error);
     res.status(500).json({ error: 'Failed to verify code' });
+  }
+});
+
+// Step 4: Create Stripe Identity session
+router.post('/create-identity-session', async (req, res) => {
+  try {
+    const candidateId = req.session.candidateId;
+
+    if (!candidateId) {
+      return res.status(400).json({ error: 'No active candidate session' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripe = require('stripe')(stripeKey);
+
+    const verificationSession = await stripe.identity.verificationSessions.create({
+      type: 'document',
+      options: {
+        document: {
+          require_matching_selfie: true
+        }
+      },
+      metadata: {
+        candidateId: candidateId,
+        email: candidate.email,
+        name: `${candidate.firstName} ${candidate.lastName}`
+      }
+    });
+
+    candidate.stripeVerificationSessionId = verificationSession.id;
+    await candidate.save();
+
+    res.json({
+      success: true,
+      clientSecret: verificationSession.client_secret,
+      sessionId: verificationSession.id
+    });
+  } catch (error) {
+    console.error('Error creating candidate identity session:', error);
+    res.status(500).json({ error: 'Failed to create identity verification session' });
+  }
+});
+
+// Step 4: Verify Stripe Identity session result
+router.post('/verify-identity-session', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const candidateId = req.session.candidateId;
+
+    if (!candidateId || !sessionId) {
+      return res.status(400).json({ error: 'Missing candidate or session ID' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripe = require('stripe')(stripeKey);
+
+    const verificationSession = await stripe.identity.verificationSessions.retrieve(sessionId, {
+      expand: ['verified_outputs']
+    });
+
+    if (verificationSession.status === 'verified') {
+      const candidate = await Candidate.findById(candidateId);
+      if (!candidate) {
+        return res.status(404).json({ error: 'Candidate not found' });
+      }
+
+      const rawDocFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
+      const docFirstName = rawDocFirstName.split(/\s+/)[0] || '';
+      const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();
+
+      if (docFirstName && docLastName) {
+        candidate.firstName = docFirstName;
+        candidate.lastName = docLastName;
+      }
+
+      candidate.isIdentityVerified = true;
+      candidate.identityVerifiedAt = new Date();
+      candidate.facialRecognitionVerifiedAt = new Date();
+      candidate.status = 'candidate';
+      await candidate.save();
+
+      res.json({
+        success: true,
+        slug: candidate.slug
+      });
+    } else if (verificationSession.status === 'requires_input') {
+      res.status(400).json({
+        success: false,
+        message: 'Verification incomplete. Please try again.'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: `Verification failed with status: ${verificationSession.status}`
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying candidate identity session:', error);
+    res.status(500).json({ error: 'Failed to verify identity session' });
   }
 });
 
@@ -379,7 +482,7 @@ router.post('/connect', async (req, res) => {
     }
 
     const candidate = await Candidate.findById(candidateId);
-    if (!candidate || !candidate.isPhoneVerified || !candidate.emailVerifiedAt) {
+    if (!candidate || !candidate.isPhoneVerified || !candidate.emailVerifiedAt || !candidate.isIdentityVerified) {
       return res.status(403).json({ error: 'Please complete verification before contacting recruiters.' });
     }
 
