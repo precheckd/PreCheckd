@@ -13,6 +13,13 @@
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
+
+    const headerText = document.getElementById('page-header-text');
+    if (id === 'step-done' || id === 'step-connect-done') {
+      headerText.classList.add('hidden');
+    } else {
+      headerText.classList.remove('hidden');
+    }
   }
 
   function showError(message) {

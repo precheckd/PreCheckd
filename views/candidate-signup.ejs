@@ -160,20 +160,21 @@
 
     .success-box {
       text-align: center;
-      padding: 1rem 0;
+      padding: 1.5rem 0;
     }
 
     .success-box svg {
-      width: 48px;
-      height: 48px;
+      width: 96px;
+      height: 96px;
       color: #4ADE80;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     .success-box h2 {
-      font-size: 1.25rem;
+      font-size: 2.5rem;
       color: #F2F4F3;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
     }
 
     .success-box p {
@@ -284,6 +285,10 @@
       padding: 1rem 0;
     }
 
+    .page-header-text.hidden {
+      display: none;
+    }
+
     .hidden {
       display: none;
     }
@@ -293,13 +298,15 @@
 
 <div class="page-wrap">
   <section class="content-section">
-    <% if (recruiter) { %>
-      <h1>Contact <%= recruiter.firstName %> <%= recruiter.lastName %></h1>
-      <p class="intro-text">Verify your email and phone to send a connection request to this recruiter.</p>
-    <% } else { %>
-      <h1>Get Verified</h1>
-      <p class="intro-text">Verify your identity to start connecting with verified recruiters on PreCheckd.</p>
-    <% } %>
+    <div id="page-header-text" class="page-header-text">
+      <% if (recruiter) { %>
+        <h1>Contact <%= recruiter.firstName %> <%= recruiter.lastName %></h1>
+        <p class="intro-text">Verify your email and phone to send a connection request to this recruiter.</p>
+      <% } else { %>
+        <h1>Get Verified</h1>
+        <p class="intro-text">Verify your identity to start connecting with verified recruiters on PreCheckd.</p>
+      <% } %>
+    </div>
 
     <p id="form-error" class="form-error hidden"></p>
 
