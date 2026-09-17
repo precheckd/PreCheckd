@@ -6,7 +6,7 @@ async function connectDatabase() {
     throw new Error('MONGODB_URI is not set');
   }
   mongoose.connection.on('error', (err) => console.error('MongoDB connection error:', err));
-  await mongoose.connect(uri, { dbName: 'precheckd' });
+  await mongoose.connect(uri, { dbName: 'precheckd-staging' });
   console.log('Connected to MongoDB');
   return mongoose.connection;
 }
