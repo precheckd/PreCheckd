@@ -48,16 +48,6 @@ function normalizePhoneToE164(rawPhone) {
   return null;
 }
 
-function isValidLinkedInUrl(url) {
-  if (!url || typeof url !== 'string') return false;
-  try {
-    const parsed = new URL(url.trim());
-    return parsed.hostname.includes('linkedin.com');
-  } catch {
-    return false;
-  }
-}
-
 async function sendVerificationCode(phone, code) {
   if (MOCK_SMS) {
     console.log(`[MOCK SMS] Would send code ${code} to ${phone}`);
@@ -158,14 +148,10 @@ router.post('/login-verify', async (req, res) => {
 // Step 1: New candidate signup
 router.post('/signup', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, linkedinUrl } = req.body;
+    const { firstName, lastName, email, phone } = req.body;
 
-    if (!firstName || !lastName || !email || !phone || !linkedinUrl) {
+    if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    if (!isValidLinkedInUrl(linkedinUrl)) {
-      return res.status(400).json({ error: 'Please enter a valid LinkedIn profile URL.' });
     }
 
     const normalizedPhone = normalizePhoneToE164(phone);
@@ -186,7 +172,6 @@ router.post('/signup', async (req, res) => {
       slug,
       email,
       phone: normalizedPhone,
-      linkedinUrl: linkedinUrl.trim(),
       emailVerifiedAt: null
     });
 
