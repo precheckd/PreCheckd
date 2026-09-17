@@ -20,11 +20,19 @@ const smsClient = new PinpointSMSVoiceV2Client({
 const NOTIFY_CONFIGURATION_ID = process.env.AWS_NOTIFY_CONFIGURATION_ID;
 const NOTIFY_TEMPLATE_ID = process.env.AWS_NOTIFY_TEMPLATE_ID;
 
-function makeSlug(firstName, lastName) {
+// Tries the clean firstname-lastname slug first; only appends a suffix
+// if that clean version is already taken.
+async function makeSlug(firstName, lastName) {
   const base = `${firstName}-${lastName}`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+
+  const existing = await Recruiter.findOne({ slug: base });
+  if (!existing) {
+    return base;
+  }
+
   const suffix = crypto.randomBytes(3).toString('hex');
   return `${base}-${suffix}`;
 }
@@ -85,7 +93,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    const slug = makeSlug(firstName, lastName);
+    const slug = await makeSlug(firstName, lastName);
     const emailToken = generateVerificationToken();
 
     // Company Domain check — leaves domainVerifiedAt null (Pending) unless the domain clears the age threshold
