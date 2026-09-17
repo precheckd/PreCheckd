@@ -20,10 +20,12 @@
     "express-session": "^1.19.0",
     "express-validator": "^7.2.0",
     "helmet": "^8.0.0",
+    "mammoth": "^1.12.3",
     "mongoose": "^8.8.1",
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
     "nodemailer": "^10.0.9",
+    "pdf-parse": "^2.4.5",
     "resend": "^6.28.0",
     "stripe": "^17.7.0",
     "twilio": "^5.3.5"
