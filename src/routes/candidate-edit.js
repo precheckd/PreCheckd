@@ -1,173 +1,144 @@
-const mongoose = require('mongoose');
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const Candidate = require('../models/Candidate');
+const { uploadCandidatePhoto, deleteS3Object } = require('../utils/s3Upload');
 
-const workHistorySchema = new mongoose.Schema({
-  employerName: { type: String, required: true },
-  jobTitle: { type: String, required: true },
-  startDate: { type: String, required: true }, // "YYYY-MM"
-  endDate: { type: String, default: null }, // null means current
-  verified: { type: Boolean, default: false },
-  verifiedAt: { type: Date, default: null },
-}, { _id: false });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
-const educationHistorySchema = new mongoose.Schema({
-  schoolName: { type: String, required: true },
-  degree: { type: String, required: true },
-  graduationDate: { type: String, required: true }, // "YYYY-MM"
-  verified: { type: Boolean, default: false },
-  verifiedAt: { type: Date, default: null },
-}, { _id: false });
+function requireCandidateLogin(req, res, next) {
+  if (!req.session.candidateId) {
+    return res.status(403).send('You must be logged in to view this page.');
+  }
+  next();
+}
 
-const certificationSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  credentialId: { type: String, default: null },
-  verified: { type: Boolean, default: false },
-  verifiedAt: { type: Date, default: null },
-}, { _id: false });
+router.use(requireCandidateLogin);
 
-const candidateSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  phone: {
-    type: String,
-    required: true
-  },
+function parseJsonField(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
 
-  bio: {
-    type: String,
-    default: null
-  },
-  profilePhotoUrl: {
-    type: String,
-    default: null
-  },
+// GET /candidate/:slug/edit — owner-only edit form
+router.get('/:slug/edit', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
 
-  workHistory: {
-    type: [workHistorySchema],
-    default: []
-  },
-  educationHistory: {
-    type: [educationHistorySchema],
-    default: []
-  },
-  certifications: {
-    type: [certificationSchema],
-    default: []
-  },
-  resumeUrl: {
-    type: String,
-    default: null
-  },
-  resumeParsingStatus: {
-    type: String,
-    enum: ['none', 'pending', 'complete', 'failed'],
-    default: 'none'
-  },
+    if (!candidate) {
+      return res.status(404).send('Candidate not found.');
+    }
 
-  isPhoneVerified: {
-    type: Boolean,
-    default: false
-  },
-  phoneVerifiedAt: {
-    type: Date,
-    default: null
-  },
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).send('You do not have permission to edit this profile.');
+    }
 
-  emailVerifiedAt: {
-    type: Date,
-    default: null
-  },
-  emailVerificationToken: {
-    type: String,
-    default: null
-  },
-  emailVerificationExpires: {
-    type: Date,
-    default: null
-  },
-
-  loginToken: {
-    type: String,
-    default: null
-  },
-  loginTokenExpires: {
-    type: Date,
-    default: null
-  },
-
-  isIdentityVerified: {
-    type: Boolean,
-    default: false
-  },
-  identityVerifiedAt: {
-    type: Date,
-    default: null
-  },
-  facialRecognitionVerifiedAt: {
-    type: Date,
-    default: null
-  },
-  stripeVerificationSessionId: {
-    type: String,
-    default: null
-  },
-
-  skillsAssessmentCompletedAt: {
-    type: Date,
-    default: null
-  },
-  skillsAssessmentScore: {
-    type: Number,
-    default: null
-  },
-
-  backgroundCheckStatus: {
-    type: String,
-    default: null
-  },
-
-  securityClearance: {
-    type: String,
-    default: null
-  },
-
-  status: {
-    type: String,
-    default: 'pre_candidate'
-  },
-  fullVerificationComplete: {
-    type: Boolean,
-    default: false
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    res.render('candidate-edit', {
+      candidate,
+      title: `Edit Profile | PreCheckd`,
+      error: null
+    });
+  } catch (error) {
+    console.error('Error loading candidate edit page:', error);
+    res.status(500).send('Server error');
   }
 });
 
-candidateSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+// POST /candidate/:slug/edit — save changes, owner-only
+router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).send('Candidate not found.');
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).send('You do not have permission to edit this profile.');
+    }
+
+    const { bio } = req.body;
+    const workHistory = parseJsonField(req.body.workHistory);
+    const educationHistory = parseJsonField(req.body.educationHistory);
+    const certifications = parseJsonField(req.body.certifications);
+
+    candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
+
+    if (req.file) {
+      try {
+        const oldPhotoUrl = candidate.profilePhotoUrl;
+        const newPhotoUrl = await uploadCandidatePhoto(candidate._id.toString(), req.file);
+        candidate.profilePhotoUrl = newPhotoUrl;
+        await deleteS3Object(oldPhotoUrl);
+      } catch (uploadError) {
+        return res.status(400).render('candidate-edit', {
+          candidate,
+          title: `Edit Profile | PreCheckd`,
+          error: uploadError.message
+        });
+      }
+    }
+
+    function mergeEntries(newEntries, existingEntries, matchFields) {
+      if (!Array.isArray(newEntries)) return [];
+
+      const existingByKey = new Map(
+        (existingEntries || []).map((e) => [
+          matchFields.map((f) => (e[f] || '').toString().toLowerCase()).join('|'),
+          e
+        ])
+      );
+
+      return newEntries
+        .filter((e) => matchFields.every((f) => e[f] && e[f].toString().trim()))
+        .map((e) => {
+          const key = matchFields.map((f) => e[f].toString().trim().toLowerCase()).join('|');
+          const existing = existingByKey.get(key);
+          if (existing) {
+            return existing;
+          }
+          return {
+            ...e,
+            verified: false,
+            verifiedAt: null
+          };
+        });
+    }
+
+    candidate.workHistory = mergeEntries(
+      workHistory,
+      candidate.workHistory,
+      ['jobTitle', 'employerName', 'startDate']
+    );
+
+    candidate.educationHistory = mergeEntries(
+      educationHistory,
+      candidate.educationHistory,
+      ['schoolName', 'degree', 'graduationDate']
+    );
+
+    candidate.certifications = mergeEntries(
+      certifications,
+      candidate.certifications,
+      ['name', 'credentialId']
+    );
+
+    await candidate.save();
+
+    res.redirect(`/candidate/${candidate.slug}`);
+  } catch (error) {
+    console.error('Error saving candidate edit:', error);
+    res.status(500).send('Server error');
+  }
 });
 
-module.exports = mongoose.model('Candidate', candidateSchema);
+module.exports = router;
