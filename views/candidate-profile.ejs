@@ -6,6 +6,60 @@
     min-height: 100vh;
   }
 
+  .owner-banner {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    background: #24404A;
+    border: 1px solid #2ECC71;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .owner-banner-text {
+    color: #C7D1CF;
+    font-size: 0.9rem;
+  }
+
+  .owner-banner-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .owner-banner-actions a {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-edit {
+    background: #2ECC71;
+    color: #1F363C;
+  }
+
+  .btn-edit:hover {
+    background: #4ADE80;
+  }
+
+  .btn-logout {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+  }
+
+  .btn-logout:hover {
+    background: #2A4750;
+    color: #F2F4F3;
+  }
+
   .cprofile-header {
     max-width: 900px;
     margin: 0 auto 2rem;
@@ -174,6 +228,12 @@
       padding: 1rem;
     }
 
+    .owner-banner {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+    }
+
     .cprofile-header,
     .cprofile-section {
       padding: 1.5rem;
@@ -204,14 +264,20 @@
     verificationRow('Phone Number', candidate.phoneVerifiedAt),
     verificationRow('Government ID', candidate.identityVerifiedAt),
     verificationRow('Facial Recognition', candidate.facialRecognitionVerifiedAt),
-    verificationRow('Employment History', candidate.employmentVerifiedAt),
-    verificationRow('Education', candidate.educationVerifiedAt),
   ];
 
   const hasBio = candidate.bio && candidate.bio.trim();
 %>
 
 <div class="cprofile-content">
+  <div class="owner-banner">
+    <span class="owner-banner-text">You're viewing your own profile.</span>
+    <div class="owner-banner-actions">
+      <a href="/candidate/<%= candidate.slug %>/edit" class="btn-edit">Edit Profile</a>
+      <a href="/api/candidate/logout" class="btn-logout">Log Out</a>
+    </div>
+  </div>
+
   <div class="cprofile-header">
     <div class="cprofile-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
     <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
@@ -237,57 +303,51 @@
       </div>
     </div>
 
+    <% if (candidate.certifications && candidate.certifications.length > 0) { %>
     <div class="cprofile-section">
       <h3>Certifications</h3>
-      <% if (candidate.certifications && candidate.certifications.length > 0) { %>
-        <% candidate.certifications.forEach(function(cert) { %>
-          <div class="cert-entry">
-            <div>
-              <div class="cert-name"><%= cert.name %></div>
-              <% if (cert.credentialId) { %>
-                <div class="cert-credential-id">Credential ID: <%= cert.credentialId %></div>
-              <% } %>
-            </div>
-            <% if (cert.verified) { %>
-              <span class="cert-status status-verified">✓ Verified <%= cert.verifiedAt ? cert.verifiedAt.toLocaleDateString('en-US', dateOpts) : '' %></span>
-            <% } else { %>
-              <span class="cert-status status-pending">Verification Pending</span>
+      <% candidate.certifications.forEach(function(cert) { %>
+        <div class="cert-entry">
+          <div>
+            <div class="cert-name"><%= cert.name %></div>
+            <% if (cert.credentialId) { %>
+              <div class="cert-credential-id">Credential ID: <%= cert.credentialId %></div>
             <% } %>
           </div>
-        <% }); %>
-      <% } else { %>
-        <p class="empty-note">No certifications added yet.</p>
-      <% } %>
+          <% if (cert.verified) { %>
+            <span class="cert-status status-verified">✓ Verified <%= cert.verifiedAt ? cert.verifiedAt.toLocaleDateString('en-US', dateOpts) : '' %></span>
+          <% } else { %>
+            <span class="cert-status status-pending">Verification Pending</span>
+          <% } %>
+        </div>
+      <% }); %>
     </div>
+    <% } %>
 
+    <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
     <div class="cprofile-section">
       <h3>Work History</h3>
-      <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
-        <% candidate.workHistory.forEach(function(job) { %>
-          <div class="history-entry">
-            <div class="history-title"><%= job.jobTitle %></div>
-            <div class="history-sub"><%= job.employerName %></div>
-            <div class="history-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <p class="empty-note">No work history added yet.</p>
-      <% } %>
+      <% candidate.workHistory.forEach(function(job) { %>
+        <div class="history-entry">
+          <div class="history-title"><%= job.jobTitle %></div>
+          <div class="history-sub"><%= job.employerName %></div>
+          <div class="history-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+        </div>
+      <% }); %>
     </div>
+    <% } %>
 
+    <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
     <div class="cprofile-section">
       <h3>Education</h3>
-      <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
-        <% candidate.educationHistory.forEach(function(edu) { %>
-          <div class="history-entry">
-            <div class="history-title"><%= edu.degree %></div>
-            <div class="history-sub"><%= edu.schoolName %></div>
-            <div class="history-dates"><%= edu.graduationDate %></div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <p class="empty-note">No education history added yet.</p>
-      <% } %>
+      <% candidate.educationHistory.forEach(function(edu) { %>
+        <div class="history-entry">
+          <div class="history-title"><%= edu.degree %></div>
+          <div class="history-sub"><%= edu.schoolName %></div>
+          <div class="history-dates"><%= edu.graduationDate %></div>
+        </div>
+      <% }); %>
     </div>
+    <% } %>
   </div>
 </div>

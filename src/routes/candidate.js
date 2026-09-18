@@ -34,8 +34,6 @@ const smsClient = new PinpointSMSVoiceV2Client({
 const NOTIFY_CONFIGURATION_ID = process.env.AWS_NOTIFY_CONFIGURATION_ID;
 const NOTIFY_TEMPLATE_ID = process.env.AWS_NOTIFY_TEMPLATE_ID;
 
-// Tries the clean firstname-lastname slug first; only appends a suffix
-// if that clean version is already taken.
 async function makeSlug(firstName, lastName) {
   const base = `${firstName}-${lastName}`
     .toLowerCase()
@@ -80,9 +78,6 @@ async function sendVerificationCode(phone, code) {
   }));
 }
 
-// Fire-and-forget resume parsing. Uploads to S3, then runs extraction in
-// the background so it doesn't block the signup response. Updates the
-// candidate record with results (or a failed status) whenever it finishes.
 async function processResumeInBackground(candidateId, file) {
   try {
     const candidate = await Candidate.findById(candidateId);
@@ -110,7 +105,14 @@ async function processResumeInBackground(candidateId, file) {
   }
 }
 
-// Step 0: Check whether this email belongs to an existing candidate.
+// Log out — candidates get sent back to their own entry point, not the
+// recruiter login page.
+router.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/candidate-signup');
+  });
+});
+
 router.post('/check-email', async (req, res) => {
   try {
     const { email, recruiterSlug } = req.body;
@@ -147,7 +149,6 @@ router.post('/check-email', async (req, res) => {
   }
 });
 
-// Verify the returning-candidate login code
 router.post('/login-verify', async (req, res) => {
   try {
     const { code } = req.body;
@@ -194,7 +195,6 @@ router.post('/login-verify', async (req, res) => {
   }
 });
 
-// Step 1: New candidate signup — details + optional resume upload
 router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
     const { firstName, lastName, email, phone } = req.body;
@@ -271,7 +271,6 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
   }
 });
 
-// Resend SMS code
 router.post('/resend-code', async (req, res) => {
   try {
     const phone = req.session.candidatePhone;
@@ -298,7 +297,6 @@ router.post('/resend-code', async (req, res) => {
   }
 });
 
-// Step 2: Verify phone OTP
 router.post('/verify-phone', async (req, res) => {
   try {
     const { code } = req.body;
@@ -343,8 +341,6 @@ router.post('/verify-phone', async (req, res) => {
   }
 });
 
-// Verify email via clicked link — redirects straight to the candidate's
-// own profile page instead of a standalone confirmation screen.
 router.get('/verify-email', async (req, res) => {
   try {
     const { token } = req.query;
@@ -376,8 +372,6 @@ router.get('/verify-email', async (req, res) => {
   }
 });
 
-// Poll for resume parsing status — frontend calls this after Identity
-// verification to decide whether to show the review screen.
 router.get('/resume-status', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -403,8 +397,6 @@ router.get('/resume-status', async (req, res) => {
   }
 });
 
-// Save reviewed/edited work history, education, bio, and certifications —
-// used both for the post-parsing review screen and for manual entry.
 router.post('/save-profile-details', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -424,8 +416,6 @@ router.post('/save-profile-details', async (req, res) => {
     candidate.educationHistory = Array.isArray(educationHistory) ? educationHistory : [];
 
     if (Array.isArray(certifications)) {
-      // Preserve verified status on any certification whose name still matches
-      // an already-verified entry; anything new/edited starts as unverified.
       const existingByName = new Map(
         (candidate.certifications || []).map((c) => [c.name.toLowerCase(), c])
       );
@@ -437,7 +427,6 @@ router.post('/save-profile-details', async (req, res) => {
           const credentialId = c.credentialId && c.credentialId.trim() ? c.credentialId.trim() : null;
 
           if (existing && existing.credentialId === credentialId) {
-            // Unchanged name + credential ID — keep prior verification status.
             return existing;
           }
 
@@ -459,7 +448,6 @@ router.post('/save-profile-details', async (req, res) => {
   }
 });
 
-// Step 3: Create Stripe Identity session (or mock, based on MOCK_IDENTITY)
 router.post('/create-identity-session', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
@@ -514,7 +502,6 @@ router.post('/create-identity-session', async (req, res) => {
   }
 });
 
-// Step 3: Verify Stripe Identity session result (or mock)
 router.post('/verify-identity-session', async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -589,7 +576,6 @@ router.post('/verify-identity-session', async (req, res) => {
   }
 });
 
-// Send a connection request to the recruiter remembered in this session
 router.post('/connect', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
