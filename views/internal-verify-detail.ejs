@@ -1,0 +1,207 @@
+<style>
+  .internal-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .internal-header {
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .internal-header a.back-link {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .internal-header a.back-link:hover {
+    color: #F2F4F3;
+  }
+
+  .internal-header h1 {
+    font-size: 1.5rem;
+    color: #F2F4F3;
+    margin-top: 0.5rem;
+  }
+
+  .internal-header p {
+    color: #8FA6AC;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .internal-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .internal-section {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .internal-section h3 {
+    font-size: 1.05rem;
+    color: #F2F4F3;
+    margin-bottom: 1rem;
+  }
+
+  .entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+  }
+
+  .entry-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .entry-title {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .entry-sub {
+    color: #B9C7CA;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .entry-dates {
+    color: #8FA6AC;
+    font-size: 0.78rem;
+    margin-top: 0.25rem;
+  }
+
+  .toggle-form {
+    flex-shrink: 0;
+  }
+
+  .toggle-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .toggle-btn.is-verified {
+    background: #1E3A2E;
+    color: #4ADE80;
+    border-color: #2ECC71;
+  }
+
+  .toggle-btn.is-pending {
+    background: #3A2020;
+    color: #FF8A8A;
+    border-color: #E53E3E;
+  }
+
+  .empty-note {
+    color: #8FA6AC;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+</style>
+
+<div class="internal-content">
+  <div class="internal-header">
+    <a href="/internal/verify" class="back-link">← Back to candidate list</a>
+    <h1><%= candidate.firstName %> <%= candidate.lastName %></h1>
+    <p><%= candidate.email %> · <%= candidate.phone %></p>
+  </div>
+
+  <div class="internal-wrapper">
+
+    <div class="internal-section">
+      <h3>Work History</h3>
+      <% if (candidate.workHistory.length === 0) { %>
+        <p class="empty-note">No entries.</p>
+      <% } else { %>
+        <% candidate.workHistory.forEach(function(job, index) { %>
+          <div class="entry-row">
+            <div>
+              <div class="entry-title"><%= job.jobTitle %></div>
+              <div class="entry-sub"><%= job.employerName %></div>
+              <div class="entry-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+            </div>
+            <form class="toggle-form" method="POST" action="/internal/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="category" value="workHistory">
+              <input type="hidden" name="index" value="<%= index %>">
+              <button type="submit" class="toggle-btn <%= job.verified ? 'is-verified' : 'is-pending' %>">
+                <%= job.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
+              </button>
+            </form>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+
+    <div class="internal-section">
+      <h3>Education</h3>
+      <% if (candidate.educationHistory.length === 0) { %>
+        <p class="empty-note">No entries.</p>
+      <% } else { %>
+        <% candidate.educationHistory.forEach(function(edu, index) { %>
+          <div class="entry-row">
+            <div>
+              <div class="entry-title"><%= edu.degree %></div>
+              <div class="entry-sub"><%= edu.schoolName %></div>
+              <div class="entry-dates"><%= edu.graduationDate %></div>
+            </div>
+            <form class="toggle-form" method="POST" action="/internal/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="category" value="educationHistory">
+              <input type="hidden" name="index" value="<%= index %>">
+              <button type="submit" class="toggle-btn <%= edu.verified ? 'is-verified' : 'is-pending' %>">
+                <%= edu.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
+              </button>
+            </form>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+
+    <div class="internal-section">
+      <h3>Certifications</h3>
+      <% if (candidate.certifications.length === 0) { %>
+        <p class="empty-note">No entries.</p>
+      <% } else { %>
+        <% candidate.certifications.forEach(function(cert, index) { %>
+          <div class="entry-row">
+            <div>
+              <div class="entry-title"><%= cert.name %></div>
+              <% if (cert.credentialId) { %>
+                <div class="entry-sub">Credential ID: <%= cert.credentialId %></div>
+              <% } %>
+            </div>
+            <form class="toggle-form" method="POST" action="/internal/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="category" value="certifications">
+              <input type="hidden" name="index" value="<%= index %>">
+              <button type="submit" class="toggle-btn <%= cert.verified ? 'is-verified' : 'is-pending' %>">
+                <%= cert.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
+              </button>
+            </form>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+
+  </div>
+</div>

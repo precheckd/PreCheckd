@@ -15,6 +15,7 @@ const candidateRoutes = require('./routes/candidate');
 const candidateProfileRoutes = require('./routes/candidate-profile');
 const candidateEditRoutes = require('./routes/candidate-edit');
 const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
+const internalRoutes = require('./routes/internal');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 assertEnv();
@@ -70,10 +71,11 @@ app.use('/recruiter', recruiterProfileRoutes);
 // Candidate profile pages (private, owner-only)
 app.use('/candidate', candidateProfileRoutes);
 
-// Candidate edit routes (private, owner-only) — mounted after the profile
-// routes since both share the /candidate/:slug base path, and edit needs
-// its own /:slug/edit sub-path to match correctly.
+// Candidate edit routes (private, owner-only)
 app.use('/candidate', candidateEditRoutes);
+
+// Internal admin tool — password-gated, staff only
+app.use('/internal', internalRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

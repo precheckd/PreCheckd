@@ -1,0 +1,114 @@
+<style>
+  .internal-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .internal-header {
+    max-width: 1000px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .internal-header h1 {
+    font-size: 1.5rem;
+    color: #F2F4F3;
+  }
+
+  .internal-header a {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .internal-header a:hover {
+    color: #F2F4F3;
+  }
+
+  .candidate-list {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .candidate-row {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .candidate-row:hover {
+    border-color: #2ECC71;
+  }
+
+  .candidate-name {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .candidate-email {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .candidate-counts {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #B9C7CA;
+  }
+
+  .empty-state {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+    color: #8FA6AC;
+    padding: 3rem 1.5rem;
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+  }
+</style>
+
+<div class="internal-content">
+  <div class="internal-header">
+    <h1>Candidates Awaiting Manual Verification</h1>
+    <a href="/internal/logout">Log Out</a>
+  </div>
+
+  <% if (candidates.length === 0) { %>
+    <div class="empty-state">
+      <p>No candidates with work history, education, or certifications yet.</p>
+    </div>
+  <% } else { %>
+    <div class="candidate-list">
+      <% candidates.forEach(function(c) { %>
+        <a href="/internal/verify/<%= c._id %>" class="candidate-row">
+          <div>
+            <div class="candidate-name"><%= c.firstName %> <%= c.lastName %></div>
+            <div class="candidate-email"><%= c.email %></div>
+          </div>
+          <div class="candidate-counts">
+            <span><%= c.workHistory.length %> job<%= c.workHistory.length !== 1 ? 's' : '' %></span>
+            <span><%= c.educationHistory.length %> school<%= c.educationHistory.length !== 1 ? 's' : '' %></span>
+            <span><%= c.certifications.length %> cert<%= c.certifications.length !== 1 ? 's' : '' %></span>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
