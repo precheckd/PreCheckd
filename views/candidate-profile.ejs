@@ -127,6 +127,42 @@
     margin-top: 0.3rem;
   }
 
+  .cert-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #3B5860;
+    gap: 1rem;
+  }
+
+  .cert-entry:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .cert-entry:first-child {
+    padding-top: 0;
+  }
+
+  .cert-name {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .cert-credential-id {
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+  }
+
+  .cert-status {
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
   .empty-note {
     color: #8FA6AC;
     font-size: 0.9rem;
@@ -146,6 +182,12 @@
     .cprofile-name {
       font-size: 1.5rem;
     }
+
+    .cert-entry {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
   }
 </style>
 
@@ -162,7 +204,6 @@
     verificationRow('Phone Number', candidate.phoneVerifiedAt),
     verificationRow('Government ID', candidate.identityVerifiedAt),
     verificationRow('Facial Recognition', candidate.facialRecognitionVerifiedAt),
-    verificationRow('Certifications', candidate.certificationsVerifiedAt),
     verificationRow('Employment History', candidate.employmentVerifiedAt),
     verificationRow('Education', candidate.educationVerifiedAt),
   ];
@@ -194,6 +235,29 @@
           </div>
         <% }); %>
       </div>
+    </div>
+
+    <div class="cprofile-section">
+      <h3>Certifications</h3>
+      <% if (candidate.certifications && candidate.certifications.length > 0) { %>
+        <% candidate.certifications.forEach(function(cert) { %>
+          <div class="cert-entry">
+            <div>
+              <div class="cert-name"><%= cert.name %></div>
+              <% if (cert.credentialId) { %>
+                <div class="cert-credential-id">Credential ID: <%= cert.credentialId %></div>
+              <% } %>
+            </div>
+            <% if (cert.verified) { %>
+              <span class="cert-status status-verified">✓ Verified <%= cert.verifiedAt ? cert.verifiedAt.toLocaleDateString('en-US', dateOpts) : '' %></span>
+            <% } else { %>
+              <span class="cert-status status-pending">Verification Pending</span>
+            <% } %>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p class="empty-note">No certifications added yet.</p>
+      <% } %>
     </div>
 
     <div class="cprofile-section">
