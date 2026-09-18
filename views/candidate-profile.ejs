@@ -122,6 +122,10 @@
     background: #3B5F6A;
     border: 1px solid #4A6F7B;
     border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .verification-row {
     padding: 1rem 1.25rem;
     display: flex;
     align-items: center;
@@ -129,10 +133,30 @@
     gap: 1rem;
   }
 
+  .verification-row.expandable {
+    cursor: pointer;
+  }
+
+  .verification-label-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .verification-label {
     color: #E8EBEA;
     font-weight: 500;
     font-size: 0.95rem;
+  }
+
+  .verification-caret {
+    color: #8FA6AC;
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+  }
+
+  .verification-item.expanded .verification-caret {
+    transform: rotate(180deg);
   }
 
   .verification-status {
@@ -145,75 +169,63 @@
     color: #4ADE80;
   }
 
+  .status-partial {
+    color: #FBBF24;
+  }
+
   .status-pending {
     color: #F87171;
   }
 
-  .history-entry {
-    padding: 1rem 0;
-    border-bottom: 1px solid #3B5860;
+  .verification-detail {
+    display: none;
+    border-top: 1px solid #4A6F7B;
+    padding: 0.5rem 1.25rem 1rem;
   }
 
-  .history-entry:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+  .verification-item.expanded .verification-detail {
+    display: block;
   }
 
-  .history-entry:first-child {
-    padding-top: 0;
-  }
-
-  .history-title {
-    color: #F2F4F3;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-
-  .history-sub {
-    color: #B9C7CA;
-    font-size: 0.85rem;
-    margin-top: 0.15rem;
-  }
-
-  .history-dates {
-    color: #8FA6AC;
-    font-size: 0.8rem;
-    margin-top: 0.3rem;
-  }
-
-  .cert-entry {
+  .detail-entry {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid #3B5860;
+    align-items: flex-start;
     gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #2A4750;
   }
 
-  .cert-entry:last-child {
+  .detail-entry:last-child {
     border-bottom: none;
-    padding-bottom: 0;
+    padding-bottom: 0.25rem;
   }
 
-  .cert-entry:first-child {
-    padding-top: 0;
+  .detail-entry:first-child {
+    padding-top: 0.75rem;
   }
 
-  .cert-name {
+  .detail-title {
     color: #F2F4F3;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
-  .cert-credential-id {
+  .detail-sub {
+    color: #B9C7CA;
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+  }
+
+  .detail-dates {
     color: #8FA6AC;
-    font-size: 0.8rem;
-    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    margin-top: 0.25rem;
   }
 
-  .cert-status {
+  .detail-status {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     white-space: nowrap;
   }
 
@@ -243,9 +255,8 @@
       font-size: 1.5rem;
     }
 
-    .cert-entry {
+    .detail-entry {
       flex-direction: column;
-      align-items: flex-start;
       gap: 0.35rem;
     }
   }
@@ -254,19 +265,25 @@
 <%
   const dateOpts = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/New_York' };
   const memberSinceOpts = { year: 'numeric', month: 'short', timeZone: 'America/New_York' };
+  const hasBio = candidate.bio && candidate.bio.trim();
 
-  function verificationRow(label, verifiedAt) {
-    return { label, verifiedAt };
+  function aggregateStatus(entries) {
+    if (!entries || entries.length === 0) return null; // section hidden entirely
+    const verifiedCount = entries.filter((e) => e.verified).length;
+    if (verifiedCount === entries.length) return 'verified';
+    if (verifiedCount === 0) return 'pending';
+    return 'partial';
   }
 
-  const verifications = [
-    verificationRow('Email Ownership', candidate.emailVerifiedAt),
-    verificationRow('Phone Number', candidate.phoneVerifiedAt),
-    verificationRow('Government ID', candidate.identityVerifiedAt),
-    verificationRow('Facial Recognition', candidate.facialRecognitionVerifiedAt),
-  ];
+  function statusLabel(status) {
+    if (status === 'verified') return '✓ Verified';
+    if (status === 'partial') return 'Partially Verified';
+    return 'Verification Pending';
+  }
 
-  const hasBio = candidate.bio && candidate.bio.trim();
+  const certStatus = aggregateStatus(candidate.certifications);
+  const workStatus = aggregateStatus(candidate.workHistory);
+  const eduStatus = aggregateStatus(candidate.educationHistory);
 %>
 
 <div class="cprofile-content">
@@ -290,64 +307,152 @@
     <div class="cprofile-section">
       <h3>Verification Status</h3>
       <div class="verification-list">
-        <% verifications.forEach(function(v) { %>
-          <div class="verification-item">
-            <span class="verification-label"><%= v.label %></span>
-            <% if (v.verifiedAt) { %>
-              <span class="verification-status status-verified">✓ Verified <%= v.verifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+
+        <!-- Email Ownership (no detail, not expandable) -->
+        <div class="verification-item">
+          <div class="verification-row">
+            <span class="verification-label">Email Ownership</span>
+            <% if (candidate.emailVerifiedAt) { %>
+              <span class="verification-status status-verified">✓ Verified <%= candidate.emailVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
             <% } else { %>
               <span class="verification-status status-pending">Verification Pending</span>
             <% } %>
           </div>
-        <% }); %>
-      </div>
-    </div>
+        </div>
 
-    <% if (candidate.certifications && candidate.certifications.length > 0) { %>
-    <div class="cprofile-section">
-      <h3>Certifications</h3>
-      <% candidate.certifications.forEach(function(cert) { %>
-        <div class="cert-entry">
-          <div>
-            <div class="cert-name"><%= cert.name %></div>
-            <% if (cert.credentialId) { %>
-              <div class="cert-credential-id">Credential ID: <%= cert.credentialId %></div>
+        <!-- Phone Number (no detail, not expandable) -->
+        <div class="verification-item">
+          <div class="verification-row">
+            <span class="verification-label">Phone Number</span>
+            <% if (candidate.phoneVerifiedAt) { %>
+              <span class="verification-status status-verified">✓ Verified <%= candidate.phoneVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+            <% } else { %>
+              <span class="verification-status status-pending">Verification Pending</span>
             <% } %>
           </div>
-          <% if (cert.verified) { %>
-            <span class="cert-status status-verified">✓ Verified <%= cert.verifiedAt ? cert.verifiedAt.toLocaleDateString('en-US', dateOpts) : '' %></span>
-          <% } else { %>
-            <span class="cert-status status-pending">Verification Pending</span>
-          <% } %>
         </div>
-      <% }); %>
-    </div>
-    <% } %>
 
-    <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
-    <div class="cprofile-section">
-      <h3>Work History</h3>
-      <% candidate.workHistory.forEach(function(job) { %>
-        <div class="history-entry">
-          <div class="history-title"><%= job.jobTitle %></div>
-          <div class="history-sub"><%= job.employerName %></div>
-          <div class="history-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+        <!-- Government ID (no detail, not expandable) -->
+        <div class="verification-item">
+          <div class="verification-row">
+            <span class="verification-label">Government ID</span>
+            <% if (candidate.identityVerifiedAt) { %>
+              <span class="verification-status status-verified">✓ Verified <%= candidate.identityVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+            <% } else { %>
+              <span class="verification-status status-pending">Verification Pending</span>
+            <% } %>
+          </div>
         </div>
-      <% }); %>
-    </div>
-    <% } %>
 
-    <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
-    <div class="cprofile-section">
-      <h3>Education</h3>
-      <% candidate.educationHistory.forEach(function(edu) { %>
-        <div class="history-entry">
-          <div class="history-title"><%= edu.degree %></div>
-          <div class="history-sub"><%= edu.schoolName %></div>
-          <div class="history-dates"><%= edu.graduationDate %></div>
+        <!-- Facial Recognition (no detail, not expandable) -->
+        <div class="verification-item">
+          <div class="verification-row">
+            <span class="verification-label">Facial Recognition</span>
+            <% if (candidate.facialRecognitionVerifiedAt) { %>
+              <span class="verification-status status-verified">✓ Verified <%= candidate.facialRecognitionVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
+            <% } else { %>
+              <span class="verification-status status-pending">Verification Pending</span>
+            <% } %>
+          </div>
         </div>
-      <% }); %>
+
+        <!-- Certifications (expandable) -->
+        <% if (certStatus) { %>
+        <div class="verification-item" data-toggle-target="cert-detail">
+          <div class="verification-row expandable">
+            <div class="verification-label-group">
+              <span class="verification-label">Certifications</span>
+              <span class="verification-caret">▼</span>
+            </div>
+            <span class="verification-status status-<%= certStatus %>"><%= statusLabel(certStatus) %></span>
+          </div>
+          <div class="verification-detail" id="cert-detail">
+            <% candidate.certifications.forEach(function(cert) { %>
+              <div class="detail-entry">
+                <div>
+                  <div class="detail-title"><%= cert.name %></div>
+                  <% if (cert.credentialId) { %>
+                    <div class="detail-sub">Credential ID: <%= cert.credentialId %></div>
+                  <% } %>
+                </div>
+                <% if (cert.verified) { %>
+                  <span class="detail-status status-verified">✓ Verified</span>
+                <% } else { %>
+                  <span class="detail-status status-pending">Pending</span>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Work History (expandable) -->
+        <% if (workStatus) { %>
+        <div class="verification-item" data-toggle-target="work-detail">
+          <div class="verification-row expandable">
+            <div class="verification-label-group">
+              <span class="verification-label">Employment History</span>
+              <span class="verification-caret">▼</span>
+            </div>
+            <span class="verification-status status-<%= workStatus %>"><%= statusLabel(workStatus) %></span>
+          </div>
+          <div class="verification-detail" id="work-detail">
+            <% candidate.workHistory.forEach(function(job) { %>
+              <div class="detail-entry">
+                <div>
+                  <div class="detail-title"><%= job.jobTitle %></div>
+                  <div class="detail-sub"><%= job.employerName %></div>
+                  <div class="detail-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+                </div>
+                <% if (job.verified) { %>
+                  <span class="detail-status status-verified">✓ Verified</span>
+                <% } else { %>
+                  <span class="detail-status status-pending">Pending</span>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Education (expandable) -->
+        <% if (eduStatus) { %>
+        <div class="verification-item" data-toggle-target="edu-detail">
+          <div class="verification-row expandable">
+            <div class="verification-label-group">
+              <span class="verification-label">Education</span>
+              <span class="verification-caret">▼</span>
+            </div>
+            <span class="verification-status status-<%= eduStatus %>"><%= statusLabel(eduStatus) %></span>
+          </div>
+          <div class="verification-detail" id="edu-detail">
+            <% candidate.educationHistory.forEach(function(edu) { %>
+              <div class="detail-entry">
+                <div>
+                  <div class="detail-title"><%= edu.degree %></div>
+                  <div class="detail-sub"><%= edu.schoolName %></div>
+                  <div class="detail-dates"><%= edu.graduationDate %></div>
+                </div>
+                <% if (edu.verified) { %>
+                  <span class="detail-status status-verified">✓ Verified</span>
+                <% } else { %>
+                  <span class="detail-status status-pending">Pending</span>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+
+      </div>
     </div>
-    <% } %>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('.verification-row.expandable').forEach(function(row) {
+    row.addEventListener('click', function() {
+      row.closest('.verification-item').classList.toggle('expanded');
+    });
+  });
+</script>
