@@ -68,6 +68,41 @@
     padding: 2rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
     border: 1px solid #3B5860;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .cprofile-photo {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .cprofile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cprofile-avatar-circle {
+    width: 100px;
+    height: 100px;
+    background: #2ECC71;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #1F363C;
+    flex-shrink: 0;
+  }
+
+  .cprofile-info {
+    flex: 1;
   }
 
   .cprofile-name {
@@ -246,9 +281,22 @@
       text-align: center;
     }
 
-    .cprofile-header,
+    .cprofile-header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
     .cprofile-section {
       padding: 1.5rem;
+    }
+
+    .cprofile-photo,
+    .cprofile-avatar-circle {
+      width: 80px;
+      height: 80px;
+      font-size: 1.75rem;
     }
 
     .cprofile-name {
@@ -268,7 +316,7 @@
   const hasBio = candidate.bio && candidate.bio.trim();
 
   function aggregateStatus(entries) {
-    if (!entries || entries.length === 0) return null; // section hidden entirely
+    if (!entries || entries.length === 0) return null;
     const verifiedCount = entries.filter((e) => e.verified).length;
     if (verifiedCount === entries.length) return 'verified';
     if (verifiedCount === 0) return 'pending';
@@ -296,11 +344,22 @@
   </div>
 
   <div class="cprofile-header">
-    <div class="cprofile-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
-    <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
-    <% if (hasBio) { %>
-      <p class="cprofile-bio"><%= candidate.bio %></p>
+    <% if (candidate.profilePhotoUrl) { %>
+      <div class="cprofile-photo">
+        <img src="<%= candidate.profilePhotoUrl %>" alt="<%= candidate.firstName %> <%= candidate.lastName %>">
+      </div>
+    <% } else { %>
+      <div class="cprofile-avatar-circle">
+        <%= candidate.firstName.charAt(0).toUpperCase() %><%= candidate.lastName.charAt(0).toUpperCase() %>
+      </div>
     <% } %>
+    <div class="cprofile-info">
+      <div class="cprofile-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
+      <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
+      <% if (hasBio) { %>
+        <p class="cprofile-bio"><%= candidate.bio %></p>
+      <% } %>
+    </div>
   </div>
 
   <div class="cprofile-wrapper">
@@ -308,7 +367,6 @@
       <h3>Verification Status</h3>
       <div class="verification-list">
 
-        <!-- Email Ownership (no detail, not expandable) -->
         <div class="verification-item">
           <div class="verification-row">
             <span class="verification-label">Email Ownership</span>
@@ -320,7 +378,6 @@
           </div>
         </div>
 
-        <!-- Phone Number (no detail, not expandable) -->
         <div class="verification-item">
           <div class="verification-row">
             <span class="verification-label">Phone Number</span>
@@ -332,7 +389,6 @@
           </div>
         </div>
 
-        <!-- Government ID (no detail, not expandable) -->
         <div class="verification-item">
           <div class="verification-row">
             <span class="verification-label">Government ID</span>
@@ -344,7 +400,6 @@
           </div>
         </div>
 
-        <!-- Facial Recognition (no detail, not expandable) -->
         <div class="verification-item">
           <div class="verification-row">
             <span class="verification-label">Facial Recognition</span>
@@ -356,7 +411,6 @@
           </div>
         </div>
 
-        <!-- Certifications (expandable) -->
         <% if (certStatus) { %>
         <div class="verification-item" data-toggle-target="cert-detail">
           <div class="verification-row expandable">
@@ -386,7 +440,6 @@
         </div>
         <% } %>
 
-        <!-- Work History (expandable) -->
         <% if (workStatus) { %>
         <div class="verification-item" data-toggle-target="work-detail">
           <div class="verification-row expandable">
@@ -415,7 +468,6 @@
         </div>
         <% } %>
 
-        <!-- Education (expandable) -->
         <% if (eduStatus) { %>
         <div class="verification-item" data-toggle-target="edu-detail">
           <div class="verification-row expandable">

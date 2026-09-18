@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Recruiter = require('../models/Recruiter');
-const { uploadProfilePhoto, deleteProfilePhoto } = require('../utils/s3Upload');
+const { uploadProfilePhoto, deleteS3Object } = require('../utils/s3Upload');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -106,7 +106,7 @@ router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
         const oldPhotoUrl = recruiter.profilePhotoUrl;
         const newPhotoUrl = await uploadProfilePhoto(recruiter._id.toString(), req.file);
         recruiter.profilePhotoUrl = newPhotoUrl;
-        await deleteProfilePhoto(oldPhotoUrl);
+        await deleteS3Object(oldPhotoUrl);
       } catch (uploadError) {
         return res.status(400).render('edit-profile', {
           recruiter: recruiter,

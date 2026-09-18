@@ -52,6 +52,10 @@ const candidateSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  profilePhotoUrl: {
+    type: String,
+    default: null
+  },
 
   workHistory: {
     type: [workHistorySchema],
@@ -123,7 +127,6 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
-  // Hard/soft skills — CoderByte assessment
   skillsAssessmentCompletedAt: {
     type: Date,
     default: null
@@ -133,13 +136,11 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
-  // Background check — employer-triggered, not run at signup
   backgroundCheckStatus: {
     type: String,
     default: null
   },
 
-  // Self-reported, never independently verified
   securityClearance: {
     type: String,
     default: null

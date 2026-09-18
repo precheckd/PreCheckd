@@ -65,6 +65,26 @@ async function uploadProfilePhoto(recruiterId, file) {
   return publicUrl;
 }
 
+async function uploadCandidatePhoto(candidateId, file) {
+  const validation = validateImageFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
+  const key = `candidate-photos/${candidateId}-${crypto.randomBytes(6).toString('hex')}${extension}`;
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  const publicUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+  return publicUrl;
+}
+
 async function uploadResume(candidateId, file) {
   const validation = validateResumeFile(file);
   if (!validation.valid) {
@@ -85,24 +105,25 @@ async function uploadResume(candidateId, file) {
   return publicUrl;
 }
 
-async function deleteProfilePhoto(photoUrl) {
-  if (!photoUrl) return;
+async function deleteS3Object(fileUrl) {
+  if (!fileUrl) return;
   try {
-    const key = photoUrl.split(`${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/`)[1];
+    const key = fileUrl.split(`${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/`)[1];
     if (!key) return;
     await s3Client.send(new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
     }));
   } catch (error) {
-    console.error('Failed to delete old profile photo:', error);
+    console.error('Failed to delete old S3 file:', error);
   }
 }
 
 module.exports = {
   uploadProfilePhoto,
+  uploadCandidatePhoto,
   uploadResume,
-  deleteProfilePhoto,
+  deleteS3Object,
   validateImageFile,
   validateResumeFile
 };
