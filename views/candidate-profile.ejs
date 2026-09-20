@@ -49,6 +49,17 @@
     background: #4ADE80;
   }
 
+  .btn-secondary-action {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+  }
+
+  .btn-secondary-action:hover {
+    background: #2A4750;
+    color: #F2F4F3;
+  }
+
   .btn-logout {
     background: transparent;
     color: #C7D1CF;
@@ -339,6 +350,7 @@
     <span class="owner-banner-text">You're viewing your own profile.</span>
     <div class="owner-banner-actions">
       <a href="/candidate/<%= candidate.slug %>/edit" class="btn-edit">Edit Profile</a>
+      <a href="/candidate-dashboard/requests" class="btn-secondary-action">My Requests</a>
       <a href="/api/candidate/logout" class="btn-logout">Log Out</a>
     </div>
   </div>
