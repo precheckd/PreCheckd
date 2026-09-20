@@ -309,7 +309,13 @@
     <div id="page-header-text" class="page-header-text">
       <% if (recruiter) { %>
         <h1>Contact <%= recruiter.firstName %> <%= recruiter.lastName %></h1>
-        <p class="intro-text">Verify your email and phone to send a connection request to this recruiter.</p>
+        <p class="intro-text">
+          <% if (typeof alreadyVerified !== 'undefined' && alreadyVerified) { %>
+            You're already verified — just confirm you'd like to send a connection request.
+          <% } else { %>
+            Verify your email and phone to send a connection request to this recruiter.
+          <% } %>
+        </p>
       <% } else { %>
         <h1>Get Verified</h1>
         <p class="intro-text">Verify your identity to start connecting with verified recruiters on PreCheckd.</p>
@@ -319,7 +325,7 @@
     <p id="form-error" class="form-error hidden"></p>
 
     <!-- Step 0: Email gate -->
-    <section id="step-email-gate" class="form-step">
+    <section id="step-email-gate" class="form-step <%= (typeof alreadyVerified !== 'undefined' && alreadyVerified) ? 'hidden' : '' %>">
       <h2>Enter your email to get started</h2>
       <form id="email-gate-form">
         <label>Email<input type="email" name="email" required></label>
@@ -409,9 +415,9 @@
     </section>
 
     <!-- Connect confirmation (only shown when a recruiter is in context) -->
-    <section id="step-connect-confirm" class="form-step hidden">
+    <section id="step-connect-confirm" class="form-step <%= (typeof alreadyVerified !== 'undefined' && alreadyVerified && recruiter) ? '' : 'hidden' %>">
       <div class="recruiter-callout">
-        Send a connection request to <strong id="connect-recruiter-name"></strong>?
+        Send a connection request to <strong id="connect-recruiter-name"><%= recruiter ? `${recruiter.firstName} ${recruiter.lastName}` : '' %></strong>?
       </div>
       <p>They'll be notified and can choose to share their contact info with you.</p>
       <form id="connect-confirm-form">
