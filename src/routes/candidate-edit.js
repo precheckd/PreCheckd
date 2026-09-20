@@ -30,6 +30,32 @@ function parseJsonField(value) {
   }
 }
 
+function mergeEntries(newEntries, existingEntries, matchFields) {
+  if (!Array.isArray(newEntries)) return [];
+
+  const existingByKey = new Map(
+    (existingEntries || []).map((e) => [
+      matchFields.map((f) => (e[f] || '').toString().toLowerCase()).join('|'),
+      e
+    ])
+  );
+
+  return newEntries
+    .filter((e) => matchFields.every((f) => e[f] && e[f].toString().trim()))
+    .map((e) => {
+      const key = matchFields.map((f) => e[f].toString().trim().toLowerCase()).join('|');
+      const existing = existingByKey.get(key);
+      if (existing) {
+        return existing;
+      }
+      return {
+        ...e,
+        verified: false,
+        verifiedAt: null
+      };
+    });
+}
+
 // GET /candidate/:slug/edit — owner-only edit form
 router.get('/:slug/edit', async (req, res) => {
   try {
@@ -71,9 +97,9 @@ router.post('/:slug/edit', upload.fields([
     }
 
     const { bio } = req.body;
-    const workHistory = parseJsonField(req.body.workHistory);
-    const educationHistory = parseJsonField(req.body.educationHistory);
-    const certifications = parseJsonField(req.body.certifications);
+    const submittedWorkHistory = parseJsonField(req.body.workHistory);
+    const submittedEducationHistory = parseJsonField(req.body.educationHistory);
+    const submittedCertifications = parseJsonField(req.body.certifications);
 
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
 
@@ -95,9 +121,18 @@ router.post('/:slug/edit', upload.fields([
       }
     }
 
-    // If a resume was uploaded from the edit page, parse it immediately
-    // (not backgrounded like signup, since the candidate is actively
-    // waiting on this page and it's a much lower-traffic moment).
+    // First, apply whatever the candidate manually edited/added in the form
+    // (existing entries merge to preserve verified status; new ones start
+    // unverified).
+    candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
+    candidate.educationHistory = mergeEntries(submittedEducationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
+    candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId']);
+
+    // Then, if a resume was uploaded, parse it and layer in anything the
+    // candidate didn't already provide via the form above. This runs AFTER
+    // the manual-entry merge, and writes directly — no second merge pass
+    // needed, since a freshly-parsed resume's data is already correct and
+    // has never been "verified" before.
     let resumeParseError = null;
     if (resumeFile) {
       try {
@@ -106,65 +141,30 @@ router.post('/:slug/edit', upload.fields([
 
         const parsed = await parseResume(resumeFile);
 
-        // Only overwrite fields the candidate hasn't already filled in
-        // themselves, so re-uploading a resume doesn't clobber manual edits
-        // they may have made since signup.
         if (!candidate.bio) {
           candidate.bio = parsed.bio;
         }
-        if (!candidate.workHistory || candidate.workHistory.length === 0) {
-          candidate.workHistory = parsed.workHistory;
+        if (candidate.workHistory.length === 0) {
+          candidate.workHistory = parsed.workHistory.map((job) => ({
+            ...job,
+            verified: false,
+            verifiedAt: null
+          }));
         }
-        if (!candidate.educationHistory || candidate.educationHistory.length === 0) {
-          candidate.educationHistory = parsed.educationHistory;
+        if (candidate.educationHistory.length === 0) {
+          candidate.educationHistory = parsed.educationHistory.map((edu) => ({
+            ...edu,
+            verified: false,
+            verifiedAt: null
+          }));
         }
-        if (!candidate.certifications || candidate.certifications.length === 0) {
+        if (candidate.certifications.length === 0) {
           candidate.certifications = parsed.certifications;
         }
       } catch (parseError) {
         console.error('Resume parsing failed on edit page:', parseError);
         resumeParseError = 'We saved your resume, but couldn\'t automatically read it. Please add your details manually below.';
       }
-    }
-
-    function mergeEntries(newEntries, existingEntries, matchFields) {
-      if (!Array.isArray(newEntries)) return [];
-
-      const existingByKey = new Map(
-        (existingEntries || []).map((e) => [
-          matchFields.map((f) => (e[f] || '').toString().toLowerCase()).join('|'),
-          e
-        ])
-      );
-
-      return newEntries
-        .filter((e) => matchFields.every((f) => e[f] && e[f].toString().trim()))
-        .map((e) => {
-          const key = matchFields.map((f) => e[f].toString().trim().toLowerCase()).join('|');
-          const existing = existingByKey.get(key);
-          if (existing) {
-            return existing;
-          }
-          return {
-            ...e,
-            verified: false,
-            verifiedAt: null
-          };
-        });
-    }
-
-    // If the resume just populated fresh data above, and the form's
-    // submitted arrays are empty (candidate hadn't added anything before
-    // uploading), skip the merge so we don't immediately overwrite what
-    // the resume just filled in.
-    if (workHistory.length > 0 || candidate.workHistory.length === 0) {
-      candidate.workHistory = mergeEntries(workHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
-    }
-    if (educationHistory.length > 0 || candidate.educationHistory.length === 0) {
-      candidate.educationHistory = mergeEntries(educationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
-    }
-    if (certifications.length > 0 || candidate.certifications.length === 0) {
-      candidate.certifications = mergeEntries(certifications, candidate.certifications, ['name', 'credentialId']);
     }
 
     await candidate.save();

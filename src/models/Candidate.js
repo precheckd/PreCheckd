@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const workHistorySchema = new mongoose.Schema({
   employerName: { type: String, required: true },
   jobTitle: { type: String, required: true },
-  startDate: { type: String, required: true }, // "YYYY-MM"
+  startDate: { type: String, default: null }, // "YYYY-MM" — not always determinable from a resume
   endDate: { type: String, default: null }, // null means current
   verified: { type: Boolean, default: false },
   verifiedAt: { type: Date, default: null },
@@ -13,7 +13,7 @@ const workHistorySchema = new mongoose.Schema({
 const educationHistorySchema = new mongoose.Schema({
   schoolName: { type: String, required: true },
   degree: { type: String, required: true },
-  graduationDate: { type: String, required: true }, // "YYYY-MM"
+  graduationDate: { type: String, default: null }, // "YYYY-MM" — not always determinable from a resume
   verified: { type: Boolean, default: false },
   verifiedAt: { type: Date, default: null },
 }, { _id: false });
@@ -26,7 +26,6 @@ const certificationSchema = new mongoose.Schema({
 }, { _id: false });
 
 function generateAnonId() {
-  // 4-character uppercase alphanumeric, e.g. "K7XQ" — no name/identity embedded
   return crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 4);
 }
 
