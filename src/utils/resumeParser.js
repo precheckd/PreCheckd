@@ -1,21 +1,4 @@
-const pdfParseModule = require('pdf-parse');
-
-console.log('DEBUG pdf-parse typeof module:', typeof pdfParseModule);
-console.log('DEBUG pdf-parse keys:', Object.keys(pdfParseModule || {}));
-
-// pdf-parse 2.x restructured its exports compared to 1.x — it may export
-// the function directly, under .default, or under a named export like
-// .PDFParse. Try the common shapes in order rather than assuming one.
-let pdfParse;
-if (typeof pdfParseModule === 'function') {
-  pdfParse = pdfParseModule;
-} else if (typeof pdfParseModule?.default === 'function') {
-  pdfParse = pdfParseModule.default;
-} else if (typeof pdfParseModule?.PDFParse === 'function') {
-  pdfParse = pdfParseModule.PDFParse;
-} else {
-  console.error('DEBUG: could not find a callable pdf-parse export. Full module:', pdfParseModule);
-}
+const { PDFParse } = require('pdf-parse');
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
@@ -24,11 +7,13 @@ async function extractTextFromFile(file) {
   const mimeType = file.mimetype;
 
   if (mimeType === 'application/pdf') {
-    if (typeof pdfParse !== 'function') {
-      throw new Error('PDF parser is not available (check server logs for the DEBUG export shape).');
+    const parser = new PDFParse({ data: file.buffer });
+    try {
+      const result = await parser.getText();
+      return result.text;
+    } finally {
+      await parser.destroy();
     }
-    const data = await pdfParse(file.buffer);
-    return data.text;
   }
 
   throw new Error('Unsupported file type. Please upload a PDF file.');
