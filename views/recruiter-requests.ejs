@@ -47,6 +47,40 @@
     flex-wrap: wrap;
   }
 
+  .request-name-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .request-photo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .request-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .request-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #4A6F7B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #C7D1CF;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
   .request-name {
     font-size: 1.1rem;
     font-weight: 600;
@@ -56,12 +90,14 @@
   .request-date {
     font-size: 0.8rem;
     color: #8FA6AC;
+    margin-top: 0.15rem;
   }
 
-  .request-linkedin {
-    display: inline-block;
+  .anonymized-note {
+    font-size: 0.78rem;
+    color: #8FA6AC;
+    font-style: italic;
     margin-bottom: 0.75rem;
-    font-size: 0.9rem;
   }
 
   .request-note {
@@ -73,6 +109,21 @@
     font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: 1rem;
+  }
+
+  .request-history-preview {
+    margin-bottom: 1rem;
+  }
+
+  .history-line {
+    color: #C7D1CF;
+    font-size: 0.88rem;
+    padding: 0.25rem 0;
+  }
+
+  .employer-hidden {
+    color: #8FA6AC;
+    font-style: italic;
   }
 
   .request-actions {
@@ -135,6 +186,12 @@
     color: #FF8A8A;
   }
 
+  .contact-info {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+
   .empty-state {
     max-width: 900px;
     margin: 0 auto;
@@ -170,12 +227,19 @@
   <% } else { %>
     <div class="requests-list">
       <% requests.forEach(function(request) { %>
-        <% const candidate = request.candidateId; %>
+        <% const candidate = request.candidate; %>
         <div class="request-card">
           <div class="request-top">
-            <div>
-              <div class="request-name"><%= candidate.firstName %> <%= candidate.lastName %></div>
-              <div class="request-date">Requested <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+            <div class="request-name-group">
+              <% if (candidate.photoUrl) { %>
+                <div class="request-photo"><img src="<%= candidate.photoUrl %>" alt=""></div>
+              <% } else { %>
+                <div class="request-avatar-placeholder"><%= request.status === 'pending' ? '?' : candidate.displayName.charAt(0) %></div>
+              <% } %>
+              <div>
+                <div class="request-name"><%= candidate.displayName %></div>
+                <div class="request-date">Requested <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+              </div>
             </div>
             <% if (request.status === 'accepted') { %>
               <span class="status-badge status-accepted">Accepted</span>
@@ -184,10 +248,36 @@
             <% } %>
           </div>
 
-          <a href="<%= candidate.linkedinUrl %>" target="_blank" rel="noopener" class="request-linkedin">View LinkedIn Profile →</a>
+          <% if (request.status === 'pending') { %>
+            <p class="anonymized-note">Identity and employer names are hidden until you respond to this request.</p>
+          <% } %>
+
+          <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
+            <div class="request-history-preview">
+              <% candidate.workHistory.forEach(function(job) { %>
+                <div class="history-line">
+                  <%= job.jobTitle %> at
+                  <% if (job.employerName) { %>
+                    <%= job.employerName %>
+                  <% } else { %>
+                    <span class="employer-hidden">[employer hidden]</span>
+                  <% } %>
+                  (<%= job.startDate %> — <%= job.endDate || 'Present' %>)
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
 
           <% if (request.note) { %>
             <div class="request-note"><%= request.note %></div>
+          <% } %>
+
+          <% if (request.status !== 'pending' && (candidate.email || candidate.phone)) { %>
+            <div class="contact-info">
+              <% if (candidate.email) { %><%= candidate.email %><% } %>
+              <% if (candidate.email && candidate.phone) { %> · <% } %>
+              <% if (candidate.phone) { %><%= candidate.phone %><% } %>
+            </div>
           <% } %>
 
           <% if (request.status === 'pending') { %>

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const workHistorySchema = new mongoose.Schema({
   employerName: { type: String, required: true },
@@ -24,6 +25,11 @@ const certificationSchema = new mongoose.Schema({
   verifiedAt: { type: Date, default: null },
 }, { _id: false });
 
+function generateAnonId() {
+  // 4-character uppercase alphanumeric, e.g. "K7XQ" — no name/identity embedded
+  return crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 4);
+}
+
 const candidateSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -37,6 +43,11 @@ const candidateSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  anonId: {
+    type: String,
+    unique: true,
+    default: generateAnonId
   },
   email: {
     type: String,

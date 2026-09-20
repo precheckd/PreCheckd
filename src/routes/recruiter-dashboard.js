@@ -1,14 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const Recruiter = require('../models/Recruiter');
-const Candidate = require('../models/Candidate');
 const ConnectionRequest = require('../models/ConnectionRequest');
+const Recruiter = require('../models/Recruiter');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
 } = require('../services/emailService');
 
-// Require a logged-in recruiter for every route in this file
 function requireRecruiterLogin(req, res, next) {
   if (!req.session.recruiterId) {
     return res.redirect('/login');
@@ -18,25 +16,48 @@ function requireRecruiterLogin(req, res, next) {
 
 router.use(requireRecruiterLogin);
 
-// GET /recruiter-dashboard/requests — inbox of connection requests
+// GET /recruiter-dashboard/requests — inbox of all connection requests
 router.get('/requests', async (req, res) => {
   try {
-    const recruiter = await Recruiter.findById(req.session.recruiterId);
-    if (!recruiter) {
-      return res.status(404).send('Recruiter not found');
-    }
+    const requests = await ConnectionRequest.find({ recruiterId: req.session.recruiterId })
+      .populate('candidateId')
+      .sort({ createdAt: -1 });
 
-    const requests = await ConnectionRequest.find({ recruiterId: recruiter._id })
-      .sort({ createdAt: -1 })
-      .populate('candidateId');
+    // Anonymize pending requests — recruiter shouldn't see identifying
+    // info until they've made an accept/decline decision. Accepted/declined
+    // requests show full real info, since the decision's already been made.
+    const requestsForView = requests.map((r) => {
+      const candidate = r.candidateId;
+      const isPending = r.status === 'pending';
 
-    res.render('recruiter-requests', {
-      recruiter,
-      requests,
-      title: 'Connection Requests | PreCheckd'
+      return {
+        _id: r._id,
+        status: r.status,
+        note: r.note,
+        createdAt: r.createdAt,
+        respondedAt: r.respondedAt,
+        candidate: {
+          displayName: isPending ? `Candidate ${candidate.anonId}` : `${candidate.firstName} ${candidate.lastName}`,
+          photoUrl: isPending ? null : candidate.profilePhotoUrl,
+          workHistory: (candidate.workHistory || []).map((job) => ({
+            jobTitle: job.jobTitle,
+            employerName: isPending ? null : job.employerName,
+            startDate: job.startDate,
+            endDate: job.endDate,
+            verified: job.verified
+          })),
+          educationHistory: candidate.educationHistory || [],
+          certifications: candidate.certifications || [],
+          bio: candidate.bio,
+          email: isPending ? null : candidate.email,
+          phone: isPending ? null : candidate.phone
+        }
+      };
     });
+
+    res.render('recruiter-requests', { requests: requestsForView });
   } catch (error) {
-    console.error('Error loading connection requests:', error);
+    console.error('Error loading recruiter requests:', error);
     res.status(500).send('Server error');
   }
 });
@@ -44,32 +65,26 @@ router.get('/requests', async (req, res) => {
 // POST /recruiter-dashboard/requests/:id/accept
 router.post('/requests/:id/accept', async (req, res) => {
   try {
-    const recruiter = await Recruiter.findById(req.session.recruiterId);
-    if (!recruiter) {
-      return res.status(404).send('Recruiter not found');
-    }
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
 
-    const request = await ConnectionRequest.findOne({
-      _id: req.params.id,
-      recruiterId: recruiter._id,
-      status: 'pending'
-    }).populate('candidateId');
-
-    if (!request) {
-      return res.status(404).send('Request not found or already handled');
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) {
+      return res.status(403).send('Not authorized.');
     }
 
     request.status = 'accepted';
     request.respondedAt = new Date();
     await request.save();
 
-    const candidate = request.candidateId;
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+
     sendConnectionAcceptedEmail(
-      candidate.email,
-      candidate.firstName,
+      request.candidateId.email,
+      request.candidateId.firstName,
       `${recruiter.firstName} ${recruiter.lastName}`,
       recruiter.email
-    ).catch((err) => console.error('Failed to send acceptance email:', err));
+    ).catch((err) => {
+      console.error('Failed to send acceptance email:', err);
+    });
 
     res.redirect('/recruiter-dashboard/requests');
   } catch (error) {
@@ -81,31 +96,25 @@ router.post('/requests/:id/accept', async (req, res) => {
 // POST /recruiter-dashboard/requests/:id/decline
 router.post('/requests/:id/decline', async (req, res) => {
   try {
-    const recruiter = await Recruiter.findById(req.session.recruiterId);
-    if (!recruiter) {
-      return res.status(404).send('Recruiter not found');
-    }
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
 
-    const request = await ConnectionRequest.findOne({
-      _id: req.params.id,
-      recruiterId: recruiter._id,
-      status: 'pending'
-    }).populate('candidateId');
-
-    if (!request) {
-      return res.status(404).send('Request not found or already handled');
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) {
+      return res.status(403).send('Not authorized.');
     }
 
     request.status = 'declined';
     request.respondedAt = new Date();
     await request.save();
 
-    const candidate = request.candidateId;
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+
     sendConnectionDeclinedEmail(
-      candidate.email,
-      candidate.firstName,
+      request.candidateId.email,
+      request.candidateId.firstName,
       `${recruiter.firstName} ${recruiter.lastName}`
-    ).catch((err) => console.error('Failed to send decline email:', err));
+    ).catch((err) => {
+      console.error('Failed to send decline email:', err);
+    });
 
     res.redirect('/recruiter-dashboard/requests');
   } catch (error) {
