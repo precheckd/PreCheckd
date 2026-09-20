@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Candidate = require('../models/Candidate');
-const { uploadCandidatePhoto, deleteS3Object } = require('../utils/s3Upload');
+const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils/s3Upload');
+const { parseResume } = require('../utils/resumeParser');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -54,7 +55,10 @@ router.get('/:slug/edit', async (req, res) => {
 });
 
 // POST /candidate/:slug/edit — save changes, owner-only
-router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
+router.post('/:slug/edit', upload.fields([
+  { name: 'profilePhoto', maxCount: 1 },
+  { name: 'resume', maxCount: 1 }
+]), async (req, res) => {
   try {
     const candidate = await Candidate.findOne({ slug: req.params.slug });
 
@@ -73,10 +77,13 @@ router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
 
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
 
-    if (req.file) {
+    const photoFile = req.files?.profilePhoto?.[0];
+    const resumeFile = req.files?.resume?.[0];
+
+    if (photoFile) {
       try {
         const oldPhotoUrl = candidate.profilePhotoUrl;
-        const newPhotoUrl = await uploadCandidatePhoto(candidate._id.toString(), req.file);
+        const newPhotoUrl = await uploadCandidatePhoto(candidate._id.toString(), photoFile);
         candidate.profilePhotoUrl = newPhotoUrl;
         await deleteS3Object(oldPhotoUrl);
       } catch (uploadError) {
@@ -85,6 +92,38 @@ router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
           title: `Edit Profile | PreCheckd`,
           error: uploadError.message
         });
+      }
+    }
+
+    // If a resume was uploaded from the edit page, parse it immediately
+    // (not backgrounded like signup, since the candidate is actively
+    // waiting on this page and it's a much lower-traffic moment).
+    let resumeParseError = null;
+    if (resumeFile) {
+      try {
+        const resumeUrl = await uploadResume(candidate._id.toString(), resumeFile);
+        candidate.resumeUrl = resumeUrl;
+
+        const parsed = await parseResume(resumeFile);
+
+        // Only overwrite fields the candidate hasn't already filled in
+        // themselves, so re-uploading a resume doesn't clobber manual edits
+        // they may have made since signup.
+        if (!candidate.bio) {
+          candidate.bio = parsed.bio;
+        }
+        if (!candidate.workHistory || candidate.workHistory.length === 0) {
+          candidate.workHistory = parsed.workHistory;
+        }
+        if (!candidate.educationHistory || candidate.educationHistory.length === 0) {
+          candidate.educationHistory = parsed.educationHistory;
+        }
+        if (!candidate.certifications || candidate.certifications.length === 0) {
+          candidate.certifications = parsed.certifications;
+        }
+      } catch (parseError) {
+        console.error('Resume parsing failed on edit page:', parseError);
+        resumeParseError = 'We saved your resume, but couldn\'t automatically read it. Please add your details manually below.';
       }
     }
 
@@ -114,25 +153,29 @@ router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
         });
     }
 
-    candidate.workHistory = mergeEntries(
-      workHistory,
-      candidate.workHistory,
-      ['jobTitle', 'employerName', 'startDate']
-    );
-
-    candidate.educationHistory = mergeEntries(
-      educationHistory,
-      candidate.educationHistory,
-      ['schoolName', 'degree', 'graduationDate']
-    );
-
-    candidate.certifications = mergeEntries(
-      certifications,
-      candidate.certifications,
-      ['name', 'credentialId']
-    );
+    // If the resume just populated fresh data above, and the form's
+    // submitted arrays are empty (candidate hadn't added anything before
+    // uploading), skip the merge so we don't immediately overwrite what
+    // the resume just filled in.
+    if (workHistory.length > 0 || candidate.workHistory.length === 0) {
+      candidate.workHistory = mergeEntries(workHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
+    }
+    if (educationHistory.length > 0 || candidate.educationHistory.length === 0) {
+      candidate.educationHistory = mergeEntries(educationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
+    }
+    if (certifications.length > 0 || candidate.certifications.length === 0) {
+      candidate.certifications = mergeEntries(certifications, candidate.certifications, ['name', 'credentialId']);
+    }
 
     await candidate.save();
+
+    if (resumeParseError) {
+      return res.render('candidate-edit', {
+        candidate,
+        title: `Edit Profile | PreCheckd`,
+        error: resumeParseError
+      });
+    }
 
     res.redirect(`/candidate/${candidate.slug}`);
   } catch (error) {

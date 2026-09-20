@@ -123,6 +123,27 @@
     font-weight: 400;
   }
 
+  .resume-upload-box {
+    background: #24404A;
+    border: 1px dashed #4A6F7B;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .resume-upload-box p {
+    margin-bottom: 0.6rem;
+    font-size: 0.85rem;
+    color: #B9C7CA;
+    line-height: 1.5;
+  }
+
+  .resume-current-note {
+    font-size: 0.82rem;
+    color: #4ADE80;
+    margin-bottom: 0.6rem;
+  }
+
   .section-label {
     color: #F2F4F3;
     font-weight: 600;
@@ -222,8 +243,14 @@
     width: auto;
   }
 
-  button[type="submit"]:hover {
+  button[type="submit"]:hover:not(:disabled) {
     background: #4ADE80;
+  }
+
+  button[type="submit"]:disabled {
+    background: #5C7278;
+    color: #B9C7CA;
+    cursor: not-allowed;
   }
 
   .btn-cancel {
@@ -260,7 +287,7 @@
   <div class="cedit-container">
     <div class="cedit-header">
       <h1>Edit Your Profile</h1>
-      <p>Manage your photo, bio, work history, education, and certifications.</p>
+      <p>Manage your photo, resume, bio, work history, education, and certifications.</p>
     </div>
 
     <div class="cedit-card">
@@ -281,6 +308,19 @@
           <span class="label-hint">JPEG, PNG, or WebP. Max 5MB.</span>
         </label>
 
+        <label>
+          Resume
+          <div class="resume-upload-box">
+            <% if (candidate.resumeUrl) { %>
+              <p class="resume-current-note">✓ Resume on file. Upload a new one to replace it and re-parse your details.</p>
+            <% } else { %>
+              <p>Didn't upload a resume when you signed up? Add one now and we'll pull in your work history, education, and certifications automatically — it'll only fill in fields you haven't already added yourself.</p>
+            <% } %>
+            <input type="file" name="resume" accept=".pdf">
+            <span class="label-hint">PDF only, max 5MB. This may take a few seconds to process after you save.</span>
+          </div>
+        </label>
+
         <label>Bio <span class="label-hint">(optional)</span>
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>
@@ -299,7 +339,7 @@
         <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
 
         <div class="form-actions">
-          <button type="submit">Save Changes</button>
+          <button type="submit" id="save-button">Save Changes</button>
           <a href="/candidate/<%= candidate.slug %>" class="btn-cancel">Cancel</a>
         </div>
       </form>

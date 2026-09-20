@@ -110,7 +110,14 @@
   // build hidden inputs holding JSON just before submit so the server
   // receives them as regular parsed fields.
   const form = document.getElementById('edit-form');
+  const saveButton = document.getElementById('save-button');
+
   form.addEventListener('submit', () => {
+    const resumeInput = form.querySelector('input[name="resume"]');
+    if (resumeInput && resumeInput.files.length > 0) {
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving and processing resume...';
+    }
     const addHiddenJsonField = (name, value) => {
       const existing = form.querySelector(`input[name="${name}"]`);
       if (existing) existing.remove();
