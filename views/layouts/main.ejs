@@ -105,6 +105,16 @@
       color: #F2F4F3;
     }
 
+    .nav-btn-outline.is-logged-in {
+      background: #2ECC71;
+      color: #1F363C;
+    }
+
+    .nav-btn-outline.is-logged-in:hover {
+      background: #4ADE80;
+      color: #1F363C;
+    }
+
     main {
       min-height: calc(100vh - 150px);
     }
@@ -213,8 +223,18 @@
       <a href="/recruiter-search" class="nav-btn-outline">Browse Recruiters</a>
       <a href="/recruiter-landing" class="nav-btn-outline">Recruiters</a>
       <a href="/candidate-landing" class="nav-btn-outline">Candidates</a>
-      <a href="/login" class="nav-btn-outline">Recruiter Login</a>
-      <a href="/candidate-signup" class="nav-btn-outline">Candidate Login</a>
+
+      <% if (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug) { %>
+        <a href="/recruiter/<%= loggedInRecruiterSlug %>" class="nav-btn-outline is-logged-in">My Recruiter Profile</a>
+      <% } else { %>
+        <a href="/login" class="nav-btn-outline">Recruiter Login</a>
+      <% } %>
+
+      <% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
+        <a href="/candidate/<%= loggedInCandidateSlug %>" class="nav-btn-outline is-logged-in">My Candidate Profile</a>
+      <% } else { %>
+        <a href="/candidate-signup" class="nav-btn-outline">Candidate Login</a>
+      <% } %>
     </nav>
   </div>
 </header>

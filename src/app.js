@@ -18,6 +18,8 @@ const candidateDashboardRoutes = require('./routes/candidate-dashboard');
 const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
 const internalRoutes = require('./routes/internal');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const Recruiter = require('./models/Recruiter');
+const Candidate = require('./models/Candidate');
 
 assertEnv();
 
@@ -55,6 +57,34 @@ app.use('/webhooks', webhookRoutes);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Makes the logged-in state available to every template via res.locals,
+// so the header nav can show a "My Profile" link for whoever is logged
+// in, on every page site-wide, without each route computing this itself.
+app.use(async (req, res, next) => {
+  res.locals.loggedInRecruiterSlug = null;
+  res.locals.loggedInCandidateSlug = null;
+
+  try {
+    if (req.session.recruiterId) {
+      const recruiter = await Recruiter.findById(req.session.recruiterId).select('slug');
+      if (recruiter) {
+        res.locals.loggedInRecruiterSlug = recruiter.slug;
+      }
+    }
+
+    if (req.session.candidateId) {
+      const candidate = await Candidate.findById(req.session.candidateId).select('slug');
+      if (candidate) {
+        res.locals.loggedInCandidateSlug = candidate.slug;
+      }
+    }
+  } catch (error) {
+    console.error('Error resolving logged-in user for nav:', error);
+  }
+
+  next();
+});
 
 // Landing page for founding recruiters
 app.get('/founding-recruiter-landing', (req, res) => {
