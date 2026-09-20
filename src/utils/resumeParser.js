@@ -1,5 +1,5 @@
-const pdfParse = require('pdf-parse');
-const mammoth = require('mammoth');
+const pdfParseModule = require('pdf-parse');
+const pdfParse = typeof pdfParseModule === 'function' ? pdfParseModule : pdfParseModule.default;
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
@@ -12,12 +12,7 @@ async function extractTextFromFile(file) {
     return data.text;
   }
 
-  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    const result = await mammoth.extractRawText({ buffer: file.buffer });
-    return result.value;
-  }
-
-  throw new Error('Unsupported file type. Please upload a PDF or DOCX file.');
+  throw new Error('Unsupported file type. Please upload a PDF file.');
 }
 
 async function extractStructuredDataFromText(resumeText) {
