@@ -115,6 +115,11 @@ router.get('/compose', async (req, res) => {
   }
 });
 
+// GET /messages/sent — simple confirmation shown to the sender after sending
+router.get('/sent', (req, res) => {
+  res.render('message-sent', { currentUserType: req.currentUser.type });
+});
+
 // GET /messages/:id — view a single message, marks it read
 router.get('/:id', async (req, res) => {
   try {
@@ -202,7 +207,10 @@ router.post('/send', async (req, res) => {
       });
     }
 
-    res.redirect(`/messages/${message._id}`);
+    // Redirect the sender to a confirmation page — the sender is never
+    // the recipient, so redirecting to the message detail view (which is
+    // recipient-only) would always deny them access.
+    res.redirect('/messages/sent');
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).send('Server error');

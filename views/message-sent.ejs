@@ -1,0 +1,91 @@
+<style>
+  .sent-content {
+    flex: 1;
+    padding: 4rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sent-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .sent-card svg {
+    width: 64px;
+    height: 64px;
+    color: #4ADE80;
+    margin-bottom: 1.5rem;
+  }
+
+  .sent-card h1 {
+    font-size: 1.5rem;
+    color: #F2F4F3;
+    margin-bottom: 0.75rem;
+  }
+
+  .sent-card p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .sent-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sent-actions a {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-primary-action {
+    background: #2ECC71;
+    color: #1F363C;
+  }
+
+  .btn-primary-action:hover {
+    background: #4ADE80;
+  }
+
+  .btn-secondary-action {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+  }
+
+  .btn-secondary-action:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+</style>
+
+<div class="sent-content">
+  <div class="sent-card">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    <h1>Message Sent!</h1>
+    <p>Your message is on its way. They'll be notified by email.</p>
+    <div class="sent-actions">
+      <a href="<%= currentUserType === 'recruiter' ? '/recruiter-dashboard/requests' : '/candidate-dashboard/requests' %>" class="btn-secondary-action">Back to Requests</a>
+      <a href="/messages" class="btn-primary-action">View Inbox</a>
+    </div>
+  </div>
+</div>
