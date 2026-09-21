@@ -6,8 +6,6 @@ const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const { sendNewMessageEmail } = require('../services/emailService');
 
-// Figures out whether the current session is a recruiter or a candidate,
-// and returns a consistent { type, id } shape either route below can use.
 function getCurrentUser(req) {
   if (req.session.recruiterId) {
     return { type: 'recruiter', id: req.session.recruiterId };
@@ -37,8 +35,6 @@ router.get('/', async (req, res) => {
     const messages = await Message.find({ recipientType: type, recipientId: id })
       .sort({ sentAt: -1 });
 
-    // Resolve sender display info per message (recruiter name/company, or
-    // candidate name) so the inbox view doesn't need to do its own lookups.
     const messagesForView = await Promise.all(messages.map(async (m) => {
       let senderName = 'Unknown';
       let senderSlug = null;
@@ -73,6 +69,48 @@ router.get('/', async (req, res) => {
     res.render('inbox', { messages: messagesForView, currentUserType: type });
   } catch (error) {
     console.error('Error loading inbox:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// GET /messages/compose — blank compose form, tied to an accepted connection
+router.get('/compose', async (req, res) => {
+  try {
+    const { type, id } = req.currentUser;
+    const { connectionRequestId } = req.query;
+
+    if (!connectionRequestId) {
+      return res.status(400).send('Missing connection request.');
+    }
+
+    const connection = await ConnectionRequest.findById(connectionRequestId);
+
+    if (!connection || connection.status !== 'accepted') {
+      return res.status(403).send('You can only message someone through an accepted connection.');
+    }
+
+    const isRecruiterParty = type === 'recruiter' && connection.recruiterId.toString() === id;
+    const isCandidateParty = type === 'candidate' && connection.candidateId.toString() === id;
+
+    if (!isRecruiterParty && !isCandidateParty) {
+      return res.status(403).send('Not authorized to message on this connection.');
+    }
+
+    const recipientType = type === 'recruiter' ? 'candidate' : 'recruiter';
+    const recipientId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
+    const RecipientModel = recipientType === 'recruiter' ? Recruiter : Candidate;
+    const recipient = await RecipientModel.findById(recipientId).select('firstName lastName');
+
+    if (!recipient) {
+      return res.status(404).send('Recipient not found.');
+    }
+
+    res.render('message-compose', {
+      connectionRequestId,
+      recipientName: `${recipient.firstName} ${recipient.lastName}`
+    });
+  } catch (error) {
+    console.error('Error loading compose page:', error);
     res.status(500).send('Server error');
   }
 });
@@ -128,7 +166,6 @@ router.post('/send', async (req, res) => {
       return res.status(403).send('You can only message someone through an accepted connection.');
     }
 
-    // Confirm the sender is actually one of the two parties on this connection.
     const isRecruiterParty = type === 'recruiter' && connection.recruiterId.toString() === id;
     const isCandidateParty = type === 'candidate' && connection.candidateId.toString() === id;
 
@@ -149,8 +186,6 @@ router.post('/send', async (req, res) => {
       body: body.trim()
     });
 
-    // Look up recipient email for the notification, then send in the
-    // background — never blocks the response.
     const RecipientModel = recipientType === 'recruiter' ? Recruiter : Candidate;
     const recipient = await RecipientModel.findById(recipientId).select('email firstName');
     const SenderModel = type === 'recruiter' ? Recruiter : Candidate;
