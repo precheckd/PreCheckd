@@ -6,71 +6,6 @@
     min-height: 100vh;
   }
 
-  .owner-banner {
-    max-width: 900px;
-    margin: 0 auto 1.5rem;
-    background: #24404A;
-    border: 1px solid #2ECC71;
-    border-radius: 8px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .owner-banner-text {
-    color: #C7D1CF;
-    font-size: 0.9rem;
-  }
-
-  .owner-banner-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .owner-banner-actions a {
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    transition: background 0.2s, color 0.2s;
-  }
-
-  .btn-edit {
-    background: #2ECC71;
-    color: #1F363C;
-  }
-
-  .btn-edit:hover {
-    background: #4ADE80;
-  }
-
-  .btn-secondary-action {
-    background: transparent;
-    color: #C7D1CF;
-    border: 1px solid #4A6F7B;
-  }
-
-  .btn-secondary-action:hover {
-    background: #2A4750;
-    color: #F2F4F3;
-  }
-
-  .btn-logout {
-    background: transparent;
-    color: #C7D1CF;
-    border: 1px solid #4A6F7B;
-  }
-
-  .btn-logout:hover {
-    background: #2A4750;
-    color: #F2F4F3;
-  }
-
   .cprofile-header {
     max-width: 900px;
     margin: 0 auto 2rem;
@@ -286,12 +221,6 @@
       padding: 1rem;
     }
 
-    .owner-banner {
-      flex-direction: column;
-      align-items: stretch;
-      text-align: center;
-    }
-
     .cprofile-header {
       flex-direction: column;
       align-items: center;
@@ -346,17 +275,6 @@
 %>
 
 <div class="cprofile-content">
-  <div class="owner-banner">
-    <span class="owner-banner-text">You're viewing your own profile.</span>
-    <div class="owner-banner-actions">
-      <a href="/recruiter-search" class="btn-secondary-action">Browse Recruiters</a>
-      <a href="/candidate/<%= candidate.slug %>/edit" class="btn-edit">Edit Profile</a>
-      <a href="/candidate-dashboard/requests" class="btn-secondary-action">My Requests</a>
-      <a href="/messages" class="btn-secondary-action">Inbox</a>
-      <a href="/api/candidate/logout" class="btn-logout">Log Out</a>
-    </div>
-  </div>
-
   <div class="cprofile-header">
     <% if (candidate.profilePhotoUrl) { %>
       <div class="cprofile-photo">

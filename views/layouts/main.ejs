@@ -115,6 +115,62 @@
       color: #1F363C;
     }
 
+    .session-bar {
+      background: #24404A;
+      border-bottom: 1px solid #2ECC71;
+      padding: 0.75rem 1.5rem;
+    }
+
+    .session-bar-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .session-bar-text {
+      color: #C7D1CF;
+      font-size: 0.85rem;
+    }
+
+    .session-bar-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .session-bar-actions a {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .session-btn-primary {
+      background: #2ECC71;
+      color: #1F363C;
+    }
+
+    .session-btn-primary:hover {
+      background: #4ADE80;
+    }
+
+    .session-btn-secondary {
+      background: transparent;
+      color: #C7D1CF;
+      border: 1px solid #4A6F7B;
+    }
+
+    .session-btn-secondary:hover {
+      background: #2A4750;
+      color: #F2F4F3;
+    }
+
     main {
       min-height: calc(100vh - 150px);
     }
@@ -200,6 +256,12 @@
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
       }
+
+      .session-bar-container {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -238,6 +300,33 @@
     </nav>
   </div>
 </header>
+
+<% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
+  <div class="session-bar">
+    <div class="session-bar-container">
+      <span class="session-bar-text">Logged in as a candidate</span>
+      <div class="session-bar-actions">
+        <a href="/recruiter-search" class="session-btn-secondary">Browse Recruiters</a>
+        <a href="/candidate/<%= loggedInCandidateSlug %>/edit" class="session-btn-primary">Edit Profile</a>
+        <a href="/candidate-dashboard/requests" class="session-btn-secondary">My Requests</a>
+        <a href="/messages" class="session-btn-secondary">Inbox</a>
+        <a href="/api/candidate/logout" class="session-btn-secondary">Log Out</a>
+      </div>
+    </div>
+  </div>
+<% } else if (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug) { %>
+  <div class="session-bar">
+    <div class="session-bar-container">
+      <span class="session-bar-text">Logged in as a recruiter</span>
+      <div class="session-bar-actions">
+        <a href="/recruiter/<%= loggedInRecruiterSlug %>/edit" class="session-btn-primary">Edit Profile</a>
+        <a href="/recruiter-dashboard/requests" class="session-btn-secondary">Connection Requests</a>
+        <a href="/messages" class="session-btn-secondary">Inbox</a>
+        <a href="/logout" class="session-btn-secondary">Log Out</a>
+      </div>
+    </div>
+  </div>
+<% } %>
 
 <main>
   <%- body %>
