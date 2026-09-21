@@ -1,0 +1,145 @@
+<style>
+  .inbox-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .inbox-header {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .inbox-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .inbox-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .inbox-list {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .message-row {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    transition: border-color 0.15s;
+    gap: 1rem;
+  }
+
+  .message-row:hover {
+    border-color: #2ECC71;
+  }
+
+  .message-row.unread {
+    border-left: 3px solid #2ECC71;
+  }
+
+  .message-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .message-sender {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .message-sender.unread-text {
+    color: #4ADE80;
+  }
+
+  .message-subject {
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .message-preview {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .message-date {
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    color: #8FA6AC;
+    padding: 3rem 1.5rem;
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .inbox-content {
+      padding: 1rem;
+    }
+
+    .message-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+  }
+</style>
+
+<div class="inbox-content">
+  <div class="inbox-header">
+    <h1>Inbox</h1>
+    <p>Messages from your connections on PreCheckd.</p>
+  </div>
+
+  <% if (messages.length === 0) { %>
+    <div class="empty-state">
+      <p>No messages yet. Once you have an accepted connection, you can message them here.</p>
+    </div>
+  <% } else { %>
+    <div class="inbox-list">
+      <% messages.forEach(function(message) { %>
+        <% const isUnread = !message.readAt; %>
+        <a href="/messages/<%= message._id %>" class="message-row <%= isUnread ? 'unread' : '' %>">
+          <div class="message-info">
+            <div class="message-sender <%= isUnread ? 'unread-text' : '' %>"><%= message.senderName %></div>
+            <% if (message.subject) { %>
+              <div class="message-subject"><%= message.subject %></div>
+            <% } %>
+            <div class="message-preview"><%= message.body.slice(0, 100) %><%= message.body.length > 100 ? '...' : '' %></div>
+          </div>
+          <div class="message-date"><%= message.sentAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

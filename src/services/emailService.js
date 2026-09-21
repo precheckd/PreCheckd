@@ -72,11 +72,56 @@ async function sendCandidateVerificationLink(toEmail, firstName, token) {
   });
 }
 
+async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, recruiterName, recruiterEmail) {
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidateEmail,
+    subject: `${recruiterName} accepted your connection request`,
+    html: `
+      <p>Hi ${candidateFirstName},</p>
+      <p><strong>${recruiterName}</strong> accepted your connection request on PreCheckd.</p>
+      <p>You can now reach them directly at: <strong>${recruiterEmail}</strong></p>
+      <p>You can also message them directly through your PreCheckd inbox.</p>
+    `,
+  });
+}
+
+async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, recruiterName) {
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidateEmail,
+    subject: `Update on your connection request`,
+    html: `
+      <p>Hi ${candidateFirstName},</p>
+      <p><strong>${recruiterName}</strong> declined your connection request on PreCheckd.</p>
+      <p>Don't be discouraged — keep browsing and connecting with other verified recruiters.</p>
+    `,
+  });
+}
+
+async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subject) {
+  const inboxUrl = `${process.env.APP_BASE_URL}/messages`;
+
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: subject ? `New message: ${subject}` : `You have a new message on PreCheckd`,
+    html: `
+      <p>Hi ${recipientFirstName},</p>
+      <p><strong>${senderName}</strong> sent you a message on PreCheckd.</p>
+      <p><a href="${inboxUrl}">View it in your inbox</a></p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   generateVerificationToken,
   sendLoginEmail,
   sendCandidateLoginCode,
   sendCandidateVerificationLink,
+  sendConnectionAcceptedEmail,
+  sendConnectionDeclinedEmail,
+  sendNewMessageEmail,
   generateSixDigitCode
 };
