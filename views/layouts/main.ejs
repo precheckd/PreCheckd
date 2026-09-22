@@ -200,7 +200,7 @@
 
     .cc-widgets {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
     }
 
@@ -274,6 +274,68 @@
     .cc-status-declined {
       background: rgba(248, 113, 113, 0.15);
       color: #F87171;
+    }
+
+    .cc-verification-summary {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .cc-verification-count {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #4ADE80;
+    }
+
+    .cc-verification-total {
+      font-size: 0.9rem;
+      color: #7A9B8E;
+    }
+
+    .cc-verification-bar-track {
+      background: rgba(122, 155, 142, 0.2);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .cc-verification-bar-fill {
+      background: #2ECC71;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .cc-verification-complete {
+      color: #4ADE80;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .cc-nudge-list {
+      list-style: none;
+    }
+
+    .cc-nudge-item {
+      color: #C7D1CF;
+      font-size: 0.85rem;
+      padding: 0.4rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.12);
+    }
+
+    .cc-nudge-item:last-child {
+      border-bottom: none;
+    }
+
+    .cc-nudge-item::before {
+      content: "○";
+      color: #FBBF24;
+      font-size: 0.7rem;
     }
 
     main {
@@ -434,6 +496,35 @@
     </div>
 
     <div class="cc-widgets">
+      <div class="cc-widget">
+        <h4>Verification Status</h4>
+        <div class="cc-verification-summary">
+          <span class="cc-verification-count"><%= commandCenterVerifiedCount %></span>
+          <span class="cc-verification-total">/ <%= commandCenterVerifiedTotal %> verified</span>
+        </div>
+        <div class="cc-verification-bar-track">
+          <div class="cc-verification-bar-fill" style="width: <%= commandCenterVerifiedTotal > 0 ? (commandCenterVerifiedCount / commandCenterVerifiedTotal * 100) : 0 %>%;"></div>
+        </div>
+        <% if (commandCenterVerifiedCount === commandCenterVerifiedTotal) { %>
+          <p class="cc-verification-complete">✓ Fully verified</p>
+        <% } else { %>
+          <p class="cc-widget-empty">Some checks still pending</p>
+        <% } %>
+      </div>
+
+      <div class="cc-widget">
+        <h4>Complete Your Profile</h4>
+        <% if (commandCenterNudges && commandCenterNudges.length > 0) { %>
+          <ul class="cc-nudge-list">
+            <% commandCenterNudges.forEach(function(nudge) { %>
+              <li class="cc-nudge-item"><%= nudge %></li>
+            <% }); %>
+          </ul>
+        <% } else { %>
+          <p class="cc-verification-complete">✓ Profile complete</p>
+        <% } %>
+      </div>
+
       <div class="cc-widget">
         <h4>Recent Messages</h4>
         <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>

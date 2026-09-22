@@ -56,6 +56,25 @@ app.use('/webhooks', webhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+function buildCandidateNudges(candidate) {
+  const nudges = [];
+  if (!candidate.profilePhotoUrl) nudges.push('Add a profile photo');
+  if (!candidate.bio) nudges.push('Write a short bio');
+  if (!candidate.workHistory || candidate.workHistory.length === 0) nudges.push('Add your work history');
+  if (!candidate.educationHistory || candidate.educationHistory.length === 0) nudges.push('Add your education');
+  if (!candidate.resumeUrl) nudges.push('Upload your resume');
+  return nudges;
+}
+
+function buildRecruiterNudges(recruiter) {
+  const nudges = [];
+  if (!recruiter.profilePhotoUrl) nudges.push('Add a profile photo');
+  if (!recruiter.bio) nudges.push('Write a short bio');
+  if (!recruiter.yearsOfExperience) nudges.push('Add years of experience');
+  if (!recruiter.specialties || recruiter.specialties.length === 0) nudges.push('Add your specialties');
+  return nudges;
+}
+
 // Makes logged-in state AND command-center widget data available to every
 // template via res.locals. Runs on every request, so kept as light as
 // reasonably possible — limited to a few small, indexed queries.
@@ -65,10 +84,13 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterMessages = [];
   res.locals.commandCenterUnreadCount = 0;
   res.locals.commandCenterRequests = [];
+  res.locals.commandCenterVerifiedCount = 0;
+  res.locals.commandCenterVerifiedTotal = 0;
+  res.locals.commandCenterNudges = [];
 
   try {
     if (req.session.recruiterId) {
-      const recruiter = await Recruiter.findById(req.session.recruiterId).select('slug');
+      const recruiter = await Recruiter.findById(req.session.recruiterId);
       if (recruiter) {
         res.locals.loggedInRecruiterSlug = recruiter.slug;
 
@@ -98,11 +120,22 @@ app.use(async (req, res, next) => {
           status: r.status,
           displayName: r.status === 'pending' ? `Candidate ${r.candidateId?.anonId || ''}` : `${r.candidateId?.firstName || ''} ${r.candidateId?.lastName || ''}`
         }));
+
+        const recruiterChecks = [
+          recruiter.domainVerifiedAt,
+          recruiter.emailVerifiedAt,
+          recruiter.phoneVerifiedAt,
+          recruiter.identityVerifiedAt,
+          recruiter.facialRecognitionVerifiedAt
+        ];
+        res.locals.commandCenterVerifiedTotal = recruiterChecks.length;
+        res.locals.commandCenterVerifiedCount = recruiterChecks.filter(Boolean).length;
+        res.locals.commandCenterNudges = buildRecruiterNudges(recruiter);
       }
     }
 
     if (req.session.candidateId) {
-      const candidate = await Candidate.findById(req.session.candidateId).select('slug');
+      const candidate = await Candidate.findById(req.session.candidateId);
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
 
@@ -132,6 +165,16 @@ app.use(async (req, res, next) => {
           status: r.status,
           displayName: r.recruiterId ? `${r.recruiterId.firstName} ${r.recruiterId.lastName}` : 'Unknown'
         }));
+
+        const candidateChecks = [
+          candidate.emailVerifiedAt,
+          candidate.phoneVerifiedAt,
+          candidate.identityVerifiedAt,
+          candidate.facialRecognitionVerifiedAt
+        ];
+        res.locals.commandCenterVerifiedTotal = candidateChecks.length;
+        res.locals.commandCenterVerifiedCount = candidateChecks.filter(Boolean).length;
+        res.locals.commandCenterNudges = buildCandidateNudges(candidate);
       }
     }
   } catch (error) {
