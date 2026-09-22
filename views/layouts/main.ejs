@@ -193,6 +193,13 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .cc-tools-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
     }
 
     .cc-widget {
@@ -368,9 +375,9 @@
       background: #0A0F0C;
       border: 1px solid rgba(46, 204, 113, 0.3);
       border-radius: 6px;
-      padding: 0.5rem 0.75rem;
+      padding: 0.65rem 0.85rem;
       color: #E8EBEA;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
 
     .cc-search-widget-input::placeholder {
@@ -387,8 +394,8 @@
       color: #0A0F0C;
       border: none;
       border-radius: 6px;
-      padding: 0.5rem 1rem;
-      font-size: 0.8rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
@@ -508,7 +515,8 @@
         text-align: center;
       }
 
-      .cc-widgets {
+      .cc-widgets,
+      .cc-tools-row {
         grid-template-columns: 1fr;
       }
     }
@@ -635,13 +643,16 @@
         <% } %>
       </div>
 
-      <% if (loggedInCandidateSlug) { %>
+    </div>
+
+    <% if (loggedInCandidateSlug) { %>
+    <div class="cc-tools-row">
       <div class="cc-widget">
         <div class="cc-widget-header">
           <h4>Search Recruiters</h4>
         </div>
         <form class="cc-search-widget-form" action="/recruiter-search" method="GET">
-          <input type="text" name="q" class="cc-search-widget-input" placeholder="Name, company, specialty...">
+          <input type="text" name="q" class="cc-search-widget-input" placeholder="Search by name, company, or specialty...">
           <button type="submit" class="cc-search-widget-btn">Go</button>
         </form>
       </div>
@@ -651,13 +662,13 @@
           <h4>Email Checker<span class="cc-coming-soon-badge">Coming Soon</span></h4>
         </div>
         <form class="cc-search-widget-form">
-          <input type="text" class="cc-search-widget-input" placeholder="Paste a sender's email..." disabled>
+          <input type="text" class="cc-search-widget-input" placeholder="Paste a sender's email address..." disabled>
           <button type="button" class="cc-search-widget-btn" disabled>Check</button>
         </form>
       </div>
-      <% } %>
-
     </div>
+    <% } %>
+
   </div>
 </div>
 <% } %>
