@@ -19,65 +19,65 @@
     }
 
     header {
-  background: #1F363C;
-  border-bottom: 1px solid #3B5860;
-  padding: 1rem 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.2);
-}
+      background: #1F363C;
+      border-bottom: 1px solid #3B5860;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
 
-.header-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .header-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-decoration: none;
-  color: #F2F4F3;
-}
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #F2F4F3;
+    }
 
-.logo-icon {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  color: #2ECC71;
-}
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      color: #2ECC71;
+    }
 
-.logo-icon svg {
-  width: 100%;
-  height: 100%;
-}
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+    }
 
-.logo-text-group {
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid #3B5860;
-  padding-left: 0.75rem;
-}
+    .logo-text-group {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #3B5860;
+      padding-left: 0.75rem;
+    }
 
-.logo-text {
-  font-size: 34px;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1;
-}
+    .logo-text {
+      font-size: 34px;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1;
+    }
 
-.logo-text .logo-accent {
-  color: #2ECC71;
-}
+    .logo-text .logo-accent {
+      color: #2ECC71;
+    }
 
-.logo-tagline {
-  font-size: 0.82rem;
-  color: #8FA6AC;
-  font-weight: 500;
-  margin-top: 0.3rem;
-  letter-spacing: 0.02em;
-}
+    .logo-tagline {
+      font-size: 0.82rem;
+      color: #8FA6AC;
+      font-weight: 500;
+      margin-top: 0.3rem;
+      letter-spacing: 0.02em;
+    }
 
     .header-nav {
       display: flex;
@@ -115,60 +115,165 @@
       color: #1F363C;
     }
 
-    .session-bar {
-      background: #24404A;
-      border-bottom: 1px solid #2ECC71;
-      padding: 0.75rem 1.5rem;
+    /* Command Center — radar/sonar themed session bar */
+    .command-center {
+      background: #0A0F0C;
+      border-top: 2px solid #2ECC71;
+      border-bottom: 2px solid #2ECC71;
+      box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+      padding: 1rem 1.5rem 1.5rem;
     }
 
-    .session-bar-container {
+    .cc-container {
       max-width: 1600px;
       margin: 0 auto;
+    }
+
+    .cc-top-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
-    .session-bar-text {
-      color: #C7D1CF;
-      font-size: 0.85rem;
+    .cc-status-text {
+      color: #7A9B8E;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
     }
 
-    .session-bar-actions {
+    .cc-actions {
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
     }
 
-    .session-bar-actions a {
+    .cc-actions a {
       font-size: 0.85rem;
       font-weight: 600;
       text-decoration: none;
-      padding: 0.4rem 0.85rem;
+      padding: 0.5rem 1rem;
       border-radius: 6px;
       transition: background 0.2s, color 0.2s;
+      position: relative;
     }
 
-    .session-btn-primary {
+    .cc-btn-primary {
       background: #2ECC71;
-      color: #1F363C;
+      color: #0A0F0C;
     }
 
-    .session-btn-primary:hover {
+    .cc-btn-primary:hover {
       background: #4ADE80;
     }
 
-    .session-btn-secondary {
+    .cc-btn-secondary {
       background: transparent;
-      color: #C7D1CF;
-      border: 1px solid #4A6F7B;
+      color: #4ADE80;
+      border: 1px solid #2ECC71;
     }
 
-    .session-btn-secondary:hover {
-      background: #2A4750;
+    .cc-btn-secondary:hover {
+      background: rgba(46, 204, 113, 0.1);
       color: #F2F4F3;
+    }
+
+    .cc-unread-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ADE80;
+      margin-left: 0.4rem;
+      box-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
+      animation: cc-pulse 2s infinite;
+    }
+
+    @keyframes cc-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .cc-widgets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .cc-widget {
+      background: rgba(46, 204, 113, 0.04);
+      border: 1px solid rgba(46, 204, 113, 0.25);
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .cc-widget h4 {
+      color: #4ADE80;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+    }
+
+    .cc-widget-empty {
+      color: #7A9B8E;
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .cc-widget-item {
+      display: block;
+      text-decoration: none;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.12);
+    }
+
+    .cc-widget-item:last-child {
+      border-bottom: none;
+    }
+
+    .cc-widget-item-title {
+      color: #E8EBEA;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .cc-widget-item-sub {
+      color: #7A9B8E;
+      font-size: 0.8rem;
+      margin-top: 0.15rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cc-status-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 0.25rem;
+    }
+
+    .cc-status-pending {
+      background: rgba(251, 191, 36, 0.15);
+      color: #FBBF24;
+    }
+
+    .cc-status-accepted {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ADE80;
+    }
+
+    .cc-status-declined {
+      background: rgba(248, 113, 113, 0.15);
+      color: #F87171;
     }
 
     main {
@@ -257,10 +362,14 @@
         font-size: 0.9rem;
       }
 
-      .session-bar-container {
+      .cc-top-row {
         flex-direction: column;
         align-items: stretch;
         text-align: center;
+      }
+
+      .cc-widgets {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -301,31 +410,60 @@
   </div>
 </header>
 
-<% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
-  <div class="session-bar">
-    <div class="session-bar-container">
-      <span class="session-bar-text">Logged in as a candidate</span>
-      <div class="session-bar-actions">
-        <a href="/recruiter-search" class="session-btn-secondary">Browse Recruiters</a>
-        <a href="/candidate/<%= loggedInCandidateSlug %>/edit" class="session-btn-primary">Edit Profile</a>
-        <a href="/candidate-dashboard/requests" class="session-btn-secondary">My Requests</a>
-        <a href="/messages" class="session-btn-secondary">Inbox</a>
-        <a href="/api/candidate/logout" class="session-btn-secondary">Log Out</a>
+<% if ((typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) || (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug)) { %>
+<div class="command-center">
+  <div class="cc-container">
+    <div class="cc-top-row">
+      <span class="cc-status-text">
+        <% if (loggedInCandidateSlug) { %>Command Center · Candidate<% } else { %>Command Center · Recruiter<% } %>
+      </span>
+      <div class="cc-actions">
+        <% if (loggedInCandidateSlug) { %>
+          <a href="/recruiter-search" class="cc-btn-secondary">Browse Recruiters</a>
+          <a href="/candidate/<%= loggedInCandidateSlug %>/edit" class="cc-btn-primary">Edit Profile</a>
+          <a href="/candidate-dashboard/requests" class="cc-btn-secondary">My Requests</a>
+          <a href="/messages" class="cc-btn-secondary">Inbox<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></a>
+          <a href="/api/candidate/logout" class="cc-btn-secondary">Log Out</a>
+        <% } else if (loggedInRecruiterSlug) { %>
+          <a href="/recruiter/<%= loggedInRecruiterSlug %>/edit" class="cc-btn-primary">Edit Profile</a>
+          <a href="/recruiter-dashboard/requests" class="cc-btn-secondary">Connection Requests</a>
+          <a href="/messages" class="cc-btn-secondary">Inbox<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></a>
+          <a href="/logout" class="cc-btn-secondary">Log Out</a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="cc-widgets">
+      <div class="cc-widget">
+        <h4>Recent Messages</h4>
+        <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>
+          <% commandCenterMessages.forEach(function(m) { %>
+            <a href="/messages/<%= m._id %>" class="cc-widget-item">
+              <div class="cc-widget-item-title"><%= m.senderName %><% if (!m.readAt) { %> <span class="cc-unread-dot"></span><% } %></div>
+              <div class="cc-widget-item-sub"><%= m.preview %></div>
+            </a>
+          <% }); %>
+        <% } else { %>
+          <p class="cc-widget-empty">No messages yet.</p>
+        <% } %>
+      </div>
+
+      <div class="cc-widget">
+        <h4><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></h4>
+        <% if (commandCenterRequests && commandCenterRequests.length > 0) { %>
+          <% commandCenterRequests.forEach(function(r) { %>
+            <a href="<%= loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests' %>" class="cc-widget-item">
+              <div class="cc-widget-item-title"><%= r.displayName %></div>
+              <span class="cc-status-badge cc-status-<%= r.status %>"><%= r.status %></span>
+            </a>
+          <% }); %>
+        <% } else { %>
+          <p class="cc-widget-empty">No connection requests yet.</p>
+        <% } %>
       </div>
     </div>
   </div>
-<% } else if (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug) { %>
-  <div class="session-bar">
-    <div class="session-bar-container">
-      <span class="session-bar-text">Logged in as a recruiter</span>
-      <div class="session-bar-actions">
-        <a href="/recruiter/<%= loggedInRecruiterSlug %>/edit" class="session-btn-primary">Edit Profile</a>
-        <a href="/recruiter-dashboard/requests" class="session-btn-secondary">Connection Requests</a>
-        <a href="/messages" class="session-btn-secondary">Inbox</a>
-        <a href="/logout" class="session-btn-secondary">Log Out</a>
-      </div>
-    </div>
-  </div>
+</div>
 <% } %>
 
 <main>
