@@ -195,6 +195,7 @@ router.post('/login-verify', async (req, res) => {
   }
 });
 
+// Step 1: New candidate signup — details + optional resume upload
 router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
     const { firstName, lastName, email, phone } = req.body;
@@ -205,12 +206,17 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
 
     const normalizedPhone = normalizePhoneToE164(phone);
     if (!normalizedPhone) {
-      return res.status(400).json({ error: 'Please enter a valid US phone number.' });
+      return res.status(400).json({ error: 'Please enter a valid phone number.' });
     }
 
-    const existing = await Candidate.findOne({ email });
-    if (existing) {
+    const existingEmail = await Candidate.findOne({ email });
+    if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    const existingPhone = await Candidate.findOne({ phone: normalizedPhone });
+    if (existingPhone) {
+      return res.status(400).json({ error: 'This phone number is already associated with a candidate account.' });
     }
 
     const slug = await makeSlug(firstName, lastName);

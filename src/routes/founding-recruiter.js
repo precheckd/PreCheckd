@@ -41,6 +41,9 @@ function generateSixDigitCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
+// Normalizes to E.164 format, but ONLY accepts US numbers (+1 followed by
+// 10 digits). Anything that would normalize to a non-US country code is
+// rejected outright — PreCheckd is US recruiters for US jobs only.
 function normalizePhoneToE164(rawPhone) {
   const digitsOnly = rawPhone.replace(/\D/g, '');
 
@@ -50,10 +53,15 @@ function normalizePhoneToE164(rawPhone) {
   if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
     return `+${digitsOnly}`;
   }
-  if (rawPhone.trim().startsWith('+')) {
-    return rawPhone.trim();
+
+  // If they typed a "+" prefix themselves, only accept it if it's
+  // specifically a well-formed US number (+1 followed by exactly 10 digits).
+  // Any other country code falls through and returns null (rejected).
+  if (rawPhone.trim().startsWith('+1') && digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+    return `+${digitsOnly}`;
   }
-  return null; // couldn't confidently normalize
+
+  return null; // not a valid US number — rejected
 }
 
 async function sendVerificationCode(phone, code) {
@@ -85,12 +93,17 @@ router.post('/signup', async (req, res) => {
 
     const normalizedPhone = normalizePhoneToE164(phone);
     if (!normalizedPhone) {
-      return res.status(400).json({ error: 'Please enter a valid US phone number.' });
+      return res.status(400).json({ error: 'PreCheckd currently only supports recruiters with a US phone number.' });
     }
 
-    const existing = await Recruiter.findOne({ email });
-    if (existing) {
+    const existingEmail = await Recruiter.findOne({ email });
+    if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    const existingPhone = await Recruiter.findOne({ phone: normalizedPhone });
+    if (existingPhone) {
+      return res.status(400).json({ error: 'This phone number is already associated with a recruiter account.' });
     }
 
     const slug = await makeSlug(firstName, lastName);
