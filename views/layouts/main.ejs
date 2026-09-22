@@ -162,15 +162,6 @@
       position: relative;
     }
 
-    .cc-btn-primary {
-      background: #2ECC71;
-      color: #0A0F0C;
-    }
-
-    .cc-btn-primary:hover {
-      background: #4ADE80;
-    }
-
     .cc-btn-secondary {
       background: transparent;
       color: #4ADE80;
@@ -209,6 +200,25 @@
       border: 1px solid rgba(46, 204, 113, 0.25);
       border-radius: 6px;
       padding: 1rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    a.cc-widget {
+      display: block;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    a.cc-widget:hover {
+      border-color: rgba(46, 204, 113, 0.6);
+      background: rgba(46, 204, 113, 0.08);
+    }
+
+    .cc-widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
     }
 
     .cc-widget h4 {
@@ -216,8 +226,18 @@
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
       font-weight: 700;
+    }
+
+    .cc-widget-view-all {
+      color: #7A9B8E;
+      font-size: 0.72rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .cc-widget-view-all:hover {
+      color: #4ADE80;
     }
 
     .cc-widget-empty {
@@ -336,6 +356,64 @@
       content: "○";
       color: #FBBF24;
       font-size: 0.7rem;
+    }
+
+    .cc-search-widget-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .cc-search-widget-input {
+      flex: 1;
+      background: #0A0F0C;
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      color: #E8EBEA;
+      font-size: 0.85rem;
+    }
+
+    .cc-search-widget-input::placeholder {
+      color: #5C7268;
+    }
+
+    .cc-search-widget-input:focus {
+      outline: none;
+      border-color: #2ECC71;
+    }
+
+    .cc-search-widget-btn {
+      background: #2ECC71;
+      color: #0A0F0C;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .cc-search-widget-btn:hover {
+      background: #4ADE80;
+    }
+
+    .cc-coming-soon-badge {
+      display: inline-block;
+      background: rgba(251, 191, 36, 0.15);
+      color: #FBBF24;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 10px;
+      margin-left: 0.5rem;
+    }
+
+    .cc-search-widget-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     main {
@@ -481,23 +559,19 @@
       </span>
       <div class="cc-actions">
         <% if (loggedInCandidateSlug) { %>
-          <a href="/recruiter-search" class="cc-btn-secondary">Browse Recruiters</a>
-          <a href="/candidate/<%= loggedInCandidateSlug %>/edit" class="cc-btn-primary">Edit Profile</a>
-          <a href="/candidate-dashboard/requests" class="cc-btn-secondary">My Requests</a>
-          <a href="/messages" class="cc-btn-secondary">Inbox<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></a>
           <a href="/api/candidate/logout" class="cc-btn-secondary">Log Out</a>
         <% } else if (loggedInRecruiterSlug) { %>
-          <a href="/recruiter/<%= loggedInRecruiterSlug %>/edit" class="cc-btn-primary">Edit Profile</a>
-          <a href="/recruiter-dashboard/requests" class="cc-btn-secondary">Connection Requests</a>
-          <a href="/messages" class="cc-btn-secondary">Inbox<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></a>
           <a href="/logout" class="cc-btn-secondary">Log Out</a>
         <% } %>
       </div>
     </div>
 
     <div class="cc-widgets">
-      <div class="cc-widget">
-        <h4>Verification Status</h4>
+
+      <a href="<%= loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}/edit` : `/recruiter/${loggedInRecruiterSlug}/edit` %>" class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Verification Status</h4>
+        </div>
         <div class="cc-verification-summary">
           <span class="cc-verification-count"><%= commandCenterVerifiedCount %></span>
           <span class="cc-verification-total">/ <%= commandCenterVerifiedTotal %> verified</span>
@@ -510,10 +584,12 @@
         <% } else { %>
           <p class="cc-widget-empty">Some checks still pending</p>
         <% } %>
-      </div>
+      </a>
 
-      <div class="cc-widget">
-        <h4>Complete Your Profile</h4>
+      <a href="<%= loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}/edit` : `/recruiter/${loggedInRecruiterSlug}/edit` %>" class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Complete Your Profile</h4>
+        </div>
         <% if (commandCenterNudges && commandCenterNudges.length > 0) { %>
           <ul class="cc-nudge-list">
             <% commandCenterNudges.forEach(function(nudge) { %>
@@ -523,10 +599,13 @@
         <% } else { %>
           <p class="cc-verification-complete">✓ Profile complete</p>
         <% } %>
-      </div>
+      </a>
 
       <div class="cc-widget">
-        <h4>Recent Messages</h4>
+        <div class="cc-widget-header">
+          <h4>Recent Messages<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
+          <a href="/messages" class="cc-widget-view-all">View All →</a>
+        </div>
         <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>
           <% commandCenterMessages.forEach(function(m) { %>
             <a href="/messages/<%= m._id %>" class="cc-widget-item">
@@ -540,7 +619,10 @@
       </div>
 
       <div class="cc-widget">
-        <h4><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></h4>
+        <div class="cc-widget-header">
+          <h4><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></h4>
+          <a href="<%= loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests' %>" class="cc-widget-view-all">View All →</a>
+        </div>
         <% if (commandCenterRequests && commandCenterRequests.length > 0) { %>
           <% commandCenterRequests.forEach(function(r) { %>
             <a href="<%= loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests' %>" class="cc-widget-item">
@@ -552,6 +634,29 @@
           <p class="cc-widget-empty">No connection requests yet.</p>
         <% } %>
       </div>
+
+      <% if (loggedInCandidateSlug) { %>
+      <div class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Search Recruiters</h4>
+        </div>
+        <form class="cc-search-widget-form" action="/recruiter-search" method="GET">
+          <input type="text" name="q" class="cc-search-widget-input" placeholder="Name, company, specialty...">
+          <button type="submit" class="cc-search-widget-btn">Go</button>
+        </form>
+      </div>
+
+      <div class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Email Checker<span class="cc-coming-soon-badge">Coming Soon</span></h4>
+        </div>
+        <form class="cc-search-widget-form">
+          <input type="text" class="cc-search-widget-input" placeholder="Paste a sender's email..." disabled>
+          <button type="button" class="cc-search-widget-btn" disabled>Check</button>
+        </form>
+      </div>
+      <% } %>
+
     </div>
   </div>
 </div>

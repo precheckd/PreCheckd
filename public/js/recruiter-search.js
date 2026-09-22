@@ -9,12 +9,10 @@
 
   const cards = document.querySelectorAll('.recruiter-card');
 
-  searchForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+  function runSearch(query) {
+    const trimmed = query.trim().toLowerCase();
 
-    const query = searchInput.value.trim().toLowerCase();
-
-    if (query === '') {
+    if (trimmed === '') {
       promptState.classList.remove('hidden');
       emptyState.classList.add('hidden');
       grid.classList.add('hidden');
@@ -25,7 +23,7 @@
 
     cards.forEach((card) => {
       const searchable = card.getAttribute('data-search') || '';
-      if (searchable.includes(query)) {
+      if (searchable.includes(trimmed)) {
         card.classList.remove('hidden');
         visibleCount++;
       } else {
@@ -42,5 +40,19 @@
       emptyState.classList.add('hidden');
       grid.classList.remove('hidden');
     }
+  }
+
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(searchInput.value);
   });
+
+  // If a query was pre-filled (e.g. arriving from the command center's
+  // search widget via ?q=...), run the search automatically on load.
+  const prefilled = window.PRECHECKD_PREFILLED_QUERY || '';
+  if (prefilled.trim() !== '') {
+    runSearch(prefilled);
+  } else {
+    promptState.classList.remove('hidden');
+  }
 })();

@@ -251,11 +251,11 @@
   </div>
 
   <form class="search-bar" id="recruiter-search-form">
-    <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty...">
+    <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty..." value="<%= prefilledQuery %>">
     <button type="submit">Search</button>
   </form>
 
-  <div class="prompt-state" id="prompt-state">
+  <div class="prompt-state hidden" id="prompt-state">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <p>Search for a verified recruiter to get started.</p>
   </div>
@@ -325,6 +325,9 @@
   </div>
 </main>
 
+<script>
+  window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
+</script>
 <script src="/js/recruiter-search.js"></script>
 
 </body>
