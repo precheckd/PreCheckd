@@ -64,9 +64,20 @@
 
     .intro-text {
       color: #C7D1CF;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       font-size: 0.95rem;
       line-height: 1.6;
+    }
+
+    .us-only-notice {
+      background: rgba(251, 191, 36, 0.1);
+      border-left: 3px solid #FBBF24;
+      color: #FBBF24;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
     }
 
     .form-step {
@@ -320,6 +331,8 @@
     <h1>Become a Founding Recruiter</h1>
     <p class="intro-text">Sign up, verify your phone number, and complete verification to join PreCheckd as a founding recruiter.</p>
 
+    <p class="us-only-notice">PreCheckd currently only accepts recruiters based in the United States. Signups with non-US phone numbers will be rejected.</p>
+
     <p id="form-error" class="form-error hidden"></p>
 
     <section id="step-signup" class="form-step">
@@ -329,7 +342,7 @@
         <label>Last name<input type="text" name="lastName" required></label>
         <label>Nickname <span class="label-hint">(optional, shown on your public profile)</span><input type="text" name="nickname"></label>
         <label>Email<input type="email" name="email" required></label>
-        <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
+        <label>Phone <span class="label-hint">(US number required — you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
         <label>Company (optional)<input type="text" name="company"></label>
         <button type="submit">Continue</button>
       </form>
@@ -395,6 +408,11 @@
 
   <section class="content-section right-column">
     <div class="faq-title">Frequently Asked Questions</div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="this.nextElementSibling.classList.toggle('show')">Do you accept recruiters outside the US?</div>
+      <div class="faq-answer">Not at this time. PreCheckd currently only supports recruiters with a US phone number. We may expand internationally in the future.</div>
+    </div>
 
     <div class="faq-item">
       <div class="faq-question" onclick="this.nextElementSibling.classList.toggle('show')">How long does verification take?</div>
