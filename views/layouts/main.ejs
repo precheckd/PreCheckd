@@ -115,7 +115,6 @@
       color: #1F363C;
     }
 
-    /* Command Center — radar/sonar themed session bar */
     .command-center {
       background: #0A0F0C;
       border-top: 2px solid #2ECC71;
@@ -216,8 +215,7 @@
       cursor: pointer;
     }
 
-    a.cc-widget:hover,
-    .cc-widget:has(.cc-widget-item:hover) {
+    a.cc-widget:hover {
       border-color: rgba(46, 204, 113, 0.6);
       background: rgba(46, 204, 113, 0.08);
     }
@@ -406,22 +404,59 @@
       background: #4ADE80;
     }
 
-    .cc-coming-soon-badge {
-      display: inline-block;
-      background: rgba(251, 191, 36, 0.15);
-      color: #FBBF24;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 0.15rem 0.45rem;
-      border-radius: 10px;
-      margin-left: 0.5rem;
+    .cc-search-widget-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .cc-search-widget-input:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    .cc-checker-results {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(46, 204, 113, 0.15);
+      display: none;
+    }
+
+    .cc-checker-results.visible {
+      display: block;
+    }
+
+    .cc-checker-result-row {
+      font-size: 0.82rem;
+      color: #C7D1CF;
+      padding: 0.35rem 0;
+      line-height: 1.5;
+    }
+
+    .cc-checker-result-row strong {
+      color: #E8EBEA;
+    }
+
+    .cc-checker-flag {
+      color: #FBBF24;
+      font-weight: 600;
+    }
+
+    .cc-checker-clean {
+      color: #4ADE80;
+      font-weight: 600;
+    }
+
+    .cc-checker-error {
+      color: #F87171;
+      font-size: 0.82rem;
+    }
+
+    .cc-checker-disclaimer {
+      color: #5C7268;
+      font-size: 0.72rem;
+      margin-top: 0.6rem;
+      font-style: italic;
+      line-height: 1.4;
     }
 
     main {
@@ -662,12 +697,14 @@
 
       <div class="cc-widget">
         <div class="cc-widget-header">
-          <h4>Email Checker<span class="cc-coming-soon-badge">Coming Soon</span></h4>
+          <h4>Email Checker</h4>
         </div>
-        <form class="cc-search-widget-form">
-          <input type="text" class="cc-search-widget-input" placeholder="Paste a sender's email address..." disabled>
-          <button type="button" class="cc-search-widget-btn" disabled>Check</button>
+        <form class="cc-search-widget-form" id="email-checker-form">
+          <input type="email" id="email-checker-input" class="cc-search-widget-input" placeholder="Paste a sender's email address..." required>
+          <button type="submit" id="email-checker-btn" class="cc-search-widget-btn">Check</button>
         </form>
+        <div class="cc-checker-results" id="email-checker-results"></div>
+        <p class="cc-checker-disclaimer">This tool provides informational signals only, not a verdict. Use your own judgment alongside these results.</p>
       </div>
     </div>
     <% } %>
@@ -707,6 +744,78 @@
     © 2026 PreCheckd LLC. All rights reserved.
   </div>
 </footer>
+
+<% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
+<script>
+  (function () {
+    const form = document.getElementById('email-checker-form');
+    if (!form) return;
+
+    const input = document.getElementById('email-checker-input');
+    const button = document.getElementById('email-checker-btn');
+    const resultsBox = document.getElementById('email-checker-results');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const email = input.value.trim();
+      if (!email) return;
+
+      button.disabled = true;
+      button.textContent = 'Checking...';
+      resultsBox.classList.remove('visible');
+      resultsBox.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/email-checker/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          resultsBox.innerHTML = `<p class="cc-checker-error">${data.error || 'Something went wrong.'}</p>`;
+          resultsBox.classList.add('visible');
+          return;
+        }
+
+        let html = '';
+
+        if (data.domainCheck) {
+          if (data.domainCheck.verified && data.domainCheck.registeredYear) {
+            html += `<div class="cc-checker-result-row"><strong>Domain (${data.domain}):</strong> registered since ${data.domainCheck.registeredYear}.</div>`;
+          } else {
+            html += `<div class="cc-checker-result-row"><strong>Domain (${data.domain}):</strong> <span class="cc-checker-flag">registration age could not be confirmed as established</span> — newer or unverified domains can be a scam indicator.</div>`;
+          }
+        } else if (data.domainCheckError) {
+          html += `<div class="cc-checker-error">${data.domainCheckError}</div>`;
+        }
+
+        if (data.breachCheck) {
+          if (data.breachCheck.breached) {
+            html += `<div class="cc-checker-result-row"><span class="cc-checker-flag">This address appears in ${data.breachCheck.breachCount} known data breach${data.breachCheck.breachCount === 1 ? '' : 'es'}.</span> This alone doesn't confirm a scam, but is worth noting.</div>`;
+          } else {
+            html += `<div class="cc-checker-result-row"><span class="cc-checker-clean">No known data breaches found</span> for this address.</div>`;
+          }
+        } else if (data.breachCheckError) {
+          html += `<div class="cc-checker-error">${data.breachCheckError}</div>`;
+        }
+
+        resultsBox.innerHTML = html;
+        resultsBox.classList.add('visible');
+      } catch (error) {
+        resultsBox.innerHTML = '<p class="cc-checker-error">Could not reach the checker service. Please try again.</p>';
+        resultsBox.classList.add('visible');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Check';
+      }
+    });
+  })();
+</script>
+<% } %>
 
 </body>
 </html>

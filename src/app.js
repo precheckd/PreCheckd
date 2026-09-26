@@ -18,6 +18,7 @@ const candidateDashboardRoutes = require('./routes/candidate-dashboard');
 const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
 const messagesRoutes = require('./routes/messages');
 const internalRoutes = require('./routes/internal');
+const emailCheckerRoutes = require('./routes/email-checker');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const Recruiter = require('./models/Recruiter');
 const Candidate = require('./models/Candidate');
@@ -28,11 +29,6 @@ assertEnv();
 
 const app = express();
 
-// Render (and similar platforms) terminate HTTPS at a proxy in front of
-// this app — without this, Express thinks every request is plain HTTP,
-// which silently prevents secure cookies (like our session cookie) from
-// ever being set. This tells Express to trust the proxy's forwarded
-// headers and correctly recognize HTTPS requests as secure.
 app.set('trust proxy', 1);
 
 app.set('view engine', 'ejs');
@@ -82,9 +78,6 @@ function buildRecruiterNudges(recruiter) {
   return nudges;
 }
 
-// Makes logged-in state AND command-center widget data available to every
-// template via res.locals. Runs on every request, so kept as light as
-// reasonably possible — limited to a few small, indexed queries.
 app.use(async (req, res, next) => {
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
@@ -207,6 +200,7 @@ app.use('/internal', internalRoutes);
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);
 app.use('/api/candidate', candidateRoutes);
+app.use('/api/email-checker', emailCheckerRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/candidate-dashboard', candidateDashboardRoutes);
 app.use('/messages', messagesRoutes);
