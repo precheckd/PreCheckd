@@ -28,6 +28,13 @@ assertEnv();
 
 const app = express();
 
+// Render (and similar platforms) terminate HTTPS at a proxy in front of
+// this app — without this, Express thinks every request is plain HTTP,
+// which silently prevents secure cookies (like our session cookie) from
+// ever being set. This tells Express to trust the proxy's forwarded
+// headers and correctly recognize HTTPS requests as secure.
+app.set('trust proxy', 1);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 app.use(expressLayouts);
