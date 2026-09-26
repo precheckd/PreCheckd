@@ -793,16 +793,6 @@
           html += `<div class="cc-checker-error">${data.domainCheckError}</div>`;
         }
 
-        if (data.breachCheck) {
-          if (data.breachCheck.breached) {
-            html += `<div class="cc-checker-result-row"><span class="cc-checker-flag">This address appears in ${data.breachCheck.breachCount} known data breach${data.breachCheck.breachCount === 1 ? '' : 'es'}.</span> This alone doesn't confirm a scam, but is worth noting.</div>`;
-          } else {
-            html += `<div class="cc-checker-result-row"><span class="cc-checker-clean">No known data breaches found</span> for this address.</div>`;
-          }
-        } else if (data.breachCheckError) {
-          html += `<div class="cc-checker-error">${data.breachCheckError}</div>`;
-        }
-
         resultsBox.innerHTML = html;
         resultsBox.classList.add('visible');
       } catch (error) {

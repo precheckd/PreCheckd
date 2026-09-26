@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { checkDomainAge } = require('../utils/domainAgeCheck');
-const { checkEmailBreaches } = require('../utils/breachCheck');
 
 function requireCandidateLogin(req, res, next) {
   if (!req.session.candidateId) {
@@ -12,7 +11,7 @@ function requireCandidateLogin(req, res, next) {
 
 router.use(requireCandidateLogin);
 
-// POST /api/email-checker/check — runs WHOIS + breach checks on a submitted email
+// POST /api/email-checker/check — runs a WHOIS domain-age check on a submitted email
 router.post('/check', async (req, res) => {
   try {
     const { email } = req.body;
@@ -23,35 +22,17 @@ router.post('/check', async (req, res) => {
 
     const domain = email.split('@')[1];
 
-    const [domainResult, breachResult] = await Promise.allSettled([
-      checkDomainAge(domain),
-      checkEmailBreaches(email),
-    ]);
+    let domainCheck = null;
+    let domainCheckError = null;
 
-    const response = {
-      email,
-      domain,
-      domainCheck: null,
-      domainCheckError: null,
-      breachCheck: null,
-      breachCheckError: null,
-    };
-
-    if (domainResult.status === 'fulfilled') {
-      response.domainCheck = domainResult.value;
-    } else {
-      console.error('Domain age check failed:', domainResult.reason);
-      response.domainCheckError = 'Could not check domain registration info right now.';
+    try {
+      domainCheck = await checkDomainAge(domain);
+    } catch (error) {
+      console.error('Domain age check failed:', error);
+      domainCheckError = 'Could not check domain registration info right now.';
     }
 
-    if (breachResult.status === 'fulfilled') {
-      response.breachCheck = breachResult.value;
-    } else {
-      console.error('Breach check failed:', breachResult.reason);
-      response.breachCheckError = 'Could not check breach history right now.';
-    }
-
-    res.json(response);
+    res.json({ email, domain, domainCheck, domainCheckError });
   } catch (error) {
     console.error('Error running email check:', error);
     res.status(500).json({ error: 'Something went wrong running this check. Please try again.' });
