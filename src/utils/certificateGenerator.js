@@ -11,10 +11,6 @@ const PAGE_WIDTH = 612; // Letter size, portrait
 const PAGE_HEIGHT = 792;
 const MARGIN = 40;
 
-// Derives a stable certificate ID from the candidate's own database ID —
-// same candidate always gets the same ID across every download, without
-// needing to store anything new. Not a secret; just a human-readable
-// reference number.
 function getCertificateId(candidateId) {
   const hash = crypto.createHash('sha256').update(candidateId.toString()).digest('hex');
   return `PC-${hash.slice(0, 10).toUpperCase()}`;
@@ -22,15 +18,18 @@ function getCertificateId(candidateId) {
 
 // Draws the PreCheckd circular checkmark logo as actual vector art
 // (matching the site's own logo), centered at the given coordinates.
+// NOTE: PDF coordinate space has Y increasing upward (unlike screen/SVG
+// coordinates, where Y increases downward) — the path's Y values are
+// negated relative to a normal screen-style checkmark path so it renders
+// right-side up instead of flipped.
 function drawLogo(page, x, y, radius) {
   page.drawCircle({
     x, y, size: radius,
     borderColor: GREEN,
     borderWidth: 2.5,
   });
-  // A simple checkmark path, scaled and centered within the circle.
   page.drawSvgPath(
-    `M ${-radius * 0.45} ${-radius * 0.05} L ${-radius * 0.1} ${-radius * 0.4} L ${radius * 0.5} ${radius * 0.35}`,
+    `M ${-radius * 0.45} ${radius * 0.05} L ${-radius * 0.1} ${radius * 0.4} L ${radius * 0.5} ${-radius * 0.35}`,
     {
       x, y,
       borderColor: GREEN,
@@ -52,10 +51,9 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
 
   page.drawRectangle({
     x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT,
-    color: rgb(0.99, 0.98, 0.96), // warm off-white, print-friendly
+    color: rgb(0.99, 0.98, 0.96),
   });
 
-  // Decorative double-border frame.
   page.drawRectangle({
     x: MARGIN, y: MARGIN,
     width: PAGE_WIDTH - MARGIN * 2, height: PAGE_HEIGHT - MARGIN * 2,
@@ -117,11 +115,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   });
   cursorY -= 45;
 
-  // Verification rows — flat checks first, then aggregate categories.
-  // NOTE: uses plain ASCII "V" instead of a Unicode checkmark — pdf-lib's
-  // standard WinAnsi-encoded fonts can't render "\u2713" and throw at
-  // render time. A custom-embedded font could support real Unicode later
-  // if desired, but this keeps things simple and reliable for now.
   const rows = [
     { label: 'Email Ownership', verifiedAt: candidate.emailVerifiedAt },
     { label: 'Phone Number', verifiedAt: candidate.phoneVerifiedAt },
@@ -167,8 +160,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
 
   cursorY = cursorY - aggregateRows.length * rowHeight - 30;
 
-  // Certificate ID, issue date, and expiry — printed values reflect the
-  // moment this specific PDF was generated, not a stored, fixed date.
   const certificateId = getCertificateId(candidate._id);
   const issuedDate = new Date();
   const goodThroughDate = new Date(issuedDate.getTime() + 60 * 24 * 60 * 60 * 1000);
@@ -184,8 +175,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
     page.drawText(line, { x: (PAGE_WIDTH - w) / 2, y: cursorY - i * 14, size: 10, font: helvetica, color: MUTED_TEXT });
   });
 
-  // QR code — links to the live, always-current verification page for
-  // this candidate. Placed bottom-right within the border.
   const verifyUrl = `${baseUrl}/verify/${candidate.slug}`;
   const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200 });
   const qrImageBytes = Buffer.from(qrDataUrl.split(',')[1], 'base64');
@@ -210,8 +199,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
     x: MARGIN + 20, y: MARGIN + 8, size: 8, font: helvetica, color: MUTED_TEXT,
   });
 
-  // Merge the candidate's actual resume PDF pages after the certificate
-  // cover page, if one is on file.
   if (resumeBuffer) {
     try {
       const resumeDoc = await PDFDocument.load(resumeBuffer);
@@ -219,8 +206,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
       copiedPages.forEach((p) => pdfDoc.addPage(p));
     } catch (error) {
       console.error('Could not merge resume into certificate — resume may not be a valid PDF:', error);
-      // Certificate cover page still generates fine on its own even if
-      // the resume merge fails for some reason.
     }
   }
 
