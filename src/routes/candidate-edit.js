@@ -4,6 +4,7 @@ const multer = require('multer');
 const Candidate = require('../models/Candidate');
 const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils/s3Upload');
 const { parseResume } = require('../utils/resumeParser');
+const { fetchCredlyBadges, findMatchingBadge, tryCredlyAutoGuess } = require('../utils/credlyVerification');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -56,6 +57,63 @@ function mergeEntries(newEntries, existingEntries, matchFields) {
     });
 }
 
+// Runs a candidate's certifications against a fetched Credly badge wallet,
+// marking any matches as verified with the badge's real issue date. Never
+// un-verifies a cert that was already verified by some other means — only
+// adds verification, never removes it.
+function applyCredlyMatches(certifications, badges) {
+  return certifications.map((cert) => {
+    if (cert.verified) return cert;
+
+    const match = findMatchingBadge(cert.name, badges);
+    if (!match) return cert;
+
+    return {
+      ...cert,
+      verified: true,
+      verifiedAt: match.issued_at_date ? new Date(match.issued_at_date) : new Date(),
+    };
+  });
+}
+
+// Attempts to sync a candidate's certifications against Credly — either
+// using their already-stored username, a newly-provided one from the edit
+// form, or a background auto-guess if neither exists yet. Mutates
+// candidate.certifications and candidate.credlyUsername/credlyLastSyncedAt
+// in place; never throws — sync failures are silent, since Credly is a
+// bonus verification path, not a required one.
+async function syncWithCredly(candidate, providedUsername) {
+  const usernameToTry = (providedUsername && providedUsername.trim())
+    ? providedUsername.trim()
+    : candidate.credlyUsername;
+
+  if (usernameToTry) {
+    try {
+      const badges = await fetchCredlyBadges(usernameToTry);
+      candidate.credlyUsername = usernameToTry;
+      candidate.credlyLastSyncedAt = new Date();
+      candidate.certifications = applyCredlyMatches(candidate.certifications, badges);
+      return;
+    } catch (error) {
+      // A manually-provided username that fails is worth surfacing;
+      // an already-stored one that starts failing (profile went private,
+      // etc.) is not worth interrupting the save over.
+      if (providedUsername) {
+        throw new Error('Could not find a public Credly profile for that username. Please double-check it and try again.');
+      }
+      return;
+    }
+  }
+
+  // No username at all yet — try the silent background auto-guess.
+  const guess = await tryCredlyAutoGuess(candidate.firstName, candidate.lastName);
+  if (guess) {
+    candidate.credlyUsername = guess.username;
+    candidate.credlyLastSyncedAt = new Date();
+    candidate.certifications = applyCredlyMatches(candidate.certifications, guess.badges);
+  }
+}
+
 // GET /candidate/:slug/edit — owner-only edit form
 router.get('/:slug/edit', async (req, res) => {
   try {
@@ -96,7 +154,7 @@ router.post('/:slug/edit', upload.fields([
       return res.status(403).send('You do not have permission to edit this profile.');
     }
 
-    const { bio } = req.body;
+    const { bio, credlyUsername } = req.body;
     const submittedWorkHistory = parseJsonField(req.body.workHistory);
     const submittedEducationHistory = parseJsonField(req.body.educationHistory);
     const submittedCertifications = parseJsonField(req.body.certifications);
@@ -129,10 +187,7 @@ router.post('/:slug/edit', upload.fields([
     candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId']);
 
     // Then, if a resume was uploaded, parse it and layer in anything the
-    // candidate didn't already provide via the form above. This runs AFTER
-    // the manual-entry merge, and writes directly — no second merge pass
-    // needed, since a freshly-parsed resume's data is already correct and
-    // has never been "verified" before.
+    // candidate didn't already provide via the form above.
     let resumeParseError = null;
     if (resumeFile) {
       try {
@@ -167,13 +222,23 @@ router.post('/:slug/edit', upload.fields([
       }
     }
 
+    // Sync against Credly last, after all certification entries (manual,
+    // merged, or resume-parsed) are finalized — this is the pass that
+    // actually marks matching certs as verified.
+    let credlyError = null;
+    try {
+      await syncWithCredly(candidate, credlyUsername);
+    } catch (error) {
+      credlyError = error.message;
+    }
+
     await candidate.save();
 
-    if (resumeParseError) {
+    if (resumeParseError || credlyError) {
       return res.render('candidate-edit', {
         candidate,
         title: `Edit Profile | PreCheckd`,
-        error: resumeParseError
+        error: resumeParseError || credlyError
       });
     }
 

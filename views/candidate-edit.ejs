@@ -224,6 +224,27 @@
     line-height: 1.4;
   }
 
+  .credly-box {
+    background: #24404A;
+    border: 1px dashed #4A6F7B;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .credly-box p {
+    margin-bottom: 0.6rem;
+    font-size: 0.85rem;
+    color: #B9C7CA;
+    line-height: 1.5;
+  }
+
+  .credly-synced-note {
+    font-size: 0.82rem;
+    color: #4ADE80;
+    margin-bottom: 0.6rem;
+  }
+
   .form-actions {
     display: flex;
     gap: 0.75rem;
@@ -334,7 +355,21 @@
         <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
 
         <div class="section-label">Certifications</div>
-        <p class="cert-hint">Add a credential ID to any certification you'd like us to verify. Editing a credential ID or name resets that certification's verification status.</p>
+
+        <label>
+          Credly username <span class="label-hint">(optional, but recommended)</span>
+          <div class="credly-box">
+            <% if (candidate.credlyUsername) { %>
+              <p class="credly-synced-note">✓ Synced with Credly as "<%= candidate.credlyUsername %>"<% if (candidate.credlyLastSyncedAt) { %> — last checked <%= candidate.credlyLastSyncedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %><% } %>. Any matching certifications below will be auto-verified whenever you save.</p>
+            <% } else { %>
+              <p>Have certifications on Credly (AWS, Microsoft, Proofpoint, PMI, and many others use it)? Add your Credly username and we'll automatically verify any matching certifications below — no need to hunt down individual badge links. Find it in your Credly profile URL — for example, "kent-mayer" from credly.com/users/kent-mayer.</p>
+            <% } %>
+            <input type="text" name="credlyUsername" placeholder="e.g. kent-mayer" value="<%= candidate.credlyUsername || '' %>">
+            <span class="label-hint">Your Credly profile must be set to public for this to work.</span>
+          </div>
+        </label>
+
+        <p class="cert-hint">Add a credential ID to any certification not covered by Credly if you'd like us to verify it another way. Editing a credential ID or name resets that certification's verification status.</p>
         <div id="certification-entries"></div>
         <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
 

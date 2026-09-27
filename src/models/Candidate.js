@@ -90,6 +90,20 @@ const candidateSchema = new mongoose.Schema({
     default: 'none'
   },
 
+  // Credly username (not a full URL — just the identifier, e.g. "kent-mayer"
+  // from credly.com/users/kent-mayer). Populated either by a successful
+  // background auto-guess or by the candidate manually providing it on the
+  // edit screen. Used to fetch their public badge wallet and auto-verify
+  // matching certifications.
+  credlyUsername: {
+    type: String,
+    default: null
+  },
+  credlyLastSyncedAt: {
+    type: Date,
+    default: null
+  },
+
   isPhoneVerified: {
     type: Boolean,
     default: false
