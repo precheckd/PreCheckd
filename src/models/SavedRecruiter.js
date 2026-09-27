@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 // A candidate's saved/bookmarked recruiters — lets them revisit a recruiter
-// later without re-searching. Deliberately a simple join, no extra fields
-// beyond what's needed to list and unsave.
+// later without re-searching, with an optional personal note explaining
+// why they saved them or what stood out.
 const savedRecruiterSchema = new mongoose.Schema({
   candidateId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -13,6 +13,10 @@ const savedRecruiterSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Recruiter',
     required: true
+  },
+  note: {
+    type: String,
+    default: null
   },
   savedAt: {
     type: Date,

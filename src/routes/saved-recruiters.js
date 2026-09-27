@@ -26,32 +26,44 @@ router.get('/status/:slug', async (req, res) => {
       recruiterId: recruiter._id
     });
 
-    res.json({ saved: Boolean(existing) });
+    res.json({ saved: Boolean(existing), note: existing?.note || null });
   } catch (error) {
     console.error('Error checking saved-recruiter status:', error);
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 
-// POST /api/saved-recruiters/save — bookmark a recruiter
+// POST /api/saved-recruiters/save — bookmark a recruiter, with an optional
+// note captured at the moment of saving.
 router.post('/save', async (req, res) => {
   try {
-    const { recruiterSlug } = req.body;
+    const { recruiterSlug, note } = req.body;
 
     const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
     if (!recruiter) {
       return res.status(404).json({ error: 'Recruiter not found.' });
     }
 
+    const trimmedNote = note && note.trim() ? note.trim().slice(0, 500) : null;
+
     try {
       await SavedRecruiter.create({
         candidateId: req.session.candidateId,
-        recruiterId: recruiter._id
+        recruiterId: recruiter._id,
+        note: trimmedNote
       });
     } catch (error) {
-      // Duplicate key error just means it's already saved — treat as success,
-      // not a failure, since the end state the candidate wants is the same.
-      if (error.code !== 11000) throw error;
+      // Duplicate key error just means it's already saved — update the
+      // note on the existing record instead of failing, since the
+      // candidate's intent (save this, with this note) is still valid.
+      if (error.code === 11000) {
+        await SavedRecruiter.updateOne(
+          { candidateId: req.session.candidateId, recruiterId: recruiter._id },
+          { note: trimmedNote }
+        );
+      } else {
+        throw error;
+      }
     }
 
     res.json({ success: true, saved: true });
@@ -80,6 +92,65 @@ router.post('/unsave', async (req, res) => {
   } catch (error) {
     console.error('Error unsaving recruiter:', error);
     res.status(500).json({ error: 'Something went wrong removing this recruiter.' });
+  }
+});
+
+// GET /api/saved-recruiters/list — full list of the candidate's saved
+// recruiters, with notes, for the "My Saved Recruiters" page.
+router.get('/list', async (req, res) => {
+  try {
+    const saved = await SavedRecruiter.find({ candidateId: req.session.candidateId })
+      .sort({ savedAt: -1 })
+      .populate('recruiterId', 'firstName lastName company slug profilePhotoUrl');
+
+    const results = saved
+      .filter((s) => s.recruiterId)
+      .map((s) => ({
+        id: s._id,
+        note: s.note,
+        savedAt: s.savedAt,
+        recruiter: {
+          slug: s.recruiterId.slug,
+          firstName: s.recruiterId.firstName,
+          lastName: s.recruiterId.lastName,
+          company: s.recruiterId.company && s.recruiterId.company !== 'Not provided' ? s.recruiterId.company : null,
+          profilePhotoUrl: s.recruiterId.profilePhotoUrl
+        }
+      }));
+
+    res.json({ savedRecruiters: results });
+  } catch (error) {
+    console.error('Error loading saved recruiters list:', error);
+    res.status(500).json({ error: 'Something went wrong loading your saved recruiters.' });
+  }
+});
+
+// POST /api/saved-recruiters/update-note — edit the note on an existing
+// saved recruiter from the full list page.
+router.post('/update-note', async (req, res) => {
+  try {
+    const { recruiterSlug, note } = req.body;
+
+    const recruiter = await Recruiter.findOne({ slug: recruiterSlug });
+    if (!recruiter) {
+      return res.status(404).json({ error: 'Recruiter not found.' });
+    }
+
+    const trimmedNote = note && note.trim() ? note.trim().slice(0, 500) : null;
+
+    const result = await SavedRecruiter.updateOne(
+      { candidateId: req.session.candidateId, recruiterId: recruiter._id },
+      { note: trimmedNote }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'This recruiter is not in your saved list.' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating saved-recruiter note:', error);
+    res.status(500).json({ error: 'Something went wrong saving your note.' });
   }
 });
 
