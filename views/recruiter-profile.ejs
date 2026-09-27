@@ -17,6 +17,46 @@
     display: flex;
     gap: 2rem;
     align-items: flex-start;
+    position: relative;
+  }
+
+  .save-recruiter-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: transparent;
+    color: #8FA6AC;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    width: auto;
+  }
+
+  .save-recruiter-btn:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .save-recruiter-btn.is-saved {
+    background: rgba(46, 204, 113, 0.1);
+    color: #4ADE80;
+    border-color: #2ECC71;
+  }
+
+  .save-recruiter-btn.is-saved:hover {
+    background: rgba(46, 204, 113, 0.15);
+  }
+
+  .save-recruiter-btn svg {
+    width: 15px;
+    height: 15px;
   }
 
   .header-photo {
@@ -308,6 +348,12 @@
       padding: 1.5rem;
     }
 
+    .save-recruiter-btn {
+      position: static;
+      align-self: center;
+      margin-top: 1rem;
+    }
+
     .profile-section {
       padding: 1.5rem;
     }
@@ -359,6 +405,8 @@
     : `This recruiter's company domain was verified against public registration records.`;
 
   const hasSpecialties = recruiter.specialties && recruiter.specialties.length > 0;
+
+  const showSaveButton = typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug;
 %>
 
 <div class="profile-content">
@@ -373,6 +421,12 @@
 
   <!-- Header: photo + identity -->
   <div class="profile-header">
+    <% if (showSaveButton) { %>
+      <button type="button" id="save-recruiter-btn" class="save-recruiter-btn" data-recruiter-slug="<%= recruiter.slug %>">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span id="save-recruiter-label">Save</span>
+      </button>
+    <% } %>
     <div class="header-photo">
       <% if (recruiter.profilePhotoUrl) { %>
         <img src="<%= recruiter.profilePhotoUrl %>" alt="<%= displayName %>">
@@ -536,3 +590,7 @@
     </div>
   </div>
 </div>
+
+<% if (showSaveButton) { %>
+<script src="/js/save-recruiter.js"></script>
+<% } %>

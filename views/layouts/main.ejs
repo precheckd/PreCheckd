@@ -681,6 +681,27 @@
         <% } %>
       </a>
 
+      <% if (loggedInCandidateSlug) { %>
+      <a href="/recruiter-search" class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Saved Recruiters</h4>
+          <span class="cc-widget-view-all">Browse →</span>
+        </div>
+        <% if (commandCenterSavedRecruiters && commandCenterSavedRecruiters.length > 0) { %>
+          <% commandCenterSavedRecruiters.forEach(function(sr) { %>
+            <div class="cc-widget-item">
+              <div class="cc-widget-item-title"><%= sr.displayName %></div>
+              <% if (sr.company) { %>
+                <div class="cc-widget-item-sub"><%= sr.company %></div>
+              <% } %>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="cc-widget-empty">No saved recruiters yet.</p>
+        <% } %>
+      </a>
+      <% } %>
+
     </div>
 
     <% if (loggedInCandidateSlug) { %>

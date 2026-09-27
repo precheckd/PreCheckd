@@ -19,11 +19,13 @@ const recruiterDashboardRoutes = require('./routes/recruiter-dashboard');
 const messagesRoutes = require('./routes/messages');
 const internalRoutes = require('./routes/internal');
 const emailCheckerRoutes = require('./routes/email-checker');
+const savedRecruitersRoutes = require('./routes/saved-recruiters');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const Recruiter = require('./models/Recruiter');
 const Candidate = require('./models/Candidate');
 const Message = require('./models/Message');
 const ConnectionRequest = require('./models/ConnectionRequest');
+const SavedRecruiter = require('./models/SavedRecruiter');
 
 assertEnv();
 
@@ -87,6 +89,7 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterVerifiedCount = 0;
   res.locals.commandCenterVerifiedTotal = 0;
   res.locals.commandCenterNudges = [];
+  res.locals.commandCenterSavedRecruiters = [];
 
   try {
     if (req.session.recruiterId) {
@@ -139,12 +142,14 @@ app.use(async (req, res, next) => {
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
 
-        const [recentMessages, unreadCount, recentRequests] = await Promise.all([
+        const [recentMessages, unreadCount, recentRequests, savedRecruiters] = await Promise.all([
           Message.find({ recipientType: 'candidate', recipientId: req.session.candidateId })
             .sort({ sentAt: -1 }).limit(3),
           Message.countDocuments({ recipientType: 'candidate', recipientId: req.session.candidateId, readAt: null }),
           ConnectionRequest.find({ candidateId: req.session.candidateId })
-            .sort({ createdAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company')
+            .sort({ createdAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company'),
+          SavedRecruiter.find({ candidateId: req.session.candidateId })
+            .sort({ savedAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company slug')
         ]);
 
         res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
@@ -165,6 +170,14 @@ app.use(async (req, res, next) => {
           status: r.status,
           displayName: r.recruiterId ? `${r.recruiterId.firstName} ${r.recruiterId.lastName}` : 'Unknown'
         }));
+
+        res.locals.commandCenterSavedRecruiters = savedRecruiters
+          .filter((s) => s.recruiterId)
+          .map((s) => ({
+            slug: s.recruiterId.slug,
+            displayName: `${s.recruiterId.firstName} ${s.recruiterId.lastName}`,
+            company: s.recruiterId.company && s.recruiterId.company !== 'Not provided' ? s.recruiterId.company : null
+          }));
 
         const candidateChecks = [
           candidate.emailVerifiedAt,
@@ -201,6 +214,7 @@ const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);
 app.use('/api/candidate', candidateRoutes);
 app.use('/api/email-checker', emailCheckerRoutes);
+app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/candidate-dashboard', candidateDashboardRoutes);
 app.use('/messages', messagesRoutes);
