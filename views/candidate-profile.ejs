@@ -158,6 +158,46 @@
     color: #F87171;
   }
 
+  .verification-pending-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .resend-email-btn {
+    background: transparent;
+    border: 1px solid #2ECC71;
+    color: #4ADE80;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .resend-email-btn:hover:not(:disabled) {
+    background: rgba(46, 204, 113, 0.1);
+  }
+
+  .resend-email-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .resend-email-status {
+    font-size: 0.78rem;
+    color: #4ADE80;
+    margin-top: 0.5rem;
+    padding: 0 1.25rem 0.75rem;
+    display: none;
+  }
+
+  .resend-email-status.visible {
+    display: block;
+  }
+
   .verification-detail {
     display: none;
     border-top: 1px solid #4A6F7B;
@@ -247,6 +287,10 @@
       flex-direction: column;
       gap: 0.35rem;
     }
+
+    .verification-row {
+      flex-wrap: wrap;
+    }
   }
 </style>
 
@@ -305,9 +349,15 @@
             <% if (candidate.emailVerifiedAt) { %>
               <span class="verification-status status-verified">✓ Verified <%= candidate.emailVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
             <% } else { %>
-              <span class="verification-status status-pending">Verification Pending</span>
+              <div class="verification-pending-group">
+                <span class="verification-status status-pending">Verification Pending</span>
+                <button type="button" id="resend-email-btn" class="resend-email-btn">Resend Email</button>
+              </div>
             <% } %>
           </div>
+          <% if (!candidate.emailVerifiedAt) { %>
+            <p class="resend-email-status" id="resend-email-status"></p>
+          <% } %>
         </div>
 
         <div class="verification-item">
@@ -439,4 +489,39 @@
       row.closest('.verification-item').classList.toggle('expanded');
     });
   });
+
+  const resendBtn = document.getElementById('resend-email-btn');
+  if (resendBtn) {
+    resendBtn.addEventListener('click', async function () {
+      const statusEl = document.getElementById('resend-email-status');
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Sending...';
+      statusEl.classList.remove('visible');
+
+      try {
+        const response = await fetch('/api/candidate/resend-verification-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          statusEl.textContent = data.error || 'Something went wrong. Please try again.';
+          statusEl.style.color = '#F87171';
+        } else {
+          statusEl.textContent = data.message;
+          statusEl.style.color = '#4ADE80';
+        }
+        statusEl.classList.add('visible');
+      } catch (error) {
+        statusEl.textContent = 'Could not reach the server. Please try again.';
+        statusEl.style.color = '#F87171';
+        statusEl.classList.add('visible');
+      } finally {
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend Email';
+      }
+        }
+    });
+  }
 </script>

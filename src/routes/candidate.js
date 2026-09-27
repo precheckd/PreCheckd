@@ -378,6 +378,41 @@ router.get('/verify-email', async (req, res) => {
   }
 });
 
+// POST /api/candidate/resend-verification-email — candidate-triggered
+// resend, for when the original signup email was missed or lost. Only
+// works if email isn't already verified; generates a fresh token so any
+// old, possibly-expired link stops working once a new one is issued.
+router.post('/resend-verification-email', async (req, res) => {
+  try {
+    const candidateId = req.session.candidateId;
+
+    if (!candidateId) {
+      return res.status(403).json({ error: 'You must be logged in to do this.' });
+    }
+
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate.emailVerifiedAt) {
+      return res.status(400).json({ error: 'Your email is already verified.' });
+    }
+
+    const emailToken = generateVerificationToken();
+    candidate.emailVerificationToken = emailToken;
+    candidate.emailVerificationExpires = Date.now() + 48 * 60 * 60 * 1000;
+    await candidate.save();
+
+    await sendCandidateVerificationLink(candidate.email, candidate.firstName, emailToken);
+
+    res.json({ success: true, message: `Verification email resent to ${candidate.email}.` });
+  } catch (error) {
+    console.error('Error resending candidate verification email:', error);
+    res.status(500).json({ error: 'Failed to resend verification email. Please try again.' });
+  }
+});
+
 router.get('/resume-status', async (req, res) => {
   try {
     const candidateId = req.session.candidateId;
