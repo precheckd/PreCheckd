@@ -6,22 +6,18 @@ const NAVY = rgb(0.122, 0.212, 0.235); // #1F363C
 const GREEN = rgb(0.180, 0.800, 0.443); // #2ECC71
 const DARK_TEXT = rgb(0.15, 0.15, 0.15);
 const MUTED_TEXT = rgb(0.4, 0.4, 0.4);
+const VERIFIED_COLOR = rgb(0.1, 0.55, 0.3);
 
 const PAGE_WIDTH = 612; // Letter size, portrait
 const PAGE_HEIGHT = 792;
 const MARGIN = 40;
+const MAX_ENTRIES_PER_CATEGORY = 5;
 
 function getCertificateId(candidateId) {
   const hash = crypto.createHash('sha256').update(candidateId.toString()).digest('hex');
   return `PC-${hash.slice(0, 10).toUpperCase()}`;
 }
 
-// Draws the PreCheckd circular checkmark logo as actual vector art
-// (matching the site's own logo), centered at the given coordinates.
-// NOTE: PDF coordinate space has Y increasing upward (unlike screen/SVG
-// coordinates, where Y increases downward) — the path's Y values are
-// negated relative to a normal screen-style checkmark path so it renders
-// right-side up instead of flipped.
 function drawLogo(page, x, y, radius) {
   page.drawCircle({
     x, y, size: radius,
@@ -39,10 +35,16 @@ function drawLogo(page, x, y, radius) {
   );
 }
 
-function aggregateStatus(entries) {
-  if (!entries || entries.length === 0) return null;
-  const verifiedCount = entries.filter((e) => e.verified).length;
-  return { verifiedCount, total: entries.length };
+// Returns only the verified entries from a list, each reduced to a single
+// display line — the certificate shows what's confirmed, not what's
+// pending, and simply omits a whole category if nothing in it is verified
+// yet, rather than drawing attention to a discouraging fraction.
+function getVerifiedLines(entries, formatLine) {
+  if (!entries || entries.length === 0) return [];
+  return entries
+    .filter((e) => e.verified)
+    .slice(0, MAX_ENTRIES_PER_CATEGORY)
+    .map(formatLine);
 }
 
 async function generateCertificate(candidate, resumeBuffer, baseUrl) {
@@ -115,50 +117,63 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   });
   cursorY -= 45;
 
-  const rows = [
+  // Flat identity checks — these stay as-is, since there's exactly one
+  // instance of each (a person has one email, one phone, etc.), so a
+  // simple Verified/Pending line is already the honest, complete picture.
+  const identityRows = [
     { label: 'Email Ownership', verifiedAt: candidate.emailVerifiedAt },
     { label: 'Phone Number', verifiedAt: candidate.phoneVerifiedAt },
     { label: 'Government ID', verifiedAt: candidate.identityVerifiedAt },
     { label: 'Facial Recognition', verifiedAt: candidate.facialRecognitionVerifiedAt },
   ];
 
-  const certAgg = aggregateStatus(candidate.certifications);
-  const workAgg = aggregateStatus(candidate.workHistory);
-  const eduAgg = aggregateStatus(candidate.educationHistory);
-
-  const rowStartY = cursorY;
-  const rowHeight = 26;
+  const rowHeight = 22;
   const rowLabelX = MARGIN + 50;
   const rowStatusX = PAGE_WIDTH - MARGIN - 200;
+  const sectionHeaderX = MARGIN + 50;
 
-  rows.forEach((row, i) => {
-    const y = rowStartY - i * rowHeight;
+  identityRows.forEach((row, i) => {
+    const y = cursorY - i * rowHeight;
     page.drawText(row.label, { x: rowLabelX, y, size: 12, font: helvetica, color: DARK_TEXT });
     if (row.verifiedAt) {
       const dateStr = new Date(row.verifiedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-      page.drawText(`Verified ${dateStr}`, { x: rowStatusX, y, size: 11, font: helveticaBold, color: rgb(0.1, 0.55, 0.3) });
+      page.drawText(`Verified ${dateStr}`, { x: rowStatusX, y, size: 11, font: helveticaBold, color: VERIFIED_COLOR });
     } else {
       page.drawText('Pending', { x: rowStatusX, y, size: 11, font: helveticaBold, color: rgb(0.75, 0.35, 0.3) });
     }
   });
 
-  cursorY = rowStartY - rows.length * rowHeight - 6;
+  cursorY = cursorY - identityRows.length * rowHeight - 20;
 
-  const aggregateRows = [
-    { label: 'Certifications', agg: certAgg },
-    { label: 'Employment History', agg: workAgg },
-    { label: 'Education', agg: eduAgg },
-  ].filter((r) => r.agg);
+  // Verified-only entries per category — lists what's confirmed, omits
+  // the category entirely if nothing in it is verified yet.
+  const certLines = getVerifiedLines(candidate.certifications, (c) => c.name);
+  const workLines = getVerifiedLines(candidate.workHistory, (j) => `${j.jobTitle} — ${j.employerName}`);
+  const eduLines = getVerifiedLines(candidate.educationHistory, (e) => `${e.degree} — ${e.schoolName}`);
 
-  aggregateRows.forEach((row, i) => {
-    const y = cursorY - i * rowHeight;
-    page.drawText(row.label, { x: rowLabelX, y, size: 12, font: helvetica, color: DARK_TEXT });
-    const { verifiedCount, total } = row.agg;
-    const color = verifiedCount === total ? rgb(0.1, 0.55, 0.3) : verifiedCount === 0 ? rgb(0.75, 0.35, 0.3) : rgb(0.75, 0.55, 0.1);
-    page.drawText(`${verifiedCount} of ${total} verified`, { x: rowStatusX, y, size: 11, font: helveticaBold, color });
+  const sections = [
+    { title: 'Verified Certifications', lines: certLines },
+    { title: 'Verified Employment', lines: workLines },
+    { title: 'Verified Education', lines: eduLines },
+  ].filter((s) => s.lines.length > 0);
+
+  sections.forEach((section) => {
+    page.drawText(section.title, {
+      x: sectionHeaderX, y: cursorY, size: 11, font: helveticaBold, color: NAVY,
+    });
+    cursorY -= 18;
+
+    section.lines.forEach((line) => {
+      page.drawText(`\u2022 ${line}`, {
+        x: sectionHeaderX + 10, y: cursorY, size: 10.5, font: helvetica, color: DARK_TEXT,
+      });
+      cursorY -= 15;
+    });
+
+    cursorY -= 8;
   });
 
-  cursorY = cursorY - aggregateRows.length * rowHeight - 30;
+  cursorY -= 15;
 
   const certificateId = getCertificateId(candidate._id);
   const issuedDate = new Date();
