@@ -35,10 +35,6 @@ function drawLogo(page, x, y, radius) {
   );
 }
 
-// Returns only the verified entries from a list, each reduced to a single
-// display line — the certificate shows what's confirmed, not what's
-// pending, and simply omits a whole category if nothing in it is verified
-// yet, rather than drawing attention to a discouraging fraction.
 function getVerifiedLines(entries, formatLine) {
   if (!entries || entries.length === 0) return [];
   return entries
@@ -84,7 +80,7 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   });
   cursorY -= 40;
 
-  const title = 'Certificate of Authenticity';
+  const title = 'Certificate of Verification';
   const titleWidth = timesBold.widthOfTextAtSize(title, 26);
   page.drawText(title, {
     x: (PAGE_WIDTH - titleWidth) / 2, y: cursorY, size: 26, font: timesBold, color: NAVY,
@@ -117,9 +113,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   });
   cursorY -= 45;
 
-  // Flat identity checks — these stay as-is, since there's exactly one
-  // instance of each (a person has one email, one phone, etc.), so a
-  // simple Verified/Pending line is already the honest, complete picture.
   const identityRows = [
     { label: 'Email Ownership', verifiedAt: candidate.emailVerifiedAt },
     { label: 'Phone Number', verifiedAt: candidate.phoneVerifiedAt },
@@ -145,8 +138,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
 
   cursorY = cursorY - identityRows.length * rowHeight - 20;
 
-  // Verified-only entries per category — lists what's confirmed, omits
-  // the category entirely if nothing in it is verified yet.
   const certLines = getVerifiedLines(candidate.certifications, (c) => c.name);
   const workLines = getVerifiedLines(candidate.workHistory, (j) => `${j.jobTitle} — ${j.employerName}`);
   const eduLines = getVerifiedLines(candidate.educationHistory, (e) => `${e.degree} — ${e.schoolName}`);

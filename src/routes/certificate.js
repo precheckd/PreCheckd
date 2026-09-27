@@ -13,7 +13,7 @@ function requireCandidateLogin(req, res, next) {
 router.use(requireCandidateLogin);
 
 // GET /candidate/:slug/certificate — generates and downloads a fresh
-// Certificate of Authenticity, owner-only. Regenerated on every request
+// Certificate of Verification, owner-only. Regenerated on every request
 // so the printed Issued/Good-Through dates and verification statuses are
 // always current as of the moment of download, not a stale cached copy.
 router.get('/:slug/certificate', async (req, res) => {
@@ -45,7 +45,7 @@ router.get('/:slug/certificate', async (req, res) => {
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const pdfBuffer = await generateCertificate(candidate, resumeBuffer, baseUrl);
 
-    const filename = `PreCheckd-Certificate-${candidate.firstName}-${candidate.lastName}.pdf`;
+    const filename = `PreCheckd-Certificate-of-Verification-${candidate.firstName}-${candidate.lastName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(pdfBuffer);
