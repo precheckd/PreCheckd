@@ -36,6 +36,14 @@ async function fetchCredlyBadges(username) {
   return Array.isArray(data?.data) ? data.data : [];
 }
 
+function getBadgeName(badge) {
+  return badge?.badge_template?.name || badge?.name || null;
+}
+
+function getBadgeId(badge) {
+  return badge?.id || null;
+}
+
 // Given a candidate's typed certification name, tries to find a matching
 // badge in a fetched Credly wallet. Returns the matching badge or null.
 function findMatchingBadge(certName, badges) {
@@ -43,13 +51,33 @@ function findMatchingBadge(certName, badges) {
   if (!normalizedTarget) return null;
 
   return badges.find((badge) => {
-    const badgeName = badge?.badge_template?.name || badge?.name;
+    const badgeName = getBadgeName(badge);
     if (!badgeName) return false;
     const normalizedBadge = normalizeCertName(badgeName);
     return normalizedBadge === normalizedTarget
       || normalizedBadge.includes(normalizedTarget)
       || normalizedTarget.includes(normalizedBadge);
   }) || null;
+}
+
+// Splits a fetched badge wallet into badges that match something already
+// on the candidate's profile vs. badges that don't match anything —
+// the latter are candidates for the "we found more badges" opt-in prompt.
+function findUnmatchedBadges(existingCertifications, badges) {
+  return badges.filter((badge) => {
+    const badgeName = getBadgeName(badge);
+    if (!badgeName) return false;
+
+    const alreadyListed = existingCertifications.some((cert) => {
+      const normalizedExisting = normalizeCertName(cert.name);
+      const normalizedBadge = normalizeCertName(badgeName);
+      return normalizedExisting === normalizedBadge
+        || normalizedExisting.includes(normalizedBadge)
+        || normalizedBadge.includes(normalizedExisting);
+    });
+
+    return !alreadyListed;
+  });
 }
 
 // Attempts the "auto-guess" Credly username derived from a candidate's
@@ -74,4 +102,12 @@ async function tryCredlyAutoGuess(firstName, lastName) {
   }
 }
 
-module.exports = { fetchCredlyBadges, findMatchingBadge, tryCredlyAutoGuess, normalizeCertName };
+module.exports = {
+  fetchCredlyBadges,
+  findMatchingBadge,
+  findUnmatchedBadges,
+  tryCredlyAutoGuess,
+  normalizeCertName,
+  getBadgeName,
+  getBadgeId,
+};

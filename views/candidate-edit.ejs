@@ -245,6 +245,95 @@
     margin-bottom: 0.6rem;
   }
 
+  .credly-found-box {
+    background: #24343A;
+    border: 1px solid #2ECC71;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .credly-found-box h4 {
+    color: #4ADE80;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  .credly-found-box > p {
+    color: #B9C7CA;
+    font-size: 0.82rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .credly-found-item {
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .credly-found-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .credly-found-item-name {
+    color: #F2F4F3;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .credly-found-item-meta {
+    color: #8FA6AC;
+    font-size: 0.78rem;
+    margin-top: 0.15rem;
+  }
+
+  .credly-found-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .credly-add-btn {
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: auto;
+  }
+
+  .credly-add-btn:hover {
+    background: #4ADE80;
+  }
+
+  .credly-dismiss-btn {
+    background: transparent;
+    color: #8FA6AC;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: auto;
+  }
+
+  .credly-dismiss-btn:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
   .form-actions {
     display: flex;
     gap: 0.75rem;
@@ -301,6 +390,11 @@
     .cedit-card {
       padding: 1.5rem;
     }
+
+    .credly-found-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>
 
@@ -314,6 +408,27 @@
     <div class="cedit-card">
       <% if (typeof error !== 'undefined' && error) { %>
         <p class="form-error"><%= error %></p>
+      <% } %>
+
+      <% if (candidate.credlyUnmatchedBadges && candidate.credlyUnmatchedBadges.length > 0) { %>
+        <div class="credly-found-box" id="credly-found-box">
+          <h4>We found more badges on your Credly profile</h4>
+          <p>These don't match anything currently on your profile. Add the ones you'd like to include — they'll be marked verified right away.</p>
+          <div id="credly-found-list">
+            <% candidate.credlyUnmatchedBadges.forEach(function(badge) { %>
+              <div class="credly-found-item" data-badge-id="<%= badge.badgeId %>">
+                <div>
+                  <div class="credly-found-item-name"><%= badge.name %></div>
+                  <div class="credly-found-item-meta"><%= badge.issuerName || 'Credly' %><% if (badge.issuedAt) { %> · Issued <%= badge.issuedAt %><% } %></div>
+                </div>
+                <div class="credly-found-item-actions">
+                  <button type="button" class="credly-add-btn" data-action="add">Add</button>
+                  <button type="button" class="credly-dismiss-btn" data-action="dismiss">Dismiss</button>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
       <% } %>
 
       <form id="edit-form" action="/candidate/<%= candidate.slug %>/edit" method="POST" enctype="multipart/form-data">
@@ -388,5 +503,7 @@
     educationHistory: <%- JSON.stringify(candidate.educationHistory || []) %>,
     certifications: <%- JSON.stringify(candidate.certifications || []) %>
   };
+  window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
 <script src="/js/candidate-edit.js"></script>
+<script src="/js/credly-badges.js"></script>

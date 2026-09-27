@@ -25,6 +25,17 @@ const certificationSchema = new mongoose.Schema({
   verifiedAt: { type: Date, default: null },
 }, { _id: false });
 
+// A badge found in a candidate's Credly wallet that doesn't match any
+// certification they've already listed — shown to them as an opt-in
+// "add this?" prompt, never added automatically.
+const credlyUnmatchedBadgeSchema = new mongoose.Schema({
+  badgeId: { type: String, required: true },
+  name: { type: String, required: true },
+  issuerName: { type: String, default: null },
+  issuedAt: { type: String, default: null },
+  expiresAt: { type: String, default: null },
+}, { _id: false });
+
 function generateAnonId() {
   return crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 4);
 }
@@ -102,6 +113,14 @@ const candidateSchema = new mongoose.Schema({
   credlyLastSyncedAt: {
     type: Date,
     default: null
+  },
+  // Badges found in the candidate's Credly wallet during the last sync
+  // that didn't match any existing certification entry — surfaced as an
+  // opt-in "we found more badges, want to add them?" prompt. Cleared as
+  // the candidate adds or dismisses each one.
+  credlyUnmatchedBadges: {
+    type: [credlyUnmatchedBadgeSchema],
+    default: []
   },
 
   isPhoneVerified: {

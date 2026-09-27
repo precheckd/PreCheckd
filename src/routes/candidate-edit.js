@@ -4,7 +4,7 @@ const multer = require('multer');
 const Candidate = require('../models/Candidate');
 const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils/s3Upload');
 const { parseResume } = require('../utils/resumeParser');
-const { fetchCredlyBadges, findMatchingBadge, tryCredlyAutoGuess } = require('../utils/credlyVerification');
+const { fetchCredlyBadges, findMatchingBadge, findUnmatchedBadges, tryCredlyAutoGuess, getBadgeName, getBadgeId } = require('../utils/credlyVerification');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -79,25 +79,35 @@ function applyCredlyMatches(certifications, badges) {
 // Attempts to sync a candidate's certifications against Credly — either
 // using their already-stored username, a newly-provided one from the edit
 // form, or a background auto-guess if neither exists yet. Mutates
-// candidate.certifications and candidate.credlyUsername/credlyLastSyncedAt
-// in place; never throws — sync failures are silent, since Credly is a
-// bonus verification path, not a required one.
+// candidate.certifications, candidate.credlyUsername/credlyLastSyncedAt,
+// and candidate.credlyUnmatchedBadges in place; never throws — sync
+// failures are silent, since Credly is a bonus verification path, not a
+// required one. Returns nothing; mutation is the interface.
 async function syncWithCredly(candidate, providedUsername) {
   const usernameToTry = (providedUsername && providedUsername.trim())
     ? providedUsername.trim()
     : candidate.credlyUsername;
+
+  const applyBadges = (badges) => {
+    candidate.certifications = applyCredlyMatches(candidate.certifications, badges);
+    const unmatched = findUnmatchedBadges(candidate.certifications, badges);
+    candidate.credlyUnmatchedBadges = unmatched.map((badge) => ({
+      badgeId: getBadgeId(badge),
+      name: getBadgeName(badge),
+      issuerName: badge?.issuer?.entities?.[0]?.entity?.name || null,
+      issuedAt: badge?.issued_at_date || null,
+      expiresAt: badge?.expires_at_date || null,
+    }));
+  };
 
   if (usernameToTry) {
     try {
       const badges = await fetchCredlyBadges(usernameToTry);
       candidate.credlyUsername = usernameToTry;
       candidate.credlyLastSyncedAt = new Date();
-      candidate.certifications = applyCredlyMatches(candidate.certifications, badges);
+      applyBadges(badges);
       return;
     } catch (error) {
-      // A manually-provided username that fails is worth surfacing;
-      // an already-stored one that starts failing (profile went private,
-      // etc.) is not worth interrupting the save over.
       if (providedUsername) {
         throw new Error('Could not find a public Credly profile for that username. Please double-check it and try again.');
       }
@@ -105,12 +115,11 @@ async function syncWithCredly(candidate, providedUsername) {
     }
   }
 
-  // No username at all yet — try the silent background auto-guess.
   const guess = await tryCredlyAutoGuess(candidate.firstName, candidate.lastName);
   if (guess) {
     candidate.credlyUsername = guess.username;
     candidate.credlyLastSyncedAt = new Date();
-    candidate.certifications = applyCredlyMatches(candidate.certifications, guess.badges);
+    applyBadges(guess.badges);
   }
 }
 
@@ -135,6 +144,71 @@ router.get('/:slug/edit', async (req, res) => {
   } catch (error) {
     console.error('Error loading candidate edit page:', error);
     res.status(500).send('Server error');
+  }
+});
+
+// POST /candidate/:slug/edit/add-credly-badge — candidate opts to add one
+// of the unmatched badges found during a sync as a real certification entry.
+router.post('/:slug/edit/add-credly-badge', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    const { badgeId } = req.body;
+    const badge = (candidate.credlyUnmatchedBadges || []).find((b) => b.badgeId === badgeId);
+
+    if (!badge) {
+      return res.status(400).json({ error: 'That badge was not found in your pending Credly badges.' });
+    }
+
+    candidate.certifications.push({
+      name: badge.name,
+      credentialId: null,
+      verified: true,
+      verifiedAt: badge.issuedAt ? new Date(badge.issuedAt) : new Date(),
+    });
+
+    candidate.credlyUnmatchedBadges = (candidate.credlyUnmatchedBadges || []).filter((b) => b.badgeId !== badgeId);
+
+    await candidate.save();
+
+    res.json({ success: true, certifications: candidate.certifications });
+  } catch (error) {
+    console.error('Error adding Credly badge:', error);
+    res.status(500).json({ error: 'Something went wrong adding that certification.' });
+  }
+});
+
+// POST /candidate/:slug/edit/dismiss-credly-badge — candidate opts NOT to
+// add one of the unmatched badges; removes it from the pending list.
+router.post('/:slug/edit/dismiss-credly-badge', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    const { badgeId } = req.body;
+    candidate.credlyUnmatchedBadges = (candidate.credlyUnmatchedBadges || []).filter((b) => b.badgeId !== badgeId);
+
+    await candidate.save();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error dismissing Credly badge:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 
@@ -179,15 +253,10 @@ router.post('/:slug/edit', upload.fields([
       }
     }
 
-    // First, apply whatever the candidate manually edited/added in the form
-    // (existing entries merge to preserve verified status; new ones start
-    // unverified).
     candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
     candidate.educationHistory = mergeEntries(submittedEducationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
     candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId']);
 
-    // Then, if a resume was uploaded, parse it and layer in anything the
-    // candidate didn't already provide via the form above.
     let resumeParseError = null;
     if (resumeFile) {
       try {
@@ -222,9 +291,6 @@ router.post('/:slug/edit', upload.fields([
       }
     }
 
-    // Sync against Credly last, after all certification entries (manual,
-    // merged, or resume-parsed) are finalized — this is the pass that
-    // actually marks matching certs as verified.
     let credlyError = null;
     try {
       await syncWithCredly(candidate, credlyUsername);
