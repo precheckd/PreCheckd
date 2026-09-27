@@ -21,6 +21,7 @@ const messagesRoutes = require('./routes/messages');
 const internalRoutes = require('./routes/internal');
 const emailCheckerRoutes = require('./routes/email-checker');
 const savedRecruitersRoutes = require('./routes/saved-recruiters');
+const certificateRoutes = require('./routes/certificate');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const Recruiter = require('./models/Recruiter');
 const Candidate = require('./models/Candidate');
@@ -209,6 +210,7 @@ app.get('/founding-recruiter', (req, res) => {
 app.use('/recruiter', recruiterProfileRoutes);
 app.use('/candidate', candidateProfileRoutes);
 app.use('/candidate', candidateEditRoutes);
+app.use('/candidate', certificateRoutes);
 app.use('/internal', internalRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');

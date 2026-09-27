@@ -459,6 +459,33 @@
       line-height: 1.4;
     }
 
+    .cc-certificate-btn {
+      display: block;
+      width: 100%;
+      background: #2ECC71;
+      color: #0A0F0C;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .cc-certificate-btn:hover {
+      background: #4ADE80;
+    }
+
+    .cc-certificate-note {
+      color: #7A9B8E;
+      font-size: 0.75rem;
+      margin-top: 0.6rem;
+      line-height: 1.4;
+    }
+
     main {
       min-height: calc(100vh - 150px);
     }
@@ -726,6 +753,14 @@
         </form>
         <div class="cc-checker-results" id="email-checker-results"></div>
         <p class="cc-checker-disclaimer">This tool provides informational signals only, not a verdict. Use your own judgment alongside these results.</p>
+      </div>
+
+      <div class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Certificate of Authenticity</h4>
+        </div>
+        <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-certificate-btn">Download Certificate (PDF)</a>
+        <p class="cc-certificate-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
       </div>
     </div>
     <% } %>
