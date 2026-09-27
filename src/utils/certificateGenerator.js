@@ -118,6 +118,10 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   cursorY -= 45;
 
   // Verification rows — flat checks first, then aggregate categories.
+  // NOTE: uses plain ASCII "V" instead of a Unicode checkmark — pdf-lib's
+  // standard WinAnsi-encoded fonts can't render "\u2713" and throw at
+  // render time. A custom-embedded font could support real Unicode later
+  // if desired, but this keeps things simple and reliable for now.
   const rows = [
     { label: 'Email Ownership', verifiedAt: candidate.emailVerifiedAt },
     { label: 'Phone Number', verifiedAt: candidate.phoneVerifiedAt },
@@ -139,7 +143,7 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
     page.drawText(row.label, { x: rowLabelX, y, size: 12, font: helvetica, color: DARK_TEXT });
     if (row.verifiedAt) {
       const dateStr = new Date(row.verifiedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-      page.drawText(`\u2713 Verified ${dateStr}`, { x: rowStatusX, y, size: 11, font: helveticaBold, color: rgb(0.1, 0.55, 0.3) });
+      page.drawText(`Verified ${dateStr}`, { x: rowStatusX, y, size: 11, font: helveticaBold, color: rgb(0.1, 0.55, 0.3) });
     } else {
       page.drawText('Pending', { x: rowStatusX, y, size: 11, font: helveticaBold, color: rgb(0.75, 0.35, 0.3) });
     }
