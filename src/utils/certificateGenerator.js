@@ -45,6 +45,20 @@ function getVerifiedLines(entries, formatLine) {
 
 async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   const pdfDoc = await PDFDocument.create();
+
+  // Resume pages go first (if present), so an ATS parser reading page 1
+  // sees the candidate's actual resume content exactly as it always did.
+  // The PreCheckd verification page is appended last as an addendum.
+  if (resumeBuffer) {
+    try {
+      const resumeDoc = await PDFDocument.load(resumeBuffer);
+      const copiedPages = await pdfDoc.copyPages(resumeDoc, resumeDoc.getPageIndices());
+      copiedPages.forEach((p) => pdfDoc.addPage(p));
+    } catch (error) {
+      console.error('Could not merge resume into certificate — resume may not be a valid PDF:', error);
+    }
+  }
+
   const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
   page.drawRectangle({
@@ -204,16 +218,6 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
   page.drawText('Fixing hiring one verification at a time', {
     x: MARGIN + 20, y: MARGIN + 8, size: 8, font: helvetica, color: MUTED_TEXT,
   });
-
-  if (resumeBuffer) {
-    try {
-      const resumeDoc = await PDFDocument.load(resumeBuffer);
-      const copiedPages = await pdfDoc.copyPages(resumeDoc, resumeDoc.getPageIndices());
-      copiedPages.forEach((p) => pdfDoc.addPage(p));
-    } catch (error) {
-      console.error('Could not merge resume into certificate — resume may not be a valid PDF:', error);
-    }
-  }
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
