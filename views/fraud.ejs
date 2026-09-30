@@ -1,0 +1,203 @@
+<style>
+  .fraud-hero {
+    background: #1F363C;
+    color: #F2F4F3;
+    padding: 3rem 1.5rem;
+  }
+
+  .fraud-hero-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .fraud-hero h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .fraud-hero p {
+    color: #B0C4CE;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+  }
+
+  .fraud-body {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .fraud-section-title {
+    font-size: 1.3rem;
+    color: #1F363C;
+    margin-bottom: 1rem;
+  }
+
+  .fraud-form {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    padding: 2rem;
+  }
+
+  .fraud-field {
+    margin-bottom: 1.25rem;
+  }
+
+  .fraud-field label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1F363C;
+    margin-bottom: 0.4rem;
+  }
+
+  .fraud-field .fraud-hint {
+    font-weight: 400;
+    color: #7A8B91;
+    font-size: 0.8rem;
+  }
+
+  .fraud-field input[type="email"],
+  .fraud-field input[type="datetime-local"],
+  .fraud-field select,
+  .fraud-field textarea,
+  .fraud-field input[type="file"] {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #C7D1CF;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .fraud-field textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .fraud-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .fraud-checkbox-row input {
+    margin-top: 0.25rem;
+  }
+
+  .fraud-checkbox-row label {
+    font-size: 0.85rem;
+    color: #4A5A5F;
+    line-height: 1.4;
+  }
+
+  .fraud-submit-btn {
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    border-radius: 6px;
+    padding: 0.85rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .fraud-submit-btn:hover {
+    background: #4ADE80;
+  }
+
+  .fraud-alert {
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .fraud-alert-error {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: #B91C1C;
+  }
+
+  .fraud-alert-success {
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    color: #1F7A4C;
+  }
+</style>
+
+<div class="fraud-hero">
+  <div class="fraud-hero-container">
+    <h1>Reporting Recruiter Fraud</h1>
+    <p>PreCheckd verifies every recruiter's phone, email, government ID, facial recognition, and company domain before they can connect with candidates. But fraud doesn't only come from people already on our platform — scam job offers and phishing attempts happen everywhere.</p>
+    <p>This page lets anyone report a suspicious recruiter, whether or not they've ever used PreCheckd. Reports build a database we use to flag bad actors, encourage unverified recruiters to prove they're legitimate, and — over time — push back against fraud across the industry, not just on our own site.</p>
+  </div>
+</div>
+
+<div class="fraud-body">
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="fraud-alert fraud-alert-error"><%= error %></div>
+  <% } %>
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="fraud-alert fraud-alert-success">Thank you — your report has been submitted and will be reviewed.</div>
+  <% } else { %>
+
+  <h2 class="fraud-section-title">Report a Recruiter</h2>
+
+  <form class="fraud-form" action="/fraud/report" method="POST" enctype="multipart/form-data">
+    <div class="fraud-field">
+      <label for="reporterEmail">Your email address</label>
+      <input type="email" id="reporterEmail" name="reporterEmail" required placeholder="you@example.com">
+    </div>
+
+    <div class="fraud-field">
+      <label for="reportedEmail">Recruiter's email address</label>
+      <input type="email" id="reportedEmail" name="reportedEmail" required placeholder="recruiter@company.com">
+    </div>
+
+    <div class="fraud-field">
+      <label for="incidentDate">Date/time this happened <span class="fraud-hint">(optional)</span></label>
+      <input type="datetime-local" id="incidentDate" name="incidentDate">
+    </div>
+
+    <div class="fraud-field">
+      <label for="reasonCategory">Reason</label>
+      <select id="reasonCategory" name="reasonCategory" required>
+        <option value="">Select a reason...</option>
+        <option value="payment-request">Asked for payment or fees</option>
+        <option value="sensitive-info-request">Requested SSN or bank info upfront</option>
+        <option value="impersonation">Impersonating a real company</option>
+        <option value="ghosting">Ghosted after connecting</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="fraud-field">
+      <label for="description">What happened?</label>
+      <textarea id="description" name="description" required placeholder="Describe what happened in your own words..."></textarea>
+    </div>
+
+    <div class="fraud-field">
+      <label for="evidenceText">Paste the email or message content <span class="fraud-hint">(optional)</span></label>
+      <textarea id="evidenceText" name="evidenceText" placeholder="Paste the suspicious email or message here..."></textarea>
+    </div>
+
+    <div class="fraud-field">
+      <label for="evidenceScreenshot">Upload a screenshot or file <span class="fraud-hint">(optional, JPEG/PNG/WebP/PDF, max 5MB)</span></label>
+      <input type="file" id="evidenceScreenshot" name="evidenceScreenshot" accept="image/jpeg,image/png,image/webp,application/pdf">
+    </div>
+
+    <div class="fraud-checkbox-row">
+      <input type="checkbox" id="contactConsent" name="contactConsent">
+      <label for="contactConsent">We may follow up with you about your PreCheckd account.</label>
+    </div>
+
+    <button type="submit" class="fraud-submit-btn">Submit Report</button>
+  </form>
+
+  <% } %>
+</div>

@@ -17,6 +17,7 @@ const ALLOWED_RESUME_MIME_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
+const ALLOWED_EVIDENCE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 function validateImageFile(file) {
@@ -38,6 +39,19 @@ function validateResumeFile(file) {
   }
   if (!ALLOWED_RESUME_MIME_TYPES.includes(file.mimetype)) {
     return { valid: false, error: 'Please upload a PDF or DOCX file.' };
+  }
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return { valid: false, error: 'File must be smaller than 5MB.' };
+  }
+  return { valid: true };
+}
+
+function validateEvidenceFile(file) {
+  if (!file) {
+    return { valid: false, error: 'No file provided.' };
+  }
+  if (!ALLOWED_EVIDENCE_MIME_TYPES.includes(file.mimetype)) {
+    return { valid: false, error: 'Please upload a JPEG, PNG, WebP, or PDF file.' };
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return { valid: false, error: 'File must be smaller than 5MB.' };
@@ -105,6 +119,26 @@ async function uploadResume(candidateId, file) {
   return publicUrl;
 }
 
+async function uploadFraudEvidence(reportId, file) {
+  const validation = validateEvidenceFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
+  const key = `fraud-evidence/${reportId}-${crypto.randomBytes(6).toString('hex')}${extension}`;
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  const publicUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+  return publicUrl;
+}
+
 async function deleteS3Object(fileUrl) {
   if (!fileUrl) return;
   try {
@@ -123,7 +157,9 @@ module.exports = {
   uploadProfilePhoto,
   uploadCandidatePhoto,
   uploadResume,
+  uploadFraudEvidence,
   deleteS3Object,
   validateImageFile,
-  validateResumeFile
+  validateResumeFile,
+  validateEvidenceFile
 };
