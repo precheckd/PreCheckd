@@ -24,7 +24,6 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
   try {
     const {
       reporterEmail,
-      contactConsent,
       reportedEmail,
       incidentDate,
       reasonCategory,
@@ -76,7 +75,6 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
 
     const report = new FraudReport({
       reporterEmail: normalizedReporterEmail,
-      contactConsent: contactConsent === 'on' || contactConsent === 'true',
       reportedEmail: normalizedReportedEmail,
       reportedDomain,
       incidentDate: incidentDate ? new Date(incidentDate) : undefined,

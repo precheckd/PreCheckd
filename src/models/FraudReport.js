@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const fraudReportSchema = new mongoose.Schema({
   reporterEmail: { type: String, required: true, trim: true, lowercase: true },
-  contactConsent: { type: Boolean, default: false },
 
   reportedEmail: { type: String, required: true, trim: true, lowercase: true },
   reportedDomain: { type: String, trim: true, lowercase: true },

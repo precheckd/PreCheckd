@@ -78,23 +78,6 @@
     resize: vertical;
   }
 
-  .fraud-checkbox-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .fraud-checkbox-row input {
-    margin-top: 0.25rem;
-  }
-
-  .fraud-checkbox-row label {
-    font-size: 0.85rem;
-    color: #4A5A5F;
-    line-height: 1.4;
-  }
-
   .fraud-submit-btn {
     background: #2ECC71;
     color: #1F363C;
@@ -123,10 +106,79 @@
     color: #B91C1C;
   }
 
-  .fraud-alert-success {
-    background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.4);
+  .fraud-success {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    padding: 2rem;
+  }
+
+  .fraud-success h2 {
     color: #1F7A4C;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .fraud-success-steps {
+    margin: 1.25rem 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: fraud-step;
+  }
+
+  .fraud-success-steps li {
+    counter-increment: fraud-step;
+    position: relative;
+    padding-left: 2.25rem;
+    margin-bottom: 1rem;
+    color: #4A5A5F;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+
+  .fraud-success-steps li::before {
+    content: counter(fraud-step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    background: #2ECC71;
+    color: #1F363C;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fraud-cta {
+    margin-top: 1.75rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid #DCE4E2;
+  }
+
+  .fraud-cta p {
+    color: #4A5A5F;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .fraud-cta-link {
+    display: inline-block;
+    background: #1F363C;
+    color: #F2F4F3;
+    text-decoration: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-right: 0.75rem;
+  }
+
+  .fraud-cta-link:hover {
+    background: #2A4750;
   }
 </style>
 
@@ -142,8 +194,22 @@
   <% if (typeof error !== 'undefined' && error) { %>
     <div class="fraud-alert fraud-alert-error"><%= error %></div>
   <% } %>
+
   <% if (typeof success !== 'undefined' && success) { %>
-    <div class="fraud-alert fraud-alert-success">Thank you — your report has been submitted and will be reviewed.</div>
+    <div class="fraud-success">
+      <h2>Thank you — your report has been submitted.</h2>
+      <p>Here's what happens next:</p>
+      <ol class="fraud-success-steps">
+        <li>Your report is logged in our fraud database immediately and checked against every PreCheckd recruiter account.</li>
+        <li>If it matches an existing account, that's flagged for review, and depending on the recruiter's verification status, we may reach out to them.</li>
+        <li>Our team reviews new reports directly — this isn't fully automated yet, so a real person looks at what you submitted.</li>
+      </ol>
+      <div class="fraud-cta">
+        <p>While you're here — see how PreCheckd verifies every recruiter before they can reach candidates, and why that matters.</p>
+        <a href="/candidate-landing" class="fraud-cta-link">For Candidates</a>
+        <a href="/recruiter-search" class="fraud-cta-link">Browse Verified Recruiters</a>
+      </div>
+    </div>
   <% } else { %>
 
   <h2 class="fraud-section-title">Report a Recruiter</h2>
@@ -189,11 +255,6 @@
     <div class="fraud-field">
       <label for="evidenceScreenshot">Upload a screenshot or file <span class="fraud-hint">(optional, JPEG/PNG/WebP/PDF, max 5MB)</span></label>
       <input type="file" id="evidenceScreenshot" name="evidenceScreenshot" accept="image/jpeg,image/png,image/webp,application/pdf">
-    </div>
-
-    <div class="fraud-checkbox-row">
-      <input type="checkbox" id="contactConsent" name="contactConsent">
-      <label for="contactConsent">We may follow up with you about your PreCheckd account.</label>
     </div>
 
     <button type="submit" class="fraud-submit-btn">Submit Report</button>
