@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
+const FraudReport = require('../models/FraudReport');
+const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 
 const INTERNAL_ADMIN_SECRET = process.env.INTERNAL_ADMIN_SECRET;
 
@@ -101,6 +103,122 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
     res.redirect(`/internal/verify/${candidate._id}`);
   } catch (error) {
     console.error('Error toggling verification status:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Fraud dashboard — emails/domains that have crossed the distinct-reporter
+// threshold. Thresholds live only in fraudConfig.js, never exposed publicly.
+router.get('/fraud', async (req, res) => {
+  try {
+    const flaggedEmails = await FraudReport.aggregate([
+      {
+        $group: {
+          _id: '$reportedEmail',
+          reporters: { $addToSet: '$reporterEmail' },
+          count: { $sum: 1 },
+          latest: { $max: '$createdAt' },
+          matchedRecruiterId: { $first: '$matchedRecruiterId' },
+        }
+      },
+      {
+        $project: {
+          reportedEmail: '$_id',
+          distinctReporters: { $size: '$reporters' },
+          count: 1,
+          latest: 1,
+          matchedRecruiterId: 1,
+        }
+      },
+      { $match: { distinctReporters: { $gte: EMAIL_REPORT_THRESHOLD } } },
+      { $sort: { distinctReporters: -1, latest: -1 } },
+    ]);
+
+    const flaggedDomains = await FraudReport.aggregate([
+      { $match: { reportedDomain: { $nin: PUBLIC_EMAIL_DOMAINS, $ne: '' } } },
+      {
+        $group: {
+          _id: '$reportedDomain',
+          reporters: { $addToSet: '$reporterEmail' },
+          count: { $sum: 1 },
+          latest: { $max: '$createdAt' },
+        }
+      },
+      {
+        $project: {
+          reportedDomain: '$_id',
+          distinctReporters: { $size: '$reporters' },
+          count: 1,
+          latest: 1,
+        }
+      },
+      { $match: { distinctReporters: { $gte: DOMAIN_REPORT_THRESHOLD } } },
+      { $sort: { distinctReporters: -1, latest: -1 } },
+    ]);
+
+    res.render('internal-fraud-list', {
+      flaggedEmails,
+      flaggedDomains,
+      emailThreshold: EMAIL_REPORT_THRESHOLD,
+      domainThreshold: DOMAIN_REPORT_THRESHOLD,
+    });
+  } catch (error) {
+    console.error('Error loading fraud dashboard:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Detail view — every individual report against one exact email address
+router.get('/fraud/email/:email', async (req, res) => {
+  try {
+    const reportedEmail = req.params.email.toLowerCase();
+    const reports = await FraudReport.find({ reportedEmail })
+      .sort({ createdAt: -1 })
+      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified');
+
+    res.render('internal-fraud-detail', {
+      targetLabel: reportedEmail,
+      targetType: 'email',
+      reports,
+    });
+  } catch (error) {
+    console.error('Error loading fraud detail (email):', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Detail view — every individual report against one domain
+router.get('/fraud/domain/:domain', async (req, res) => {
+  try {
+    const reportedDomain = req.params.domain.toLowerCase();
+    const reports = await FraudReport.find({ reportedDomain })
+      .sort({ createdAt: -1 })
+      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified');
+
+    res.render('internal-fraud-detail', {
+      targetLabel: reportedDomain,
+      targetType: 'domain',
+      reports,
+    });
+  } catch (error) {
+    console.error('Error loading fraud detail (domain):', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Update a single report's status from the detail view
+router.post('/fraud/:reportId/status', async (req, res) => {
+  try {
+    const { status, redirectTo } = req.body;
+    const validStatuses = ['pending', 'reviewed', 'dismissed', 'confirmed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).send('Invalid status.');
+    }
+
+    await FraudReport.findByIdAndUpdate(req.params.reportId, { status });
+    res.redirect(redirectTo || '/internal/fraud');
+  } catch (error) {
+    console.error('Error updating fraud report status:', error);
     res.status(500).send('Server error');
   }
 });

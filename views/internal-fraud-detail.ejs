@@ -1,0 +1,210 @@
+<%
+  const reasonLabels = {
+    'payment-request': 'Asked for payment or fees',
+    'sensitive-info-request': 'Requested SSN or bank info upfront',
+    'impersonation': 'Impersonating a real company',
+    'ghosting': 'Ghosted after connecting',
+    'other': 'Other'
+  };
+  const redirectTo = targetType === 'email'
+    ? `/internal/fraud/email/${encodeURIComponent(targetLabel)}`
+    : `/internal/fraud/domain/${encodeURIComponent(targetLabel)}`;
+%>
+
+<style>
+  .ifd-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .ifd-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .ifd-header a {
+    color: #1F7A4C;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .ifd-title {
+    color: #1F363C;
+    font-size: 1.5rem;
+    margin: 0.5rem 0 1.75rem;
+    word-break: break-all;
+  }
+
+  .ifd-report {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .ifd-report-top {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .ifd-reason {
+    font-weight: 700;
+    color: #1F363C;
+    font-size: 0.95rem;
+  }
+
+  .ifd-date {
+    color: #7A8B91;
+    font-size: 0.82rem;
+  }
+
+  .ifd-row {
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  .ifd-row strong {
+    color: #1F363C;
+  }
+
+  .ifd-evidence-text {
+    background: #FFFFFF;
+    border: 1px solid #DCE4E2;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    color: #4A5A5F;
+    white-space: pre-wrap;
+    margin-top: 0.35rem;
+  }
+
+  .ifd-match-badge {
+    display: inline-block;
+    background: rgba(46, 204, 113, 0.15);
+    color: #1F7A4C;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+  }
+
+  .ifd-status-form {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #DCE4E2;
+  }
+
+  .ifd-status-form select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #C7D1CF;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  .ifd-status-form button {
+    background: #1F363C;
+    color: #F2F4F3;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ifd-status-form button:hover {
+    background: #2A4750;
+  }
+
+  .ifd-current-status {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 10px;
+  }
+
+  .ifd-status-pending { background: rgba(251, 191, 36, 0.15); color: #B45309; }
+  .ifd-status-reviewed { background: rgba(96, 165, 250, 0.15); color: #1D4ED8; }
+  .ifd-status-dismissed { background: rgba(122, 139, 145, 0.15); color: #4A5A5F; }
+  .ifd-status-confirmed { background: rgba(248, 113, 113, 0.15); color: #B91C1C; }
+
+  .ifd-evidence-link {
+    color: #1F7A4C;
+    font-size: 0.85rem;
+  }
+</style>
+
+<div class="ifd-wrap">
+  <div class="ifd-header">
+    <a href="/internal/fraud">← Back to Fraud Dashboard</a>
+  </div>
+  <h1 class="ifd-title"><%= targetLabel %></h1>
+
+  <% if (reports.length === 0) { %>
+    <p>No reports found.</p>
+  <% } else { %>
+    <% reports.forEach((report) => { %>
+      <div class="ifd-report">
+        <div class="ifd-report-top">
+          <span class="ifd-reason"><%= reasonLabels[report.reasonCategory] || report.reasonCategory %></span>
+          <span class="ifd-date"><%= new Date(report.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></span>
+        </div>
+
+        <div class="ifd-row"><strong>Reporter:</strong> <%= report.reporterEmail %></div>
+
+        <% if (report.incidentDate) { %>
+          <div class="ifd-row"><strong>Incident date:</strong> <%= new Date(report.incidentDate).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>
+        <% } %>
+
+        <div class="ifd-row"><strong>Description:</strong> <%= report.description %></div>
+
+        <% if (report.evidenceText) { %>
+          <div class="ifd-row">
+            <strong>Pasted evidence:</strong>
+            <div class="ifd-evidence-text"><%= report.evidenceText %></div>
+          </div>
+        <% } %>
+
+        <% if (report.evidenceScreenshotUrl) { %>
+          <div class="ifd-row">
+            <strong>Attachment:</strong>
+            <a class="ifd-evidence-link" href="<%= report.evidenceScreenshotUrl %>" target="_blank" rel="noopener noreferrer">View uploaded file →</a>
+          </div>
+        <% } %>
+
+        <% if (report.matchedRecruiterId) { %>
+          <div class="ifd-row">
+            <strong>Matched PreCheckd account:</strong>
+            <span class="ifd-match-badge"><%= report.matchedRecruiterId.firstName %> <%= report.matchedRecruiterId.lastName %> (<%= report.matchType %> match)</span>
+            <% if (report.matchedRecruiterId.isIdentityVerified) { %>
+              — <strong style="color:#B91C1C;">already fully verified</strong>
+            <% } %>
+          </div>
+        <% } %>
+
+        <form class="ifd-status-form" action="/internal/fraud/<%= report._id %>/status" method="POST">
+          <span class="ifd-current-status ifd-status-<%= report.status %>"><%= report.status %></span>
+          <select name="status">
+            <option value="pending" <%= report.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="reviewed" <%= report.status === 'reviewed' ? 'selected' : '' %>>Reviewed</option>
+            <option value="dismissed" <%= report.status === 'dismissed' ? 'selected' : '' %>>Dismissed</option>
+            <option value="confirmed" <%= report.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+          </select>
+          <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+          <button type="submit">Update Status</button>
+        </form>
+      </div>
+    <% }); %>
+  <% } %>
+</div>

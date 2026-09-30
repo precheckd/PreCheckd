@@ -1,0 +1,190 @@
+<style>
+  .if-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .if-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.5rem;
+  }
+
+  .if-header h1 {
+    color: #1F363C;
+    font-size: 1.6rem;
+  }
+
+  .if-header a {
+    color: #1F7A4C;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .if-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .if-section h2 {
+    font-size: 1.1rem;
+    color: #1F363C;
+    margin-bottom: 0.25rem;
+  }
+
+  .if-section .if-subtext {
+    color: #7A8B91;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .if-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .if-table th {
+    text-align: left;
+    background: #1F363C;
+    color: #F2F4F3;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 1rem;
+  }
+
+  .if-table td {
+    padding: 0.85rem 1rem;
+    border-top: 1px solid #DCE4E2;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  .if-table tr:hover td {
+    background: rgba(46, 204, 113, 0.06);
+  }
+
+  .if-count-badge {
+    display: inline-block;
+    background: rgba(248, 113, 113, 0.15);
+    color: #B91C1C;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+  }
+
+  .if-match-badge {
+    display: inline-block;
+    background: rgba(46, 204, 113, 0.15);
+    color: #1F7A4C;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+  }
+
+  .if-no-match {
+    color: #7A8B91;
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  .if-empty {
+    color: #7A8B91;
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: 1rem;
+  }
+
+  .if-table a.if-view-link {
+    color: #1F363C;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .if-table a.if-view-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="if-wrap">
+  <div class="if-header">
+    <h1>Fraud Dashboard</h1>
+    <a href="/internal/verify">Back to Candidate Verification →</a>
+  </div>
+
+  <div class="if-section">
+    <h2>Flagged Emails</h2>
+    <p class="if-subtext"><%= emailThreshold %>+ distinct reporters against the exact same email address.</p>
+
+    <% if (flaggedEmails.length === 0) { %>
+      <p class="if-empty">No emails have crossed the threshold yet.</p>
+    <% } else { %>
+      <table class="if-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Distinct Reporters</th>
+            <th>Total Reports</th>
+            <th>Last Report</th>
+            <th>PreCheckd Account</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% flaggedEmails.forEach((item) => { %>
+            <tr>
+              <td><a class="if-view-link" href="/internal/fraud/email/<%= encodeURIComponent(item.reportedEmail) %>"><%= item.reportedEmail %></a></td>
+              <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
+              <td><%= item.count %></td>
+              <td><%= new Date(item.latest).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+              <td>
+                <% if (item.matchedRecruiterId) { %>
+                  <span class="if-match-badge">Matched Recruiter</span>
+                <% } else { %>
+                  <span class="if-no-match">No match</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="if-section">
+    <h2>Flagged Domains</h2>
+    <p class="if-subtext"><%= domainThreshold %>+ distinct reporters against the same non-public domain.</p>
+
+    <% if (flaggedDomains.length === 0) { %>
+      <p class="if-empty">No domains have crossed the threshold yet.</p>
+    <% } else { %>
+      <table class="if-table">
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>Distinct Reporters</th>
+            <th>Total Reports</th>
+            <th>Last Report</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% flaggedDomains.forEach((item) => { %>
+            <tr>
+              <td><a class="if-view-link" href="/internal/fraud/domain/<%= encodeURIComponent(item.reportedDomain) %>"><%= item.reportedDomain %></a></td>
+              <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
+              <td><%= item.count %></td>
+              <td><%= new Date(item.latest).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>

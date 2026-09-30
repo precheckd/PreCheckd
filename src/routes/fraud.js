@@ -4,14 +4,9 @@ const multer = require('multer');
 const FraudReport = require('../models/FraudReport');
 const Recruiter = require('../models/Recruiter');
 const { uploadFraudEvidence, validateEvidenceFile } = require('../utils/s3Upload');
+const { PUBLIC_EMAIL_DOMAINS } = require('../config/fraudConfig');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
-
-const PUBLIC_EMAIL_DOMAINS = [
-  'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com',
-  'icloud.com', 'live.com', 'msn.com', 'protonmail.com', 'mail.com',
-  'gmx.com', 'yandex.com', 'zoho.com'
-];
 
 const MAX_REPORTS_PER_EMAIL_PER_DAY = 5;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
