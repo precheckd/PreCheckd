@@ -27,7 +27,7 @@ router.post('/login', (req, res) => {
 
   if (secret === INTERNAL_ADMIN_SECRET) {
     req.session.isInternalAdmin = true;
-    return res.redirect('/internal/verify');
+    return res.redirect('/internal');
   }
 
   res.render('internal-login', { error: 'Incorrect password.' });
@@ -39,6 +39,40 @@ router.get('/logout', (req, res) => {
 });
 
 router.use(requireInternalAuth);
+
+// Landing dashboard — links out to each internal tool
+router.get('/', async (req, res) => {
+  try {
+    const [candidateCount, flaggedCount] = await Promise.all([
+      Candidate.countDocuments({
+        $or: [
+          { 'workHistory.0': { $exists: true } },
+          { 'educationHistory.0': { $exists: true } },
+          { 'certifications.0': { $exists: true } }
+        ]
+      }),
+      FraudReport.aggregate([
+        {
+          $group: {
+            _id: '$reportedEmail',
+            reporters: { $addToSet: '$reporterEmail' }
+          }
+        },
+        { $project: { distinctReporters: { $size: '$reporters' } } },
+        { $match: { distinctReporters: { $gte: EMAIL_REPORT_THRESHOLD } } },
+        { $count: 'total' }
+      ]),
+    ]);
+
+    res.render('internal-dashboard', {
+      candidateCount,
+      flaggedCount: flaggedCount[0]?.total || 0,
+    });
+  } catch (error) {
+    console.error('Error loading internal dashboard:', error);
+    res.status(500).send('Server error');
+  }
+});
 
 // List all candidates who have at least one work/education/certification entry
 router.get('/verify', async (req, res) => {
@@ -95,8 +129,6 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
     entry.verified = !entry.verified;
     entry.verifiedAt = entry.verified ? new Date() : null;
 
-    // Mongoose needs an explicit markModified call for in-place array
-    // subdocument edits like this to actually persist correctly.
     candidate.markModified(category);
     await candidate.save();
 
@@ -107,8 +139,7 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
   }
 });
 
-// Fraud dashboard — emails/domains that have crossed the distinct-reporter
-// threshold. Thresholds live only in fraudConfig.js, never exposed publicly.
+// Fraud dashboard
 router.get('/fraud', async (req, res) => {
   try {
     const flaggedEmails = await FraudReport.aggregate([
