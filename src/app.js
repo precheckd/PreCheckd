@@ -163,6 +163,16 @@ app.use(async (req, res, next) => {
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
 
+        const [recentFraudReports, fraudReportCount] = await Promise.all([
+          FraudReport.find({ reporterCandidateId: candidate._id }).sort({ createdAt: -1 }).limit(3),
+          FraudReport.countDocuments({ reporterCandidateId: candidate._id })
+        ]);
+        res.locals.commandCenterFraudReports = recentFraudReports.map((r) => ({
+          reasonCategory: r.reasonCategory,
+          createdAt: r.createdAt
+        }));
+        res.locals.commandCenterFraudReportCount = fraudReportCount;
+
         const [recentMessages, unreadCount, recentRequests, savedRecruiters] = await Promise.all([
           Message.find({ recipientType: 'candidate', recipientId: req.session.candidateId })
             .sort({ sentAt: -1 }).limit(3),

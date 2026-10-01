@@ -1,0 +1,104 @@
+<style>
+  .reports-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .reports-header {
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .reports-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .reports-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .reports-list {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .report-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .report-card .report-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: #8FA6AC;
+  }
+
+  .report-category {
+    display: inline-block;
+    background: #3A2020;
+    color: #FF8A8A;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .report-card .report-target {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .report-card p.report-description {
+    color: #E8EBEA;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .no-reports {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+</style>
+
+<div class="reports-content">
+  <div class="reports-header">
+    <h1>Your reports</h1>
+    <p>Reports you've filed while logged in. This is just a record of what you submitted — not a status update.</p>
+  </div>
+
+  <% if (reports.length === 0) { %>
+    <div class="no-reports">You haven't filed any reports while logged in.</div>
+  <% } else { %>
+    <div class="reports-list">
+      <% reports.forEach((report) => { %>
+        <div class="report-card">
+          <div class="report-meta">
+            <span class="report-category"><%= report.reasonCategory.replace(/-/g, ' ') %></span>
+            <span>Filed <%= new Date(report.createdAt).toLocaleDateString() %></span>
+          </div>
+          <div class="report-target">Reported: <%= report.reportedEmail %></div>
+          <p class="report-description"><%= report.description %></p>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>

@@ -720,7 +720,7 @@
       <% if (loggedInRecruiterSlug) { %>
       <a href="<%= (typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount) ? '/recruiter-dashboard/claim' : '/recruiter-dashboard/reports' %>" class="cc-widget">
         <div class="cc-widget-header">
-          <h4>Reports<% if (commandCenterFraudReportCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
+          <h4>Reports About You<% if (commandCenterFraudReportCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
           <span class="cc-widget-view-all">View All →</span>
         </div>
         <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
@@ -732,6 +732,25 @@
           <% }); %>
         <% } else { %>
           <p class="cc-widget-empty">No reports on file.</p>
+        <% } %>
+      </a>
+      <% } %>
+
+      <% if (loggedInCandidateSlug) { %>
+      <a href="/candidate-dashboard/my-reports" class="cc-widget">
+        <div class="cc-widget-header">
+          <h4>Your Filed Reports</h4>
+          <span class="cc-widget-view-all">View All →</span>
+        </div>
+        <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
+          <% commandCenterFraudReports.forEach(function(r) { %>
+            <div class="cc-widget-item">
+              <div class="cc-widget-item-title"><%= r.reasonCategory.replace(/-/g, ' ') %></div>
+              <div class="cc-widget-item-sub"><%= new Date(r.createdAt).toLocaleDateString() %></div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="cc-widget-empty">You haven't filed a report.</p>
         <% } %>
       </a>
       <% } %>

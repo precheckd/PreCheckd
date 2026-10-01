@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const fraudReportSchema = new mongoose.Schema({
   reporterEmail: { type: String, required: true, trim: true, lowercase: true },
+  // Only set when the reporter was logged in as a candidate at the moment
+  // they submitted — never matched retroactively by email. Filing while
+  // logged out stays untracked on their side, same as today; that's a
+  // deliberate choice (anonymity), not a gap to fix later.
+  reporterCandidateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Candidate', default: null },
 
   reportedEmail: { type: String, required: true, trim: true, lowercase: true },
   reportedDomain: { type: String, trim: true, lowercase: true },

@@ -196,6 +196,7 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
 
     const report = new FraudReport({
       reporterEmail: normalizedReporterEmail,
+      reporterCandidateId: req.session.candidateId || null,
       reportedEmail: normalizedReportedEmail,
       reportedDomain,
       incidentDate: incidentDate ? new Date(incidentDate) : undefined,
