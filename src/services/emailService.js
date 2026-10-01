@@ -114,6 +114,33 @@ async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subj
   });
 }
 
+async function sendFraudReportThankYouEmail(toEmail, couponCode) {
+  const candidateLandingUrl = `${process.env.APP_BASE_URL}/candidate-landing`;
+  const recruiterSearchUrl = `${process.env.APP_BASE_URL}/recruiter-search`;
+
+  return resend.emails.send({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Thanks for reporting — here\'s what happens next',
+    html: `
+      <p>Hi,</p>
+      <p>Thanks for taking the time to report a suspicious recruiter to PreCheckd. Here's what happens next:</p>
+      <ol>
+        <li>Your report is logged immediately and checked against every PreCheckd recruiter account.</li>
+        <li>If it matches an existing account, that's flagged for review, and depending on the recruiter's verification status, we may reach out to them.</li>
+        <li>Our team reviews new reports directly — this isn't fully automated yet, so a real person looks at what you submitted.</li>
+      </ol>
+      ${couponCode ? `
+      <p>As a thank-you, here's a code good for 20% off PreCheckd once our paid features launch:</p>
+      <p style="font-size: 1.3em; font-weight: bold; letter-spacing: 0.08em; color: #1F363C;">${couponCode}</p>
+      <p>Save this — we'll let you know when it's ready to use.</p>
+      ` : ''}
+      <p>In the meantime, see how PreCheckd verifies every recruiter before they can reach candidates:</p>
+      <p><a href="${candidateLandingUrl}">For Candidates</a> &middot; <a href="${recruiterSearchUrl}">Browse Verified Recruiters</a></p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   generateVerificationToken,
@@ -123,5 +150,6 @@ module.exports = {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail,
   sendNewMessageEmail,
+  sendFraudReportThankYouEmail,
   generateSixDigitCode
 };

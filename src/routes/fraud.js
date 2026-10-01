@@ -5,6 +5,7 @@ const FraudReport = require('../models/FraudReport');
 const Recruiter = require('../models/Recruiter');
 const { uploadFraudEvidence, validateEvidenceFile } = require('../utils/s3Upload');
 const { createCoupon } = require('../utils/couponGenerator');
+const { sendFraudReportThankYouEmail } = require('../services/emailService');
 const { PUBLIC_EMAIL_DOMAINS } = require('../config/fraudConfig');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -12,8 +13,6 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 const MAX_REPORTS_PER_EMAIL_PER_DAY = 5;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Defaults for the fraud-report thank-you coupon. Adjust here if the
-// offer changes — single source of truth for this flow.
 const THANKYOU_DISCOUNT_TYPE = 'percentage';
 const THANKYOU_DISCOUNT_VALUE = 20;
 const THANKYOU_EXPIRES_IN_DAYS = 90;
@@ -110,9 +109,15 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       });
       couponCode = coupon.code;
     } catch (couponError) {
-      // A coupon-generation failure should never block the fraud report
-      // itself from succeeding — log it and move on without a code.
       console.error('Could not generate thank-you coupon:', couponError);
+    }
+
+    try {
+      await sendFraudReportThankYouEmail(normalizedReporterEmail, couponCode);
+    } catch (emailError) {
+      // A failed email send should never block the report itself — the
+      // on-page thank-you screen still shows the coupon either way.
+      console.error('Could not send fraud report thank-you email:', emailError);
     }
 
     res.render('fraud', { error: null, success: true, couponCode });
