@@ -36,6 +36,12 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Incorrect email or password.' });
     }
 
+    if (recruiter.isSuspended) {
+      return res.status(403).json({
+        error: 'Your account has been suspended. Contact us directly for details.'
+      });
+    }
+
     req.session.recruiterId = recruiter._id.toString();
 
     res.json({ success: true, accountTier: recruiter.accountTier, slug: recruiter.slug });
@@ -142,6 +148,10 @@ router.post('/reset-password/:token', async (req, res) => {
 
     if (account.loginTokenExpires && Date.now() > account.loginTokenExpires) {
       return res.status(400).json({ error: 'This link has expired. Please request a new one.' });
+    }
+
+    if (recruiter && recruiter.isSuspended) {
+      return res.status(403).json({ error: 'Your account has been suspended. Contact us directly for details.' });
     }
 
     account.passwordHash = await bcrypt.hash(password, 10);

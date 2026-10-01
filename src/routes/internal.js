@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
+const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 
@@ -213,12 +214,19 @@ router.get('/fraud/email/:email', async (req, res) => {
     const reportedEmail = req.params.email.toLowerCase();
     const reports = await FraudReport.find({ reportedEmail })
       .sort({ createdAt: -1 })
-      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified');
+      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified isSuspended');
+
+    // Only an exact-email match actually points at the account behind
+    // *this* reported email — a domain match points at a different person
+    // at the same company, so suspending from here would hit the wrong
+    // account. Find the first report (if any) that's a real exact match.
+    const matchedAccount = reports.find((r) => r.matchType === 'email' && r.matchedRecruiterId)?.matchedRecruiterId || null;
 
     res.render('internal-fraud-detail', {
       targetLabel: reportedEmail,
       targetType: 'email',
       reports,
+      matchedAccount,
     });
   } catch (error) {
     console.error('Error loading fraud detail (email):', error);
@@ -232,15 +240,48 @@ router.get('/fraud/domain/:domain', async (req, res) => {
     const reportedDomain = req.params.domain.toLowerCase();
     const reports = await FraudReport.find({ reportedDomain })
       .sort({ createdAt: -1 })
-      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified');
+      .populate('matchedRecruiterId', 'firstName lastName email slug isIdentityVerified isSuspended');
 
     res.render('internal-fraud-detail', {
       targetLabel: reportedDomain,
       targetType: 'domain',
       reports,
+      matchedAccount: null,
     });
   } catch (error) {
     console.error('Error loading fraud detail (domain):', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Suspend / unsuspend a recruiter account — manual, staff-only, reversible.
+// Never automated and never visible to anyone but the recruiter themselves
+// (and only indirectly, as a login/profile dead-end) — nothing here is ever
+// surfaced publicly as "this account was suspended for fraud."
+router.post('/recruiter/:id/suspend', async (req, res) => {
+  try {
+    const { redirectTo } = req.body;
+    await Recruiter.findByIdAndUpdate(req.params.id, {
+      isSuspended: true,
+      suspendedAt: new Date(),
+    });
+    res.redirect(redirectTo || '/internal/fraud');
+  } catch (error) {
+    console.error('Error suspending recruiter account:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/recruiter/:id/unsuspend', async (req, res) => {
+  try {
+    const { redirectTo } = req.body;
+    await Recruiter.findByIdAndUpdate(req.params.id, {
+      isSuspended: false,
+      suspendedAt: null,
+    });
+    res.redirect(redirectTo || '/internal/fraud');
+  } catch (error) {
+    console.error('Error unsuspending recruiter account:', error);
     res.status(500).send('Server error');
   }
 });

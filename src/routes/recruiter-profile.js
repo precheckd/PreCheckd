@@ -16,7 +16,8 @@ router.get('/:slug', async (req, res) => {
 
     const recruiter = await Recruiter.findOne({
       slug: slug,
-      isActive: true
+      isActive: true,
+      isSuspended: { $ne: true }
     });
 
     if (!recruiter) {
@@ -46,7 +47,7 @@ router.get('/:slug/edit', async (req, res) => {
   try {
     const slug = req.params.slug;
 
-    const recruiter = await Recruiter.findOne({ slug: slug, isActive: true });
+    const recruiter = await Recruiter.findOne({ slug: slug, isActive: true, isSuspended: { $ne: true } });
 
     if (!recruiter) {
       return res.status(404).send('Recruiter not found');
@@ -78,7 +79,7 @@ router.post('/:slug/edit', upload.single('profilePhoto'), async (req, res) => {
   try {
     const slug = req.params.slug;
 
-    const recruiter = await Recruiter.findOne({ slug: slug, isActive: true });
+    const recruiter = await Recruiter.findOne({ slug: slug, isActive: true, isSuspended: { $ne: true } });
 
     if (!recruiter) {
       return res.status(404).send('Recruiter not found');

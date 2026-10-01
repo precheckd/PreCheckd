@@ -99,9 +99,9 @@ router.get('/compose', async (req, res) => {
     const recipientType = type === 'recruiter' ? 'candidate' : 'recruiter';
     const recipientId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
     const RecipientModel = recipientType === 'recruiter' ? Recruiter : Candidate;
-    const recipient = await RecipientModel.findById(recipientId).select('firstName lastName');
+    const recipient = await RecipientModel.findById(recipientId).select('firstName lastName isSuspended');
 
-    if (!recipient) {
+    if (!recipient || (recipientType === 'recruiter' && recipient.isSuspended)) {
       return res.status(404).send('Recipient not found.');
     }
 
@@ -180,6 +180,13 @@ router.post('/send', async (req, res) => {
 
     const recipientType = type === 'recruiter' ? 'candidate' : 'recruiter';
     const recipientId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
+
+    if (recipientType === 'recruiter') {
+      const recipientRecruiter = await Recruiter.findById(recipientId).select('isSuspended');
+      if (!recipientRecruiter || recipientRecruiter.isSuspended) {
+        return res.status(404).send('Recipient not found.');
+      }
+    }
 
     const message = await Message.create({
       connectionRequestId,

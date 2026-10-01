@@ -97,10 +97,20 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterFraudReportCount = 0;
   res.locals.commandCenterIsClaimAccount = false;
 
+  // Set below if a suspended recruiter's session turns up — handled after
+  // the try/catch so it doesn't short-circuit the candidate-session check
+  // that follows it (same mistake as the claim-account branch above it).
+  let destroySuspendedSession = false;
+
   try {
     if (req.session.recruiterId) {
       const recruiter = await Recruiter.findById(req.session.recruiterId);
-      if (recruiter) {
+
+      // A suspended account's session dies on its very next request —
+      // nothing waits for them to log out or for a token to expire.
+      if (recruiter && recruiter.isSuspended) {
+        destroySuspendedSession = true;
+      } else if (recruiter) {
         res.locals.loggedInRecruiterSlug = recruiter.slug;
         res.locals.commandCenterIsClaimAccount = recruiter.accountTier === 'unverified_claim';
 
@@ -223,6 +233,10 @@ app.use(async (req, res, next) => {
     }
   } catch (error) {
     console.error('Error resolving command center data:', error);
+  }
+
+  if (destroySuspendedSession) {
+    return req.session.destroy(() => next());
   }
 
   next();

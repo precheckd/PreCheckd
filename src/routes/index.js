@@ -13,7 +13,7 @@ router.get('/recruiter-landing', (req, res) => {
 
 router.get('/recruiter-search', async (req, res) => {
   try {
-    const recruiters = await Recruiter.find({ isActive: true }).sort({ createdAt: -1 });
+    const recruiters = await Recruiter.find({ isActive: true, isSuspended: { $ne: true } }).sort({ createdAt: -1 });
     res.render('recruiter-search', { recruiters, prefilledQuery: req.query.q || '' });
   } catch (error) {
     console.error('Error loading recruiter search page:', error);
@@ -31,7 +31,7 @@ router.get('/candidate-signup', async (req, res) => {
     let recruiter = null;
 
     if (recruiterSlug) {
-      recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
+      recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true, isSuspended: { $ne: true } });
     }
 
     if (req.session.candidateId) {

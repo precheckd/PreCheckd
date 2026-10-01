@@ -39,7 +39,7 @@ router.post('/save', async (req, res) => {
   try {
     const { recruiterSlug, note } = req.body;
 
-    const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
+    const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true, isSuspended: { $ne: true } });
     if (!recruiter) {
       return res.status(404).json({ error: 'Recruiter not found.' });
     }

@@ -143,6 +143,73 @@
     color: #1F7A4C;
     font-size: 0.85rem;
   }
+
+  .ifd-account-box {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .ifd-account-box.is-suspended {
+    background: rgba(248, 113, 113, 0.08);
+    border-color: rgba(248, 113, 113, 0.4);
+  }
+
+  .ifd-account-name {
+    font-weight: 700;
+    color: #1F363C;
+    font-size: 1rem;
+  }
+
+  .ifd-account-email {
+    color: #7A8B91;
+    font-size: 0.85rem;
+  }
+
+  .ifd-suspend-btn {
+    background: #B91C1C;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ifd-suspend-btn:hover {
+    background: #991B1B;
+  }
+
+  .ifd-unsuspend-btn {
+    background: #1F363C;
+    color: #F2F4F3;
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ifd-unsuspend-btn:hover {
+    background: #2A4750;
+  }
+
+  .ifd-suspended-label {
+    color: #B91C1C;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
 </style>
 
 <div class="ifd-wrap">
@@ -150,6 +217,29 @@
     <a href="/internal/fraud">← Back to Fraud Dashboard</a>
   </div>
   <h1 class="ifd-title"><%= targetLabel %></h1>
+
+  <% if (matchedAccount) { %>
+    <div class="ifd-account-box <%= matchedAccount.isSuspended ? 'is-suspended' : '' %>">
+      <div>
+        <div class="ifd-account-name"><%= matchedAccount.firstName %> <%= matchedAccount.lastName || '' %></div>
+        <div class="ifd-account-email"><%= matchedAccount.email %></div>
+        <% if (matchedAccount.isSuspended) { %>
+          <div class="ifd-suspended-label">Account suspended</div>
+        <% } %>
+      </div>
+      <% if (matchedAccount.isSuspended) { %>
+        <form action="/internal/recruiter/<%= matchedAccount._id %>/unsuspend" method="POST">
+          <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+          <button type="submit" class="ifd-unsuspend-btn">Unsuspend account</button>
+        </form>
+      <% } else { %>
+        <form action="/internal/recruiter/<%= matchedAccount._id %>/suspend" method="POST" onsubmit="return confirm('Suspend this account? They will be immediately logged out, their public profile disappears, and messaging stops working. This is manual and reversible.');">
+          <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+          <button type="submit" class="ifd-suspend-btn">Suspend account</button>
+        </form>
+      <% } %>
+    </div>
+  <% } %>
 
   <% if (reports.length === 0) { %>
     <p>No reports found.</p>

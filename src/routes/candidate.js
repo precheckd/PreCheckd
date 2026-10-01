@@ -636,7 +636,7 @@ router.post('/connect', async (req, res) => {
       return res.status(403).json({ error: 'Please complete verification before contacting recruiters.' });
     }
 
-    const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true });
+    const recruiter = await Recruiter.findOne({ slug: recruiterSlug, isActive: true, isSuspended: { $ne: true } });
     if (!recruiter) {
       return res.status(404).json({ error: 'Recruiter not found.' });
     }

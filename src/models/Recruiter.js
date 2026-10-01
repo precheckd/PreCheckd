@@ -111,6 +111,20 @@ const recruiterSchema = new mongoose.Schema({
     default: null
   },
 
+  // Manual, staff-only action from the internal fraud dashboard — never
+  // automated, never public. A suspended account can't log in, has no
+  // public profile, and can't send or receive messages, but nothing about
+  // *why* is ever shown anywhere outside direct contact with the recruiter
+  // themselves. Reversible: unsuspending just clears both fields.
+  isSuspended: {
+    type: Boolean,
+    default: false
+  },
+  suspendedAt: {
+    type: Date,
+    default: null
+  },
+
   // Password reset / first-time-set-password token flow (also doubles as
   // the one-time migration link for accounts created before passwords
   // existed). Single-use, cleared as soon as it's consumed.
