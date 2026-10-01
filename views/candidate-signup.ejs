@@ -333,14 +333,15 @@
       </form>
     </section>
 
-    <!-- Returning candidate: login code -->
-    <section id="step-login-code" class="form-step hidden">
+    <!-- Returning candidate: password login -->
+    <section id="step-login-password" class="form-step hidden">
       <h2>Welcome back</h2>
-      <p>We emailed you a 6-digit code.</p>
-      <form id="login-code-form">
-        <label>Login code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
-        <button type="submit">Verify</button>
+      <p id="login-password-greeting">Enter your password to continue.</p>
+      <form id="login-password-form">
+        <label>Password<input type="password" name="password" required></label>
+        <button type="submit">Log in</button>
       </form>
+      <p><a href="#" id="forgot-password-link">Forgot password?</a></p>
     </section>
 
     <!-- New candidate: full details + resume upload -->
@@ -351,6 +352,7 @@
         <label>Last name<input type="text" name="lastName" required></label>
         <input type="hidden" name="email" id="signup-email-hidden">
         <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
+        <label>Password <span class="label-hint">(at least 8 characters)</span><input type="password" name="password" minlength="8" required></label>
 
         <div class="resume-upload-box">
           <p><strong>Have a resume handy?</strong> Every job site makes you upload one, then re-type everything on it anyway. We think that's ridiculous — upload yours and we'll pull your work history and education automatically. You'll get a chance to review it before anything's saved. Prefer to type it manually? Skip this and you can add it later.</p>

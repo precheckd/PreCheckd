@@ -69,6 +69,10 @@ const candidateSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  passwordHash: {
+    type: String,
+    default: null
+  },
 
   bio: {
     type: String,
@@ -145,6 +149,9 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
+  // Password reset / first-time-set-password token flow (also doubles as
+  // the one-time migration link for accounts created before passwords
+  // existed). Single-use, cleared as soon as it's consumed.
   loginToken: {
     type: String,
     default: null

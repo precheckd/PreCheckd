@@ -28,6 +28,10 @@ const recruiterSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  passwordHash: {
+    type: String,
+    default: null
+  },
   company: {
     type: String,
     default: 'Not provided'
@@ -81,7 +85,9 @@ const recruiterSchema = new mongoose.Schema({
     default: null
   },
 
-  // Magic-link login token flow
+  // Password reset / first-time-set-password token flow (also doubles as
+  // the one-time migration link for accounts created before passwords
+  // existed). Single-use, cleared as soon as it's consumed.
   loginToken: {
     type: String,
     default: null

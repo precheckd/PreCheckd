@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
 const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
@@ -81,10 +82,14 @@ async function sendVerificationCode(phone, code) {
 // Step 1: Signup and send real SMS code via AWS Notify
 router.post('/signup', async (req, res) => {
   try {
-    const { firstName, lastName, nickname, email, phone, company } = req.body;
+    const { firstName, lastName, nickname, email, phone, company, password } = req.body;
 
-    if (!firstName || !lastName || !email || !phone) {
+    if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
     }
 
     if (isBlockedEmailDomain(email)) {
@@ -115,6 +120,8 @@ router.post('/signup', async (req, res) => {
     const domainVerifiedAt = domainCheck.verified ? new Date() : null;
     const domainRegisteredYear = domainCheck.verified ? domainCheck.registeredYear : null;
 
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const recruiter = new Recruiter({
       firstName,
       lastName,
@@ -122,6 +129,7 @@ router.post('/signup', async (req, res) => {
       slug,
       email,
       phone: normalizedPhone,
+      passwordHash,
       company: company || 'Not provided',
       isPhoneVerified: false,
       isIdentityVerified: false,

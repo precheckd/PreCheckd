@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const {
-  sendCandidateLoginCode,
   sendCandidateVerificationLink,
   generateVerificationToken,
   generateSixDigitCode
@@ -113,6 +113,8 @@ router.get('/logout', (req, res) => {
   });
 });
 
+// Checks whether a typed email belongs to an existing candidate, so the
+// signup page can branch to the password-login step instead of full signup.
 router.post('/check-email', async (req, res) => {
   try {
     const { email, recruiterSlug } = req.body;
@@ -125,38 +127,26 @@ router.post('/check-email', async (req, res) => {
       req.session.candidateRecruiterSlug = recruiterSlug;
     }
 
-    const candidate = await Candidate.findOne({ email });
+    const candidate = await Candidate.findOne({ email: email.trim().toLowerCase() });
 
     if (!candidate) {
       return res.json({ exists: false });
     }
 
-    const code = generateSixDigitCode();
-    candidate.loginToken = code;
-    candidate.loginTokenExpires = Date.now() + 10 * 60 * 1000;
-    await candidate.save();
-
     req.session.candidatePendingLoginId = candidate._id.toString();
 
-    sendCandidateLoginCode(candidate.email, candidate.firstName, code).catch((err) => {
-      console.error('Failed to send candidate login code:', err);
-    });
-
-    res.json({ exists: true, firstName: candidate.firstName });
+    res.json({ exists: true, firstName: candidate.firstName, hasPassword: Boolean(candidate.passwordHash) });
   } catch (error) {
     console.error('Error checking candidate email:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
 
-router.post('/login-verify', async (req, res) => {
+// Returning candidate: password login (replaces the old emailed 6-digit code)
+router.post('/login', async (req, res) => {
   try {
-    const { code } = req.body;
+    const { password } = req.body;
     const candidateId = req.session.candidatePendingLoginId;
-
-    if (!code) {
-      return res.status(400).json({ error: 'Missing code' });
-    }
 
     if (!candidateId) {
       return res.status(400).json({ error: 'No login attempt in progress. Please start over.' });
@@ -164,21 +154,24 @@ router.post('/login-verify', async (req, res) => {
 
     const candidate = await Candidate.findById(candidateId);
 
-    if (!candidate || !candidate.loginToken || !candidate.loginTokenExpires) {
-      return res.status(400).json({ error: 'No code on file. Please request a new one.' });
+    if (!candidate) {
+      return res.status(400).json({ error: 'No login attempt in progress. Please start over.' });
     }
 
-    if (Date.now() > candidate.loginTokenExpires) {
-      return res.status(400).json({ error: 'This code has expired. Please request a new one.' });
+    if (!candidate.passwordHash) {
+      return res.status(400).json({
+        error: 'This account hasn\'t set a password yet. Use "Forgot password?" below to set one.'
+      });
     }
 
-    if (code !== candidate.loginToken) {
-      return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
     }
 
-    candidate.loginToken = null;
-    candidate.loginTokenExpires = null;
-    await candidate.save();
+    const matches = await bcrypt.compare(password, candidate.passwordHash);
+    if (!matches) {
+      return res.status(400).json({ error: 'Incorrect password. Please try again.' });
+    }
 
     req.session.candidateId = candidate._id.toString();
     delete req.session.candidatePendingLoginId;
@@ -190,18 +183,22 @@ router.post('/login-verify', async (req, res) => {
       slug: candidate.slug
     });
   } catch (error) {
-    console.error('Error verifying candidate login code:', error);
-    res.status(500).json({ error: 'Failed to verify code' });
+    console.error('Error logging in candidate:', error);
+    res.status(500).json({ error: 'Failed to log in' });
   }
 });
 
 // Step 1: New candidate signup — details + optional resume upload
 router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
-    const { firstName, lastName, email, phone } = req.body;
+    const { firstName, lastName, email, phone, password } = req.body;
 
-    if (!firstName || !lastName || !email || !phone) {
+    if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
     }
 
     const normalizedPhone = normalizePhoneToE164(phone);
@@ -222,12 +219,15 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
     const slug = await makeSlug(firstName, lastName);
     const emailToken = generateVerificationToken();
 
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const candidate = new Candidate({
       firstName,
       lastName,
       slug,
       email,
       phone: normalizedPhone,
+      passwordHash,
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000,

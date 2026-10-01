@@ -27,31 +27,28 @@ async function sendVerificationEmail(toEmail, firstName, token) {
   });
 }
 
-async function sendLoginEmail(toEmail, firstName, token) {
-  const loginUrl = `${process.env.APP_BASE_URL}/login/verify?token=${token}`;
+// Used three ways, all through the same /reset-password/:token page:
+//   1. A recruiter or candidate who clicked "Forgot password"
+//   2. An account created before passwords existed, getting its one-time
+//      migration link to set a password for the first time
+//   3. (future) A claim-account invite, once that flow is built
+async function sendPasswordResetEmail(toEmail, firstName, token, { isFirstTime = false } = {}) {
+  const resetUrl = `${process.env.APP_BASE_URL}/reset-password/${token}`;
+
+  const subject = isFirstTime ? 'Set your PreCheckd password' : 'Reset your PreCheckd password';
+  const intro = isFirstTime
+    ? `We've moved to password-based logins. Click below to set a password for your PreCheckd account:`
+    : `Click the link below to set a new password for your PreCheckd account:`;
 
   return resend.emails.send({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
-    subject: 'Your PreCheckd login link',
+    subject,
     html: `
       <p>Hi ${firstName},</p>
-      <p>Click the link below to log in to your PreCheckd account:</p>
-      <p><a href="${loginUrl}">${loginUrl}</a></p>
-      <p>This link expires in 15 minutes and can only be used once. If you didn't request this, you can safely ignore this email.</p>
-    `,
-  });
-}
-
-async function sendCandidateLoginCode(toEmail, firstName, code) {
-  return resend.emails.send({
-    from: 'PreCheckd <noreply@precheckd.com>',
-    to: toEmail,
-    subject: 'Your PreCheckd login code',
-    html: `
-      <p>Hi ${firstName},</p>
-      <p>Your login code is: <strong>${code}</strong></p>
-      <p>Enter this code to log back into PreCheckd. This code expires in 10 minutes.</p>
+      <p>${intro}</p>
+      <p><a href="${resetUrl}">${resetUrl}</a></p>
+      <p>This link expires in 30 minutes and can only be used once. If you didn't request this, you can safely ignore this email.</p>
     `,
   });
 }
@@ -144,8 +141,7 @@ async function sendFraudReportThankYouEmail(toEmail, couponCode) {
 module.exports = {
   sendVerificationEmail,
   generateVerificationToken,
-  sendLoginEmail,
-  sendCandidateLoginCode,
+  sendPasswordResetEmail,
   sendCandidateVerificationLink,
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail,

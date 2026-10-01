@@ -175,6 +175,7 @@
   }
 
   // --- Step 0: Email gate ---
+  let pendingLoginEmail = null;
   const emailGateForm = document.getElementById('email-gate-form');
   emailGateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -188,7 +189,10 @@
       });
 
       if (result.exists) {
-        showStep('step-login-code');
+        pendingLoginEmail = email;
+        document.getElementById('login-password-greeting').textContent =
+          `Welcome back${result.firstName ? ', ' + result.firstName : ''} — enter your password to continue.`;
+        showStep('step-login-password');
       } else {
         document.getElementById('signup-email-hidden').value = email;
         showStep('step-signup');
@@ -198,14 +202,14 @@
     }
   });
 
-  // --- Returning candidate: login code ---
-  const loginCodeForm = document.getElementById('login-code-form');
-  loginCodeForm.addEventListener('submit', async (e) => {
+  // --- Returning candidate: password login ---
+  const loginPasswordForm = document.getElementById('login-password-form');
+  loginPasswordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
     try {
-      const code = new FormData(loginCodeForm).get('code');
-      const result = await postJson('/api/candidate/login-verify', { code });
+      const password = new FormData(loginPasswordForm).get('password');
+      const result = await postJson('/api/candidate/login', { password });
       candidateSlug = result.slug;
 
       if (result.isFullyVerified) {
@@ -214,6 +218,20 @@
         showStep('step-identity');
         await prepareIdentitySession();
       }
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  // --- Returning candidate: forgot password ---
+  const forgotPasswordLink = document.getElementById('forgot-password-link');
+  forgotPasswordLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    hideError();
+    try {
+      await postJson('/forgot-password', { email: pendingLoginEmail });
+      document.getElementById('login-password-greeting').textContent =
+        'Check your email for a link to set a new password.';
     } catch (err) {
       showError(err.message);
     }
