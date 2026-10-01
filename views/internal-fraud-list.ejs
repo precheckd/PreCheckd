@@ -112,6 +112,22 @@
   .if-table a.if-view-link:hover {
     text-decoration: underline;
   }
+
+  .if-row-flagged-red td {
+    background: rgba(248, 113, 113, 0.12);
+  }
+
+  .if-row-flagged-red:hover td {
+    background: rgba(248, 113, 113, 0.18);
+  }
+
+  .if-row-flagged-yellow td {
+    background: rgba(250, 204, 21, 0.14);
+  }
+
+  .if-row-flagged-yellow:hover td {
+    background: rgba(250, 204, 21, 0.2);
+  }
 </style>
 
 <div class="if-wrap">
@@ -121,11 +137,11 @@
   </div>
 
   <div class="if-section">
-    <h2>Flagged Emails</h2>
-    <p class="if-subtext"><%= emailThreshold %>+ distinct reporters against the exact same email address.</p>
+    <h2>Reported Emails</h2>
+    <p class="if-subtext">Every email address anyone has reported. Rows in red have hit <%= emailThreshold %>+ distinct reporters.</p>
 
     <% if (flaggedEmails.length === 0) { %>
-      <p class="if-empty">No emails have crossed the threshold yet.</p>
+      <p class="if-empty">No reports yet.</p>
     <% } else { %>
       <table class="if-table">
         <thead>
@@ -139,7 +155,7 @@
         </thead>
         <tbody>
           <% flaggedEmails.forEach((item) => { %>
-            <tr>
+            <tr class="<%= item.flagged ? 'if-row-flagged-red' : '' %>">
               <td><a class="if-view-link" href="/internal/fraud/email/<%= encodeURIComponent(item.reportedEmail) %>"><%= item.reportedEmail %></a></td>
               <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
               <td><%= item.count %></td>
@@ -159,11 +175,11 @@
   </div>
 
   <div class="if-section">
-    <h2>Flagged Domains</h2>
-    <p class="if-subtext"><%= domainThreshold %>+ distinct reporters against the same non-public domain.</p>
+    <h2>Reported Domains</h2>
+    <p class="if-subtext">Every non-public domain anyone has reported. Rows in yellow have hit <%= domainThreshold %>+ distinct reporters.</p>
 
     <% if (flaggedDomains.length === 0) { %>
-      <p class="if-empty">No domains have crossed the threshold yet.</p>
+      <p class="if-empty">No reports yet.</p>
     <% } else { %>
       <table class="if-table">
         <thead>
@@ -176,7 +192,7 @@
         </thead>
         <tbody>
           <% flaggedDomains.forEach((item) => { %>
-            <tr>
+            <tr class="<%= item.flagged ? 'if-row-flagged-yellow' : '' %>">
               <td><a class="if-view-link" href="/internal/fraud/domain/<%= encodeURIComponent(item.reportedDomain) %>"><%= item.reportedDomain %></a></td>
               <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
               <td><%= item.count %></td>

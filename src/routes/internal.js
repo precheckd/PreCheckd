@@ -139,7 +139,11 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
   }
 });
 
-// Fraud dashboard
+// Fraud dashboard — lists EVERY reported email/domain, not just ones that
+// crossed the threshold. A single, isolated report can be the first sign of
+// something that blows up later, so nothing gets hidden from staff; the
+// threshold is only used (client-side, via `flagged` below) to highlight
+// rows worth looking at first.
 router.get('/fraud', async (req, res) => {
   try {
     const flaggedEmails = await FraudReport.aggregate([
@@ -161,9 +165,11 @@ router.get('/fraud', async (req, res) => {
           matchedRecruiterId: 1,
         }
       },
-      { $match: { distinctReporters: { $gte: EMAIL_REPORT_THRESHOLD } } },
       { $sort: { distinctReporters: -1, latest: -1 } },
     ]);
+    flaggedEmails.forEach((item) => {
+      item.flagged = item.distinctReporters >= EMAIL_REPORT_THRESHOLD;
+    });
 
     const flaggedDomains = await FraudReport.aggregate([
       { $match: { reportedDomain: { $nin: PUBLIC_EMAIL_DOMAINS, $ne: '' } } },
@@ -183,9 +189,11 @@ router.get('/fraud', async (req, res) => {
           latest: 1,
         }
       },
-      { $match: { distinctReporters: { $gte: DOMAIN_REPORT_THRESHOLD } } },
       { $sort: { distinctReporters: -1, latest: -1 } },
     ]);
+    flaggedDomains.forEach((item) => {
+      item.flagged = item.distinctReporters >= DOMAIN_REPORT_THRESHOLD;
+    });
 
     res.render('internal-fraud-list', {
       flaggedEmails,
