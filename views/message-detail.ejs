@@ -146,6 +146,16 @@
       padding: 1.5rem;
     }
   }
+
+  .unavailable-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
 </style>
 
 <div class="message-detail-content">
@@ -163,15 +173,21 @@
       <div class="message-body"><%= message.body %></div>
     </div>
 
-    <div class="reply-card">
-      <h3>Reply</h3>
-      <form action="/messages/send" method="POST">
-        <input type="hidden" name="connectionRequestId" value="<%= message.connectionRequestId %>">
-        <label>Message
-          <textarea name="body" placeholder="Write your reply..." required></textarea>
-        </label>
-        <button type="submit">Send Reply</button>
-      </form>
-    </div>
+    <% if (senderUnavailable) { %>
+      <div class="unavailable-card">
+        This recruiter's profile is no longer active on PreCheckd, so you can't reply here. This isn't about anything you did — you're not being ignored.
+      </div>
+    <% } else { %>
+      <div class="reply-card">
+        <h3>Reply</h3>
+        <form action="/messages/send" method="POST">
+          <input type="hidden" name="connectionRequestId" value="<%= message.connectionRequestId %>">
+          <label>Message
+            <textarea name="body" placeholder="Write your reply..." required></textarea>
+          </label>
+          <button type="submit">Send Reply</button>
+        </form>
+      </div>
+    <% } %>
   </div>
 </div>

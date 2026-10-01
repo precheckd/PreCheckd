@@ -136,9 +136,20 @@ router.get('/:id', async (req, res) => {
     }
 
     let senderName = 'Unknown';
+    // Whoever is viewing this is always the recipient here, so the sender
+    // is always the other party in the thread — the one they'd reply to.
+    // If that's a recruiter who's since gone inactive or been suspended,
+    // flag it so the reply form can be swapped for an explanation instead
+    // of a reply that would otherwise silently 404. Deliberately the same
+    // message either way — nothing here distinguishes "deactivated" from
+    // "suspended for fraud."
+    let senderUnavailable = false;
     if (message.senderType === 'recruiter') {
-      const sender = await Recruiter.findById(message.senderId).select('firstName lastName');
-      if (sender) senderName = `${sender.firstName} ${sender.lastName}`;
+      const sender = await Recruiter.findById(message.senderId).select('firstName lastName isActive isSuspended');
+      if (sender) {
+        senderName = `${sender.firstName} ${sender.lastName}`;
+        senderUnavailable = !sender.isActive || sender.isSuspended;
+      }
     } else {
       const sender = await Candidate.findById(message.senderId).select('firstName lastName');
       if (sender) senderName = `${sender.firstName} ${sender.lastName}`;
@@ -147,6 +158,7 @@ router.get('/:id', async (req, res) => {
     res.render('message-detail', {
       message,
       senderName,
+      senderUnavailable,
       currentUserType: type
     });
   } catch (error) {
