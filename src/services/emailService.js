@@ -177,6 +177,22 @@ async function sendFraudClaimInviteEmail(toEmail, token) {
   });
 }
 
+// Verifies someone actually owns the email they typed into the public
+// fraud report form, before that submission is allowed to do anything
+// (create a claim account, email a recruiter, etc.). No account, no
+// password — just proof of inbox access for this one submission.
+async function sendFraudReporterVerificationEmail(toEmail, code) {
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Your PreCheckd verification code',
+    html: `
+      <p>Your verification code is: <strong>${code}</strong></p>
+      <p>Enter this code to continue your fraud report. It expires in 10 minutes.</p>
+    `,
+  });
+}
+
 // Sent to an existing, already-active account (standard or a previously
 // claimed account — anything with a password set) when a new report names
 // them by exact email match. Deliberately neutral: no description of what
@@ -202,6 +218,7 @@ module.exports = {
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
   sendFraudReportNoticeEmail,
+  sendFraudReporterVerificationEmail,
   generateVerificationToken,
   sendPasswordResetEmail,
   sendCandidateVerificationLink,

@@ -211,6 +211,60 @@
   .fraud-cta-link:hover {
     background: #2A4750;
   }
+
+  .fraud-gate-note {
+    color: #7A8B91;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+  }
+
+  .fraud-send-code-btn {
+    background: #1F363C;
+    color: #F2F4F3;
+    border: none;
+    border-radius: 6px;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.75rem;
+  }
+
+  .fraud-send-code-btn:hover {
+    background: #2A4750;
+  }
+
+  .fraud-send-code-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .fraud-inline-msg {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+
+  .fraud-inline-msg.is-error { color: #B91C1C; }
+  .fraud-inline-msg.is-success { color: #1F7A4C; }
+
+  .fraud-field input[readonly] {
+    background: #EEF2F1;
+    color: #4A5A5F;
+  }
+
+  .fraud-field .fraud-link {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.82rem;
+    color: #2A6F4D;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .fraud-field .fraud-link:hover {
+    text-decoration: underline;
+  }
 </style>
 
 <div class="fraud-hero">
@@ -254,51 +308,154 @@
 
   <h2 class="fraud-section-title">Report a Recruiter</h2>
 
-  <form class="fraud-form" action="/fraud/report" method="POST" enctype="multipart/form-data">
-    <div class="fraud-field">
-      <label for="reporterEmail">Your email address</label>
-      <input type="email" id="reporterEmail" name="reporterEmail" required placeholder="you@example.com">
+  <form class="fraud-form" action="/fraud/report" method="POST" enctype="multipart/form-data" id="fraudForm">
+
+    <!-- Step 1: just prove you own the email you're reporting from -->
+    <div class="fraud-field" id="fraudStepGate" <% if (step !== 'gate') { %>style="display:none;"<% } %>>
+      <label for="reporterEmailGate">Your email address <span class="fraud-hint">(to verify you're not a bot — never published)</span></label>
+      <input type="email" id="reporterEmailGate" placeholder="you@example.com" value="<%= formValues.reporterEmail || '' %>">
+      <button type="button" class="fraud-send-code-btn" id="fraudSendCodeBtn">Send verification code</button>
+      <div class="fraud-inline-msg" id="fraudGateMsg"></div>
     </div>
 
-    <div class="fraud-field">
-      <label for="reportedEmail">Recruiter's email address</label>
-      <input type="email" id="reportedEmail" name="reportedEmail" required placeholder="recruiter@company.com">
-    </div>
+    <!-- Step 2: code + the rest of the report -->
+    <div id="fraudStepVerify" <% if (step !== 'verify') { %>style="display:none;"<% } %>>
+      <div class="fraud-field">
+        <label for="reporterEmail">Your email address</label>
+        <input type="email" id="reporterEmail" name="reporterEmail" readonly value="<%= formValues.reporterEmail || '' %>">
+        <a href="#" class="fraud-link" id="fraudChangeEmailLink">Use a different email</a>
+      </div>
 
-    <div class="fraud-field">
-      <label for="incidentDate">Date/time this happened <span class="fraud-hint">(optional)</span></label>
-      <input type="datetime-local" id="incidentDate" name="incidentDate">
-    </div>
+      <div class="fraud-field">
+        <label for="code">Verification code <span class="fraud-hint">(check your email — expires in 10 minutes)</span></label>
+        <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code">
+        <a href="#" class="fraud-link" id="fraudResendCodeLink">Resend code</a>
+        <div class="fraud-inline-msg" id="fraudResendMsg"></div>
+      </div>
 
-    <div class="fraud-field">
-      <label for="reasonCategory">Reason</label>
-      <select id="reasonCategory" name="reasonCategory" required>
-        <option value="">Select a reason...</option>
-        <option value="payment-request">Asked for payment or fees</option>
-        <option value="sensitive-info-request">Requested SSN or bank info upfront</option>
-        <option value="impersonation">Impersonating a real company</option>
-        <option value="ghosting">Ghosted after connecting</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
+      <div class="fraud-field">
+        <label for="reportedEmail">Recruiter's email address</label>
+        <input type="email" id="reportedEmail" name="reportedEmail" required placeholder="recruiter@company.com" value="<%= formValues.reportedEmail || '' %>">
+      </div>
 
-    <div class="fraud-field">
-      <label for="description">What happened?</label>
-      <textarea id="description" name="description" required placeholder="Describe what happened in your own words..."></textarea>
-    </div>
+      <div class="fraud-field">
+        <label for="incidentDate">Date/time this happened <span class="fraud-hint">(optional)</span></label>
+        <input type="datetime-local" id="incidentDate" name="incidentDate" value="<%= formValues.incidentDate || '' %>">
+      </div>
 
-    <div class="fraud-field">
-      <label for="evidenceText">Paste the email or message content <span class="fraud-hint">(optional)</span></label>
-      <textarea id="evidenceText" name="evidenceText" placeholder="Paste the suspicious email or message here..."></textarea>
-    </div>
+      <div class="fraud-field">
+        <label for="reasonCategory">Reason</label>
+        <select id="reasonCategory" name="reasonCategory" required>
+          <option value="">Select a reason...</option>
+          <option value="payment-request" <%= formValues.reasonCategory === 'payment-request' ? 'selected' : '' %>>Asked for payment or fees</option>
+          <option value="sensitive-info-request" <%= formValues.reasonCategory === 'sensitive-info-request' ? 'selected' : '' %>>Requested SSN or bank info upfront</option>
+          <option value="impersonation" <%= formValues.reasonCategory === 'impersonation' ? 'selected' : '' %>>Impersonating a real company</option>
+          <option value="ghosting" <%= formValues.reasonCategory === 'ghosting' ? 'selected' : '' %>>Ghosted after connecting</option>
+          <option value="other" <%= formValues.reasonCategory === 'other' ? 'selected' : '' %>>Other</option>
+        </select>
+      </div>
 
-    <div class="fraud-field">
-      <label for="evidenceScreenshot">Upload a screenshot or file <span class="fraud-hint">(optional, JPEG/PNG/WebP/PDF, max 5MB)</span></label>
-      <input type="file" id="evidenceScreenshot" name="evidenceScreenshot" accept="image/jpeg,image/png,image/webp,application/pdf">
-    </div>
+      <div class="fraud-field">
+        <label for="description">What happened?</label>
+        <textarea id="description" name="description" required placeholder="Describe what happened in your own words..."><%= formValues.description || '' %></textarea>
+      </div>
 
-    <button type="submit" class="fraud-submit-btn">Submit Report</button>
+      <div class="fraud-field">
+        <label for="evidenceText">Paste the email or message content <span class="fraud-hint">(optional)</span></label>
+        <textarea id="evidenceText" name="evidenceText" placeholder="Paste the suspicious email or message here..."><%= formValues.evidenceText || '' %></textarea>
+      </div>
+
+      <div class="fraud-field">
+        <label for="evidenceScreenshot">Upload a screenshot or file <span class="fraud-hint">(optional, JPEG/PNG/WebP/PDF, max 5MB)</span></label>
+        <input type="file" id="evidenceScreenshot" name="evidenceScreenshot" accept="image/jpeg,image/png,image/webp,application/pdf">
+      </div>
+
+      <button type="submit" class="fraud-submit-btn">Submit Report</button>
+    </div>
   </form>
 
   <% } %>
 </div>
+
+<script>
+(function () {
+  var stepGate = document.getElementById('fraudStepGate');
+  var stepVerify = document.getElementById('fraudStepVerify');
+  var gateEmailInput = document.getElementById('reporterEmailGate');
+  var verifyEmailInput = document.getElementById('reporterEmail');
+  var sendBtn = document.getElementById('fraudSendCodeBtn');
+  var gateMsg = document.getElementById('fraudGateMsg');
+  var resendLink = document.getElementById('fraudResendCodeLink');
+  var resendMsg = document.getElementById('fraudResendMsg');
+  var changeEmailLink = document.getElementById('fraudChangeEmailLink');
+
+  if (!stepGate || !stepVerify) return;
+
+  function showMsg(el, text, isError) {
+    el.textContent = text;
+    el.className = 'fraud-inline-msg ' + (isError ? 'is-error' : 'is-success');
+  }
+
+  function requestCode(email, btn, msgEl, onSuccess) {
+    var isButton = btn.tagName === 'BUTTON';
+    if (isButton) btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = 'Sending...';
+
+    fetch('/fraud/request-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reporterEmail: email })
+    })
+      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (result) {
+        if (isButton) btn.disabled = false;
+        btn.textContent = originalText;
+        if (!result.ok) {
+          showMsg(msgEl, result.data.error || 'Something went wrong. Please try again.', true);
+          return;
+        }
+        showMsg(msgEl, 'Code sent — check your inbox.', false);
+        if (onSuccess) onSuccess();
+      })
+      .catch(function () {
+        if (isButton) btn.disabled = false;
+        btn.textContent = originalText;
+        showMsg(msgEl, 'Something went wrong. Please try again.', true);
+      });
+  }
+
+  if (sendBtn) {
+    sendBtn.addEventListener('click', function () {
+      var email = (gateEmailInput.value || '').trim();
+      if (!email || email.indexOf('@') === -1) {
+        showMsg(gateMsg, 'Please enter a valid email address.', true);
+        return;
+      }
+      requestCode(email, sendBtn, gateMsg, function () {
+        verifyEmailInput.value = email;
+        stepGate.style.display = 'none';
+        stepVerify.style.display = '';
+        document.getElementById('code').focus();
+      });
+    });
+  }
+
+  if (resendLink) {
+    resendLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      requestCode(verifyEmailInput.value, resendLink, resendMsg);
+    });
+  }
+
+  if (changeEmailLink) {
+    changeEmailLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      gateEmailInput.value = verifyEmailInput.value;
+      stepVerify.style.display = 'none';
+      stepGate.style.display = '';
+      gateEmailInput.focus();
+    });
+  }
+})();
+</script>

@@ -10,7 +10,9 @@ const {
   sendFraudReportThankYouEmail,
   sendFraudClaimInviteEmail,
   sendFraudReportNoticeEmail,
+  sendFraudReporterVerificationEmail,
   generateVerificationToken,
+  generateSixDigitCode,
 } = require('../services/emailService');
 const { PUBLIC_EMAIL_DOMAINS } = require('../config/fraudConfig');
 
@@ -18,6 +20,11 @@ const { PUBLIC_EMAIL_DOMAINS } = require('../config/fraudConfig');
 // so several same-day reports against the same person don't pile up into
 // a string of emails that reads like harassment.
 const NOTICE_DEBOUNCE_MS = 24 * 60 * 60 * 1000;
+
+// Reporter-email verification (proves they own the address they typed,
+// before it's allowed to create a claim account or email anyone).
+const REPORTER_CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const REPORTER_CODE_RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds between sends
 
 // Claim links are emailed, unprompted, to someone who may not check their
 // inbox right away — longer-lived than the 30-minute forgot-password window.
@@ -116,34 +123,94 @@ const THANKYOU_DISCOUNT_VALUE = 20;
 const THANKYOU_EXPIRES_IN_DAYS = 90;
 
 router.get('/', (req, res) => {
-  res.render('fraud', { error: null, success: false, couponCode: null });
+  res.render('fraud', { error: null, success: false, couponCode: null, step: 'gate', formValues: {} });
 });
 
-router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => {
+// --- Step 1: email a code to prove the reporter owns the address they typed ---
+router.post('/request-code', async (req, res) => {
   try {
-    const {
-      reporterEmail,
-      reportedEmail,
-      incidentDate,
-      reasonCategory,
-      description,
-      evidenceText,
-    } = req.body;
+    const { reporterEmail } = req.body;
 
     if (!reporterEmail || !EMAIL_REGEX.test(reporterEmail.trim())) {
-      return res.render('fraud', { error: 'Please provide a valid email address for yourself.', success: false, couponCode: null });
-    }
-    if (!reportedEmail || !EMAIL_REGEX.test(reportedEmail.trim())) {
-      return res.render('fraud', { error: 'Please provide a valid email address for the recruiter you are reporting.', success: false, couponCode: null });
-    }
-    if (!reasonCategory) {
-      return res.render('fraud', { error: 'Please select a reason.', success: false, couponCode: null });
-    }
-    if (!description || !description.trim()) {
-      return res.render('fraud', { error: 'Please describe what happened.', success: false, couponCode: null });
+      return res.status(400).json({ error: 'Please provide a valid email address.' });
     }
 
     const normalizedReporterEmail = reporterEmail.trim().toLowerCase();
+
+    const sentAt = req.session.fraudCodeSentAt;
+    if (sentAt && Date.now() - sentAt < REPORTER_CODE_RESEND_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((REPORTER_CODE_RESEND_COOLDOWN_MS - (Date.now() - sentAt)) / 1000);
+      return res.status(429).json({ error: `Please wait ${waitSeconds}s before requesting another code.` });
+    }
+
+    const code = generateSixDigitCode();
+    req.session.fraudCodeEmail = normalizedReporterEmail;
+    req.session.fraudCode = code;
+    req.session.fraudCodeExpires = Date.now() + REPORTER_CODE_TTL_MS;
+    req.session.fraudCodeSentAt = Date.now();
+    req.session.fraudCodeVerified = false;
+
+    await sendFraudReporterVerificationEmail(normalizedReporterEmail, code);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending fraud reporter verification code:', error);
+    res.status(500).json({ error: 'Something went wrong sending your code. Please try again.' });
+  }
+});
+
+router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => {
+  const {
+    reporterEmail,
+    reportedEmail,
+    incidentDate,
+    reasonCategory,
+    description,
+    evidenceText,
+    code,
+  } = req.body;
+
+  // Carries whatever they'd already typed back into the view on any error,
+  // so a mistyped code doesn't cost them the report they just wrote out.
+  const formValues = { reporterEmail, reportedEmail, incidentDate, reasonCategory, description, evidenceText };
+
+  function renderError(message, step = 'verify') {
+    return res.render('fraud', { error: message, success: false, couponCode: null, step, formValues });
+  }
+
+  try {
+    if (!reporterEmail || !EMAIL_REGEX.test(reporterEmail.trim())) {
+      return renderError('Please provide a valid email address for yourself.', 'gate');
+    }
+    if (!reportedEmail || !EMAIL_REGEX.test(reportedEmail.trim())) {
+      return renderError('Please provide a valid email address for the recruiter you are reporting.');
+    }
+    if (!reasonCategory) {
+      return renderError('Please select a reason.');
+    }
+    if (!description || !description.trim()) {
+      return renderError('Please describe what happened.');
+    }
+
+    const normalizedReporterEmail = reporterEmail.trim().toLowerCase();
+
+    // Reporter-email verification — proves they actually own this address
+    // before anything downstream (claim account, notification email) fires.
+    if (!req.session.fraudCode || req.session.fraudCodeEmail !== normalizedReporterEmail) {
+      return renderError('Please request a new verification code for this email address.', 'gate');
+    }
+    if (Date.now() > req.session.fraudCodeExpires) {
+      return renderError('Your verification code expired. Please request a new one.', 'gate');
+    }
+    if (!code || code.trim() !== req.session.fraudCode) {
+      return renderError('Incorrect verification code. Please try again.');
+    }
+
+    // Single-use — clear it now so this code can't verify a second report.
+    req.session.fraudCode = null;
+    req.session.fraudCodeEmail = null;
+    req.session.fraudCodeExpires = null;
+
     const normalizedReportedEmail = reportedEmail.trim().toLowerCase();
     const reportedDomain = normalizedReportedEmail.split('@')[1] || '';
 
@@ -153,7 +220,7 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       createdAt: { $gte: since },
     });
     if (recentCount >= MAX_REPORTS_PER_EMAIL_PER_DAY) {
-      return res.render('fraud', { error: 'You have submitted the maximum number of reports for today. Please try again tomorrow.', success: false, couponCode: null });
+      return renderError('You have submitted the maximum number of reports for today. Please try again tomorrow.');
     }
 
     let matchedRecruiterId = null;
@@ -211,7 +278,7 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
     if (req.file) {
       const validation = validateEvidenceFile(req.file);
       if (!validation.valid) {
-        return res.render('fraud', { error: validation.error, success: false, couponCode: null });
+        return renderError(validation.error);
       }
       report.evidenceScreenshotUrl = await uploadFraudEvidence(report._id, req.file);
     }
@@ -241,10 +308,10 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       console.error('Could not send fraud report thank-you email:', emailError);
     }
 
-    res.render('fraud', { error: null, success: true, couponCode });
+    res.render('fraud', { error: null, success: true, couponCode, step: 'verify', formValues: {} });
   } catch (error) {
     console.error('Error submitting fraud report:', error);
-    res.render('fraud', { error: 'Something went wrong submitting your report. Please try again.', success: false, couponCode: null });
+    return renderError('Something went wrong submitting your report. Please try again.');
   }
 });
 
