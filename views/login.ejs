@@ -215,7 +215,9 @@
         const data = await res.json();
 
         if (res.ok && data.success) {
-          window.location.href = `/recruiter/${data.slug}`;
+          window.location.href = data.accountTier === 'unverified_claim'
+            ? '/recruiter-dashboard/claim'
+            : `/recruiter/${data.slug}`;
         } else {
           showMessage(data.error || 'Something went wrong. Please try again.', 'error');
         }

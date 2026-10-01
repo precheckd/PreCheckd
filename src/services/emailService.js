@@ -3,6 +3,23 @@ const crypto = require('crypto');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const MOCK_EMAIL = process.env.MOCK_EMAIL === 'true';
+
+// Every send in this file goes through here instead of calling
+// resend.emails.send directly — with MOCK_EMAIL=true, nothing actually
+// goes out, it just logs to the console. Use this during testing so you
+// can use made-up/fake "reported" addresses without emailing real people,
+// the same way MOCK_SMS/MOCK_IDENTITY already work for phone/identity.
+async function sendEmail(params) {
+  if (MOCK_EMAIL) {
+    console.log(`[MOCK EMAIL] To: ${params.to} | Subject: ${params.subject}`);
+    console.log(params.html);
+    return { mock: true };
+  }
+
+  return resend.emails.send(params);
+}
+
 function generateVerificationToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -14,7 +31,7 @@ function generateSixDigitCode() {
 async function sendVerificationEmail(toEmail, firstName, token) {
   const verifyUrl = `${process.env.APP_BASE_URL}/api/founding-recruiter/verify-email?token=${token}`;
 
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
@@ -40,7 +57,7 @@ async function sendPasswordResetEmail(toEmail, firstName, token, { isFirstTime =
     ? `We've moved to password-based logins. Click below to set a password for your PreCheckd account:`
     : `Click the link below to set a new password for your PreCheckd account:`;
 
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject,
@@ -56,7 +73,7 @@ async function sendPasswordResetEmail(toEmail, firstName, token, { isFirstTime =
 async function sendCandidateVerificationLink(toEmail, firstName, token) {
   const verifyUrl = `${process.env.APP_BASE_URL}/api/candidate/verify-email?token=${token}`;
 
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
@@ -70,7 +87,7 @@ async function sendCandidateVerificationLink(toEmail, firstName, token) {
 }
 
 async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, recruiterName, recruiterEmail) {
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: candidateEmail,
     subject: `${recruiterName} accepted your connection request`,
@@ -84,7 +101,7 @@ async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, r
 }
 
 async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, recruiterName) {
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: candidateEmail,
     subject: `Update on your connection request`,
@@ -99,7 +116,7 @@ async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, r
 async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subject) {
   const inboxUrl = `${process.env.APP_BASE_URL}/messages`;
 
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject: subject ? `New message: ${subject}` : `You have a new message on PreCheckd`,
@@ -115,7 +132,7 @@ async function sendFraudReportThankYouEmail(toEmail, couponCode) {
   const candidateLandingUrl = `${process.env.APP_BASE_URL}/candidate-landing`;
   const recruiterSearchUrl = `${process.env.APP_BASE_URL}/recruiter-search`;
 
-  return resend.emails.send({
+  return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject: 'Thanks for reporting — here\'s what happens next',
@@ -138,8 +155,31 @@ async function sendFraudReportThankYouEmail(toEmail, couponCode) {
   });
 }
 
+// Sent to a recruiter email that was named in a fraud/review report but
+// doesn't match any existing PreCheckd account. Not a marketing email and
+// never advertised anywhere — the only way anyone gets this is by being
+// named in a report. Reuses the same /reset-password/:token page to let
+// them set a password and claim the account.
+async function sendFraudClaimInviteEmail(toEmail, token) {
+  const claimUrl = `${process.env.APP_BASE_URL}/reset-password/${token}`;
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Someone left feedback about you on PreCheckd',
+    html: `
+      <p>Hi,</p>
+      <p>A candidate submitted feedback on PreCheckd about an experience with a recruiter at this email address.</p>
+      <p>Create an account to see what was reported:</p>
+      <p><a href="${claimUrl}">${claimUrl}</a></p>
+      <p>This link expires in 14 days and can only be used once. If you believe this was sent in error, you can safely ignore it.</p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
+  sendFraudClaimInviteEmail,
   generateVerificationToken,
   sendPasswordResetEmail,
   sendCandidateVerificationLink,

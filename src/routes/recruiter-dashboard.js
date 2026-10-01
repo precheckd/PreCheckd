@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
 const Recruiter = require('../models/Recruiter');
+const FraudReport = require('../models/FraudReport');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
@@ -15,6 +16,40 @@ function requireRecruiterLogin(req, res, next) {
 }
 
 router.use(requireRecruiterLogin);
+
+// GET /recruiter-dashboard/claim — the only page an unverified_claim
+// account can see: the report(s) tied to them, and a locked preview of
+// everything that opens up once they verify + pay. A standard (already
+// verified) recruiter landing here just gets sent to their real profile.
+router.get('/claim', async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+
+    if (!recruiter) {
+      return res.redirect('/login');
+    }
+
+    if (recruiter.accountTier !== 'unverified_claim') {
+      return res.redirect(`/recruiter/${recruiter.slug}`);
+    }
+
+    const reports = await FraudReport.find({ matchedRecruiterId: recruiter._id })
+      .sort({ createdAt: -1 });
+
+    // Reporter identity is never shown to the recruiter being reported.
+    const reportsForView = reports.map((r) => ({
+      reasonCategory: r.reasonCategory,
+      description: r.description,
+      incidentDate: r.incidentDate,
+      createdAt: r.createdAt,
+    }));
+
+    res.render('recruiter-claim-dashboard', { recruiter, reports: reportsForView });
+  } catch (error) {
+    console.error('Error loading claim dashboard:', error);
+    res.status(500).send('Something went wrong loading your account.');
+  }
+});
 
 // GET /recruiter-dashboard/requests — inbox of all connection requests
 router.get('/requests', async (req, res) => {

@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
 
     req.session.recruiterId = recruiter._id.toString();
 
-    res.json({ success: true, slug: recruiter.slug });
+    res.json({ success: true, accountTier: recruiter.accountTier, slug: recruiter.slug });
   } catch (error) {
     console.error('Error logging in recruiter:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -151,7 +151,12 @@ router.post('/reset-password/:token', async (req, res) => {
 
     if (recruiter) {
       req.session.recruiterId = recruiter._id.toString();
-      return res.json({ success: true, accountType: 'recruiter', slug: recruiter.slug });
+      return res.json({
+        success: true,
+        accountType: 'recruiter',
+        accountTier: recruiter.accountTier,
+        slug: recruiter.slug
+      });
     }
 
     req.session.candidateId = candidate._id.toString();

@@ -5,9 +5,12 @@ const recruiterSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Not required: a claim account (see accountTier below) is created from
+  // just a reported email — we don't know a last name until the recruiter
+  // fills in their own profile after claiming it.
   lastName: {
     type: String,
-    required: true
+    default: null
   },
   nickname: {
     type: String,
@@ -23,14 +26,29 @@ const recruiterSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  // Not required: claim accounts (see accountTier below) are created from
+  // a fraud report with only an email — no phone on file until/unless they
+  // go through full paid verification. `sparse` keeps the unique index from
+  // colliding across multiple claim accounts that both lack a phone (an
+  // unset field is simply omitted from the index; it's only an explicit
+  // null that would collide, so no default is set here either).
   phone: {
     type: String,
-    required: true,
-    unique: true
+    unique: true,
+    sparse: true
   },
   passwordHash: {
     type: String,
     default: null
+  },
+  // 'standard': the normal founding/paid recruiter signup flow.
+  // 'unverified_claim': created automatically when a fraud report names an
+  // email with no matching recruiter — can only ever see the report(s)
+  // tied to them until they verify + pay, same as a standard account.
+  accountTier: {
+    type: String,
+    enum: ['standard', 'unverified_claim'],
+    default: 'standard'
   },
   company: {
     type: String,
