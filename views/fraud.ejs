@@ -153,6 +153,37 @@
     justify-content: center;
   }
 
+  .fraud-coupon-box {
+    background: #1F363C;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .fraud-coupon-label {
+    color: #B0C4CE;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+
+  .fraud-coupon-code {
+    color: #4ADE80;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-family: "Courier New", monospace;
+    margin-bottom: 0.6rem;
+  }
+
+  .fraud-coupon-note {
+    color: #7A9B8E;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
   .fraud-cta {
     margin-top: 1.75rem;
     padding-top: 1.75rem;
@@ -204,6 +235,15 @@
         <li>If it matches an existing account, that's flagged for review, and depending on the recruiter's verification status, we may reach out to them.</li>
         <li>Our team reviews new reports directly — this isn't fully automated yet, so a real person looks at what you submitted.</li>
       </ol>
+
+      <% if (typeof couponCode !== 'undefined' && couponCode) { %>
+        <div class="fraud-coupon-box">
+          <div class="fraud-coupon-label">A thank-you for reporting</div>
+          <div class="fraud-coupon-code"><%= couponCode %></div>
+          <div class="fraud-coupon-note">Save this code — it's tied to your email and good for a discount on PreCheckd once our paid features launch. We'll let you know when it's ready to use.</div>
+        </div>
+      <% } %>
+
       <div class="fraud-cta">
         <p>While you're here — see how PreCheckd verifies every recruiter before they can reach candidates, and why that matters.</p>
         <a href="/candidate-landing" class="fraud-cta-link">For Candidates</a>
