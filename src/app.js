@@ -28,6 +28,7 @@ const Candidate = require('./models/Candidate');
 const Message = require('./models/Message');
 const ConnectionRequest = require('./models/ConnectionRequest');
 const SavedRecruiter = require('./models/SavedRecruiter');
+const FraudReport = require('./models/FraudReport');
 
 assertEnv();
 
@@ -92,50 +93,68 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterVerifiedTotal = 0;
   res.locals.commandCenterNudges = [];
   res.locals.commandCenterSavedRecruiters = [];
+  res.locals.commandCenterFraudReports = [];
+  res.locals.commandCenterFraudReportCount = 0;
+  res.locals.commandCenterIsClaimAccount = false;
 
   try {
     if (req.session.recruiterId) {
       const recruiter = await Recruiter.findById(req.session.recruiterId);
       if (recruiter) {
         res.locals.loggedInRecruiterSlug = recruiter.slug;
+        res.locals.commandCenterIsClaimAccount = recruiter.accountTier === 'unverified_claim';
 
-        const [recentMessages, unreadCount, recentRequests] = await Promise.all([
-          Message.find({ recipientType: 'recruiter', recipientId: req.session.recruiterId })
-            .sort({ sentAt: -1 }).limit(3),
-          Message.countDocuments({ recipientType: 'recruiter', recipientId: req.session.recruiterId, readAt: null }),
-          ConnectionRequest.find({ recruiterId: req.session.recruiterId })
-            .sort({ createdAt: -1 }).limit(3).populate('candidateId', 'firstName lastName anonId')
+        const [recentFraudReports, fraudReportCount] = await Promise.all([
+          FraudReport.find({ matchedRecruiterId: recruiter._id }).sort({ createdAt: -1 }).limit(3),
+          FraudReport.countDocuments({ matchedRecruiterId: recruiter._id })
         ]);
-
-        res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
-          const sender = m.senderType === 'recruiter'
-            ? await Recruiter.findById(m.senderId).select('firstName lastName')
-            : await Candidate.findById(m.senderId).select('firstName lastName');
-          return {
-            _id: m._id,
-            senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown',
-            preview: m.body.slice(0, 60),
-            readAt: m.readAt
-          };
+        res.locals.commandCenterFraudReports = recentFraudReports.map((r) => ({
+          reasonCategory: r.reasonCategory,
+          createdAt: r.createdAt
         }));
-        res.locals.commandCenterUnreadCount = unreadCount;
+        res.locals.commandCenterFraudReportCount = fraudReportCount;
 
-        res.locals.commandCenterRequests = recentRequests.map((r) => ({
-          _id: r._id,
-          status: r.status,
-          displayName: r.status === 'pending' ? `Candidate ${r.candidateId?.anonId || ''}` : `${r.candidateId?.firstName || ''} ${r.candidateId?.lastName || ''}`
-        }));
+        // A claim account has no real profile, messages, or requests yet —
+        // skip those widgets entirely rather than show empty/broken ones.
+        if (!res.locals.commandCenterIsClaimAccount) {
+          const [recentMessages, unreadCount, recentRequests] = await Promise.all([
+            Message.find({ recipientType: 'recruiter', recipientId: req.session.recruiterId })
+              .sort({ sentAt: -1 }).limit(3),
+            Message.countDocuments({ recipientType: 'recruiter', recipientId: req.session.recruiterId, readAt: null }),
+            ConnectionRequest.find({ recruiterId: req.session.recruiterId })
+              .sort({ createdAt: -1 }).limit(3).populate('candidateId', 'firstName lastName anonId')
+          ]);
 
-        const recruiterChecks = [
-          recruiter.domainVerifiedAt,
-          recruiter.emailVerifiedAt,
-          recruiter.phoneVerifiedAt,
-          recruiter.identityVerifiedAt,
-          recruiter.facialRecognitionVerifiedAt
-        ];
-        res.locals.commandCenterVerifiedTotal = recruiterChecks.length;
-        res.locals.commandCenterVerifiedCount = recruiterChecks.filter(Boolean).length;
-        res.locals.commandCenterNudges = buildRecruiterNudges(recruiter);
+          res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
+            const sender = m.senderType === 'recruiter'
+              ? await Recruiter.findById(m.senderId).select('firstName lastName')
+              : await Candidate.findById(m.senderId).select('firstName lastName');
+            return {
+              _id: m._id,
+              senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown',
+              preview: m.body.slice(0, 60),
+              readAt: m.readAt
+            };
+          }));
+          res.locals.commandCenterUnreadCount = unreadCount;
+
+          res.locals.commandCenterRequests = recentRequests.map((r) => ({
+            _id: r._id,
+            status: r.status,
+            displayName: r.status === 'pending' ? `Candidate ${r.candidateId?.anonId || ''}` : `${r.candidateId?.firstName || ''} ${r.candidateId?.lastName || ''}`
+          }));
+
+          const recruiterChecks = [
+            recruiter.domainVerifiedAt,
+            recruiter.emailVerifiedAt,
+            recruiter.phoneVerifiedAt,
+            recruiter.identityVerifiedAt,
+            recruiter.facialRecognitionVerifiedAt
+          ];
+          res.locals.commandCenterVerifiedTotal = recruiterChecks.length;
+          res.locals.commandCenterVerifiedCount = recruiterChecks.filter(Boolean).length;
+          res.locals.commandCenterNudges = buildRecruiterNudges(recruiter);
+        }
       }
     }
 

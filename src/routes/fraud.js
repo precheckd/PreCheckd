@@ -9,9 +9,15 @@ const { createCoupon } = require('../utils/couponGenerator');
 const {
   sendFraudReportThankYouEmail,
   sendFraudClaimInviteEmail,
+  sendFraudReportNoticeEmail,
   generateVerificationToken,
 } = require('../services/emailService');
 const { PUBLIC_EMAIL_DOMAINS } = require('../config/fraudConfig');
+
+// At most one "you were named in a report" notice per account per day,
+// so several same-day reports against the same person don't pile up into
+// a string of emails that reads like harassment.
+const NOTICE_DEBOUNCE_MS = 24 * 60 * 60 * 1000;
 
 // Claim links are emailed, unprompted, to someone who may not check their
 // inbox right away — longer-lived than the 30-minute forgot-password window.
@@ -66,6 +72,37 @@ async function createClaimAccountAndInvite(normalizedReportedEmail) {
   } catch (error) {
     console.error('Failed to create claim account for flagged email:', error);
     return null;
+  }
+}
+
+// Notifies an already-active account (standard, or a claim account that's
+// since set a password — either way, `passwordHash` is the real signal
+// that there's a dashboard for them to check) that a new report named them.
+// Only called for an exact email match, never a domain match — a domain
+// match points at a specific *different* person at the same company, and
+// emailing the wrong named individual "you were reported" is exactly the
+// kind of mistake this has to avoid. Debounced to at most once per day.
+async function maybeNotifyExistingAccount(recruiterId) {
+  try {
+    const account = await Recruiter.findById(recruiterId);
+    if (!account || !account.passwordHash) {
+      return; // no usable dashboard to send them to yet
+    }
+
+    const recentlyNotified = account.lastFraudNotifiedAt
+      && (Date.now() - account.lastFraudNotifiedAt.getTime()) < NOTICE_DEBOUNCE_MS;
+    if (recentlyNotified) {
+      return; // report is still saved/linked — they'll see it next login
+    }
+
+    account.lastFraudNotifiedAt = new Date();
+    await account.save();
+
+    sendFraudReportNoticeEmail(account.email).catch((emailError) => {
+      console.error('Failed to send fraud report notice email:', emailError);
+    });
+  } catch (error) {
+    console.error('Failed to check/send fraud report notice:', error);
   }
 }
 
@@ -148,6 +185,13 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
         matchedRecruiterId = claimAccount._id;
         matchType = 'email';
       }
+    } else if (matchType === 'email') {
+      // Exact match to an existing account — not the claim-creation branch
+      // above, so this is either a standard recruiter or a previously
+      // claimed account. (A brand-new claim account has no passwordHash
+      // yet, so maybeNotifyExistingAccount is a no-op for it regardless —
+      // it already got its own invite email moments ago.)
+      await maybeNotifyExistingAccount(matchedRecruiterId);
     }
 
     const report = new FraudReport({

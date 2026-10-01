@@ -177,9 +177,31 @@ async function sendFraudClaimInviteEmail(toEmail, token) {
   });
 }
 
+// Sent to an existing, already-active account (standard or a previously
+// claimed account — anything with a password set) when a new report names
+// them by exact email match. Deliberately neutral: no description of what
+// was reported, no verdict, just "something's on file, go look." At most
+// one of these per account per 24 hours (see Recruiter.lastFraudNotifiedAt)
+// so several same-day reports don't read as a pile-on.
+async function sendFraudReportNoticeEmail(toEmail) {
+  const loginUrl = `${process.env.APP_BASE_URL}/login`;
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'A report was filed about your PreCheckd account',
+    html: `
+      <p>Hi,</p>
+      <p>A candidate submitted feedback on PreCheckd mentioning your account. This hasn't been reviewed or verified by PreCheckd — we're letting you know right away, for transparency, so you're aware and have the chance to respond.</p>
+      <p><a href="${loginUrl}">Log in to see it</a></p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
+  sendFraudReportNoticeEmail,
   generateVerificationToken,
   sendPasswordResetEmail,
   sendCandidateVerificationLink,

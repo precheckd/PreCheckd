@@ -1,0 +1,110 @@
+<style>
+  .reports-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .reports-header {
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .reports-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .reports-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .reports-list {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .report-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .report-card .report-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: #8FA6AC;
+  }
+
+  .report-category {
+    display: inline-block;
+    background: #3A2020;
+    color: #FF8A8A;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .report-card p {
+    color: #E8EBEA;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .no-reports {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #C7D1CF;
+    font-size: 0.9rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .reports-disclaimer {
+    max-width: 800px;
+    margin: 1.5rem auto 0;
+    color: #8FA6AC;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+</style>
+
+<div class="reports-content">
+  <div class="reports-header">
+    <h1>Reports on file</h1>
+    <p>Feedback submitted about your account. This hasn't been reviewed or verified — it's shown here for transparency.</p>
+  </div>
+
+  <% if (reports.length === 0) { %>
+    <div class="no-reports">No reports on file.</div>
+  <% } else { %>
+    <div class="reports-list">
+      <% reports.forEach((report) => { %>
+        <div class="report-card">
+          <div class="report-meta">
+            <span class="report-category"><%= report.reasonCategory.replace(/-/g, ' ') %></span>
+            <span>Reported <%= new Date(report.createdAt).toLocaleDateString() %></span>
+          </div>
+          <p><%= report.description %></p>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <p class="reports-disclaimer">
+    Reports are submitted by candidates and have not been independently verified by PreCheckd.
+    They're shared with you as soon as they come in so you're aware and have the opportunity to respond.
+  </p>
+</div>

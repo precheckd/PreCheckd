@@ -103,6 +103,14 @@ const recruiterSchema = new mongoose.Schema({
     default: null
   },
 
+  // Last time this account was emailed a "you were named in a report"
+  // notice. Used to debounce — at most one such email per 24 hours, even
+  // if several reports land the same day, so it never reads as harassment.
+  lastFraudNotifiedAt: {
+    type: Date,
+    default: null
+  },
+
   // Password reset / first-time-set-password token flow (also doubles as
   // the one-time migration link for accounts created before passwords
   // existed). Single-use, cleared as soon as it's consumed.

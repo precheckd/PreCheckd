@@ -51,6 +51,40 @@ router.get('/claim', async (req, res) => {
   }
 });
 
+// GET /recruiter-dashboard/reports — every report on file for a standard
+// (already verified/active) recruiter. The unverified_claim equivalent is
+// /claim above; this is the same underlying data, just without the locked
+// feature preview, since a standard recruiter already has everything else.
+router.get('/reports', async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+
+    if (!recruiter) {
+      return res.redirect('/login');
+    }
+
+    if (recruiter.accountTier === 'unverified_claim') {
+      return res.redirect('/recruiter-dashboard/claim');
+    }
+
+    const reports = await FraudReport.find({ matchedRecruiterId: recruiter._id })
+      .sort({ createdAt: -1 });
+
+    // Reporter identity is never shown to the recruiter being reported.
+    const reportsForView = reports.map((r) => ({
+      reasonCategory: r.reasonCategory,
+      description: r.description,
+      incidentDate: r.incidentDate,
+      createdAt: r.createdAt,
+    }));
+
+    res.render('recruiter-fraud-reports', { recruiter, reports: reportsForView });
+  } catch (error) {
+    console.error('Error loading recruiter reports:', error);
+    res.status(500).send('Something went wrong loading your reports.');
+  }
+});
+
 // GET /recruiter-dashboard/requests — inbox of all connection requests
 router.get('/requests', async (req, res) => {
   try {
