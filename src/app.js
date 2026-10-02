@@ -136,6 +136,14 @@ app.use(async (req, res, next) => {
           ]);
 
           res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
+            if (m.senderType === 'system') {
+              return {
+                _id: m._id,
+                senderName: 'PreCheckd Trust & Safety',
+                preview: m.body.slice(0, 60),
+                readAt: m.readAt
+              };
+            }
             const sender = m.senderType === 'recruiter'
               ? await Recruiter.findById(m.senderId).select('firstName lastName')
               : await Candidate.findById(m.senderId).select('firstName lastName');

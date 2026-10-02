@@ -181,7 +181,11 @@
       <div class="reply-card">
         <h3>Reply</h3>
         <form action="/messages/send" method="POST">
-          <input type="hidden" name="connectionRequestId" value="<%= message.connectionRequestId %>">
+          <% if (message.fraudReportId) { %>
+            <input type="hidden" name="fraudReportId" value="<%= message.fraudReportId %>">
+          <% } else { %>
+            <input type="hidden" name="connectionRequestId" value="<%= message.connectionRequestId %>">
+          <% } %>
           <label>Message
             <textarea name="body" placeholder="Write your reply..." required></textarea>
           </label>

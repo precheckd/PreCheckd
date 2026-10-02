@@ -1,0 +1,153 @@
+<%
+  const recruiterName = report.matchedRecruiterId
+    ? `${report.matchedRecruiterId.firstName} ${report.matchedRecruiterId.lastName || ''}`.trim()
+    : 'Unknown';
+%>
+
+<style>
+  .idd-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .idd-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .idd-header a {
+    color: #1F7A4C;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .idd-title {
+    color: #1F363C;
+    font-size: 1.4rem;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .idd-subtitle {
+    color: #7A8B91;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .idd-subtitle a {
+    color: #1F7A4C;
+    text-decoration: none;
+  }
+
+  .idd-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .idd-bubble {
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    max-width: 85%;
+  }
+
+  .idd-bubble-system {
+    background: #1F363C;
+    color: #F2F4F3;
+    align-self: flex-start;
+  }
+
+  .idd-bubble-recruiter {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    color: #333;
+    align-self: flex-end;
+  }
+
+  .idd-bubble-meta {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    margin-bottom: 0.35rem;
+  }
+
+  .idd-bubble-body {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .idd-reply-card {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .idd-reply-card h3 {
+    font-size: 1rem;
+    color: #1F363C;
+    margin-bottom: 0.75rem;
+  }
+
+  .idd-reply-card textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid #C7D1CF;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-bottom: 0.75rem;
+  }
+
+  .idd-reply-card button {
+    background: #1F363C;
+    color: #F2F4F3;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .idd-reply-card button:hover {
+    background: #2A4750;
+  }
+</style>
+
+<div class="idd-wrap">
+  <div class="idd-header">
+    <a href="/internal/disputes">← Back to Dispute Inbox</a>
+  </div>
+  <h1 class="idd-title"><%= recruiterName %></h1>
+  <div class="idd-subtitle">
+    Re: report against <%= report.reportedEmail %> —
+    <a href="/internal/fraud/email/<%= encodeURIComponent(report.reportedEmail) %>">view full report →</a>
+  </div>
+
+  <div class="idd-thread">
+    <% messages.forEach((m) => { %>
+      <div class="idd-bubble <%= m.senderType === 'system' ? 'idd-bubble-system' : 'idd-bubble-recruiter' %>">
+        <div class="idd-bubble-meta">
+          <%= m.senderType === 'system' ? 'PreCheckd Trust & Safety' : recruiterName %>
+          — <%= new Date(m.sentAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %>
+        </div>
+        <div class="idd-bubble-body"><%= m.body %></div>
+      </div>
+    <% }); %>
+  </div>
+
+  <div class="idd-reply-card">
+    <h3>Reply as PreCheckd Trust &amp; Safety</h3>
+    <form action="/internal/disputes/<%= fraudReportId %>/reply" method="POST">
+      <textarea name="body" placeholder="Write your reply..." required></textarea>
+      <button type="submit">Send Reply</button>
+    </form>
+  </div>
+</div>

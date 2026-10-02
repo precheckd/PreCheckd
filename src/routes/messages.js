@@ -39,7 +39,9 @@ router.get('/', async (req, res) => {
       let senderName = 'Unknown';
       let senderSlug = null;
 
-      if (m.senderType === 'recruiter') {
+      if (m.senderType === 'system') {
+        senderName = 'PreCheckd Trust & Safety';
+      } else if (m.senderType === 'recruiter') {
         const sender = await Recruiter.findById(m.senderId).select('firstName lastName slug');
         if (sender) {
           senderName = `${sender.firstName} ${sender.lastName}`;
@@ -144,7 +146,9 @@ router.get('/:id', async (req, res) => {
     // message either way — nothing here distinguishes "deactivated" from
     // "suspended for fraud."
     let senderUnavailable = false;
-    if (message.senderType === 'recruiter') {
+    if (message.senderType === 'system') {
+      senderName = 'PreCheckd Trust & Safety';
+    } else if (message.senderType === 'recruiter') {
       const sender = await Recruiter.findById(message.senderId).select('firstName lastName isActive isSuspended');
       if (sender) {
         senderName = `${sender.firstName} ${sender.lastName}`;
@@ -167,14 +171,46 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /messages/send — send a new message, tied to an accepted connection
+// POST /messages/send — send a new message, tied to an accepted connection,
+// or a reply in a fraud-dispute thread (tied to a fraudReportId instead)
 router.post('/send', async (req, res) => {
   try {
     const { type, id } = req.currentUser;
-    const { connectionRequestId, subject, body } = req.body;
+    const { connectionRequestId, fraudReportId, subject, body } = req.body;
 
     if (!body || !body.trim()) {
       return res.status(400).send('Message body is required.');
+    }
+
+    // --- Dispute-thread reply: addressed to the system mailbox, not a
+    // real recipient. Only a recruiter can be party to one of these (a
+    // claim account has no inbox access at all, and a dispute thread is
+    // always about a recruiter's own account), and only if they're
+    // actually the recruiter this specific thread belongs to — checked
+    // against an existing message in the thread rather than trusting the
+    // posted fraudReportId on its own.
+    if (fraudReportId) {
+      if (type !== 'recruiter') {
+        return res.status(403).send('Not authorized to reply to this thread.');
+      }
+
+      const ownsThread = await Message.findOne({ fraudReportId, recipientType: 'recruiter', recipientId: id });
+      if (!ownsThread) {
+        return res.status(403).send('Not authorized to reply to this thread.');
+      }
+
+      await Message.create({
+        fraudReportId,
+        senderType: 'recruiter',
+        senderId: id,
+        recipientType: 'system',
+        subject: subject && subject.trim() ? subject.trim() : null,
+        body: body.trim()
+      });
+
+      // No recipient email to fire here — staff checks dispute replies
+      // from the internal dashboard rather than getting pinged per-reply.
+      return res.redirect('/messages/sent');
     }
 
     const connection = await ConnectionRequest.findById(connectionRequestId);

@@ -1,30 +1,49 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
+  // Required for an ordinary recruiter<->candidate message. Left unset for
+  // a fraud-dispute thread (see fraudReportId below) — there's no accepted
+  // connection between a recruiter and "PreCheckd Trust & Safety".
   connectionRequestId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ConnectionRequest',
-    required: true
+    default: null
+  },
+
+  // Set instead of connectionRequestId for the automated "a report was
+  // filed about you" message and any replies in that thread — ties the
+  // whole back-and-forth to the specific report it's about, so a second,
+  // later report against the same recruiter starts its own thread rather
+  // than mixing two incidents together.
+  fraudReportId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FraudReport',
+    default: null
   },
 
   senderType: {
     type: String,
-    enum: ['recruiter', 'candidate'],
+    enum: ['recruiter', 'candidate', 'system'],
     required: true
   },
+  // Null for 'system' — there's no real account behind "PreCheckd Trust &
+  // Safety", just a fixed display name handled at render time.
   senderId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true
+    default: null
   },
 
   recipientType: {
     type: String,
-    enum: ['recruiter', 'candidate'],
+    enum: ['recruiter', 'candidate', 'system'],
     required: true
   },
+  // Null for 'system' — a recruiter's dispute reply is addressed to the
+  // mailbox, not a real account; staff read it from the internal dashboard
+  // instead of a recipient inbox.
   recipientId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true
+    default: null
   },
 
   subject: {

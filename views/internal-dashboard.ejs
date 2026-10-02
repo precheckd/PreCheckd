@@ -90,8 +90,14 @@
 
     <a class="id-card" href="/internal/fraud">
       <div class="id-card-title">Fraud Dashboard</div>
-      <div class="id-card-desc">Emails and domains that have crossed the distinct-reporter threshold, with individual report review and status tracking.</div>
+      <div class="id-card-desc">Every reported email and domain, sorted worst-first, with individual report review and status tracking.</div>
       <span class="id-card-stat <%= flaggedCount > 0 ? 'id-stat-alert' : '' %>"><%= flaggedCount %> flagged</span>
+    </a>
+
+    <a class="id-card" href="/internal/disputes">
+      <div class="id-card-title">Dispute Inbox</div>
+      <div class="id-card-desc">Recruiters replying to the automated "a report was filed" notice — your morning check for anything that needs a response.</div>
+      <span class="id-card-stat <%= disputeAttentionCount > 0 ? 'id-stat-alert' : '' %>"><%= disputeAttentionCount %> awaiting reply</span>
     </a>
   </div>
 </div>

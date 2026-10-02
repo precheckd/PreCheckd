@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const FraudReport = require('../models/FraudReport');
 const Recruiter = require('../models/Recruiter');
+const Message = require('../models/Message');
 const { uploadFraudEvidence, validateEvidenceFile } = require('../utils/s3Upload');
 const { createCoupon } = require('../utils/couponGenerator');
 const {
@@ -115,13 +116,32 @@ async function createClaimAccountAndInvite(normalizedReportedEmail) {
 // Only called for an exact email match, never a domain match — a domain
 // match points at a specific *different* person at the same company, and
 // emailing the wrong named individual "you were reported" is exactly the
-// kind of mistake this has to avoid. Debounced to at most once per day.
-async function maybeNotifyExistingAccount(recruiterId) {
+// kind of mistake this has to avoid.
+//
+// Two separate things happen here, on two separate schedules:
+//   - An in-platform message, tied to this exact report via fraudReportId,
+//     giving them somewhere to actually reply/dispute it. Created every
+//     time — a quiet inbox item isn't the harassment risk a string of
+//     emails would be, so this isn't debounced.
+//   - The external email notice, still capped at once per 24 hours so
+//     several same-day reports don't read as a pile-on.
+async function maybeNotifyExistingAccount(recruiterId, reportId) {
   try {
     const account = await Recruiter.findById(recruiterId);
     if (!account || !account.passwordHash) {
       return; // no usable dashboard to send them to yet
     }
+
+    Message.create({
+      senderType: 'system',
+      recipientType: 'recruiter',
+      recipientId: account._id,
+      fraudReportId: reportId,
+      subject: 'A report was filed about your account',
+      body: 'A candidate submitted feedback on PreCheckd mentioning your account. This hasn\'t been reviewed or verified by PreCheckd — we\'re letting you know right away, for transparency, so you have the chance to respond. Reply here if you\'d like to share your side or dispute it.',
+    }).catch((messageError) => {
+      console.error('Failed to create fraud dispute thread message:', messageError);
+    });
 
     const recentlyNotified = account.lastFraudNotifiedAt
       && (Date.now() - account.lastFraudNotifiedAt.getTime()) < NOTICE_DEBOUNCE_MS;
@@ -283,13 +303,6 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
         matchedRecruiterId = claimAccount._id;
         matchType = 'email';
       }
-    } else if (matchType === 'email') {
-      // Exact match to an existing account — not the claim-creation branch
-      // above, so this is either a standard recruiter or a previously
-      // claimed account. (A brand-new claim account has no passwordHash
-      // yet, so maybeNotifyExistingAccount is a no-op for it regardless —
-      // it already got its own invite email moments ago.)
-      await maybeNotifyExistingAccount(matchedRecruiterId);
     }
 
     const report = new FraudReport({
@@ -305,6 +318,17 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       matchType,
       ipAddress: req.ip,
     });
+
+    // Exact match to an account that already existed before this report
+    // (not the claim-creation branch above, so it's either a standard
+    // recruiter or a previously claimed account — a brand-new claim
+    // account has no passwordHash yet, so this is a no-op for it anyway,
+    // since it already got its own invite email moments ago). Needs
+    // report._id, which Mongoose assigns as soon as the document above is
+    // constructed, well before .save() — no need to wait for that here.
+    if (matchType === 'email' && exactMatch) {
+      await maybeNotifyExistingAccount(matchedRecruiterId, report._id);
+    }
 
     if (req.file) {
       const validation = validateEvidenceFile(req.file);

@@ -3,6 +3,7 @@ const router = express.Router();
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
+const Message = require('../models/Message');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 
 const INTERNAL_ADMIN_SECRET = process.env.INTERNAL_ADMIN_SECRET;
@@ -44,7 +45,7 @@ router.use(requireInternalAuth);
 // Landing dashboard — links out to each internal tool
 router.get('/', async (req, res) => {
   try {
-    const [candidateCount, flaggedCount] = await Promise.all([
+    const [candidateCount, flaggedCount, disputeThreads] = await Promise.all([
       Candidate.countDocuments({
         $or: [
           { 'workHistory.0': { $exists: true } },
@@ -63,11 +64,19 @@ router.get('/', async (req, res) => {
         { $match: { distinctReporters: { $gte: EMAIL_REPORT_THRESHOLD } } },
         { $count: 'total' }
       ]),
+      Message.aggregate([
+        { $match: { fraudReportId: { $ne: null } } },
+        { $sort: { sentAt: -1 } },
+        { $group: { _id: '$fraudReportId', latestSenderType: { $first: '$senderType' } } },
+        { $match: { latestSenderType: 'recruiter' } },
+        { $count: 'total' }
+      ]),
     ]);
 
     res.render('internal-dashboard', {
       candidateCount,
       flaggedCount: flaggedCount[0]?.total || 0,
+      disputeAttentionCount: disputeThreads[0]?.total || 0,
     });
   } catch (error) {
     console.error('Error loading internal dashboard:', error);
@@ -282,6 +291,112 @@ router.post('/recruiter/:id/unsuspend', async (req, res) => {
     res.redirect(redirectTo || '/internal/fraud');
   } catch (error) {
     console.error('Error unsuspending recruiter account:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Dispute inbox — every fraud-dispute thread (the in-platform conversation
+// tied to a report via fraudReportId), meant to be checked like an inbox
+// rather than relying on an email ping per reply. "Needs attention" means
+// the most recent message in the thread came from the recruiter — i.e.
+// it's staff's turn to respond. Same definition the landing-page count uses.
+router.get('/disputes', async (req, res) => {
+  try {
+    const threads = await Message.aggregate([
+      { $match: { fraudReportId: { $ne: null } } },
+      { $sort: { sentAt: -1 } },
+      {
+        $group: {
+          _id: '$fraudReportId',
+          latestBody: { $first: '$body' },
+          latestSentAt: { $first: '$sentAt' },
+          latestSenderType: { $first: '$senderType' },
+        }
+      },
+      { $sort: { latestSentAt: -1 } },
+    ]);
+
+    const reports = await FraudReport.find({ _id: { $in: threads.map((t) => t._id) } })
+      .populate('matchedRecruiterId', 'firstName lastName email');
+
+    const reportsById = {};
+    reports.forEach((r) => { reportsById[r._id.toString()] = r; });
+
+    const threadsForView = threads.map((t) => {
+      const report = reportsById[t._id.toString()];
+      const recruiter = report?.matchedRecruiterId;
+      return {
+        fraudReportId: t._id,
+        latestBody: t.latestBody,
+        latestSentAt: t.latestSentAt,
+        needsAttention: t.latestSenderType === 'recruiter',
+        recruiterName: recruiter ? `${recruiter.firstName} ${recruiter.lastName || ''}`.trim() : 'Unknown',
+        reportedEmail: report ? report.reportedEmail : 'Unknown',
+      };
+    });
+
+    res.render('internal-disputes-list', { threads: threadsForView });
+  } catch (error) {
+    console.error('Error loading disputes list:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Dispute thread detail — full back-and-forth, plus a reply box so staff
+// can respond without leaving the dashboard. Opening it marks the
+// recruiter's messages read, same as a normal inbox.
+router.get('/disputes/:fraudReportId', async (req, res) => {
+  try {
+    const { fraudReportId } = req.params;
+
+    const report = await FraudReport.findById(fraudReportId)
+      .populate('matchedRecruiterId', 'firstName lastName email');
+
+    if (!report) {
+      return res.status(404).send('Report not found.');
+    }
+
+    const messages = await Message.find({ fraudReportId }).sort({ sentAt: 1 });
+
+    await Message.updateMany(
+      { fraudReportId, recipientType: 'system', readAt: null },
+      { readAt: new Date() }
+    );
+
+    res.render('internal-dispute-detail', { report, messages, fraudReportId });
+  } catch (error) {
+    console.error('Error loading dispute thread:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Staff reply — sends as the fixed "PreCheckd Trust & Safety" sender,
+// lands in the recruiter's normal PreCheckd inbox like any other message.
+router.post('/disputes/:fraudReportId/reply', async (req, res) => {
+  try {
+    const { fraudReportId } = req.params;
+    const { body } = req.body;
+
+    if (!body || !body.trim()) {
+      return res.status(400).send('Reply body is required.');
+    }
+
+    const report = await FraudReport.findById(fraudReportId);
+    if (!report || !report.matchedRecruiterId) {
+      return res.status(404).send('Report or matched recruiter not found.');
+    }
+
+    await Message.create({
+      fraudReportId,
+      senderType: 'system',
+      recipientType: 'recruiter',
+      recipientId: report.matchedRecruiterId,
+      body: body.trim(),
+    });
+
+    res.redirect(`/internal/disputes/${fraudReportId}`);
+  } catch (error) {
+    console.error('Error replying to dispute thread:', error);
     res.status(500).send('Server error');
   }
 });
