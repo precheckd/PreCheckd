@@ -305,3 +305,88 @@ a:hover { color: #4ADE80; }
 
 .fade-in { animation: fadeIn 0.5s ease-out; }
 .slide-in-up { animation: slideInUp 0.5s ease-out; }
+/* Legal / long-form content pages (terms.ejs, privacy.ejs): both pages
+   had this exact layout and typography treatment duplicated byte-for-byte
+   in their own <style> blocks. Wrap page content in <div class="legal-page">
+   to use it instead of redefining it per page. */
+.legal-page {
+  padding: 3rem 1.5rem 5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  color: #C7D1CF;
+  line-height: 1.7;
+}
+
+.legal-page .page-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #F2F4F3;
+  margin-bottom: 0.5rem;
+}
+
+.legal-page .updated-date {
+  font-size: 0.9rem;
+  color: #8FA6AC;
+  margin-bottom: 2.5rem;
+}
+
+.legal-page .content-card {
+  background: #2A4750;
+  border: 1px solid #3B5860;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.legal-page h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #F2F4F3;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-page h2:first-child {
+  margin-top: 0;
+}
+
+.legal-page p {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.legal-page ul {
+  margin: 0 0 1rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.legal-page li {
+  margin-bottom: 0.5rem;
+}
+
+.legal-page a {
+  color: #4ADE80;
+  text-decoration: none;
+}
+
+.legal-page a:hover {
+  text-decoration: underline;
+}
+
+.legal-page strong {
+  color: #F2F4F3;
+}
+
+@media (max-width: 768px) {
+  .legal-page {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .legal-page .content-card {
+    padding: 1.5rem;
+  }
+
+  .legal-page .page-title {
+    font-size: 1.75rem;
+  }
+}

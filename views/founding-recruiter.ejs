@@ -133,29 +133,6 @@
       box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
     }
 
-    button {
-      padding: 0.75rem;
-      background: #2ECC71;
-      color: #1F363C;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover:not(:disabled) {
-      background: #4ADE80;
-    }
-
-    button:disabled {
-      background: #5C7278;
-      color: #B9C7CA;
-      cursor: not-allowed;
-      opacity: 0.8;
-    }
-
     .form-error {
       background: #3A2020;
       color: #FF8A8A;
@@ -338,7 +315,7 @@
         <label>Phone <span class="label-hint">(US number required — you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
         <label>Company (optional)<input type="text" name="company"></label>
         <label>Password <span class="label-hint">(at least 8 characters)</span><input type="password" name="password" minlength="8" required></label>
-        <button type="submit">Continue</button>
+        <button type="submit" class="btn btn-primary">Continue</button>
       </form>
     </section>
 
@@ -388,7 +365,7 @@
       <p>We texted you a 6-digit code.</p>
       <form id="phone-form">
         <label>Verification code<input type="text" name="code" inputmode="numeric" placeholder="000000" required></label>
-        <button type="submit">Verify</button>
+        <button type="submit" class="btn btn-primary">Verify</button>
       </form>
     </section>
 
@@ -396,7 +373,7 @@
       <h2>3. Identity verification</h2>
       <p>Complete your identity verification to become a verified recruiter.</p>
       <div id="stripe-element"></div>
-      <button id="checkout-button" type="button">Complete verification</button>
+      <button id="checkout-button" type="button" class="btn btn-primary">Complete verification</button>
     </section>
   </section>
 

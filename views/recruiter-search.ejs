@@ -66,20 +66,7 @@
     }
 
     .search-bar button {
-      background: #2ECC71;
-      color: #1F363C;
-      border: none;
-      padding: 0.85rem 1.5rem;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
       flex-shrink: 0;
-    }
-
-    .search-bar button:hover {
-      background: #4ADE80;
     }
 
     .recruiter-grid {
@@ -237,7 +224,6 @@
     }
   </style>
 
-<main>
   <div class="page-header">
     <h1 class="page-title">Browse Verified Recruiters</h1>
     <p class="page-subtitle">Every recruiter on PreCheckd has completed real identity, phone, email, and company domain verification. Search by name, company, or specialty to find the right one.</p>
@@ -245,7 +231,7 @@
 
   <form class="search-bar" id="recruiter-search-form">
     <input type="text" id="recruiter-search-input" placeholder="Search by name, company, or specialty..." value="<%= prefilledQuery %>">
-    <button type="submit">Search</button>
+    <button type="submit" class="btn btn-primary">Search</button>
   </form>
 
   <div class="prompt-state hidden" id="prompt-state">
@@ -316,7 +302,6 @@
       </a>
     <% }); %>
   </div>
-</main>
 
 <script>
   window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
