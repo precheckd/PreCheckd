@@ -7,8 +7,16 @@ router.get('/', (req, res) => {
   res.render('home');
 });
 
+// The nicer, newer recruiter-landing page (founding-recruiter-landing.ejs —
+// built as a proper fragment on the shared main.css design system) used to
+// only be reachable via one buried CTA on the recruiter profile page, while
+// every actual "Recruiters" link site-wide (nav, footer, homepage) pointed
+// at the older, hand-styled standalone page. Rendering it here instead
+// means every existing link/bookmark to /recruiter-landing now gets the
+// better page, with no URL or link text changes needed anywhere.
+// recruiter-landing.ejs is left in place, unused, rather than deleted.
 router.get('/recruiter-landing', (req, res) => {
-  res.render('recruiter-landing');
+  res.render('founding-recruiter-landing');
 });
 
 router.get('/recruiter-search', async (req, res) => {

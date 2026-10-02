@@ -40,93 +40,14 @@ p { margin-bottom: 1rem; color: #C7D1CF; }
 a { color: #2ECC71; text-decoration: none; transition: color 0.2s; }
 a:hover { color: #4ADE80; }
 
-/* Header & Navigation */
-header {
-  background: #1F363C;
-  border-bottom: 1px solid #3B5860;
-  padding: 1.5rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #F2F4F3;
-  text-decoration: none;
-  letter-spacing: -0.5px;
-}
-
-.logo:hover { color: #4ADE80; }
-
-nav a {
-  margin-left: 2rem;
-  font-size: 0.95rem;
-  color: #C7D1CF;
-  font-weight: 500;
-}
-
-nav a:hover { color: #4ADE80; }
-
-/* Footer */
-footer {
-  background: #17282D;
-  color: white;
-  padding: 3rem 1.5rem;
-  margin-top: 4rem;
-  border-top: 1px solid #3B5860;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.footer-section h3 {
-  color: #F2F4F3;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-}
-
-.footer-section ul {
-  list-style: none;
-}
-
-.footer-section li {
-  margin-bottom: 0.5rem;
-}
-
-.footer-section a {
-  color: #8FA6AC;
-  transition: color 0.2s;
-}
-
-.footer-section a:hover {
-  color: #4ADE80;
-}
-
-.footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 2rem;
-  text-align: center;
-  font-size: 0.875rem;
-  color: #8FA6AC;
-}
+/* Header, nav, and footer: the site's actual header/footer markup (see
+   views/layouts/main.ejs) uses .header-logo/.nav-btn-outline/.footer-section
+   etc., styled by layout's own <style> block, not by a bare `header`,
+   `footer`, `.logo`, or `nav a` selector. This file used to also define
+   `header`/`footer`/`.header-container`/`.footer-container`/`.footer-section`
+   with different values than the layout, which both loaded on every page
+   and fought over the same properties — removed in favor of one source of
+   truth (the layout) for the chrome that's actually on every page. */
 
 /* Containers & Layout */
 .container {
