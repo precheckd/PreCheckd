@@ -451,6 +451,19 @@
       font-size: 0.82rem;
     }
 
+    .cc-checker-search-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #4ADE80;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .cc-checker-search-link:hover {
+      text-decoration: underline;
+    }
+
     .cc-checker-disclaimer {
       color: #5C7268;
       font-size: 0.72rem;
@@ -895,6 +908,10 @@
         } else if (data.domainCheckError) {
           html += `<div class="cc-checker-error">${data.domainCheckError}</div>`;
         }
+
+        const searchQuery = `"${data.email}" scam OR fraud`;
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+        html += `<a class="cc-checker-search-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer">Search the web for this email →</a>`;
 
         resultsBox.innerHTML = html;
         resultsBox.classList.add('visible');
