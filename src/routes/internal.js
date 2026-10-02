@@ -37,6 +37,46 @@ function generateSixDigitCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
+// --- CSRF protection (synchronizer token pattern) ---
+// Every internal form (suspend/unsuspend, fraud-status changes, dispute
+// replies, verification toggles, even the login forms themselves) is a
+// plain POST with no other protection against cross-site forgery — a
+// logged-in admin who merely loads a malicious page could otherwise have
+// one of these POSTs fired on their behalf. A per-session random token is
+// generated on first visit, rendered into every form as a hidden field,
+// and checked against the session on every state-changing request. Kept
+// in the session (already present via express-session) rather than a
+// second double-submit cookie, so there's no new dependency and no cookie
+// plumbing to get right.
+function ensureCsrfToken(req, res, next) {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.locals.csrfToken = req.session.csrfToken;
+  next();
+}
+
+function tokensMatch(a, b) {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function verifyCsrfToken(req, res, next) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  const submitted = (req.body && req.body._csrf) || req.get('x-csrf-token');
+  if (!tokensMatch(req.session.csrfToken, submitted)) {
+    return res.status(403).send('Your session expired or this form was submitted from somewhere unexpected. Please go back, reload the page, and try again.');
+  }
+  next();
+}
+
+router.use(ensureCsrfToken, verifyCsrfToken);
+
 // --- Brute-force protection on the shared admin secret ---
 // This is a single shared password, not per-staff accounts, so there's no
 // "lock this one account" option — an IP-based cap is the whole defense,

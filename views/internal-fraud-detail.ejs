@@ -229,11 +229,13 @@
       </div>
       <% if (matchedAccount.isSuspended) { %>
         <form action="/recruiter/<%= matchedAccount._id %>/unsuspend" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
           <button type="submit" class="ifd-unsuspend-btn">Unsuspend account</button>
         </form>
       <% } else { %>
         <form action="/recruiter/<%= matchedAccount._id %>/suspend" method="POST" onsubmit="return confirm('Suspend this account? They will be immediately logged out, their public profile disappears, and messaging stops working. This is manual and reversible.');">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
           <button type="submit" class="ifd-suspend-btn">Suspend account</button>
         </form>
@@ -284,6 +286,7 @@
         <% } %>
 
         <form class="ifd-status-form" action="/fraud/<%= report._id %>/status" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <span class="ifd-current-status ifd-status-<%= report.status %>"><%= report.status %></span>
           <select name="status">
             <option value="pending" <%= report.status === 'pending' ? 'selected' : '' %>>Pending</option>

@@ -143,6 +143,7 @@
               <div class="entry-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
             </div>
             <form class="toggle-form" method="POST" action="/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <input type="hidden" name="category" value="workHistory">
               <input type="hidden" name="index" value="<%= index %>">
               <button type="submit" class="toggle-btn <%= job.verified ? 'is-verified' : 'is-pending' %>">
@@ -167,6 +168,7 @@
               <div class="entry-dates"><%= edu.graduationDate %></div>
             </div>
             <form class="toggle-form" method="POST" action="/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <input type="hidden" name="category" value="educationHistory">
               <input type="hidden" name="index" value="<%= index %>">
               <button type="submit" class="toggle-btn <%= edu.verified ? 'is-verified' : 'is-pending' %>">
@@ -192,6 +194,7 @@
               <% } %>
             </div>
             <form class="toggle-form" method="POST" action="/verify/<%= candidate._id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <input type="hidden" name="category" value="certifications">
               <input type="hidden" name="index" value="<%= index %>">
               <button type="submit" class="toggle-btn <%= cert.verified ? 'is-verified' : 'is-pending' %>">

@@ -146,6 +146,7 @@
   <div class="idd-reply-card">
     <h3>Reply as PreCheckd Trust &amp; Safety</h3>
     <form action="/disputes/<%= fraudReportId %>/reply" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <textarea name="body" placeholder="Write your reply..." required></textarea>
       <button type="submit">Send Reply</button>
     </form>
