@@ -163,7 +163,11 @@ const recruiterSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  
+  introVideoUrl: {
+    type: String,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

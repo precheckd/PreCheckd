@@ -222,6 +222,11 @@
           <a href="/recruiter/<%= recruiter.slug %>" class="btn-cancel">Cancel</a>
         </div>
       </form>
+
+      <p class="label-hint" style="margin-top: 1.5rem;">Record a short video introducing yourself to candidates.</p>
+      <a href="/recruiter/<%= recruiter.slug %>/intro-video" class="btn-cancel" style="display: inline-block; margin-top: 0.5rem;">
+        <%= recruiter.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>
+      </a>
     </div>
   </div>
 </div>

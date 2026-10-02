@@ -1,0 +1,120 @@
+<style>
+  .cvid-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cvid-container {
+    max-width: 760px;
+    width: 100%;
+  }
+
+  .cvid-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .cvid-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .cvid-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .cvid-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    margin-bottom: 1.25rem;
+  }
+
+  .cvid-card h2 {
+    font-size: 1.1rem;
+    color: #F2F4F3;
+    margin-bottom: 0.4rem;
+  }
+
+  .cvid-card .cvid-question {
+    color: #B9C7CA;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  .cvid-card .cvid-category {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #4ADE80;
+    margin-bottom: 0.5rem;
+  }
+
+  .cvid-back {
+    display: inline-block;
+    margin-bottom: 1.25rem;
+    color: #8FA6AC;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .cvid-back:hover {
+    color: #F2F4F3;
+  }
+
+  @media (max-width: 768px) {
+    .cvid-content {
+      padding: 1rem;
+    }
+
+    .cvid-card {
+      padding: 1.25rem;
+    }
+  }
+</style>
+
+<div class="cvid-content">
+  <div class="cvid-container">
+    <a href="/candidate/<%= candidate.slug %>" class="cvid-back">&larr; Back to profile</a>
+
+    <div class="cvid-header">
+      <h1>Video Introduction</h1>
+      <p>Record a short intro video and answers to 5 interview questions. Recruiters can watch these alongside your verified profile. Re-record any clip as many times as you'd like before saving.</p>
+    </div>
+
+    <div class="cvid-card">
+      <h2>Intro Video</h2>
+      <p class="cvid-question">A quick video introducing yourself — who you are and what you're looking for.</p>
+      <div
+        class="video-recorder"
+        data-upload-url="/candidate/<%= candidate.slug %>/videos/intro"
+        data-existing-url="<%= candidate.introVideoUrl || '' %>"
+      ></div>
+    </div>
+
+    <% candidate.interviewVideos.forEach(function(video, index) { %>
+      <div class="cvid-card">
+        <span class="cvid-category">Question <%= index + 1 %> of <%= candidate.interviewVideos.length %></span>
+        <h2><%= video.question %></h2>
+        <div
+          class="video-recorder"
+          data-upload-url="/candidate/<%= candidate.slug %>/videos/interview/<%= video.questionId %>"
+          data-existing-url="<%= video.videoUrl || '' %>"
+        ></div>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<script src="/js/video-recorder.js"></script>

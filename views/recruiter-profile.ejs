@@ -445,8 +445,22 @@
         <p class="intro-bio"><%= recruiter.bio %></p>
       <% } %>
       <p class="intro-text">This recruiter has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
+      <% if (isOwner) { %>
+        <p style="margin-top: 0.85rem;">
+          <a href="/recruiter/<%= recruiter.slug %>/intro-video" style="color: #4ADE80; font-size: 0.9rem; font-weight: 600; text-decoration: none;">
+            <%= recruiter.introVideoUrl ? 'Edit your video introduction' : '+ Add a video introduction' %>
+          </a>
+        </p>
+      <% } %>
     </div>
   </div>
+
+  <% if (recruiter.introVideoUrl) { %>
+  <div class="profile-section" style="max-width: 1200px; margin: 0 auto 2rem;">
+    <h3>Video Introduction</h3>
+    <video src="<%= recruiter.introVideoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E;"></video>
+  </div>
+  <% } %>
 
   <div class="profile-wrapper">
     <!-- Sidebar LEFT -->

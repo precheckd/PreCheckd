@@ -18,7 +18,9 @@ const ALLOWED_RESUME_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 const ALLOWED_EVIDENCE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const ALLOWED_VIDEO_MIME_TYPES = ['video/webm', 'video/mp4', 'video/quicktime'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024; // 100MB — short clips, but video encodes much larger than images/PDFs
 
 function validateImageFile(file) {
   if (!file) {
@@ -55,6 +57,19 @@ function validateEvidenceFile(file) {
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return { valid: false, error: 'File must be smaller than 5MB.' };
+  }
+  return { valid: true };
+}
+
+function validateVideoFile(file) {
+  if (!file) {
+    return { valid: false, error: 'No video file provided.' };
+  }
+  if (!ALLOWED_VIDEO_MIME_TYPES.includes(file.mimetype)) {
+    return { valid: false, error: 'Please upload a WebM, MP4, or MOV video.' };
+  }
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    return { valid: false, error: 'Video must be smaller than 100MB.' };
   }
   return { valid: true };
 }
@@ -139,6 +154,71 @@ async function uploadFraudEvidence(reportId, file) {
   return publicUrl;
 }
 
+function videoExtensionFor(file) {
+  const extension = path.extname(file.originalname).toLowerCase();
+  if (extension) return extension;
+  if (file.mimetype === 'video/mp4') return '.mp4';
+  if (file.mimetype === 'video/quicktime') return '.mov';
+  return '.webm';
+}
+
+async function uploadRecruiterIntroVideo(recruiterId, file) {
+  const validation = validateVideoFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const extension = videoExtensionFor(file);
+  const key = `recruiter-intro-videos/${recruiterId}-${crypto.randomBytes(6).toString('hex')}${extension}`;
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  return `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+}
+
+async function uploadCandidateIntroVideo(candidateId, file) {
+  const validation = validateVideoFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const extension = videoExtensionFor(file);
+  const key = `candidate-intro-videos/${candidateId}-${crypto.randomBytes(6).toString('hex')}${extension}`;
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  return `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+}
+
+async function uploadCandidateInterviewVideo(candidateId, questionId, file) {
+  const validation = validateVideoFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const extension = videoExtensionFor(file);
+  const key = `candidate-interview-videos/${candidateId}-q${questionId}-${crypto.randomBytes(6).toString('hex')}${extension}`;
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  return `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+}
+
 async function deleteS3Object(fileUrl) {
   if (!fileUrl) return;
   try {
@@ -158,8 +238,12 @@ module.exports = {
   uploadCandidatePhoto,
   uploadResume,
   uploadFraudEvidence,
+  uploadRecruiterIntroVideo,
+  uploadCandidateIntroVideo,
+  uploadCandidateInterviewVideo,
   deleteS3Object,
   validateImageFile,
   validateResumeFile,
-  validateEvidenceFile
+  validateEvidenceFile,
+  validateVideoFile
 };

@@ -390,3 +390,89 @@ a:hover { color: #4ADE80; }
     font-size: 1.75rem;
   }
 }
+
+/* ============================================
+   Video Recorder Widget (shared)
+   Used by: candidate interview-videos page,
+   recruiter intro-video page.
+   ============================================ */
+
+.video-recorder {
+  width: 100%;
+}
+
+.vr-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vr-video {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  background: #0E1B1E;
+  border-radius: 8px;
+  border: 1px solid #3B5860;
+  object-fit: cover;
+}
+
+.vr-status {
+  font-size: 0.85rem;
+  color: #8FA6AC;
+  min-height: 1.2em;
+}
+
+.vr-controls {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.vr-btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  width: auto;
+  transition: background 0.2s;
+}
+
+.vr-btn-record,
+.vr-btn-upload {
+  background: #2ECC71;
+  color: #1F363C;
+}
+
+.vr-btn-record:hover,
+.vr-btn-upload:hover:not(:disabled) {
+  background: #4ADE80;
+}
+
+.vr-btn-stop {
+  background: #E53E3E;
+  color: #F2F4F3;
+}
+
+.vr-btn-stop:hover {
+  background: #FF6B6B;
+}
+
+.vr-btn-rerecord {
+  background: transparent;
+  color: #C7D1CF;
+  border: 1px solid #4A6F7B;
+}
+
+.vr-btn-rerecord:hover {
+  background: #24404A;
+  color: #F2F4F3;
+}
+
+.vr-btn-upload:disabled {
+  background: #5C7278;
+  color: #B9C7CA;
+  cursor: not-allowed;
+}

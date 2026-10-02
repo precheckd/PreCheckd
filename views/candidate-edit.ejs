@@ -493,6 +493,12 @@
           <a href="/candidate/<%= candidate.slug %>" class="btn-cancel">Cancel</a>
         </div>
       </form>
+
+      <div class="section-label">Video Introduction</div>
+      <p class="cert-hint">Record a short intro video and answers to 5 interview questions for recruiters to watch alongside your profile.</p>
+      <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-block;">
+        <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>
+      </a>
     </div>
   </div>
 </div>

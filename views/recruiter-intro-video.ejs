@@ -1,0 +1,82 @@
+<style>
+  .rvid-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .rvid-container {
+    max-width: 700px;
+    width: 100%;
+  }
+
+  .rvid-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .rvid-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .rvid-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .rvid-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .rvid-back {
+    display: inline-block;
+    margin-bottom: 1.25rem;
+    color: #8FA6AC;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .rvid-back:hover {
+    color: #F2F4F3;
+  }
+
+  @media (max-width: 768px) {
+    .rvid-content {
+      padding: 1rem;
+    }
+
+    .rvid-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="rvid-content">
+  <div class="rvid-container">
+    <a href="/recruiter/<%= recruiter.slug %>" class="rvid-back">&larr; Back to profile</a>
+
+    <div class="rvid-header">
+      <h1>Video Introduction</h1>
+      <p>Record a short video introducing yourself to candidates. It'll show up on your public profile alongside your verification badges.</p>
+    </div>
+
+    <div class="rvid-card">
+      <div
+        class="video-recorder"
+        data-upload-url="/recruiter/<%= recruiter.slug %>/intro-video"
+        data-existing-url="<%= recruiter.introVideoUrl || '' %>"
+      ></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/video-recorder.js"></script>

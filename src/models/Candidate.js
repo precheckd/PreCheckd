@@ -36,6 +36,16 @@ const credlyUnmatchedBadgeSchema = new mongoose.Schema({
   expiresAt: { type: String, default: null },
 }, { _id: false });
 
+// One recorded answer to a fixed interview question (see
+// src/utils/interviewQuestions.js for the question bank). No scoring field
+// here — a rubric exists for later use, but this pass only stores the video.
+const interviewVideoSchema = new mongoose.Schema({
+  questionId: { type: Number, required: true },
+  question: { type: String, required: true },
+  videoUrl: { type: String, default: null },
+  recordedAt: { type: Date, default: null },
+}, { _id: false });
+
 function generateAnonId() {
   return crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 4);
 }
@@ -81,6 +91,14 @@ const candidateSchema = new mongoose.Schema({
   profilePhotoUrl: {
     type: String,
     default: null
+  },
+  introVideoUrl: {
+    type: String,
+    default: null
+  },
+  interviewVideos: {
+    type: [interviewVideoSchema],
+    default: []
   },
 
   workHistory: {

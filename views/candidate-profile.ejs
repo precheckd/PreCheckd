@@ -335,8 +335,22 @@
       <% if (hasBio) { %>
         <p class="cprofile-bio"><%= candidate.bio %></p>
       <% } %>
+      <p style="margin-top: 0.85rem;">
+        <a href="/candidate/<%= candidate.slug %>/videos" style="color: #4ADE80; font-size: 0.9rem; font-weight: 600; text-decoration: none;">
+          <%= candidate.introVideoUrl ? 'Edit your video introduction' : '+ Add a video introduction' %>
+        </a>
+      </p>
     </div>
   </div>
+
+  <% if (candidate.introVideoUrl) { %>
+  <div class="cprofile-wrapper" style="margin-bottom: 1.5rem;">
+    <div class="cprofile-section">
+      <h3>Video Introduction</h3>
+      <video src="<%= candidate.introVideoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E;"></video>
+    </div>
+  </div>
+  <% } %>
 
   <div class="cprofile-wrapper">
     <div class="cprofile-section">
