@@ -103,6 +103,15 @@ router.post('/signup', async (req, res) => {
 
     const existingEmail = await Recruiter.findOne({ email });
     if (existingEmail) {
+      // An unclaimed claim account (auto-created from a fraud report, no
+      // password set yet) looks like a dead end here otherwise — the
+      // person has no way to know one already exists, let alone that
+      // "Forgot password?" is the door that already opens it.
+      if (existingEmail.accountTier === 'unverified_claim' && !existingEmail.passwordHash) {
+        return res.status(400).json({
+          error: 'This email already has a PreCheckd record. Use "Forgot password?" on the login page to access it.'
+        });
+      }
       return res.status(400).json({ error: 'Email already registered' });
     }
 
