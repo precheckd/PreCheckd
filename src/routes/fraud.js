@@ -30,6 +30,33 @@ const REPORTER_CODE_RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds between sends
 // inbox right away — longer-lived than the 30-minute forgot-password window.
 const CLAIM_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
+// IP-based rate limit for /request-code — the one endpoint that emails a
+// real inbox on every call, so it's the one worth capping against someone
+// hammering it with a string of made-up addresses. No real reporter should
+// ever get near this; it's purely an anti-abuse backstop, not a throttle on
+// legitimate traffic. In-memory is fine here — a single Render instance,
+// and worst case on a restart is the limit resets early, not that it fails
+// to limit anything.
+const IP_RATE_LIMIT_MAX = 10;
+const IP_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const ipRequestLog = new Map(); // ip -> array of request timestamps (ms)
+
+function isOverIpRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - IP_RATE_LIMIT_WINDOW_MS;
+
+  const timestamps = (ipRequestLog.get(ip) || []).filter((t) => t > windowStart);
+
+  if (timestamps.length >= IP_RATE_LIMIT_MAX) {
+    ipRequestLog.set(ip, timestamps);
+    return true;
+  }
+
+  timestamps.push(now);
+  ipRequestLog.set(ip, timestamps);
+  return false;
+}
+
 // Builds a unique slug from the reported email's local part. Claim accounts
 // have no real name yet (the reporter only gives an email), so this is a
 // placeholder — it's never shown publicly since isActive stays false until
@@ -129,6 +156,10 @@ router.get('/', (req, res) => {
 // --- Step 1: email a code to prove the reporter owns the address they typed ---
 router.post('/request-code', async (req, res) => {
   try {
+    if (isOverIpRateLimit(req.ip)) {
+      return res.status(429).json({ error: 'Too many requests from this network. Please try again later.' });
+    }
+
     const { reporterEmail } = req.body;
 
     if (!reporterEmail || !EMAIL_REGEX.test(reporterEmail.trim())) {
