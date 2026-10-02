@@ -274,6 +274,21 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       return renderError('You have submitted the maximum number of reports for today. Please try again tomorrow.');
     }
 
+    // A logged-in candidate could otherwise dodge the cap above by just
+    // verifying a different throwaway email each time — this closes that
+    // off by also capping per-account, regardless of which email they
+    // verified with. Doesn't apply to a logged-out submission; there's no
+    // account to tie it to.
+    if (req.session.candidateId) {
+      const recentAccountCount = await FraudReport.countDocuments({
+        reporterCandidateId: req.session.candidateId,
+        createdAt: { $gte: since },
+      });
+      if (recentAccountCount >= MAX_REPORTS_PER_EMAIL_PER_DAY) {
+        return renderError('You have submitted the maximum number of reports for today. Please try again tomorrow.');
+      }
+    }
+
     let matchedRecruiterId = null;
     let matchType = null;
 
