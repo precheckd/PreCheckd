@@ -100,7 +100,7 @@
     <% } %>
 
     <% if (step === 'code') { %>
-      <p>Enter the code sent to the admin phone.</p>
+      <p>Enter the code sent to the admin email.</p>
       <form method="POST" action="/login/verify-code">
         <label>Code
           <input type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autofocus>

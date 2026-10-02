@@ -235,6 +235,24 @@ async function sendLookupNudgeEmail(toEmail) {
   });
 }
 
+// The admin login's second factor — sent to Kent directly rather than
+// through SMS (which this reuses from the recruiter/candidate phone-
+// verification path and depends on the destination number not being on
+// AWS's opt-out suppression list, which turned out to be an issue here).
+// Email doesn't have that failure mode, so it's the more reliable second
+// factor for a single-admin login like this one.
+async function sendAdminLoginCodeEmail(code) {
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: 'kent@precheckd.com',
+    subject: 'Your PreCheckd admin login code',
+    html: `
+      <p>Your admin login code is: <strong>${code}</strong></p>
+      <p>Enter this on the login page to finish signing in. It expires in 10 minutes.</p>
+    `,
+  });
+}
+
 // Sent to Kent directly (not a recruiter/candidate notice) when an IP hits
 // the admin-login rate limit — a burst of wrong passwords/codes against
 // the one shared admin secret. Debounced per IP so it's one heads-up per
@@ -265,5 +283,6 @@ module.exports = {
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,
+  sendAdminLoginCodeEmail,
   generateSixDigitCode
 };

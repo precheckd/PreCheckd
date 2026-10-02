@@ -1,45 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
 const Message = require('../models/Message');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
-const { sendAdminLoginAlertEmail } = require('../services/emailService');
+const { sendAdminLoginAlertEmail, sendAdminLoginCodeEmail } = require('../services/emailService');
 
 const INTERNAL_ADMIN_SECRET = process.env.INTERNAL_ADMIN_SECRET;
-const INTERNAL_ADMIN_PHONE = process.env.INTERNAL_ADMIN_PHONE;
-const MOCK_SMS = process.env.MOCK_SMS === 'true';
-
-const smsClient = new PinpointSMSVoiceV2Client({
-  region: process.env.AWS_SMS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_SMS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SMS_SECRET_ACCESS_KEY,
-  },
-});
-
-const NOTIFY_CONFIGURATION_ID = process.env.AWS_NOTIFY_CONFIGURATION_ID;
-const NOTIFY_TEMPLATE_ID = process.env.AWS_NOTIFY_TEMPLATE_ID;
 
 function generateSixDigitCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-}
-
-async function sendAdminLoginCode(code) {
-  if (MOCK_SMS) {
-    console.log(`[MOCK SMS] Would send admin login code ${code} to ${INTERNAL_ADMIN_PHONE}`);
-    return { mock: true };
-  }
-
-  return smsClient.send(new SendNotifyTextMessageCommand({
-    NotifyConfigurationId: NOTIFY_CONFIGURATION_ID,
-    DestinationPhoneNumber: INTERNAL_ADMIN_PHONE,
-    TemplateId: NOTIFY_TEMPLATE_ID,
-    TemplateVariables: { code },
-  }));
 }
 
 // --- Brute-force protection on the shared admin secret ---
@@ -83,7 +55,7 @@ function recordFailedLoginAttempt(ip) {
   }
 }
 
-// Real staff session, once fully logged in (secret + SMS code), is capped
+// Real staff session, once fully logged in (secret + emailed code), is capped
 // much shorter than the normal 30-day cookie everyone else gets — this is
 // the one login on the site that's worth re-proving more often.
 const ADMIN_SESSION_MS = 4 * 60 * 60 * 1000; // 4 hours
@@ -118,22 +90,18 @@ router.post('/login', (req, res) => {
     return res.render('internal-login', { error: 'Incorrect password.', step: 'secret' });
   }
 
-  if (!INTERNAL_ADMIN_PHONE) {
-    return res.render('internal-login', { error: 'INTERNAL_ADMIN_PHONE is not configured on the server.', step: 'secret' });
-  }
-
   const code = generateSixDigitCode();
   req.session.adminLoginCode = code;
   req.session.adminLoginCodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  sendAdminLoginCode(code).catch((error) => {
-    console.error('Failed to send admin login SMS code:', error);
+  sendAdminLoginCodeEmail(code).catch((error) => {
+    console.error('Failed to send admin login code email:', error);
   });
 
   res.render('internal-login', { error: null, step: 'code' });
 });
 
-// Step 2 — SMS code
+// Step 2 — emailed code
 router.post('/login/verify-code', (req, res) => {
   if (isOverLoginRateLimit(req.ip)) {
     return res.render('internal-login', { error: 'Too many attempts from this network. Please try again later.', step: 'secret' });
