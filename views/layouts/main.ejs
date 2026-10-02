@@ -274,6 +274,22 @@
       border-bottom: none;
     }
 
+    a.cc-widget-item {
+      cursor: pointer;
+      margin: 0 -0.5rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    a.cc-widget-item:hover {
+      background: rgba(46, 204, 113, 0.08);
+    }
+
+    a.cc-widget-item:hover .cc-widget-item-title {
+      color: #4ADE80;
+    }
+
     .cc-widget-item-title {
       color: #E8EBEA;
       font-size: 0.88rem;
@@ -705,39 +721,41 @@
         <% } %>
       </a>
 
-      <a href="/messages" class="cc-widget">
+      <% const requestsListHref = loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests'; %>
+
+      <div class="cc-widget">
         <div class="cc-widget-header">
           <h4>Recent Messages<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
-          <span class="cc-widget-view-all">View All →</span>
+          <a href="/messages" class="cc-widget-view-all">View All →</a>
         </div>
         <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>
           <% commandCenterMessages.forEach(function(m) { %>
-            <div class="cc-widget-item">
+            <a href="/messages/<%= m._id %>" class="cc-widget-item">
               <div class="cc-widget-item-title"><%= m.senderName %><% if (!m.readAt) { %> <span class="cc-unread-dot"></span><% } %></div>
               <div class="cc-widget-item-sub"><%= m.preview %></div>
-            </div>
+            </a>
           <% }); %>
         <% } else { %>
           <p class="cc-widget-empty">No messages yet.</p>
         <% } %>
-      </a>
+      </div>
 
-      <a href="<%= loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests' %>" class="cc-widget">
+      <div class="cc-widget">
         <div class="cc-widget-header">
           <h4><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></h4>
-          <span class="cc-widget-view-all">View All →</span>
+          <a href="<%= requestsListHref %>" class="cc-widget-view-all">View All →</a>
         </div>
         <% if (commandCenterRequests && commandCenterRequests.length > 0) { %>
           <% commandCenterRequests.forEach(function(r) { %>
-            <div class="cc-widget-item">
+            <a href="<%= requestsListHref %>#request-<%= r._id %>" class="cc-widget-item">
               <div class="cc-widget-item-title"><%= r.displayName %></div>
               <span class="cc-status-badge cc-status-<%= r.status %>"><%= r.status %></span>
-            </div>
+            </a>
           <% }); %>
         <% } else { %>
           <p class="cc-widget-empty">No connection requests yet.</p>
         <% } %>
-      </a>
+      </div>
 
       <% } %>
 

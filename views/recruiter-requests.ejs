@@ -36,6 +36,16 @@
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    scroll-margin-top: 1.5rem;
+  }
+
+  .request-card:target {
+    animation: request-card-highlight 2s ease-out;
+  }
+
+  @keyframes request-card-highlight {
+    0% { border-color: #2ECC71; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.4); }
+    100% { border-color: #3B5860; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
   }
 
   .request-top {
@@ -228,7 +238,7 @@
     <div class="requests-list">
       <% requests.forEach(function(request) { %>
         <% const candidate = request.candidate; %>
-        <div class="request-card">
+        <div class="request-card" id="request-<%= request._id %>">
           <div class="request-top">
             <div class="request-name-group">
               <% if (candidate.photoUrl) { %>
