@@ -129,7 +129,7 @@ async function maybeNotifyExistingAccount(recruiterId, reportId) {
   try {
     const account = await Recruiter.findById(recruiterId);
     if (!account || !account.passwordHash) {
-      return; // no usable dashboard to send them to yet
+      return false; // no usable dashboard to send them to yet
     }
 
     Message.create({
@@ -146,7 +146,7 @@ async function maybeNotifyExistingAccount(recruiterId, reportId) {
     const recentlyNotified = account.lastFraudNotifiedAt
       && (Date.now() - account.lastFraudNotifiedAt.getTime()) < NOTICE_DEBOUNCE_MS;
     if (recentlyNotified) {
-      return; // report is still saved/linked — they'll see it next login
+      return true; // debounced on the email only — the account was still contacted via the in-platform message above
     }
 
     account.lastFraudNotifiedAt = new Date();
@@ -155,8 +155,11 @@ async function maybeNotifyExistingAccount(recruiterId, reportId) {
     sendFraudReportNoticeEmail(account.email).catch((emailError) => {
       console.error('Failed to send fraud report notice email:', emailError);
     });
+
+    return true;
   } catch (error) {
     console.error('Failed to check/send fraud report notice:', error);
+    return false;
   }
 }
 
@@ -342,7 +345,7 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
     // report._id, which Mongoose assigns as soon as the document above is
     // constructed, well before .save() — no need to wait for that here.
     if (matchType === 'email' && exactMatch) {
-      await maybeNotifyExistingAccount(matchedRecruiterId, report._id);
+      report.recruiterNotified = await maybeNotifyExistingAccount(matchedRecruiterId, report._id);
     }
 
     if (req.file) {

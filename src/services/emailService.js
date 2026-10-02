@@ -214,6 +214,27 @@ async function sendFraudReportNoticeEmail(toEmail) {
   });
 }
 
+// Sent to an unverified/claim account when a candidate runs their email
+// through the public Email Checker widget. Not an accusation — just an FYI
+// that someone looked them up, plus a nudge to get verified. At most one
+// per account per week (see Recruiter.lastLookupNudgeAt), however many
+// lookups happen in that window, so it reads as useful rather than spammy.
+async function sendLookupNudgeEmail(toEmail) {
+  const loginUrl = `${process.env.APP_BASE_URL}/login`;
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: 'Someone looked up your email on PreCheckd',
+    html: `
+      <p>Hi,</p>
+      <p>A candidate recently used PreCheckd's Email Checker tool to look into this email address. This isn't a report or any kind of accusation — candidates use this tool to research recruiters before responding to outreach.</p>
+      <p>If you're a legitimate recruiter, getting verified on PreCheckd is the fastest way to show candidates you're trustworthy before they decide whether to engage.</p>
+      <p><a href="${loginUrl}">Log in or get verified</a></p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
@@ -226,5 +247,6 @@ module.exports = {
   sendConnectionDeclinedEmail,
   sendNewMessageEmail,
   sendFraudReportThankYouEmail,
+  sendLookupNudgeEmail,
   generateSixDigitCode
 };

@@ -111,6 +111,15 @@ const recruiterSchema = new mongoose.Schema({
     default: null
   },
 
+  // Last time this (still-unverified) account was emailed a "someone just
+  // looked you up" nudge from the candidate-facing Email Checker. Capped at
+  // once per week regardless of how many lookups happen — a useful nudge to
+  // a real recruiter, not a string of emails that reads as spam.
+  lastLookupNudgeAt: {
+    type: Date,
+    default: null
+  },
+
   // Manual, staff-only action from the internal fraud dashboard — never
   // automated, never public. A suspended account can't log in, has no
   // public profile, and can't send or receive messages, but nothing about

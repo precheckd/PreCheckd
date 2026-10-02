@@ -25,6 +25,14 @@ const fraudReportSchema = new mongoose.Schema({
   matchedRecruiterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Recruiter', default: null },
   matchType: { type: String, enum: ['email', 'domain', null], default: null },
 
+  // True only when this specific report actually resulted in the account
+  // being contacted (exact email match AND an active account with a
+  // password to notify). An exact-email match against a brand-new claim
+  // account with no password yet doesn't set this — nothing was contacted.
+  // This is what the Email Checker's "we've contacted this account" count
+  // reads from, so it stays accurate even when matchType alone wouldn't be.
+  recruiterNotified: { type: Boolean, default: false },
+
   status: { type: String, enum: ['pending', 'reviewed', 'dismissed', 'confirmed'], default: 'pending' },
   ipAddress: { type: String },
 }, { timestamps: true });

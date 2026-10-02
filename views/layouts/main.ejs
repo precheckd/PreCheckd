@@ -909,6 +909,11 @@
           html += `<div class="cc-checker-error">${data.domainCheckError}</div>`;
         }
 
+        if (data.contactCount > 0) {
+          const times = data.contactCount === 1 ? 'time' : 'times';
+          html += `<div class="cc-checker-result-row"><strong>PreCheckd contact history:</strong> we've contacted this account ${data.contactCount} ${times} in the past 90 days regarding a candidate report.</div>`;
+        }
+
         const searchQuery = `"${data.email}" scam OR fraud`;
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
         html += `<a class="cc-checker-search-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer">Search the web for this email →</a>`;
