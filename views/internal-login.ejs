@@ -99,11 +99,21 @@
       <p class="form-error"><%= error %></p>
     <% } %>
 
-    <form method="POST" action="/internal/login">
-      <label>Password
-        <input type="password" name="secret" required autofocus>
-      </label>
-      <button type="submit">Log In</button>
-    </form>
+    <% if (step === 'code') { %>
+      <p>Enter the code sent to the admin phone.</p>
+      <form method="POST" action="/login/verify-code">
+        <label>Code
+          <input type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autofocus>
+        </label>
+        <button type="submit">Verify</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/login">
+        <label>Password
+          <input type="password" name="secret" required autofocus>
+        </label>
+        <button type="submit">Log In</button>
+      </form>
+    <% } %>
   </div>
 </div>

@@ -235,6 +235,22 @@ async function sendLookupNudgeEmail(toEmail) {
   });
 }
 
+// Sent to Kent directly (not a recruiter/candidate notice) when an IP hits
+// the admin-login rate limit — a burst of wrong passwords/codes against
+// the one shared admin secret. Debounced per IP so it's one heads-up per
+// hour of continued hammering, not one email per rejected attempt.
+async function sendAdminLoginAlertEmail(ip, attemptCount) {
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: 'kent@precheckd.com',
+    subject: 'Repeated failed admin logins on PreCheckd',
+    html: `
+      <p>An IP address (${ip}) has made ${attemptCount} failed attempts against the internal admin login in the past hour and is now rate-limited.</p>
+      <p>No action needed unless this keeps happening — the shared secret and SMS code are both still required either way.</p>
+    `,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
@@ -248,5 +264,6 @@ module.exports = {
   sendNewMessageEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
+  sendAdminLoginAlertEmail,
   generateSixDigitCode
 };

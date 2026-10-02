@@ -123,12 +123,12 @@
 
 <div class="idd-wrap">
   <div class="idd-header">
-    <a href="/internal/disputes">← Back to Dispute Inbox</a>
+    <a href="/disputes">← Back to Dispute Inbox</a>
   </div>
   <h1 class="idd-title"><%= recruiterName %></h1>
   <div class="idd-subtitle">
     Re: report against <%= report.reportedEmail %> —
-    <a href="/internal/fraud/email/<%= encodeURIComponent(report.reportedEmail) %>">view full report →</a>
+    <a href="/fraud/email/<%= encodeURIComponent(report.reportedEmail) %>">view full report →</a>
   </div>
 
   <div class="idd-thread">
@@ -145,7 +145,7 @@
 
   <div class="idd-reply-card">
     <h3>Reply as PreCheckd Trust &amp; Safety</h3>
-    <form action="/internal/disputes/<%= fraudReportId %>/reply" method="POST">
+    <form action="/disputes/<%= fraudReportId %>/reply" method="POST">
       <textarea name="body" placeholder="Write your reply..." required></textarea>
       <button type="submit">Send Reply</button>
     </form>

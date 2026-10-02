@@ -78,23 +78,23 @@
 <div class="id-wrap">
   <div class="id-header">
     <h1>PreCheckd Internal</h1>
-    <a href="/internal/logout">Log Out</a>
+    <a href="/logout">Log Out</a>
   </div>
 
   <div class="id-cards">
-    <a class="id-card" href="/internal/verify">
+    <a class="id-card" href="/verify">
       <div class="id-card-title">Candidate Verification</div>
       <div class="id-card-desc">Review and toggle verified status on candidate work history, education, and certifications.</div>
       <span class="id-card-stat"><%= candidateCount %> candidates with entries</span>
     </a>
 
-    <a class="id-card" href="/internal/fraud">
+    <a class="id-card" href="/fraud">
       <div class="id-card-title">Fraud Dashboard</div>
       <div class="id-card-desc">Every reported email and domain, sorted worst-first, with individual report review and status tracking.</div>
       <span class="id-card-stat <%= flaggedCount > 0 ? 'id-stat-alert' : '' %>"><%= flaggedCount %> flagged</span>
     </a>
 
-    <a class="id-card" href="/internal/disputes">
+    <a class="id-card" href="/disputes">
       <div class="id-card-title">Dispute Inbox</div>
       <div class="id-card-desc">Recruiters replying to the automated "a report was filed" notice — your morning check for anything that needs a response.</div>
       <span class="id-card-stat <%= disputeAttentionCount > 0 ? 'id-stat-alert' : '' %>"><%= disputeAttentionCount %> awaiting reply</span>

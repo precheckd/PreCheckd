@@ -87,7 +87,7 @@
 <div class="internal-content">
   <div class="internal-header">
     <h1>Candidates Awaiting Manual Verification</h1>
-    <a href="/internal/logout">Log Out</a>
+    <a href="/logout">Log Out</a>
   </div>
 
   <% if (candidates.length === 0) { %>
@@ -97,7 +97,7 @@
   <% } else { %>
     <div class="candidate-list">
       <% candidates.forEach(function(c) { %>
-        <a href="/internal/verify/<%= c._id %>" class="candidate-row">
+        <a href="/verify/<%= c._id %>" class="candidate-row">
           <div>
             <div class="candidate-name"><%= c.firstName %> <%= c.lastName %></div>
             <div class="candidate-email"><%= c.email %></div>

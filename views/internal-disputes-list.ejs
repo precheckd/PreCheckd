@@ -112,7 +112,7 @@
 <div class="id-wrap">
   <div class="id-header">
     <h1>Dispute Inbox</h1>
-    <a href="/internal">← Back to Internal Dashboard</a>
+    <a href="/">← Back to Internal Dashboard</a>
   </div>
   <p class="id-subtext">Every thread tied to a "a report was filed" notice. Rows in red are waiting on a reply from you.</p>
 
@@ -121,7 +121,7 @@
   <% } else { %>
     <div class="id-thread-list">
       <% threads.forEach((t) => { %>
-        <a class="id-thread-row <%= t.needsAttention ? 'needs-attention' : '' %>" href="/internal/disputes/<%= t.fraudReportId %>">
+        <a class="id-thread-row <%= t.needsAttention ? 'needs-attention' : '' %>" href="/disputes/<%= t.fraudReportId %>">
           <div class="id-thread-top">
             <span class="id-thread-name">
               <%= t.recruiterName %>

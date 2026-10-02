@@ -250,6 +250,25 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// The internal dashboard lives on its own subdomain in production — a
+// request to admin.precheckd.com is handled entirely by internalRoutes
+// (mounted at root, so its own paths read as /login, /fraud, etc. with no
+// /internal prefix) and never falls through to the public site's routes.
+// Locally there's no custom DNS, so /internal still works as a dev-only
+// convenience path — never relied on in production.
+const ADMIN_HOSTNAME = process.env.ADMIN_HOSTNAME || 'admin.precheckd.com';
+
+app.use((req, res, next) => {
+  if (req.hostname === ADMIN_HOSTNAME) {
+    return internalRoutes(req, res, () => res.status(404).send('Not found'));
+  }
+  next();
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/internal', internalRoutes);
+}
+
 app.get('/founding-recruiter-landing', (req, res) => {
   res.render('founding-recruiter-landing');
 });
@@ -263,7 +282,6 @@ app.use('/candidate', candidateProfileRoutes);
 app.use('/candidate', candidateEditRoutes);
 app.use('/candidate', certificateRoutes);
 app.use('/fraud', fraudRoutes);
-app.use('/internal', internalRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

@@ -7,8 +7,8 @@
     'other': 'Other'
   };
   const redirectTo = targetType === 'email'
-    ? `/internal/fraud/email/${encodeURIComponent(targetLabel)}`
-    : `/internal/fraud/domain/${encodeURIComponent(targetLabel)}`;
+    ? `/fraud/email/${encodeURIComponent(targetLabel)}`
+    : `/fraud/domain/${encodeURIComponent(targetLabel)}`;
 %>
 
 <style>
@@ -214,7 +214,7 @@
 
 <div class="ifd-wrap">
   <div class="ifd-header">
-    <a href="/internal/fraud">← Back to Fraud Dashboard</a>
+    <a href="/fraud">← Back to Fraud Dashboard</a>
   </div>
   <h1 class="ifd-title"><%= targetLabel %></h1>
 
@@ -228,12 +228,12 @@
         <% } %>
       </div>
       <% if (matchedAccount.isSuspended) { %>
-        <form action="/internal/recruiter/<%= matchedAccount._id %>/unsuspend" method="POST">
+        <form action="/recruiter/<%= matchedAccount._id %>/unsuspend" method="POST">
           <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
           <button type="submit" class="ifd-unsuspend-btn">Unsuspend account</button>
         </form>
       <% } else { %>
-        <form action="/internal/recruiter/<%= matchedAccount._id %>/suspend" method="POST" onsubmit="return confirm('Suspend this account? They will be immediately logged out, their public profile disappears, and messaging stops working. This is manual and reversible.');">
+        <form action="/recruiter/<%= matchedAccount._id %>/suspend" method="POST" onsubmit="return confirm('Suspend this account? They will be immediately logged out, their public profile disappears, and messaging stops working. This is manual and reversible.');">
           <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
           <button type="submit" class="ifd-suspend-btn">Suspend account</button>
         </form>
@@ -283,7 +283,7 @@
           </div>
         <% } %>
 
-        <form class="ifd-status-form" action="/internal/fraud/<%= report._id %>/status" method="POST">
+        <form class="ifd-status-form" action="/fraud/<%= report._id %>/status" method="POST">
           <span class="ifd-current-status ifd-status-<%= report.status %>"><%= report.status %></span>
           <select name="status">
             <option value="pending" <%= report.status === 'pending' ? 'selected' : '' %>>Pending</option>

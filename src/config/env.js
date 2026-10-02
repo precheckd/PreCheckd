@@ -3,9 +3,6 @@ const required = [
   'STRIPE_SECRET_KEY',
   'SUMSUB_APP_TOKEN',
   'SUMSUB_SECRET_KEY',
-  'TWILIO_ACCOUNT_SID',
-  'TWILIO_AUTH_TOKEN',
-  'TWILIO_VERIFY_SERVICE_SID',
 ];
 
 function assertEnv() {

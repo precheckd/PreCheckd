@@ -1,43 +1,170 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
+const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
 const Message = require('../models/Message');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
+const { sendAdminLoginAlertEmail } = require('../services/emailService');
 
 const INTERNAL_ADMIN_SECRET = process.env.INTERNAL_ADMIN_SECRET;
+const INTERNAL_ADMIN_PHONE = process.env.INTERNAL_ADMIN_PHONE;
+const MOCK_SMS = process.env.MOCK_SMS === 'true';
 
-function requireInternalAuth(req, res, next) {
-  if (req.session.isInternalAdmin) {
-    return next();
-  }
-  res.redirect('/internal/login');
+const smsClient = new PinpointSMSVoiceV2Client({
+  region: process.env.AWS_SMS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_SMS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SMS_SECRET_ACCESS_KEY,
+  },
+});
+
+const NOTIFY_CONFIGURATION_ID = process.env.AWS_NOTIFY_CONFIGURATION_ID;
+const NOTIFY_TEMPLATE_ID = process.env.AWS_NOTIFY_TEMPLATE_ID;
+
+function generateSixDigitCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
-// Login page
+async function sendAdminLoginCode(code) {
+  if (MOCK_SMS) {
+    console.log(`[MOCK SMS] Would send admin login code ${code} to ${INTERNAL_ADMIN_PHONE}`);
+    return { mock: true };
+  }
+
+  return smsClient.send(new SendNotifyTextMessageCommand({
+    NotifyConfigurationId: NOTIFY_CONFIGURATION_ID,
+    DestinationPhoneNumber: INTERNAL_ADMIN_PHONE,
+    TemplateId: NOTIFY_TEMPLATE_ID,
+    TemplateVariables: { code },
+  }));
+}
+
+// --- Brute-force protection on the shared admin secret ---
+// This is a single shared password, not per-staff accounts, so there's no
+// "lock this one account" option — an IP-based cap is the whole defense,
+// same in-memory pattern already used for the public fraud-report endpoint.
+// A single Render instance makes this fine; worst case on a restart is the
+// limit resets early, not that it silently stops limiting anything.
+const LOGIN_RATE_LIMIT_MAX = 10;
+const LOGIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const loginAttemptLog = new Map(); // ip -> array of failed-attempt timestamps (ms)
+
+// At most one "someone's hammering the admin login" alert per IP per
+// window, even though the IP stays rate-limited well past that point —
+// one email makes the point; a string of them doesn't add information.
+const ALERT_DEBOUNCE_MS = 60 * 60 * 1000;
+const lastAlertedAt = new Map(); // ip -> timestamp (ms)
+
+function isOverLoginRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - LOGIN_RATE_LIMIT_WINDOW_MS;
+  const timestamps = (loginAttemptLog.get(ip) || []).filter((t) => t > windowStart);
+  return timestamps.length >= LOGIN_RATE_LIMIT_MAX;
+}
+
+function recordFailedLoginAttempt(ip) {
+  const now = Date.now();
+  const windowStart = now - LOGIN_RATE_LIMIT_WINDOW_MS;
+  const timestamps = (loginAttemptLog.get(ip) || []).filter((t) => t > windowStart);
+  timestamps.push(now);
+  loginAttemptLog.set(ip, timestamps);
+
+  if (timestamps.length >= LOGIN_RATE_LIMIT_MAX) {
+    const alertedAt = lastAlertedAt.get(ip);
+    if (!alertedAt || now - alertedAt > ALERT_DEBOUNCE_MS) {
+      lastAlertedAt.set(ip, now);
+      sendAdminLoginAlertEmail(ip, timestamps.length).catch((error) => {
+        console.error('Failed to send admin login alert email:', error);
+      });
+    }
+  }
+}
+
+// Real staff session, once fully logged in (secret + SMS code), is capped
+// much shorter than the normal 30-day cookie everyone else gets — this is
+// the one login on the site that's worth re-proving more often.
+const ADMIN_SESSION_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+function requireInternalAuth(req, res, next) {
+  if (req.session.isInternalAdmin && req.session.adminSessionExpires > Date.now()) {
+    return next();
+  }
+  req.session.isInternalAdmin = false;
+  req.session.adminSessionExpires = null;
+  res.redirect('/login');
+}
+
+// Step 1 — shared secret
 router.get('/login', (req, res) => {
-  res.render('internal-login', { error: null });
+  res.render('internal-login', { error: null, step: 'secret' });
 });
 
 router.post('/login', (req, res) => {
+  if (isOverLoginRateLimit(req.ip)) {
+    return res.render('internal-login', { error: 'Too many attempts from this network. Please try again later.', step: 'secret' });
+  }
+
   const { secret } = req.body;
 
   if (!INTERNAL_ADMIN_SECRET) {
-    return res.render('internal-login', { error: 'INTERNAL_ADMIN_SECRET is not configured on the server.' });
+    return res.render('internal-login', { error: 'INTERNAL_ADMIN_SECRET is not configured on the server.', step: 'secret' });
   }
 
-  if (secret === INTERNAL_ADMIN_SECRET) {
-    req.session.isInternalAdmin = true;
-    return res.redirect('/internal');
+  if (secret !== INTERNAL_ADMIN_SECRET) {
+    recordFailedLoginAttempt(req.ip);
+    return res.render('internal-login', { error: 'Incorrect password.', step: 'secret' });
   }
 
-  res.render('internal-login', { error: 'Incorrect password.' });
+  if (!INTERNAL_ADMIN_PHONE) {
+    return res.render('internal-login', { error: 'INTERNAL_ADMIN_PHONE is not configured on the server.', step: 'secret' });
+  }
+
+  const code = generateSixDigitCode();
+  req.session.adminLoginCode = code;
+  req.session.adminLoginCodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  sendAdminLoginCode(code).catch((error) => {
+    console.error('Failed to send admin login SMS code:', error);
+  });
+
+  res.render('internal-login', { error: null, step: 'code' });
+});
+
+// Step 2 — SMS code
+router.post('/login/verify-code', (req, res) => {
+  if (isOverLoginRateLimit(req.ip)) {
+    return res.render('internal-login', { error: 'Too many attempts from this network. Please try again later.', step: 'secret' });
+  }
+
+  const { code } = req.body;
+
+  if (!req.session.adminLoginCode) {
+    return res.render('internal-login', { error: 'Please log in again.', step: 'secret' });
+  }
+  if (Date.now() > req.session.adminLoginCodeExpires) {
+    req.session.adminLoginCode = null;
+    return res.render('internal-login', { error: 'That code expired. Please log in again.', step: 'secret' });
+  }
+  if (!code || code.trim() !== req.session.adminLoginCode) {
+    recordFailedLoginAttempt(req.ip);
+    return res.render('internal-login', { error: 'Incorrect code.', step: 'code' });
+  }
+
+  req.session.adminLoginCode = null;
+  req.session.adminLoginCodeExpires = null;
+  req.session.isInternalAdmin = true;
+  req.session.adminSessionExpires = Date.now() + ADMIN_SESSION_MS;
+
+  res.redirect('/');
 });
 
 router.get('/logout', (req, res) => {
   req.session.isInternalAdmin = false;
-  res.redirect('/internal/login');
+  req.session.adminSessionExpires = null;
+  res.redirect('/login');
 });
 
 router.use(requireInternalAuth);
@@ -142,7 +269,7 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
     candidate.markModified(category);
     await candidate.save();
 
-    res.redirect(`/internal/verify/${candidate._id}`);
+    res.redirect(`/verify/${candidate._id}`);
   } catch (error) {
     console.error('Error toggling verification status:', error);
     res.status(500).send('Server error');
@@ -274,7 +401,7 @@ router.post('/recruiter/:id/suspend', async (req, res) => {
       isSuspended: true,
       suspendedAt: new Date(),
     });
-    res.redirect(redirectTo || '/internal/fraud');
+    res.redirect(redirectTo || '/fraud');
   } catch (error) {
     console.error('Error suspending recruiter account:', error);
     res.status(500).send('Server error');
@@ -288,7 +415,7 @@ router.post('/recruiter/:id/unsuspend', async (req, res) => {
       isSuspended: false,
       suspendedAt: null,
     });
-    res.redirect(redirectTo || '/internal/fraud');
+    res.redirect(redirectTo || '/fraud');
   } catch (error) {
     console.error('Error unsuspending recruiter account:', error);
     res.status(500).send('Server error');
@@ -394,7 +521,7 @@ router.post('/disputes/:fraudReportId/reply', async (req, res) => {
       body: body.trim(),
     });
 
-    res.redirect(`/internal/disputes/${fraudReportId}`);
+    res.redirect(`/disputes/${fraudReportId}`);
   } catch (error) {
     console.error('Error replying to dispute thread:', error);
     res.status(500).send('Server error');
@@ -411,7 +538,7 @@ router.post('/fraud/:reportId/status', async (req, res) => {
     }
 
     await FraudReport.findByIdAndUpdate(req.params.reportId, { status });
-    res.redirect(redirectTo || '/internal/fraud');
+    res.redirect(redirectTo || '/fraud');
   } catch (error) {
     console.error('Error updating fraud report status:', error);
     res.status(500).send('Server error');

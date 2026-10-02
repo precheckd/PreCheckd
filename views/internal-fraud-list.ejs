@@ -133,7 +133,7 @@
 <div class="if-wrap">
   <div class="if-header">
     <h1>Fraud Dashboard</h1>
-    <a href="/internal/verify">Back to Candidate Verification →</a>
+    <a href="/verify">Back to Candidate Verification →</a>
   </div>
 
   <div class="if-section">
@@ -156,7 +156,7 @@
         <tbody>
           <% flaggedEmails.forEach((item) => { %>
             <tr class="<%= item.flagged ? 'if-row-flagged-red' : '' %>">
-              <td><a class="if-view-link" href="/internal/fraud/email/<%= encodeURIComponent(item.reportedEmail) %>"><%= item.reportedEmail %></a></td>
+              <td><a class="if-view-link" href="/fraud/email/<%= encodeURIComponent(item.reportedEmail) %>"><%= item.reportedEmail %></a></td>
               <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
               <td><%= item.count %></td>
               <td><%= new Date(item.latest).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
@@ -193,7 +193,7 @@
         <tbody>
           <% flaggedDomains.forEach((item) => { %>
             <tr class="<%= item.flagged ? 'if-row-flagged-yellow' : '' %>">
-              <td><a class="if-view-link" href="/internal/fraud/domain/<%= encodeURIComponent(item.reportedDomain) %>"><%= item.reportedDomain %></a></td>
+              <td><a class="if-view-link" href="/fraud/domain/<%= encodeURIComponent(item.reportedDomain) %>"><%= item.reportedDomain %></a></td>
               <td><span class="if-count-badge"><%= item.distinctReporters %></span></td>
               <td><%= item.count %></td>
               <td><%= new Date(item.latest).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
