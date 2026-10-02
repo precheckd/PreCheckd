@@ -7,6 +7,29 @@ const FraudReport = require('../models/FraudReport');
 const Message = require('../models/Message');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 const { sendAdminLoginAlertEmail, sendAdminLoginCodeEmail } = require('../services/emailService');
+const { getDailyPageViews } = require('../services/googleAnalyticsService');
+
+const SIGNUP_CHART_DAYS = 30;
+
+// Builds a full, zero-filled array of the last `days` calendar days (today
+// inclusive) in YYYY-MM-DD order, so a day with zero signups still shows a
+// bar/point instead of silently skipping — a gap in the x-axis reads as
+// "we have no data for that day," which would be wrong.
+function buildDateRange(days) {
+  const dates = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+function countsByDate(aggregateResult, dateRange) {
+  const lookup = {};
+  aggregateResult.forEach((row) => { lookup[row._id] = row.count; });
+  return dateRange.map((date) => lookup[date] || 0);
+}
 
 const INTERNAL_ADMIN_SECRET = process.env.INTERNAL_ADMIN_SECRET;
 
@@ -140,7 +163,23 @@ router.use(requireInternalAuth);
 // Landing dashboard — links out to each internal tool
 router.get('/', async (req, res) => {
   try {
-    const [candidateCount, flaggedCount, disputeThreads] = await Promise.all([
+    const dateRange = buildDateRange(SIGNUP_CHART_DAYS);
+    const since = new Date(Date.now() - SIGNUP_CHART_DAYS * 24 * 60 * 60 * 1000);
+    const dailyGroupStage = {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        count: { $sum: 1 },
+      },
+    };
+
+    const [
+      candidateCount,
+      flaggedCount,
+      disputeThreads,
+      recruiterSignupsByDay,
+      candidateSignupsByDay,
+      pageViewsByDay,
+    ] = await Promise.all([
       Candidate.countDocuments({
         $or: [
           { 'workHistory.0': { $exists: true } },
@@ -166,12 +205,33 @@ router.get('/', async (req, res) => {
         { $match: { latestSenderType: 'recruiter' } },
         { $count: 'total' }
       ]),
+      Recruiter.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        dailyGroupStage,
+      ]),
+      Candidate.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        dailyGroupStage,
+      ]),
+      // Returns null (not an empty series) until GA4 is actually wired up —
+      // the dashboard/view treats null as "not connected yet" vs. a real
+      // all-zero traffic day, so it never looks like the site has no visitors.
+      getDailyPageViews(SIGNUP_CHART_DAYS).catch((error) => {
+        console.error('Failed to load Google Analytics page views:', error);
+        return null;
+      }),
     ]);
 
     res.render('internal-dashboard', {
       candidateCount,
       flaggedCount: flaggedCount[0]?.total || 0,
       disputeAttentionCount: disputeThreads[0]?.total || 0,
+      signupChart: {
+        labels: dateRange,
+        recruiters: countsByDate(recruiterSignupsByDay, dateRange),
+        candidates: countsByDate(candidateSignupsByDay, dateRange),
+      },
+      trafficChart: pageViewsByDay ? { labels: dateRange, views: countsByDate(pageViewsByDay, dateRange) } : null,
     });
   } catch (error) {
     console.error('Error loading internal dashboard:', error);

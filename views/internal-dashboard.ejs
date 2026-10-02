@@ -73,12 +73,59 @@
     background: rgba(248, 113, 113, 0.15);
     color: #B91C1C;
   }
+
+  .id-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .id-chart-card {
+    background: #F7F9F8;
+    border: 1px solid #DCE4E2;
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .id-chart-title {
+    color: #1F363C;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .id-chart-empty {
+    color: #7A8B91;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .id-chart-empty a {
+    color: #1F7A4C;
+  }
 </style>
 
 <div class="id-wrap">
   <div class="id-header">
     <h1>PreCheckd Internal</h1>
     <a href="/logout">Log Out</a>
+  </div>
+
+  <div class="id-charts">
+    <div class="id-chart-card">
+      <div class="id-chart-title">Signups — last 30 days</div>
+      <canvas id="signupChart" height="200"></canvas>
+    </div>
+
+    <div class="id-chart-card">
+      <div class="id-chart-title">Site traffic — last 30 days</div>
+      <% if (trafficChart) { %>
+        <canvas id="trafficChart" height="200"></canvas>
+      <% } else { %>
+        <p class="id-chart-empty">Not connected yet — set <code>GA_MEASUREMENT_ID</code>, <code>GA_PROPERTY_ID</code>, <code>GA_CLIENT_EMAIL</code>, and <code>GA_PRIVATE_KEY</code> to enable this chart.</p>
+      <% } %>
+    </div>
   </div>
 
   <div class="id-cards">
@@ -101,3 +148,39 @@
     </a>
   </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+  const signupLabels = <%- JSON.stringify(signupChart.labels) %>;
+
+  new Chart(document.getElementById('signupChart'), {
+    type: 'bar',
+    data: {
+      labels: signupLabels,
+      datasets: [
+        { label: 'Recruiters', data: <%- JSON.stringify(signupChart.recruiters) %>, backgroundColor: '#2ECC71' },
+        { label: 'Candidates', data: <%- JSON.stringify(signupChart.candidates) %>, backgroundColor: '#1F363C' },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+
+  <% if (trafficChart) { %>
+    new Chart(document.getElementById('trafficChart'), {
+      type: 'line',
+      data: {
+        labels: <%- JSON.stringify(trafficChart.labels) %>,
+        datasets: [
+          { label: 'Page views', data: <%- JSON.stringify(trafficChart.views) %>, borderColor: '#2ECC71', backgroundColor: 'rgba(46, 204, 113, 0.15)', fill: true, tension: 0.2 },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+  <% } %>
+</script>

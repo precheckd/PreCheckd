@@ -42,6 +42,13 @@ app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 
 app.locals.stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+app.locals.gaMeasurementId = process.env.GA_MEASUREMENT_ID || null;
+
+// Referenced again below, where the admin-subdomain routing is set up —
+// declared early so this same value can gate the GA tracking snippet in
+// the shared layout, keeping internal staff page loads out of the public
+// traffic numbers this is meant to measure.
+const ADMIN_HOSTNAME = process.env.ADMIN_HOSTNAME || 'admin.precheckd.com';
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -84,6 +91,7 @@ function buildRecruiterNudges(recruiter) {
 }
 
 app.use(async (req, res, next) => {
+  res.locals.isAdminHost = req.hostname === ADMIN_HOSTNAME;
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
   res.locals.commandCenterMessages = [];
@@ -255,9 +263,9 @@ app.use(async (req, res, next) => {
 // (mounted at root, so its own paths read as /login, /fraud, etc. with no
 // /internal prefix) and never falls through to the public site's routes.
 // Locally there's no custom DNS, so /internal still works as a dev-only
-// convenience path — never relied on in production.
-const ADMIN_HOSTNAME = process.env.ADMIN_HOSTNAME || 'admin.precheckd.com';
-
+// convenience path — never relied on in production. (ADMIN_HOSTNAME itself
+// is declared up near the top of this file, since the GA tracking-snippet
+// gate needs it too.)
 app.use((req, res, next) => {
   if (req.hostname === ADMIN_HOSTNAME) {
     return internalRoutes(req, res, () => res.status(404).send('Not found'));
