@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <% const pageTitleResolved = (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : 'PreCheckd - Verified Recruiter Marketplace'; %>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PreCheckd - Verified Recruiter Marketplace</title>
+  <title><%= pageTitleResolved %></title>
   <meta name="description" content="PreCheckd verifies recruiters' identity, phone, email, and company domain, so job seekers know exactly who they're talking to.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <meta property="og:title" content="PreCheckd - Verified Recruiter Marketplace">
+  <meta property="og:title" content="<%= pageTitleResolved %>">
   <meta property="og:description" content="PreCheckd verifies recruiters' identity, phone, email, and company domain, so job seekers know exactly who they're talking to.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://precheckd.com/">

@@ -278,11 +278,11 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.get('/founding-recruiter-landing', (req, res) => {
-  res.render('founding-recruiter-landing');
+  res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Recruiters' });
 });
 
 app.get('/founding-recruiter', (req, res) => {
-  res.render('founding-recruiter');
+  res.render('founding-recruiter', { pageTitle: 'PreCheckd - Founding Recruiter Signup' });
 });
 
 app.use('/recruiter', recruiterProfileRoutes);

@@ -4,7 +4,7 @@ const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 
 router.get('/', (req, res) => {
-  res.render('home');
+  res.render('home', { pageTitle: 'PreCheckd - Choose Your Path' });
 });
 
 // The nicer, newer recruiter-landing page (founding-recruiter-landing.ejs —
@@ -16,21 +16,21 @@ router.get('/', (req, res) => {
 // better page, with no URL or link text changes needed anywhere.
 // recruiter-landing.ejs is left in place, unused, rather than deleted.
 router.get('/recruiter-landing', (req, res) => {
-  res.render('founding-recruiter-landing');
+  res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Recruiters' });
 });
 
 router.get('/recruiter-search', async (req, res) => {
   try {
     const recruiters = await Recruiter.find({ isActive: true, isSuspended: { $ne: true } }).sort({ createdAt: -1 });
-    res.render('recruiter-search', { recruiters, prefilledQuery: req.query.q || '' });
+    res.render('recruiter-search', { recruiters, prefilledQuery: req.query.q || '', pageTitle: 'PreCheckd - Browse Verified Recruiters' });
   } catch (error) {
     console.error('Error loading recruiter search page:', error);
-    res.render('recruiter-search', { recruiters: [], prefilledQuery: '' });
+    res.render('recruiter-search', { recruiters: [], prefilledQuery: '', pageTitle: 'PreCheckd - Browse Verified Recruiters' });
   }
 });
 
 router.get('/candidate-landing', (req, res) => {
-  res.render('candidate-landing');
+  res.render('candidate-landing', { pageTitle: 'PreCheckd - For Job Seekers' });
 });
 
 router.get('/candidate-signup', async (req, res) => {
@@ -50,7 +50,8 @@ router.get('/candidate-signup', async (req, res) => {
           req.session.candidateRecruiterSlug = recruiterSlug;
           return res.render('candidate-signup', {
             recruiter,
-            alreadyVerified: true
+            alreadyVerified: true,
+            pageTitle: 'PreCheckd - Get Verified'
           });
         }
         return res.redirect(`/candidate/${candidate.slug}`);
@@ -59,24 +60,25 @@ router.get('/candidate-signup', async (req, res) => {
 
     res.render('candidate-signup', {
       recruiter: recruiter,
-      alreadyVerified: false
+      alreadyVerified: false,
+      pageTitle: 'PreCheckd - Get Verified'
     });
   } catch (error) {
     console.error('Error loading candidate signup page:', error);
-    res.render('candidate-signup', { recruiter: null, alreadyVerified: false });
+    res.render('candidate-signup', { recruiter: null, alreadyVerified: false, pageTitle: 'PreCheckd - Get Verified' });
   }
 });
 
 router.get('/login', (req, res) => {
-  res.render('login');
+  res.render('login', { pageTitle: 'PreCheckd - Members Login' });
 });
 
 router.get('/terms', (req, res) => {
-  res.render('terms');
+  res.render('terms', { pageTitle: 'PreCheckd - Terms of Service' });
 });
 
 router.get('/privacy', (req, res) => {
-  res.render('privacy');
+  res.render('privacy', { pageTitle: 'PreCheckd - Privacy Policy' });
 });
 
 module.exports = router;
