@@ -136,64 +136,153 @@
       color: #1F363C;
     }
 
-    .command-center {
-      background: #0A0F0C;
-      border-top: 2px solid #2ECC71;
-      border-bottom: 2px solid #2ECC71;
-      box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
-      padding: 1rem 1.5rem 1.5rem;
-    }
-
-    .cc-container {
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    .cc-top-row {
+    /* ===== Command Center Sidebar ===== */
+    .cc-page-shell {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
+      align-items: flex-start;
     }
 
-    .cc-status-text {
+    .cc-sidebar {
+      flex-shrink: 0;
+      width: 280px;
+      background: #0A0F0C;
+      border-right: 2px solid #2ECC71;
+      box-shadow: 0 0 8px rgba(46, 204, 113, 0.25);
+      position: sticky;
+      top: var(--header-h, 89px);
+      height: calc(100vh - var(--header-h, 89px));
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: width 0.2s ease;
+      z-index: 90;
+    }
+
+    .cc-sidebar.cc-collapsed {
+      width: 64px;
+    }
+
+    .cc-sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.2);
+    }
+
+    .cc-toggle-btn {
+      background: transparent;
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      color: #4ADE80;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .cc-toggle-btn:hover {
+      background: rgba(46, 204, 113, 0.1);
+      border-color: #2ECC71;
+    }
+
+    .cc-toggle-btn svg {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.2s;
+    }
+
+    .cc-sidebar.cc-collapsed .cc-toggle-btn svg {
+      transform: rotate(180deg);
+    }
+
+    .cc-sidebar-title {
       color: #7A9B8E;
-      font-size: 0.82rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      font-weight: 600;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
-    .cc-actions {
+    .cc-sidebar.cc-collapsed .cc-sidebar-title {
+      display: none;
+    }
+
+    .cc-sidebar-footer {
+      border-top: 1px solid rgba(46, 204, 113, 0.2);
+      margin-top: 0.5rem;
+    }
+
+    .cc-nav-item-group {
+      border-bottom: 1px solid rgba(46, 204, 113, 0.12);
+    }
+
+    .cc-nav-item-group:last-child {
+      border-bottom: none;
+    }
+
+    .cc-nav-item-link {
       display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem;
+      width: 100%;
+      padding: 0.85rem 1rem;
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      font: inherit;
+      text-align: left;
+      color: #E8EBEA;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
     }
 
-    .cc-actions a {
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      transition: background 0.2s, color 0.2s;
+    .cc-nav-item-link:hover {
+      background: rgba(46, 204, 113, 0.08);
+    }
+
+    .cc-sidebar.cc-collapsed .cc-nav-item-link {
+      justify-content: center;
+      padding: 0.85rem 0;
+    }
+
+    .cc-nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: #4ADE80;
       position: relative;
     }
 
-    .cc-btn-secondary {
-      background: transparent;
-      color: #4ADE80;
-      border: 1px solid #2ECC71;
+    .cc-nav-icon svg {
+      width: 100%;
+      height: 100%;
     }
 
-    .cc-btn-secondary:hover {
-      background: rgba(46, 204, 113, 0.1);
-      color: #F2F4F3;
+    .cc-nav-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #4ADE80;
+      box-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
+      animation: cc-pulse 2s infinite;
     }
 
-    .cc-unread-dot {
+    /* Same dot, inline variant — for flagging a single unread item inside a
+       list (e.g. next to one message's sender name) rather than badging an
+       icon. */
+    .cc-inline-dot {
       display: inline-block;
       width: 8px;
       height: 8px;
@@ -209,62 +298,25 @@
       50% { opacity: 0.4; }
     }
 
-    .cc-widgets {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .cc-tools-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1rem;
-    }
-
-    .cc-widget {
-      background: rgba(46, 204, 113, 0.04);
-      border: 1px solid rgba(46, 204, 113, 0.25);
-      border-radius: 6px;
-      padding: 1rem;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    a.cc-widget {
-      display: block;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    a.cc-widget:hover {
-      border-color: rgba(46, 204, 113, 0.6);
-      background: rgba(46, 204, 113, 0.08);
-    }
-
-    .cc-widget-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-
-    .cc-widget h4 {
-      color: #4ADE80;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 700;
-    }
-
-    .cc-widget-view-all {
-      color: #7A9B8E;
-      font-size: 0.72rem;
-      text-decoration: none;
+    .cc-nav-label {
+      font-size: 0.88rem;
       font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .cc-widget-view-all:hover {
-      color: #4ADE80;
+    .cc-sidebar.cc-collapsed .cc-nav-label {
+      display: none;
+    }
+
+    .cc-nav-detail {
+      display: none;
+      padding: 0 1rem 1rem 3.35rem;
+    }
+
+    .cc-sidebar:not(.cc-collapsed) .cc-nav-detail {
+      display: block;
     }
 
     .cc-widget-empty {
@@ -403,7 +455,12 @@
 
     .cc-search-widget-form {
       display: flex;
+      flex-direction: column;
       gap: 0.5rem;
+    }
+
+    .cc-search-widget-btn {
+      width: 100%;
     }
 
     .cc-search-widget-input {
@@ -538,6 +595,42 @@
 
     main {
       min-height: calc(100vh - 150px);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cc-mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 110;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #0A0F0C;
+      border: 1px solid #2ECC71;
+      color: #4ADE80;
+      cursor: pointer;
+    }
+
+    .cc-mobile-toggle svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .cc-sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 95;
+    }
+
+    .cc-sidebar-backdrop.cc-visible {
+      display: block;
     }
 
     footer {
@@ -622,20 +715,64 @@
         font-size: 0.9rem;
       }
 
-      .cc-top-row {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
+      /* Below this width the sidebar can't live docked next to the content —
+         it becomes an off-canvas drawer opened by the hamburger button,
+         always showing full labels/detail rather than the desktop icon rail. */
+      .cc-mobile-toggle {
+        display: flex;
       }
 
-      .cc-widgets,
-      .cc-tools-row {
-        grid-template-columns: 1fr;
+      /* The hamburger is fixed-position over the header, so give the
+         header's own logo room to sit clear of it rather than overlapping. */
+      body.cc-has-sidebar .header-container {
+        padding-left: 50px;
+      }
+
+      .cc-page-shell {
+        display: block;
+      }
+
+      .cc-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        height: 100vh;
+        width: 280px;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 100;
+      }
+
+      .cc-sidebar.cc-mobile-open {
+        transform: translateX(0);
+      }
+
+      .cc-sidebar.cc-collapsed {
+        width: 280px;
+      }
+
+      .cc-sidebar.cc-collapsed .cc-nav-label,
+      .cc-sidebar.cc-collapsed .cc-sidebar-title {
+        display: block;
+      }
+
+      .cc-sidebar.cc-collapsed .cc-nav-detail {
+        display: block;
+      }
+
+      .cc-sidebar.cc-collapsed .cc-nav-item-link {
+        justify-content: flex-start;
+        padding: 0.85rem 1rem;
+      }
+
+      .cc-sidebar .cc-toggle-btn {
+        display: none;
       }
     }
   </style>
 </head>
-<body data-stripe-key="<%= stripePublishableKey %>">
+<body data-stripe-key="<%= stripePublishableKey %>" class="<%= ((typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) || (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug)) ? 'cc-has-sidebar' : '' %>">
 
 <header>
   <div class="header-container">
@@ -675,202 +812,272 @@
   </div>
 </header>
 
-<% if ((typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) || (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug)) { %>
-<div class="command-center">
-  <div class="cc-container">
-    <div class="cc-top-row">
-      <span class="cc-status-text">
-        <% if (loggedInCandidateSlug) { %>Command Center · Candidate<% } else { %>Command Center · Recruiter<% } %>
-      </span>
-      <div class="cc-actions">
-        <% if (loggedInCandidateSlug) { %>
-          <a href="/api/candidate/logout" class="cc-btn-secondary">Log Out</a>
-        <% } else if (loggedInRecruiterSlug) { %>
-          <a href="/logout" class="cc-btn-secondary">Log Out</a>
-        <% } %>
-      </div>
+<%
+  const ccLoggedIn = (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) || (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug);
+  const cp = typeof currentPath !== 'undefined' && currentPath ? currentPath : '';
+  const ccIsClaim = typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount;
+%>
+
+<% if (ccLoggedIn) { %>
+<button type="button" class="cc-mobile-toggle" id="cc-mobile-toggle" aria-label="Open Command Center menu">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+</button>
+<div class="cc-sidebar-backdrop" id="cc-sidebar-backdrop"></div>
+<% } %>
+
+<div class="cc-page-shell">
+<% if (ccLoggedIn) { %>
+  <%
+    const requestsListHref = loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests';
+    const reportsHref = loggedInRecruiterSlug ? (ccIsClaim ? '/recruiter-dashboard/claim' : '/recruiter-dashboard/reports') : '';
+    const verificationHref = loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}` : `/recruiter/${loggedInRecruiterSlug}/edit`;
+    const editHref = loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}/edit` : `/recruiter/${loggedInRecruiterSlug}/edit`;
+    const onMessages = cp.startsWith('/messages');
+    const onRequests = cp.startsWith(requestsListHref);
+    const onReports = loggedInRecruiterSlug && (cp.startsWith('/recruiter-dashboard/reports') || cp.startsWith('/recruiter-dashboard/claim'));
+    const onMyReports = cp.startsWith('/candidate-dashboard/my-reports');
+    const onSavedRecruiters = cp.startsWith('/candidate-dashboard/saved-recruiters');
+    const onVerificationPage = cp === verificationHref;
+    const onEditPage = cp === editHref;
+    const onRecruiterSearch = cp === '/recruiter-search';
+  %>
+  <aside class="cc-sidebar cc-collapsed" id="cc-sidebar">
+    <div class="cc-sidebar-header">
+      <button type="button" class="cc-toggle-btn" id="cc-toggle-btn" aria-label="Expand Command Center" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+      <span class="cc-sidebar-title"><% if (loggedInCandidateSlug) { %>Command Center · Candidate<% } else { %>Command Center · Recruiter<% } %></span>
     </div>
 
-    <div class="cc-widgets">
+    <nav class="cc-sidebar-nav">
 
       <% /* A claim account has no real profile, messages, or connections — it only ever sees the Reports widget below. */ %>
-      <% if (!(typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount)) { %>
+      <% if (!ccIsClaim) { %>
 
-      <a href="<%= loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}` : `/recruiter/${loggedInRecruiterSlug}/edit` %>" class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Verification Status</h4>
-          <span class="cc-widget-view-all">Verify Now →</span>
+      <% if (!onVerificationPage) { %>
+      <div class="cc-nav-item-group">
+        <a href="<%= verificationHref %>" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="cc-nav-label">Verification Status</span>
+        </a>
+        <div class="cc-nav-detail">
+          <div class="cc-verification-summary">
+            <span class="cc-verification-count"><%= commandCenterVerifiedCount %></span>
+            <span class="cc-verification-total">/ <%= commandCenterVerifiedTotal %> verified</span>
+          </div>
+          <div class="cc-verification-bar-track">
+            <div class="cc-verification-bar-fill" style="width: <%= commandCenterVerifiedTotal > 0 ? (commandCenterVerifiedCount / commandCenterVerifiedTotal * 100) : 0 %>%;"></div>
+          </div>
+          <% if (commandCenterVerifiedCount === commandCenterVerifiedTotal) { %>
+            <p class="cc-verification-complete">✓ Fully verified</p>
+          <% } else { %>
+            <p class="cc-widget-empty">Some checks still pending</p>
+          <% } %>
         </div>
-        <div class="cc-verification-summary">
-          <span class="cc-verification-count"><%= commandCenterVerifiedCount %></span>
-          <span class="cc-verification-total">/ <%= commandCenterVerifiedTotal %> verified</span>
-        </div>
-        <div class="cc-verification-bar-track">
-          <div class="cc-verification-bar-fill" style="width: <%= commandCenterVerifiedTotal > 0 ? (commandCenterVerifiedCount / commandCenterVerifiedTotal * 100) : 0 %>%;"></div>
-        </div>
-        <% if (commandCenterVerifiedCount === commandCenterVerifiedTotal) { %>
-          <p class="cc-verification-complete">✓ Fully verified</p>
-        <% } else { %>
-          <p class="cc-widget-empty">Some checks still pending</p>
-        <% } %>
-      </a>
+      </div>
+      <% } %>
 
-      <a href="<%= loggedInCandidateSlug ? `/candidate/${loggedInCandidateSlug}/edit` : `/recruiter/${loggedInRecruiterSlug}/edit` %>" class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Complete Your Profile</h4>
-          <span class="cc-widget-view-all">Edit →</span>
+      <% if (!onEditPage) { %>
+      <div class="cc-nav-item-group">
+        <a href="<%= editHref %>" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></span>
+          <span class="cc-nav-label">Complete Your Profile</span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterNudges && commandCenterNudges.length > 0) { %>
+            <ul class="cc-nudge-list">
+              <% commandCenterNudges.forEach(function(nudge) { %>
+                <li class="cc-nudge-item"><%= nudge %></li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <p class="cc-verification-complete">✓ Profile complete</p>
+          <% } %>
         </div>
-        <% if (commandCenterNudges && commandCenterNudges.length > 0) { %>
-          <ul class="cc-nudge-list">
-            <% commandCenterNudges.forEach(function(nudge) { %>
-              <li class="cc-nudge-item"><%= nudge %></li>
+      </div>
+      <% } %>
+
+      <% if (!onMessages) { %>
+      <div class="cc-nav-item-group">
+        <a href="/messages" class="cc-nav-item-link">
+          <span class="cc-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            <% if (commandCenterUnreadCount > 0) { %><span class="cc-nav-badge"></span><% } %>
+          </span>
+          <span class="cc-nav-label">Recent Messages</span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>
+            <% commandCenterMessages.forEach(function(m) { %>
+              <a href="/messages/<%= m._id %>" class="cc-widget-item">
+                <div class="cc-widget-item-title"><%= m.senderName %><% if (!m.readAt) { %><span class="cc-inline-dot"></span><% } %></div>
+                <div class="cc-widget-item-sub"><%= m.preview %></div>
+              </a>
             <% }); %>
-          </ul>
-        <% } else { %>
-          <p class="cc-verification-complete">✓ Profile complete</p>
-        <% } %>
-      </a>
-
-      <% const requestsListHref = loggedInCandidateSlug ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests'; %>
-
-      <div class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Recent Messages<% if (commandCenterUnreadCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
-          <a href="/messages" class="cc-widget-view-all">View All →</a>
+          <% } else { %>
+            <p class="cc-widget-empty">No messages yet.</p>
+          <% } %>
         </div>
-        <% if (commandCenterMessages && commandCenterMessages.length > 0) { %>
-          <% commandCenterMessages.forEach(function(m) { %>
-            <a href="/messages/<%= m._id %>" class="cc-widget-item">
-              <div class="cc-widget-item-title"><%= m.senderName %><% if (!m.readAt) { %> <span class="cc-unread-dot"></span><% } %></div>
-              <div class="cc-widget-item-sub"><%= m.preview %></div>
-            </a>
-          <% }); %>
-        <% } else { %>
-          <p class="cc-widget-empty">No messages yet.</p>
-        <% } %>
       </div>
+      <% } %>
 
-      <div class="cc-widget">
-        <div class="cc-widget-header">
-          <h4><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></h4>
-          <a href="<%= requestsListHref %>" class="cc-widget-view-all">View All →</a>
+      <% if (!onRequests) { %>
+      <div class="cc-nav-item-group">
+        <a href="<%= requestsListHref %>" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="cc-nav-label"><% if (loggedInCandidateSlug) { %>My Connection Requests<% } else { %>Connection Requests<% } %></span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterRequests && commandCenterRequests.length > 0) { %>
+            <% commandCenterRequests.forEach(function(r) { %>
+              <a href="<%= requestsListHref %>#request-<%= r._id %>" class="cc-widget-item">
+                <div class="cc-widget-item-title"><%= r.displayName %></div>
+                <span class="cc-status-badge cc-status-<%= r.status %>"><%= r.status %></span>
+              </a>
+            <% }); %>
+          <% } else { %>
+            <p class="cc-widget-empty">No connection requests yet.</p>
+          <% } %>
         </div>
-        <% if (commandCenterRequests && commandCenterRequests.length > 0) { %>
-          <% commandCenterRequests.forEach(function(r) { %>
-            <a href="<%= requestsListHref %>#request-<%= r._id %>" class="cc-widget-item">
-              <div class="cc-widget-item-title"><%= r.displayName %></div>
-              <span class="cc-status-badge cc-status-<%= r.status %>"><%= r.status %></span>
-            </a>
-          <% }); %>
-        <% } else { %>
-          <p class="cc-widget-empty">No connection requests yet.</p>
-        <% } %>
       </div>
+      <% } %>
 
       <% } %>
 
-      <% if (loggedInRecruiterSlug) { %>
-      <a href="<%= (typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount) ? '/recruiter-dashboard/claim' : '/recruiter-dashboard/reports' %>" class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Reports About You<% if (commandCenterFraudReportCount > 0) { %><span class="cc-unread-dot"></span><% } %></h4>
-          <span class="cc-widget-view-all">View All →</span>
+      <% if (loggedInRecruiterSlug && !onReports) { %>
+      <div class="cc-nav-item-group">
+        <a href="<%= reportsHref %>" class="cc-nav-item-link">
+          <span class="cc-nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></svg>
+            <% if (commandCenterFraudReportCount > 0) { %><span class="cc-nav-badge"></span><% } %>
+          </span>
+          <span class="cc-nav-label">Reports About You</span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
+            <% commandCenterFraudReports.forEach(function(r) { %>
+              <div class="cc-widget-item">
+                <div class="cc-widget-item-title"><%= r.reasonCategory.replace(/-/g, ' ') %></div>
+                <div class="cc-widget-item-sub"><%= new Date(r.createdAt).toLocaleDateString() %></div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="cc-widget-empty">No reports on file.</p>
+          <% } %>
         </div>
-        <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
-          <% commandCenterFraudReports.forEach(function(r) { %>
-            <div class="cc-widget-item">
-              <div class="cc-widget-item-title"><%= r.reasonCategory.replace(/-/g, ' ') %></div>
-              <div class="cc-widget-item-sub"><%= new Date(r.createdAt).toLocaleDateString() %></div>
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p class="cc-widget-empty">No reports on file.</p>
-        <% } %>
-      </a>
+      </div>
       <% } %>
 
-      <% if (loggedInCandidateSlug) { %>
-      <a href="/candidate-dashboard/my-reports" class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Your Filed Reports</h4>
-          <span class="cc-widget-view-all">View All →</span>
+      <% if (loggedInCandidateSlug && !onMyReports) { %>
+      <div class="cc-nav-item-group">
+        <a href="/candidate-dashboard/my-reports" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></svg></span>
+          <span class="cc-nav-label">Your Filed Reports</span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
+            <% commandCenterFraudReports.forEach(function(r) { %>
+              <div class="cc-widget-item">
+                <div class="cc-widget-item-title"><%= r.reasonCategory.replace(/-/g, ' ') %></div>
+                <div class="cc-widget-item-sub"><%= new Date(r.createdAt).toLocaleDateString() %></div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="cc-widget-empty">You haven't filed a report.</p>
+          <% } %>
         </div>
-        <% if (commandCenterFraudReports && commandCenterFraudReports.length > 0) { %>
-          <% commandCenterFraudReports.forEach(function(r) { %>
-            <div class="cc-widget-item">
-              <div class="cc-widget-item-title"><%= r.reasonCategory.replace(/-/g, ' ') %></div>
-              <div class="cc-widget-item-sub"><%= new Date(r.createdAt).toLocaleDateString() %></div>
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p class="cc-widget-empty">You haven't filed a report.</p>
-        <% } %>
-      </a>
+      </div>
       <% } %>
 
-      <% if (loggedInCandidateSlug) { %>
-      <a href="/candidate-dashboard/saved-recruiters" class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Saved Recruiters</h4>
-          <span class="cc-widget-view-all">View All →</span>
+      <% if (loggedInCandidateSlug && !onSavedRecruiters) { %>
+      <div class="cc-nav-item-group">
+        <a href="/candidate-dashboard/saved-recruiters" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+          <span class="cc-nav-label">Saved Recruiters</span>
+        </a>
+        <div class="cc-nav-detail">
+          <% if (commandCenterSavedRecruiters && commandCenterSavedRecruiters.length > 0) { %>
+            <% commandCenterSavedRecruiters.forEach(function(sr) { %>
+              <div class="cc-widget-item">
+                <div class="cc-widget-item-title"><%= sr.displayName %></div>
+                <% if (sr.company) { %>
+                  <div class="cc-widget-item-sub"><%= sr.company %></div>
+                <% } %>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="cc-widget-empty">No saved recruiters yet.</p>
+          <% } %>
         </div>
-        <% if (commandCenterSavedRecruiters && commandCenterSavedRecruiters.length > 0) { %>
-          <% commandCenterSavedRecruiters.forEach(function(sr) { %>
-            <div class="cc-widget-item">
-              <div class="cc-widget-item-title"><%= sr.displayName %></div>
-              <% if (sr.company) { %>
-                <div class="cc-widget-item-sub"><%= sr.company %></div>
-              <% } %>
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p class="cc-widget-empty">No saved recruiters yet.</p>
-        <% } %>
-      </a>
+      </div>
       <% } %>
-
-    </div>
+    </nav>
 
     <% if (loggedInCandidateSlug) { %>
-    <div class="cc-tools-row">
-      <div class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Search Recruiters</h4>
+    <div class="cc-sidebar-tools">
+
+      <% if (!onRecruiterSearch) { %>
+      <div class="cc-nav-item-group">
+        <a href="/recruiter-search" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="cc-nav-label">Search Recruiters</span>
+        </a>
+        <div class="cc-nav-detail">
+          <form class="cc-search-widget-form" action="/recruiter-search" method="GET">
+            <input type="text" name="q" class="cc-search-widget-input" placeholder="Search by name, company, or specialty...">
+            <button type="submit" class="cc-search-widget-btn">Go</button>
+          </form>
         </div>
-        <form class="cc-search-widget-form" action="/recruiter-search" method="GET">
-          <input type="text" name="q" class="cc-search-widget-input" placeholder="Search by name, company, or specialty...">
-          <button type="submit" class="cc-search-widget-btn">Go</button>
-        </form>
+      </div>
+      <% } %>
+
+      <div class="cc-nav-item-group">
+        <button type="button" class="cc-nav-item-link cc-nav-item-expand">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+          <span class="cc-nav-label">Email Checker</span>
+        </button>
+        <div class="cc-nav-detail">
+          <form class="cc-search-widget-form" id="email-checker-form">
+            <input type="email" id="email-checker-input" class="cc-search-widget-input" placeholder="Paste a sender's email address..." required>
+            <button type="submit" id="email-checker-btn" class="cc-search-widget-btn">Check</button>
+          </form>
+          <div class="cc-checker-results" id="email-checker-results"></div>
+          <p class="cc-checker-disclaimer">This tool provides informational signals only, not a verdict. Use your own judgment alongside these results.</p>
+        </div>
       </div>
 
-      <div class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Email Checker</h4>
+      <div class="cc-nav-item-group">
+        <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-nav-item-link">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.48 13.52 17 22l-5-3-5 3 1.52-8.48"/></svg></span>
+          <span class="cc-nav-label">Certificate of Verification</span>
+        </a>
+        <div class="cc-nav-detail">
+          <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-certificate-btn">Download Certificate (PDF)</a>
+          <p class="cc-certificate-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
         </div>
-        <form class="cc-search-widget-form" id="email-checker-form">
-          <input type="email" id="email-checker-input" class="cc-search-widget-input" placeholder="Paste a sender's email address..." required>
-          <button type="submit" id="email-checker-btn" class="cc-search-widget-btn">Check</button>
-        </form>
-        <div class="cc-checker-results" id="email-checker-results"></div>
-        <p class="cc-checker-disclaimer">This tool provides informational signals only, not a verdict. Use your own judgment alongside these results.</p>
-      </div>
-
-      <div class="cc-widget">
-        <div class="cc-widget-header">
-          <h4>Certificate of Verification</h4>
-        </div>
-        <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-certificate-btn">Download Certificate (PDF)</a>
-        <p class="cc-certificate-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
       </div>
     </div>
     <% } %>
 
-  </div>
-</div>
+    <div class="cc-sidebar-footer">
+      <div class="cc-nav-item-group">
+        <% if (loggedInCandidateSlug) { %>
+          <a href="/api/candidate/logout" class="cc-nav-item-link">
+        <% } else { %>
+          <a href="/logout" class="cc-nav-item-link">
+        <% } %>
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+          <span class="cc-nav-label">Log Out</span>
+        </a>
+      </div>
+    </div>
+  </aside>
 <% } %>
 
 <main>
   <%- body %>
 </main>
+</div>
 
 <footer>
   <div class="footer-container">
@@ -899,6 +1106,10 @@
     © 2026 PreCheckd LLC. All rights reserved.
   </div>
 </footer>
+
+<% if (ccLoggedIn) { %>
+<script src="/js/command-center-sidebar.js"></script>
+<% } %>
 
 <% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
 <script>

@@ -92,6 +92,7 @@ function buildRecruiterNudges(recruiter) {
 
 app.use(async (req, res, next) => {
   res.locals.isAdminHost = req.hostname === ADMIN_HOSTNAME;
+  res.locals.currentPath = req.path;
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
   res.locals.commandCenterMessages = [];
