@@ -917,9 +917,9 @@
 
       <% if (!onEditPage) { %>
       <div class="cc-nav-item-group">
-        <a href="<%= editHref %>" class="cc-nav-item-link" data-tooltip="Complete Your Profile">
+        <a href="<%= editHref %>" class="cc-nav-item-link" data-tooltip="Edit Your Profile">
           <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></span>
-          <span class="cc-nav-label">Complete Your Profile</span>
+          <span class="cc-nav-label">Edit Your Profile</span>
         </a>
         <div class="cc-nav-detail">
           <% if (commandCenterNudges && commandCenterNudges.length > 0) { %>
@@ -1085,9 +1085,9 @@
       </div>
 
       <div class="cc-nav-item-group">
-        <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-nav-item-link" data-tooltip="Certificate of Verification">
+        <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-nav-item-link" data-tooltip="Download Certificate">
           <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.48 13.52 17 22l-5-3-5 3 1.52-8.48"/></svg></span>
-          <span class="cc-nav-label">Certificate of Verification</span>
+          <span class="cc-nav-label">Download Certificate</span>
         </a>
         <div class="cc-nav-detail">
           <a href="/candidate/<%= loggedInCandidateSlug %>/certificate" class="cc-certificate-btn">Download Certificate (PDF)</a>
