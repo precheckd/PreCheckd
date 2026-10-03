@@ -132,11 +132,22 @@ router.post('/check-email', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Every email is tied to one account sitewide — a recruiter email has
+    // no candidate record to find here, so without this check it would
+    // silently fall through to "start a new candidate signup" instead of
+    // telling them to use the one login.
+    const existingRecruiter = await Recruiter.findOne({ email: normalizedEmail });
+    if (existingRecruiter) {
+      return res.status(400).json({ error: 'This email is registered as a recruiter account. Please use the Log In button instead.' });
+    }
+
     if (recruiterSlug) {
       req.session.candidateRecruiterSlug = recruiterSlug;
     }
 
-    const candidate = await Candidate.findOne({ email: email.trim().toLowerCase() });
+    const candidate = await Candidate.findOne({ email: normalizedEmail });
 
     if (!candidate) {
       return res.json({ exists: false });
@@ -222,6 +233,15 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
     const existingEmail = await Candidate.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Sitewide rule: one email, one account. The /check-email step above
+    // already screens this for the normal signup path, but this route is
+    // reachable directly, so it needs its own check rather than trusting
+    // that gate was used.
+    const existingRecruiterEmail = await Recruiter.findOne({ email });
+    if (existingRecruiterEmail) {
+      return res.status(400).json({ error: 'This email is registered as a recruiter account. Please use the Log In button instead.' });
     }
 
     const existingPhone = await Candidate.findOne({ phone: normalizedPhone });

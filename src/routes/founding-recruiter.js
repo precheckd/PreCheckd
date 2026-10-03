@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Recruiter = require('../models/Recruiter');
+const Candidate = require('../models/Candidate');
 const { sendVerificationEmail, generateVerificationToken } = require('../services/emailService');
 const { isBlockedEmailDomain } = require('../utils/blockedEmailDomains');
 const { checkDomainAge } = require('../utils/domainAgeCheck');
@@ -113,6 +114,13 @@ router.post('/signup', async (req, res) => {
         });
       }
       return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Sitewide rule: one email, one account — a candidate record with
+    // this email means it can't also become a recruiter account.
+    const existingCandidateEmail = await Candidate.findOne({ email });
+    if (existingCandidateEmail) {
+      return res.status(400).json({ error: 'This email is registered as a candidate account. Please use the Log In button instead.' });
     }
 
     const existingPhone = await Recruiter.findOne({ phone: normalizedPhone });

@@ -830,20 +830,22 @@
       <a href="/recruiter-landing" class="nav-btn-outline">Recruiters</a>
       <a href="/candidate-landing" class="nav-btn-outline">Candidates</a>
 
-      <% if (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug) { %>
-        <% if (typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount) { %>
+      <%
+        const navLoggedInRecruiter = typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug;
+        const navLoggedInCandidate = typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug;
+        const navIsClaim = typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount;
+      %>
+
+      <% if (navLoggedInRecruiter) { %>
+        <% if (navIsClaim) { %>
           <a href="/recruiter-dashboard/claim" class="nav-btn-outline is-logged-in">My Account</a>
         <% } else { %>
-          <a href="/recruiter/<%= loggedInRecruiterSlug %>" class="nav-btn-outline is-logged-in">My Recruiter Profile</a>
+          <a href="/recruiter/<%= loggedInRecruiterSlug %>" class="nav-btn-outline is-logged-in">Home</a>
         <% } %>
+      <% } else if (navLoggedInCandidate) { %>
+        <a href="/candidate/<%= loggedInCandidateSlug %>" class="nav-btn-outline is-logged-in">Home</a>
       <% } else { %>
-        <a href="/login" class="nav-btn-outline">Recruiter Login</a>
-      <% } %>
-
-      <% if (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) { %>
-        <a href="/candidate/<%= loggedInCandidateSlug %>" class="nav-btn-outline is-logged-in">My Candidate Profile</a>
-      <% } else { %>
-        <a href="/candidate-signup" class="nav-btn-outline">Candidate Login</a>
+        <a href="/login" class="nav-btn-outline">Log In</a>
       <% } %>
     </nav>
   </div>

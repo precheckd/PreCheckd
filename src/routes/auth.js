@@ -7,7 +7,11 @@ const { sendPasswordResetEmail, generateVerificationToken } = require('../servic
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-// --- Recruiter login: email + password ---
+// --- Unified login: email + password, either account type ---
+// Every email is tied to exactly one account sitewide (enforced at signup
+// in candidate.js and founding-recruiter.js), so a single form can check
+// Recruiter first, then Candidate, and log into whichever one matches —
+// same lookup order /forgot-password already uses for the same reason.
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -16,14 +20,17 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const recruiter = await Recruiter.findOne({ email: email.trim().toLowerCase() });
+    const normalizedEmail = email.trim().toLowerCase();
+    const recruiter = await Recruiter.findOne({ email: normalizedEmail });
+    const candidate = recruiter ? null : await Candidate.findOne({ email: normalizedEmail });
+    const account = recruiter || candidate;
 
-    if (!recruiter || !recruiter.passwordHash) {
-      // Covers both "no such account" and "account predates passwords" —
-      // in the second case we nudge them toward the one path that works
-      // (forgot-password doubles as first-time set-password) rather than
-      // a dead-end "incorrect password".
-      if (recruiter && !recruiter.passwordHash) {
+    if (!account || !account.passwordHash) {
+      // Covers "no such account" and "account predates passwords" — in the
+      // second case, nudge toward the one path that works (forgot-password
+      // doubles as first-time set-password) rather than a dead-end
+      // "incorrect password".
+      if (account && !account.passwordHash) {
         return res.status(400).json({
           error: 'This account hasn\'t set a password yet. Use "Forgot password?" below to set one.'
         });
@@ -31,27 +38,40 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Incorrect email or password.' });
     }
 
-    const matches = await bcrypt.compare(password, recruiter.passwordHash);
+    const matches = await bcrypt.compare(password, account.passwordHash);
     if (!matches) {
       return res.status(400).json({ error: 'Incorrect email or password.' });
     }
 
-    if (recruiter.isSuspended) {
-      return res.status(403).json({
-        error: 'Your account has been suspended. Contact us directly for details.'
+    if (recruiter) {
+      if (recruiter.isSuspended) {
+        return res.status(403).json({
+          error: 'Your account has been suspended. Contact us directly for details.'
+        });
+      }
+
+      delete req.session.candidateId;
+      req.session.recruiterId = recruiter._id.toString();
+
+      return res.json({
+        success: true,
+        accountType: 'recruiter',
+        accountTier: recruiter.accountTier,
+        slug: recruiter.slug
       });
     }
 
-    // Clear any stale candidate session from earlier in this browser —
-    // otherwise res.locals in app.js sets both loggedInCandidateSlug and
-    // loggedInRecruiterSlug, and both account types' sidebar tools render
-    // at once.
-    delete req.session.candidateId;
-    req.session.recruiterId = recruiter._id.toString();
+    delete req.session.recruiterId;
+    req.session.candidateId = candidate._id.toString();
 
-    res.json({ success: true, accountTier: recruiter.accountTier, slug: recruiter.slug });
+    res.json({
+      success: true,
+      accountType: 'candidate',
+      slug: candidate.slug,
+      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.isIdentityVerified)
+    });
   } catch (error) {
-    console.error('Error logging in recruiter:', error);
+    console.error('Error logging in:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
