@@ -42,6 +42,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Clear any stale candidate session from earlier in this browser —
+    // otherwise res.locals in app.js sets both loggedInCandidateSlug and
+    // loggedInRecruiterSlug, and both account types' sidebar tools render
+    // at once.
+    delete req.session.candidateId;
     req.session.recruiterId = recruiter._id.toString();
 
     res.json({ success: true, accountTier: recruiter.accountTier, slug: recruiter.slug });
@@ -160,6 +165,7 @@ router.post('/reset-password/:token', async (req, res) => {
     await account.save();
 
     if (recruiter) {
+      delete req.session.candidateId;
       req.session.recruiterId = recruiter._id.toString();
       return res.json({
         success: true,
@@ -169,6 +175,7 @@ router.post('/reset-password/:token', async (req, res) => {
       });
     }
 
+    delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
     res.json({
       success: true,

@@ -152,6 +152,10 @@ router.post('/signup', async (req, res) => {
 
     await recruiter.save();
 
+    // A stale candidate session from earlier in the same browser shouldn't
+    // carry over — otherwise both account types' sidebar tools/widgets end
+    // up rendering at once (res.locals sets both loggedIn*Slug in app.js).
+    delete req.session.candidateId;
     req.session.recruiterId = recruiter._id.toString();
     req.session.phone = normalizedPhone;
 

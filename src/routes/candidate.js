@@ -182,6 +182,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Incorrect password. Please try again.' });
     }
 
+    // Clear any stale recruiter session from earlier in this browser —
+    // otherwise res.locals in app.js sets both loggedIn*Slug and both
+    // account types' sidebar tools render at once.
+    delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
     delete req.session.candidatePendingLoginId;
 
@@ -245,6 +249,7 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
 
     await candidate.save();
 
+    delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
     req.session.candidatePhone = normalizedPhone;
 
@@ -379,6 +384,7 @@ router.get('/verify-email', async (req, res) => {
     candidate.emailVerificationExpires = null;
     await candidate.save();
 
+    delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
     res.redirect(`/candidate/${candidate.slug}`);
   } catch (error) {
