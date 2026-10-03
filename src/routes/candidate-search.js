@@ -14,22 +14,49 @@ function requireRecruiterLogin(req, res, next) {
 router.use(requireRecruiterLogin);
 
 // GET /candidate-search — the recruiter-side mirror of /recruiter-search.
-// Same client-side substring-filter pattern: render every eligible
-// candidate server-side with a data-search attribute, let the browser do
-// the filtering. "Eligible" means openToOpportunities and at least
-// identity-verified — no point surfacing a half-signed-up profile.
+// Same client-side substring-filter pattern for role/cert text search:
+// render every eligible candidate server-side with a data-search
+// attribute, let the browser do the filtering. "Eligible" means
+// openToOpportunities and at least identity-verified — no point surfacing
+// a half-signed-up profile.
+//
+// A pinned job location (?lat=&lng=, set client-side via geocoding a
+// typed address) is a separate, server-side filter on top of that: only
+// candidates whose drawn work-area shape contains the pin are returned.
+// Recruiters don't get their own drawing tool — a point is all a job
+// needs, since it's the candidate's shape that decides reach, not a
+// recruiter-chosen radius. Candidates with no drawn shape are excluded
+// once a pin is set, since "no shape" means "anywhere" is unverifiable.
 router.get('/', async (req, res) => {
   try {
-    const candidates = await Candidate.find({
+    const query = {
       openToOpportunities: true,
       isIdentityVerified: true
-    }).sort({ createdAt: -1 });
+    };
+
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+    const hasPin = Number.isFinite(lat) && Number.isFinite(lng) &&
+      lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+
+    if (hasPin) {
+      query.workAreas = {
+        $geoIntersects: {
+          $geometry: { type: 'Point', coordinates: [lng, lat] }
+        }
+      };
+    }
+
+    const candidates = await Candidate.find(query).sort({ createdAt: -1 });
 
     const candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
 
     res.render('candidate-search', {
       candidates: candidatesForView,
       prefilledQuery: req.query.q || '',
+      pinnedLat: hasPin ? lat : null,
+      pinnedLng: hasPin ? lng : null,
+      pinnedLabel: hasPin ? (req.query.label || '') : '',
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {

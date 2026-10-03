@@ -531,6 +531,12 @@
       <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-block;">
         <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>
       </a>
+
+      <div class="section-label" style="margin-top: 1.5rem;">Where You're Willing to Work</div>
+      <p class="cert-hint">Draw the area(s) you're willing to work on a map, instead of a single commute radius. Only candidates whose shape includes a recruiter's job location will show up for it.</p>
+      <a href="/candidate/<%= candidate.slug %>/work-areas" class="btn-cancel" style="display: inline-block;">
+        <%= (candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length) ? 'Edit Work Areas' : 'Draw Work Areas' %>
+      </a>
     </div>
   </div>
 </div>

@@ -233,6 +233,33 @@ const candidateSchema = new mongoose.Schema({
     default: true
   },
 
+  // GeoJSON MultiPolygon of the area(s) a candidate is willing to work —
+  // drawn freehand on a map rather than expressed as a commute radius, so
+  // a candidate can trace exactly where they'll go (e.g. Manhattan but not
+  // Brooklyn) and exclude areas a radius would wrongly include (e.g. across
+  // the Long Island Sound). MultiPolygon natively supports multiple
+  // disjoint shapes, so no extra schema work was needed for that.
+  //
+  // Deliberately no `default` here: a candidate who hasn't drawn anything
+  // should simply omit this field rather than store an empty/invalid
+  // coordinates array, which can fail 2dsphere validation. The 2dsphere
+  // index below still applies — documents without the field are just
+  // excluded from geo queries, which is the desired behavior (no drawn
+  // area means "not matched by a pinned job location" rather than
+  // "matches everywhere").
+  workAreas: {
+    type: {
+      type: String,
+      enum: ['MultiPolygon'],
+    },
+    // Mixed rather than a strictly-typed nested array — GeoJSON
+    // MultiPolygon coordinates nest four levels deep ([polygon][ring]
+    // [point][lng/lat]), and Mongoose's array-of-array casting at that
+    // depth is unreliable. MongoDB validates the shape at the 2dsphere
+    // index itself, so strict schema typing here isn't needed.
+    coordinates: mongoose.Schema.Types.Mixed,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -247,5 +274,7 @@ candidateSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
+candidateSchema.index({ workAreas: '2dsphere' });
 
 module.exports = mongoose.model('Candidate', candidateSchema);

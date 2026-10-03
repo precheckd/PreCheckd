@@ -22,6 +22,7 @@ const emailCheckerRoutes = require('./routes/email-checker');
 const savedRecruitersRoutes = require('./routes/saved-recruiters');
 const certificateRoutes = require('./routes/certificate');
 const candidateVideoRoutes = require('./routes/candidate-video');
+const candidateWorkAreasRoutes = require('./routes/candidate-work-areas');
 const candidateSearchRoutes = require('./routes/candidate-search');
 const fraudRoutes = require('./routes/fraud');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -303,6 +304,7 @@ app.use('/candidate', candidateProfileRoutes);
 app.use('/candidate', candidateEditRoutes);
 app.use('/candidate', certificateRoutes);
 app.use('/candidate', candidateVideoRoutes);
+app.use('/candidate', candidateWorkAreasRoutes);
 app.use('/fraud', fraudRoutes);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');

@@ -49,9 +49,18 @@
 
   // If a query was pre-filled (e.g. arriving from the command center's
   // search widget via ?q=...), run the search automatically on load.
+  // A location pin (filtered server-side already) should also show
+  // results immediately rather than waiting on a text query — the pin
+  // itself is the filter in that case.
   const prefilled = window.PRECHECKD_PREFILLED_QUERY || '';
+  const hasLocationPin = window.PRECHECKD_HAS_LOCATION_PIN || false;
+
   if (prefilled.trim() !== '') {
     runSearch(prefilled);
+  } else if (hasLocationPin) {
+    promptState.classList.add('hidden');
+    emptyState.classList.toggle('hidden', cards.length > 0);
+    grid.classList.toggle('hidden', cards.length === 0);
   } else {
     promptState.classList.remove('hidden');
   }
