@@ -31,21 +31,24 @@ function parseJsonField(value) {
   }
 }
 
-function mergeEntries(newEntries, existingEntries, matchFields) {
+// requiredFields defaults to matchFields when omitted — pass it explicitly
+// when one of the match fields (e.g. certifications' credentialId) is
+// optional in the form and shouldn't cause the whole entry to be dropped
+// just because it's blank.
+function mergeEntries(newEntries, existingEntries, matchFields, requiredFields) {
   if (!Array.isArray(newEntries)) return [];
+  const fieldsThatMustBePresent = requiredFields || matchFields;
+
+  const keyFor = (e) => matchFields.map((f) => (e[f] || '').toString().trim().toLowerCase()).join('|');
 
   const existingByKey = new Map(
-    (existingEntries || []).map((e) => [
-      matchFields.map((f) => (e[f] || '').toString().toLowerCase()).join('|'),
-      e
-    ])
+    (existingEntries || []).map((e) => [keyFor(e), e])
   );
 
   return newEntries
-    .filter((e) => matchFields.every((f) => e[f] && e[f].toString().trim()))
+    .filter((e) => fieldsThatMustBePresent.every((f) => e[f] && e[f].toString().trim()))
     .map((e) => {
-      const key = matchFields.map((f) => e[f].toString().trim().toLowerCase()).join('|');
-      const existing = existingByKey.get(key);
+      const existing = existingByKey.get(keyFor(e));
       if (existing) {
         return existing;
       }
@@ -255,7 +258,7 @@ router.post('/:slug/edit', upload.fields([
 
     candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
     candidate.educationHistory = mergeEntries(submittedEducationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
-    candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId']);
+    candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId'], ['name']);
 
     let resumeParseError = null;
     if (resumeFile) {
