@@ -224,6 +224,15 @@ const candidateSchema = new mongoose.Schema({
     default: false
   },
 
+  // Whether this candidate shows up in recruiters' candidate search.
+  // Defaults to on — a candidate who built a profile here is assumed to
+  // want to be found, and a surprise opt-in step would just mean quieter
+  // profiles with no obvious reason why. Toggled off from the edit page.
+  openToOpportunities: {
+    type: Boolean,
+    default: true
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

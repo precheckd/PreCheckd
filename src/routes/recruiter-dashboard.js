@@ -2,11 +2,34 @@ const express = require('express');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
 const Recruiter = require('../models/Recruiter');
+const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
+const { getAnonymizedCandidateView, getFullCandidateView } = require('../utils/candidateAnonymization');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
 } = require('../services/emailService');
+
+const FULL_ACCESS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+// A 'requested' full-access state that's sat unanswered past its window
+// is treated as if it never happened — same expiry pattern as the
+// connection request itself — so it can be requested again rather than
+// being stuck open forever. Mutates and saves the request when it's
+// found to be expired; callers can rely on request.fullAccessStatus
+// being accurate immediately after this returns.
+async function expireStaleFullAccessRequest(request) {
+  if (
+    request.fullAccessStatus === 'requested' &&
+    request.fullAccessExpiresAt &&
+    request.fullAccessExpiresAt.getTime() < Date.now()
+  ) {
+    request.fullAccessStatus = 'none';
+    request.fullAccessRequestedAt = null;
+    request.fullAccessExpiresAt = null;
+    await request.save();
+  }
+}
 
 function requireRecruiterLogin(req, res, next) {
   if (!req.session.recruiterId) {
@@ -92,8 +115,13 @@ router.get('/requests', async (req, res) => {
       .populate('candidateId')
       .sort({ createdAt: -1 });
 
-    // Anonymize pending requests — recruiter shouldn't see identifying
-    // info until they've made an accept/decline decision. Accepted/declined
+    for (const r of requests) {
+      await expireStaleFullAccessRequest(r);
+    }
+
+    // Pending requests go through the same anonymization used on the
+    // candidate-search results — recruiter shouldn't see identifying info
+    // until they've made an accept/decline decision. Accepted/declined
     // requests show full real info, since the decision's already been made.
     const requestsForView = requests.map((r) => {
       const candidate = r.candidateId;
@@ -103,30 +131,87 @@ router.get('/requests', async (req, res) => {
         _id: r._id,
         status: r.status,
         note: r.note,
+        initiatedBy: r.initiatedBy,
         createdAt: r.createdAt,
         respondedAt: r.respondedAt,
-        candidate: {
-          displayName: isPending ? `Candidate ${candidate.anonId}` : `${candidate.firstName} ${candidate.lastName}`,
-          photoUrl: isPending ? null : candidate.profilePhotoUrl,
-          workHistory: (candidate.workHistory || []).map((job) => ({
-            jobTitle: job.jobTitle,
-            employerName: isPending ? null : job.employerName,
-            startDate: job.startDate,
-            endDate: job.endDate,
-            verified: job.verified
-          })),
-          educationHistory: candidate.educationHistory || [],
-          certifications: candidate.certifications || [],
-          bio: candidate.bio,
-          email: isPending ? null : candidate.email,
-          phone: isPending ? null : candidate.phone
-        }
+        fullAccessStatus: r.fullAccessStatus,
+        candidate: isPending ? getAnonymizedCandidateView(candidate) : getFullCandidateView(candidate)
       };
     });
 
     res.render('recruiter-requests', { requests: requestsForView });
   } catch (error) {
     console.error('Error loading recruiter requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// GET /recruiter-dashboard/requests/:id/candidate — full profile view for
+// an accepted connection. Video and resume only render once fullAccessStatus
+// is 'granted' — the view itself shows a "Request Full Access" button when
+// it isn't, rather than this route gating the whole page on it.
+router.get('/requests/:id/candidate', async (req, res) => {
+  try {
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
+
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) {
+      return res.status(403).send('Not authorized.');
+    }
+
+    if (request.status !== 'accepted') {
+      return res.status(403).send('You can only view a full profile once the connection is accepted.');
+    }
+
+    await expireStaleFullAccessRequest(request);
+
+    const candidate = request.candidateId;
+    const hasFullAccess = request.fullAccessStatus === 'granted';
+
+    res.render('recruiter-candidate-profile', {
+      requestId: request._id,
+      fullAccessStatus: request.fullAccessStatus,
+      candidate: getFullCandidateView(candidate),
+      video: hasFullAccess ? {
+        introVideoUrl: candidate.introVideoUrl,
+        interviewVideos: candidate.interviewVideos || []
+      } : null,
+      resumeUrl: hasFullAccess ? candidate.resumeUrl : null,
+      title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`
+    });
+  } catch (error) {
+    console.error('Error loading recruiter candidate profile:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-dashboard/requests/:id/request-full-access — bundled
+// video + resume access request. Only allowed once the connection itself
+// is accepted, and only from a 'none' state — a 'denied' decision is
+// final for this connection, and 'requested'/'granted' are no-ops here.
+router.post('/requests/:id/request-full-access', async (req, res) => {
+  try {
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
+
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) {
+      return res.status(403).send('Not authorized.');
+    }
+
+    if (request.status !== 'accepted') {
+      return res.status(403).send('You can only request full access on an accepted connection.');
+    }
+
+    await expireStaleFullAccessRequest(request);
+
+    if (request.fullAccessStatus === 'none') {
+      request.fullAccessStatus = 'requested';
+      request.fullAccessRequestedAt = new Date();
+      request.fullAccessExpiresAt = new Date(Date.now() + FULL_ACCESS_WINDOW_MS);
+      await request.save();
+    }
+
+    res.redirect(`/recruiter-dashboard/requests/${request._id}/candidate`);
+  } catch (error) {
+    console.error('Error requesting full access:', error);
     res.status(500).send('Server error');
   }
 });

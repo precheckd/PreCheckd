@@ -877,6 +877,7 @@
     const onVerificationPage = cp === verificationHref;
     const onEditPage = cp === editHref;
     const onRecruiterSearch = cp === '/recruiter-search';
+    const onCandidateSearch = cp === '/candidate-search';
   %>
   <aside class="cc-sidebar cc-collapsed" id="cc-sidebar">
     <div class="cc-sidebar-header">
@@ -1094,6 +1095,26 @@
           <p class="cc-certificate-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
         </div>
       </div>
+    </div>
+    <% } %>
+
+    <% if (loggedInRecruiterSlug) { %>
+    <div class="cc-sidebar-tools">
+
+      <% if (!onCandidateSearch) { %>
+      <div class="cc-nav-item-group">
+        <a href="/candidate-search" class="cc-nav-item-link" data-tooltip="Find Candidates">
+          <span class="cc-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="cc-nav-label">Find Candidates</span>
+        </a>
+        <div class="cc-nav-detail">
+          <form class="cc-search-widget-form" action="/candidate-search" method="GET">
+            <input type="text" name="q" class="cc-search-widget-input" placeholder="Search by job title or certification...">
+            <button type="submit" class="cc-search-widget-btn">Go</button>
+          </form>
+        </div>
+      </div>
+      <% } %>
     </div>
     <% } %>
 

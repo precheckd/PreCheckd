@@ -300,6 +300,19 @@
               </form>
             </div>
           <% } %>
+
+          <% if (request.status === 'accepted') { %>
+            <div class="request-actions">
+              <a href="/recruiter-dashboard/requests/<%= request._id %>/candidate" class="btn-accept" style="text-decoration: none; display: inline-block;">View Full Profile</a>
+              <% if (request.fullAccessStatus === 'requested') { %>
+                <span class="status-badge" style="background: #3B5F6A; color: #B9C7CA;">Full Access Requested</span>
+              <% } else if (request.fullAccessStatus === 'granted') { %>
+                <span class="status-badge status-accepted">Full Access Granted</span>
+              <% } else if (request.fullAccessStatus === 'denied') { %>
+                <span class="status-badge status-declined">Full Access Denied</span>
+              <% } %>
+            </div>
+          <% } %>
         </div>
       <% }); %>
     </div>

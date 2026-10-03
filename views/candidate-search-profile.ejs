@@ -1,0 +1,310 @@
+<%# page title: PreCheckd - Candidate Preview %>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #1F363C;
+      min-height: 100vh;
+    }
+
+    main {
+      padding: 3rem 1.5rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #8FA6AC;
+      font-size: 0.9rem;
+      text-decoration: none;
+      margin-bottom: 1.5rem;
+    }
+
+    .back-link:hover { color: #C7D1CF; }
+
+    .profile-card {
+      background: #2A4750;
+      border: 1px solid #3B5860;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .profile-top {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .avatar-circle {
+      width: 72px;
+      height: 72px;
+      background: #4A6F7B;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #F2F4F3;
+      flex-shrink: 0;
+    }
+
+    .profile-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #F2F4F3;
+    }
+
+    .anon-note {
+      color: #8FA6AC;
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-top: 0.15rem;
+    }
+
+    .verify-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 1.25rem 0;
+    }
+
+    .verify-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.3rem 0.65rem;
+      border-radius: 20px;
+    }
+
+    .verify-badge.verified { background: #1E3A2E; color: #4ADE80; }
+    .verify-badge.pending { background: #3A2020; color: #FF8A8A; }
+
+    .section-label {
+      color: #8FA6AC;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 0.72rem;
+      margin: 1.5rem 0 0.6rem;
+    }
+
+    .history-line {
+      color: #C7D1CF;
+      font-size: 0.92rem;
+      padding: 0.3rem 0;
+    }
+
+    .employer-hidden, .school-hidden {
+      color: #8FA6AC;
+      font-style: italic;
+    }
+
+    .cert-chip {
+      display: inline-block;
+      background: #24404A;
+      color: #C7D1CF;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      margin: 0.2rem 0.3rem 0 0;
+    }
+
+    .cert-chip.verified::before {
+      content: "✓ ";
+      color: #4ADE80;
+    }
+
+    .connect-section {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #3B5860;
+    }
+
+    .connect-section p {
+      color: #C7D1CF;
+      font-size: 0.9rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .connect-section textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 0.75rem 1rem;
+      border: 1px solid #4A6F7B;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #24404A;
+      color: #F2F4F3;
+      resize: vertical;
+    }
+
+    .connect-section textarea::placeholder { color: #7A9096; }
+
+    .connect-section textarea:focus {
+      outline: none;
+      border-color: #2ECC71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+    }
+
+    .connect-submit {
+      margin-top: 0.85rem;
+      background: #2ECC71;
+      color: #1F363C;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .connect-submit:hover { background: #4ADE80; }
+    .connect-submit:disabled { opacity: 0.6; cursor: default; }
+
+    .connect-error {
+      color: #FF8A8A;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .connect-status {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #3B5860;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-pending { background: #3B5F6A; color: #B9C7CA; }
+    .status-accepted { background: #1E3A2E; color: #4ADE80; }
+    .status-declined { background: #3A2020; color: #FF8A8A; }
+  </style>
+
+  <a href="/candidate-search" class="back-link">&larr; Back to search</a>
+
+  <div class="profile-card">
+    <div class="profile-top">
+      <div class="avatar-circle">?</div>
+      <div>
+        <div class="profile-name">Candidate <%= candidate.anonId %></div>
+        <div class="anon-note">Name, employer, and school stay hidden until a connection is accepted</div>
+      </div>
+    </div>
+
+    <div class="verify-badges">
+      <span class="verify-badge <%= candidate.verification.identityVerified ? 'verified' : 'pending' %>">Identity <%= candidate.verification.identityVerified ? 'Verified' : 'Pending' %></span>
+      <span class="verify-badge <%= candidate.verification.emailVerified ? 'verified' : 'pending' %>">Email <%= candidate.verification.emailVerified ? 'Verified' : 'Pending' %></span>
+      <span class="verify-badge <%= candidate.verification.phoneVerified ? 'verified' : 'pending' %>">Phone <%= candidate.verification.phoneVerified ? 'Verified' : 'Pending' %></span>
+    </div>
+
+    <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
+      <div class="section-label">Work History</div>
+      <% candidate.workHistory.forEach(function(job) { %>
+        <div class="history-line">
+          <%= job.jobTitle %> at <span class="employer-hidden">[employer hidden]</span>
+          (<%= job.startDate || '—' %> — <%= job.endDate || 'Present' %>)
+        </div>
+      <% }); %>
+    <% } %>
+
+    <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
+      <div class="section-label">Education</div>
+      <% candidate.educationHistory.forEach(function(edu) { %>
+        <div class="history-line">
+          <%= edu.degree %>, <span class="school-hidden">[school hidden]</span>
+          <% if (edu.graduationDate) { %>(<%= edu.graduationDate %>)<% } %>
+        </div>
+      <% }); %>
+    <% } %>
+
+    <% if (candidate.certifications && candidate.certifications.length > 0) { %>
+      <div class="section-label">Certifications</div>
+      <div>
+        <% candidate.certifications.forEach(function(cert) { %>
+          <span class="cert-chip <%= cert.verified ? 'verified' : '' %>"><%= cert.name %></span>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <% if (existingRequest) { %>
+      <div class="connect-status">
+        <% if (existingRequest.status === 'pending') { %>
+          <span class="status-badge status-pending">Request Pending</span>
+          <p style="color: #8FA6AC; font-size: 0.85rem; margin-top: 0.5rem;">You've already reached out to this candidate — waiting on a response.</p>
+        <% } else if (existingRequest.status === 'accepted') { %>
+          <span class="status-badge status-accepted">Connected</span>
+          <p style="color: #8FA6AC; font-size: 0.85rem; margin-top: 0.5rem;"><a href="/recruiter-dashboard/requests" style="color: #4ADE80; text-decoration: none; font-weight: 600;">View full profile in your connection requests &rarr;</a></p>
+        <% } else { %>
+          <span class="status-badge status-declined">Declined</span>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="connect-section" id="connect-section">
+        <p>Request to connect with this candidate. Let them know what role or context you're reaching out about — this is shown to them along with your request.</p>
+        <form id="connect-form">
+          <textarea id="connect-note" name="note" placeholder="e.g. &quot;Reaching out about a Senior Backend Engineer role at Acme Co.&quot;" required></textarea>
+          <div>
+            <button type="submit" class="connect-submit" id="connect-submit-btn">Request to Connect</button>
+          </div>
+          <div class="connect-error hidden" id="connect-error"></div>
+        </form>
+      </div>
+    <% } %>
+  </div>
+
+<script>
+  (function () {
+    var form = document.getElementById('connect-form');
+    if (!form) return;
+
+    var btn = document.getElementById('connect-submit-btn');
+    var errorBox = document.getElementById('connect-error');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        var note = document.getElementById('connect-note').value;
+        var res = await fetch(window.location.pathname + '/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note: note })
+        });
+        var data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Something went wrong. Please try again.');
+        }
+
+        document.getElementById('connect-section').innerHTML =
+          '<span class="status-badge status-pending">Request Sent</span>' +
+          '<p style="color: #8FA6AC; font-size: 0.85rem; margin-top: 0.5rem;">' +
+          (data.alreadySent ? 'You had already sent this candidate a request.' : 'Your connection request has been sent.') +
+          '</p>';
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Request to Connect';
+      }
+    });
+  })();
+</script>

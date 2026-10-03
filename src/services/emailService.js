@@ -113,6 +113,36 @@ async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, r
   });
 }
 
+// Recruiter-facing counterparts to sendConnectionAcceptedEmail/
+// sendConnectionDeclinedEmail above, for when the CANDIDATE is the one
+// responding — i.e. the connection request was recruiter-initiated
+// (via /candidate-search), so the recruiter is the party waiting on a
+// decision rather than the one who made it.
+async function sendRecruiterConnectionAcceptedEmail(recruiterEmail, recruiterFirstName, candidateDisplayName) {
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: recruiterEmail,
+    subject: `${candidateDisplayName} accepted your connection request`,
+    html: `
+      <p>Hi ${recruiterFirstName},</p>
+      <p><strong>${candidateDisplayName}</strong> accepted your connection request on PreCheckd.</p>
+      <p>You can now view their full profile and message them directly through your PreCheckd dashboard.</p>
+    `,
+  });
+}
+
+async function sendRecruiterConnectionDeclinedEmail(recruiterEmail, recruiterFirstName, candidateDisplayName) {
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: recruiterEmail,
+    subject: `Update on your connection request`,
+    html: `
+      <p>Hi ${recruiterFirstName},</p>
+      <p><strong>${candidateDisplayName}</strong> declined your connection request on PreCheckd.</p>
+    `,
+  });
+}
+
 async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subject) {
   const inboxUrl = `${process.env.APP_BASE_URL}/messages`;
 
@@ -279,6 +309,8 @@ module.exports = {
   sendCandidateVerificationLink,
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail,
+  sendRecruiterConnectionAcceptedEmail,
+  sendRecruiterConnectionDeclinedEmail,
   sendNewMessageEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,

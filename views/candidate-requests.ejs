@@ -199,26 +199,172 @@
     font-weight: 600;
   }
 
+  .requests-section-title {
+    max-width: 900px;
+    margin: 0 auto 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #F2F4F3;
+  }
+
+  .requests-section + .requests-section-title {
+    margin-top: 2.5rem;
+  }
+
+  .request-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .request-actions form {
+    display: inline;
+  }
+
+  .btn-accept {
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-accept:hover { background: #4ADE80; }
+
+  .btn-decline {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-decline:hover { background: #24404A; color: #F2F4F3; }
+
+  .full-access-note {
+    background: #24404A;
+    border-left: 3px solid #4A6F7B;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    color: #C7D1CF;
+    font-size: 0.88rem;
+    margin-top: 1rem;
+  }
+
+  .status-requested { background: #3B5F6A; color: #B9C7CA; }
+
   @media (max-width: 768px) {
     .requests-content {
       padding: 1rem;
+    }
+
+    .request-actions {
+      flex-direction: column;
     }
   }
 </style>
 
 <div class="requests-content">
   <div class="requests-header">
-    <h1>My Connection Requests</h1>
-    <p>Recruiters you've reached out to, and the status of each request.</p>
+    <h1>Connection Requests</h1>
+    <p>Recruiters who've reached out to you, and the status of requests you've sent.</p>
   </div>
 
-  <% if (requests.length === 0) { %>
+  <div class="requests-section">
+  <div class="requests-section-title">Received from Recruiters</div>
+  <% if (receivedRequests.length === 0) { %>
+    <div class="empty-state">
+      <p>No recruiters have reached out yet.</p>
+    </div>
+  <% } else { %>
+    <div class="requests-list">
+      <% receivedRequests.forEach(function(request) { %>
+        <% const recruiter = request.recruiter; %>
+        <div class="request-card" id="request-<%= request._id %>">
+          <div class="request-top">
+            <div class="request-name-group">
+              <% if (recruiter.photoUrl) { %>
+                <div class="request-photo"><img src="<%= recruiter.photoUrl %>" alt=""></div>
+              <% } else { %>
+                <div class="request-avatar-placeholder"><%= recruiter.name.charAt(0) %></div>
+              <% } %>
+              <div>
+                <div class="request-name"><a href="/recruiter/<%= recruiter.slug %>"><%= recruiter.name %></a></div>
+                <% if (recruiter.company) { %>
+                  <div class="request-company"><%= recruiter.company %></div>
+                <% } %>
+                <div class="request-date">Received <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+              </div>
+            </div>
+            <% if (request.status === 'pending') { %>
+              <span class="status-badge status-pending">Pending</span>
+            <% } else if (request.status === 'accepted') { %>
+              <span class="status-badge status-accepted">Accepted</span>
+            <% } else if (request.status === 'declined') { %>
+              <span class="status-badge status-declined">Declined</span>
+            <% } %>
+          </div>
+
+          <% if (request.note) { %>
+            <div class="request-note"><%= request.note %></div>
+          <% } %>
+
+          <% if (request.status === 'pending') { %>
+            <div class="request-actions">
+              <form action="/candidate-dashboard/requests/<%= request._id %>/accept" method="POST">
+                <button type="submit" class="btn-accept">Accept</button>
+              </form>
+              <form action="/candidate-dashboard/requests/<%= request._id %>/decline" method="POST">
+                <button type="submit" class="btn-decline">Decline</button>
+              </form>
+            </div>
+          <% } %>
+
+          <% if (request.status === 'accepted' && recruiter.email) { %>
+            <div class="contact-info">✓ Contact: <%= recruiter.email %></div>
+            <div class="accepted-actions">
+              <a href="/messages/compose?connectionRequestId=<%= request._id %>" class="btn-message">Send Message</a>
+            </div>
+          <% } %>
+
+          <% if (request.status === 'accepted' && request.fullAccessStatus === 'requested') { %>
+            <div class="full-access-note">
+              <%= recruiter.name %> is requesting full access to your video introduction, interview answers, and resume.
+            </div>
+            <div class="request-actions">
+              <form action="/candidate-dashboard/requests/<%= request._id %>/grant-full-access" method="POST">
+                <button type="submit" class="btn-accept">Grant Full Access</button>
+              </form>
+              <form action="/candidate-dashboard/requests/<%= request._id %>/deny-full-access" method="POST">
+                <button type="submit" class="btn-decline">Deny</button>
+              </form>
+            </div>
+          <% } else if (request.status === 'accepted' && request.fullAccessStatus === 'granted') { %>
+            <div class="full-access-note">You've granted <%= recruiter.name %> full access to your video and resume.</div>
+          <% } else if (request.status === 'accepted' && request.fullAccessStatus === 'denied') { %>
+            <div class="full-access-note">You denied <%= recruiter.name %>'s request for full access.</div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+  </div>
+
+  <div class="requests-section-title">Sent by You</div>
+  <% if (sentRequests.length === 0) { %>
     <div class="empty-state">
       <p>You haven't sent any connection requests yet. <a href="/recruiter-search">Browse recruiters</a> to get started.</p>
     </div>
   <% } else { %>
     <div class="requests-list">
-      <% requests.forEach(function(request) { %>
+      <% sentRequests.forEach(function(request) { %>
         <% const recruiter = request.recruiter; %>
         <div class="request-card" id="request-<%= request._id %>">
           <div class="request-top">

@@ -1,0 +1,261 @@
+<style>
+  .cprofile-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .cprofile-header {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    background: #2A4750;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid #3B5860;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .cprofile-photo {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .cprofile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cprofile-avatar-circle {
+    width: 100px;
+    height: 100px;
+    background: #2ECC71;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #1F363C;
+    flex-shrink: 0;
+  }
+
+  .cprofile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .cprofile-bio {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .cprofile-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .cprofile-section {
+    background: #2A4750;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid #3B5860;
+  }
+
+  .cprofile-section h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #F2F4F3;
+    margin-bottom: 1.25rem;
+  }
+
+  .detail-entry {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #3B5860;
+  }
+
+  .detail-entry:last-child { border-bottom: none; }
+
+  .detail-title { color: #F2F4F3; font-weight: 600; font-size: 0.95rem; }
+  .detail-sub { color: #B9C7CA; font-size: 0.85rem; margin-top: 0.1rem; }
+  .detail-dates { color: #8FA6AC; font-size: 0.78rem; margin-top: 0.25rem; }
+
+  .cert-chip {
+    display: inline-block;
+    background: #24404A;
+    color: #C7D1CF;
+    font-size: 0.82rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    margin: 0.2rem 0.3rem 0 0;
+  }
+
+  .cert-chip.verified::before { content: "✓ "; color: #4ADE80; }
+
+  .contact-line {
+    color: #4ADE80;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .full-access-locked {
+    text-align: center;
+    padding: 1.5rem;
+    color: #8FA6AC;
+  }
+
+  .full-access-locked p { margin-bottom: 1rem; font-size: 0.9rem; }
+
+  .btn-request-access {
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-request-access:hover { background: #4ADE80; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .status-requested { background: #3B5F6A; color: #B9C7CA; }
+  .status-denied { background: #3A2020; color: #FF8A8A; }
+
+  .resume-link {
+    display: inline-block;
+    background: #2ECC71;
+    color: #1F363C;
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+
+  .resume-link:hover { background: #4ADE80; }
+</style>
+
+<%
+  const hasBio = candidate.bio && candidate.bio.trim();
+%>
+
+<div class="cprofile-content">
+  <div class="cprofile-header">
+    <% if (candidate.photoUrl) { %>
+      <div class="cprofile-photo"><img src="<%= candidate.photoUrl %>" alt="<%= candidate.displayName %>"></div>
+    <% } else { %>
+      <div class="cprofile-avatar-circle"><%= candidate.displayName.charAt(0).toUpperCase() %></div>
+    <% } %>
+    <div>
+      <div class="cprofile-name"><%= candidate.displayName %></div>
+      <% if (hasBio) { %><p class="cprofile-bio"><%= candidate.bio %></p><% } %>
+      <% if (candidate.email || candidate.phone) { %>
+        <div class="contact-line">
+          <% if (candidate.email) { %><%= candidate.email %><% } %>
+          <% if (candidate.email && candidate.phone) { %> · <% } %>
+          <% if (candidate.phone) { %><%= candidate.phone %><% } %>
+        </div>
+      <% } %>
+      <p style="margin-top: 0.85rem;">
+        <a href="/messages/compose?connectionRequestId=<%= requestId %>" style="color: #4ADE80; font-size: 0.9rem; font-weight: 600; text-decoration: none;">Send Message</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="cprofile-wrapper" style="margin-bottom: 1.5rem;">
+    <div class="cprofile-section">
+      <h3>Video &amp; Resume</h3>
+      <% if (video) { %>
+        <% if (video.introVideoUrl) { %>
+          <p class="detail-title" style="margin-bottom: 0.5rem;">Video Introduction</p>
+          <video src="<%= video.introVideoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E; margin-bottom: 1.25rem;"></video>
+        <% } %>
+        <% (video.interviewVideos || []).filter(function(v) { return v.videoUrl; }).forEach(function(v) { %>
+          <p class="detail-title" style="margin-bottom: 0.5rem;"><%= v.question %></p>
+          <video src="<%= v.videoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E; margin-bottom: 1.25rem;"></video>
+        <% }); %>
+        <% if (resumeUrl) { %>
+          <a href="<%= resumeUrl %>" class="resume-link" target="_blank" rel="noopener">Download Resume</a>
+        <% } %>
+      <% } else { %>
+        <div class="full-access-locked">
+          <% if (fullAccessStatus === 'requested') { %>
+            <span class="status-badge status-requested">Full Access Requested</span>
+            <p style="margin-top: 0.75rem;">Waiting on <%= candidate.displayName %> to approve access to their videos and resume.</p>
+          <% } else if (fullAccessStatus === 'denied') { %>
+            <span class="status-badge status-denied">Full Access Denied</span>
+            <p style="margin-top: 0.75rem;"><%= candidate.displayName %> declined this request.</p>
+          <% } else { %>
+            <p>Video introductions, interview answers, and the resume on file stay private until <%= candidate.displayName %> approves full access.</p>
+            <form action="/recruiter-dashboard/requests/<%= requestId %>/request-full-access" method="POST">
+              <button type="submit" class="btn-request-access">Request Full Access</button>
+            </form>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="cprofile-wrapper">
+    <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
+    <div class="cprofile-section">
+      <h3>Work History</h3>
+      <% candidate.workHistory.forEach(function(job) { %>
+        <div class="detail-entry">
+          <div class="detail-title"><%= job.jobTitle %></div>
+          <div class="detail-sub"><%= job.employerName %></div>
+          <div class="detail-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+        </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %>
+    <div class="cprofile-section">
+      <h3>Education</h3>
+      <% candidate.educationHistory.forEach(function(edu) { %>
+        <div class="detail-entry">
+          <div class="detail-title"><%= edu.degree %></div>
+          <div class="detail-sub"><%= edu.schoolName %></div>
+          <div class="detail-dates"><%= edu.graduationDate %></div>
+        </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <% if (candidate.certifications && candidate.certifications.length > 0) { %>
+    <div class="cprofile-section">
+      <h3>Certifications</h3>
+      <div>
+        <% candidate.certifications.forEach(function(cert) { %>
+          <span class="cert-chip <%= cert.verified ? 'verified' : '' %>"><%= cert.name %></span>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>

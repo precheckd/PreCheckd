@@ -67,6 +67,30 @@
     margin-top: 0.2rem;
   }
 
+  .open-to-opportunities-label {
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+
+  .open-to-opportunities-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-weight: 600;
+    color: #F2F4F3;
+    font-size: 0.9rem;
+  }
+
+  .open-to-opportunities-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+    accent-color: #2ECC71;
+  }
+
   input,
   textarea {
     padding: 0.75rem;
@@ -459,6 +483,14 @@
 
         <label>Bio <span class="label-hint">(optional)</span>
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
+        </label>
+
+        <label class="open-to-opportunities-label">
+          <span class="open-to-opportunities-row">
+            <input type="checkbox" name="openToOpportunities" value="true" <%= candidate.openToOpportunities !== false ? 'checked' : '' %>>
+            <span>Open to opportunities — show my anonymized profile to recruiters searching PreCheckd</span>
+          </span>
+          <span class="label-hint">Your name, employer, and school stay hidden until you accept a connection request. Turn this off if you only want to be found through recruiters you reach out to yourself.</span>
         </label>
 
         <div class="section-label">Work History</div>

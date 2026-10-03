@@ -165,12 +165,14 @@ router.post('/:slug/edit', upload.fields([
       return res.status(403).send('You do not have permission to edit this profile.');
     }
 
-    const { bio, credlyUsername } = req.body;
+    const { bio, credlyUsername, openToOpportunities } = req.body;
     const submittedWorkHistory = parseJsonField(req.body.workHistory);
     const submittedEducationHistory = parseJsonField(req.body.educationHistory);
     const submittedCertifications = parseJsonField(req.body.certifications);
 
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
+    // Unchecked checkboxes aren't submitted at all, so absence means false.
+    candidate.openToOpportunities = openToOpportunities === 'true';
 
     const photoFile = req.files?.profilePhoto?.[0];
     const resumeFile = req.files?.resume?.[0];
