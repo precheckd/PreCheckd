@@ -100,6 +100,7 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterMessages = [];
   res.locals.commandCenterUnreadCount = 0;
   res.locals.commandCenterRequests = [];
+  res.locals.commandCenterPendingRequestCount = 0;
   res.locals.commandCenterVerifiedCount = 0;
   res.locals.commandCenterVerifiedTotal = 0;
   res.locals.commandCenterNudges = [];
@@ -138,13 +139,18 @@ app.use(async (req, res, next) => {
         // A claim account has no real profile, messages, or requests yet —
         // skip those widgets entirely rather than show empty/broken ones.
         if (!res.locals.commandCenterIsClaimAccount) {
-          const [recentMessages, unreadCount, recentRequests] = await Promise.all([
+          const [recentMessages, unreadCount, recentRequests, pendingRequestCount] = await Promise.all([
             Message.find({ recipientType: 'recruiter', recipientId: req.session.recruiterId })
               .sort({ sentAt: -1 }).limit(3),
             Message.countDocuments({ recipientType: 'recruiter', recipientId: req.session.recruiterId, readAt: null }),
             ConnectionRequest.find({ recruiterId: req.session.recruiterId })
-              .sort({ createdAt: -1 }).limit(3).populate('candidateId', 'firstName lastName anonId')
+              .sort({ createdAt: -1 }).limit(3).populate('candidateId', 'firstName lastName anonId'),
+            // Only requests waiting on THIS recruiter to act — a request
+            // they sent that's still awaiting the candidate's decision
+            // isn't something for a badge to nag them about.
+            ConnectionRequest.countDocuments({ recruiterId: req.session.recruiterId, status: 'pending', initiatedBy: { $ne: 'recruiter' } })
           ]);
+          res.locals.commandCenterPendingRequestCount = pendingRequestCount;
 
           res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
             if (m.senderType === 'system') {
@@ -202,15 +208,19 @@ app.use(async (req, res, next) => {
         }));
         res.locals.commandCenterFraudReportCount = fraudReportCount;
 
-        const [recentMessages, unreadCount, recentRequests, savedRecruiters] = await Promise.all([
+        const [recentMessages, unreadCount, recentRequests, savedRecruiters, pendingRequestCount] = await Promise.all([
           Message.find({ recipientType: 'candidate', recipientId: req.session.candidateId })
             .sort({ sentAt: -1 }).limit(3),
           Message.countDocuments({ recipientType: 'candidate', recipientId: req.session.candidateId, readAt: null }),
           ConnectionRequest.find({ candidateId: req.session.candidateId })
             .sort({ createdAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company'),
           SavedRecruiter.find({ candidateId: req.session.candidateId })
-            .sort({ savedAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company slug')
+            .sort({ savedAt: -1 }).limit(3).populate('recruiterId', 'firstName lastName company slug'),
+          // Only requests waiting on THIS candidate to act — see the
+          // identical comment on the recruiter branch above.
+          ConnectionRequest.countDocuments({ candidateId: req.session.candidateId, status: 'pending', initiatedBy: { $ne: 'candidate' } })
         ]);
+        res.locals.commandCenterPendingRequestCount = pendingRequestCount;
 
         res.locals.commandCenterMessages = await Promise.all(recentMessages.map(async (m) => {
           const sender = m.senderType === 'recruiter'

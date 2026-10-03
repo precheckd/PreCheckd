@@ -136,6 +136,50 @@
       color: #1F363C;
     }
 
+    /* Top-bar icon buttons (Messages, Connection Requests) — LinkedIn-style
+       quick-access icons for the handful of things people check constantly,
+       sitting alongside the existing Home/Log In buttons. */
+    .nav-icon-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #C7D1CF;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-icon-btn:hover {
+      background: #2A4750;
+      color: #F2F4F3;
+    }
+
+    .nav-icon-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .nav-icon-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 8px;
+      background: #E53E3E;
+      color: #F2F4F3;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 16px;
+      text-align: center;
+    }
+
     /* ===== Command Center Sidebar ===== */
     .cc-page-shell {
       display: flex;
@@ -834,7 +878,21 @@
         const navLoggedInRecruiter = typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug;
         const navLoggedInCandidate = typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug;
         const navIsClaim = typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount;
+        const navRequestsHref = navLoggedInCandidate ? '/candidate-dashboard/requests' : '/recruiter-dashboard/requests';
+        const navUnreadCount = typeof commandCenterUnreadCount !== 'undefined' ? commandCenterUnreadCount : 0;
+        const navPendingRequestCount = typeof commandCenterPendingRequestCount !== 'undefined' ? commandCenterPendingRequestCount : 0;
       %>
+
+      <% if ((navLoggedInRecruiter || navLoggedInCandidate) && !navIsClaim) { %>
+        <a href="/messages" class="nav-icon-btn" aria-label="Messages" title="Messages">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          <% if (navUnreadCount > 0) { %><span class="nav-icon-badge"><%= navUnreadCount > 9 ? '9+' : navUnreadCount %></span><% } %>
+        </a>
+        <a href="<%= navRequestsHref %>" class="nav-icon-btn" aria-label="Connection Requests" title="Connection Requests">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <% if (navPendingRequestCount > 0) { %><span class="nav-icon-badge"><%= navPendingRequestCount > 9 ? '9+' : navPendingRequestCount %></span><% } %>
+        </a>
+      <% } %>
 
       <% if (navLoggedInRecruiter) { %>
         <% if (navIsClaim) { %>
