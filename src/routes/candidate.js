@@ -566,7 +566,14 @@ router.post('/verify-identity-session', async (req, res) => {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    if (MOCK_IDENTITY || sessionId === 'mock-session') {
+    // MOCK_IDENTITY is the only thing allowed to skip a real Stripe check —
+    // it's a server-side env var, not client input. sessionId === 'mock-session'
+    // used to be checked on its own too, which meant anyone could POST that
+    // literal string and get marked fully identity + facial-recognition
+    // verified for free, with no real check at all, regardless of
+    // MOCK_IDENTITY. Fixed: client input can never grant verification by
+    // itself.
+    if (MOCK_IDENTITY) {
       console.log(`[MOCK IDENTITY] Marking ${candidate.email} as identity-verified without a real Stripe check`);
       candidate.isIdentityVerified = true;
       candidate.identityVerifiedAt = new Date();
