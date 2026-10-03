@@ -14,6 +14,7 @@ const {
 } = require('../services/emailService');
 const { uploadResume } = require('../utils/s3Upload');
 const { parseResume } = require('../utils/resumeParser');
+const { syncWithCredly } = require('../utils/credlyVerification');
 
 const MOCK_SMS = process.env.MOCK_SMS === 'true';
 const MOCK_IDENTITY = process.env.MOCK_IDENTITY === 'true';
@@ -94,6 +95,14 @@ async function processResumeInBackground(candidateId, file) {
     candidate.educationHistory = parsed.educationHistory;
     candidate.certifications = parsed.certifications;
     candidate.resumeParsingStatus = 'complete';
+
+    // There's no Credly-username field on the signup form, so this is an
+    // auto-guess-only attempt (firstname-lastname against Credly's public
+    // directory) — same as what the edit page falls back to when the
+    // candidate hasn't set a username yet. Never throws: a failed guess
+    // just means no certs get auto-verified yet, not a signup error.
+    await syncWithCredly(candidate, null);
+
     await candidate.save();
   } catch (error) {
     console.error('Resume parsing failed:', error);

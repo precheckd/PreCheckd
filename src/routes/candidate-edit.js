@@ -4,7 +4,7 @@ const multer = require('multer');
 const Candidate = require('../models/Candidate');
 const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils/s3Upload');
 const { parseResume } = require('../utils/resumeParser');
-const { fetchCredlyBadges, findMatchingBadge, findUnmatchedBadges, tryCredlyAutoGuess, getBadgeName, getBadgeId } = require('../utils/credlyVerification');
+const { syncWithCredly } = require('../utils/credlyVerification');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -58,72 +58,6 @@ function mergeEntries(newEntries, existingEntries, matchFields, requiredFields) 
         verifiedAt: null
       };
     });
-}
-
-// Runs a candidate's certifications against a fetched Credly badge wallet,
-// marking any matches as verified with the badge's real issue date. Never
-// un-verifies a cert that was already verified by some other means — only
-// adds verification, never removes it.
-function applyCredlyMatches(certifications, badges) {
-  return certifications.map((cert) => {
-    if (cert.verified) return cert;
-
-    const match = findMatchingBadge(cert.name, badges);
-    if (!match) return cert;
-
-    return {
-      ...cert,
-      verified: true,
-      verifiedAt: match.issued_at_date ? new Date(match.issued_at_date) : new Date(),
-    };
-  });
-}
-
-// Attempts to sync a candidate's certifications against Credly — either
-// using their already-stored username, a newly-provided one from the edit
-// form, or a background auto-guess if neither exists yet. Mutates
-// candidate.certifications, candidate.credlyUsername/credlyLastSyncedAt,
-// and candidate.credlyUnmatchedBadges in place; never throws — sync
-// failures are silent, since Credly is a bonus verification path, not a
-// required one. Returns nothing; mutation is the interface.
-async function syncWithCredly(candidate, providedUsername) {
-  const usernameToTry = (providedUsername && providedUsername.trim())
-    ? providedUsername.trim()
-    : candidate.credlyUsername;
-
-  const applyBadges = (badges) => {
-    candidate.certifications = applyCredlyMatches(candidate.certifications, badges);
-    const unmatched = findUnmatchedBadges(candidate.certifications, badges);
-    candidate.credlyUnmatchedBadges = unmatched.map((badge) => ({
-      badgeId: getBadgeId(badge),
-      name: getBadgeName(badge),
-      issuerName: badge?.issuer?.entities?.[0]?.entity?.name || null,
-      issuedAt: badge?.issued_at_date || null,
-      expiresAt: badge?.expires_at_date || null,
-    }));
-  };
-
-  if (usernameToTry) {
-    try {
-      const badges = await fetchCredlyBadges(usernameToTry);
-      candidate.credlyUsername = usernameToTry;
-      candidate.credlyLastSyncedAt = new Date();
-      applyBadges(badges);
-      return;
-    } catch (error) {
-      if (providedUsername) {
-        throw new Error('Could not find a public Credly profile for that username. Please double-check it and try again.');
-      }
-      return;
-    }
-  }
-
-  const guess = await tryCredlyAutoGuess(candidate.firstName, candidate.lastName);
-  if (guess) {
-    candidate.credlyUsername = guess.username;
-    candidate.credlyLastSyncedAt = new Date();
-    applyBadges(guess.badges);
-  }
 }
 
 // GET /candidate/:slug/edit — owner-only edit form

@@ -102,6 +102,79 @@ async function tryCredlyAutoGuess(firstName, lastName) {
   }
 }
 
+// Runs a candidate's certifications against a fetched Credly badge wallet,
+// marking any matches as verified with the badge's real issue date. Never
+// un-verifies a cert that was already verified by some other means — only
+// adds verification, never removes it.
+function applyCredlyMatches(certifications, badges) {
+  return certifications.map((cert) => {
+    if (cert.verified) return cert;
+
+    const match = findMatchingBadge(cert.name, badges);
+    if (!match) return cert;
+
+    return {
+      ...cert,
+      verified: true,
+      verifiedAt: match.issued_at_date ? new Date(match.issued_at_date) : new Date(),
+    };
+  });
+}
+
+// Attempts to sync a candidate's certifications against Credly — either
+// using their already-stored username, a newly-provided one from a form,
+// or a background auto-guess if neither exists yet. Mutates
+// candidate.certifications, candidate.credlyUsername/credlyLastSyncedAt,
+// and candidate.credlyUnmatchedBadges in place; never throws when no
+// username was explicitly provided — sync failures are silent in that case,
+// since Credly is a bonus verification path, not a required one. Throws
+// only when a providedUsername was given and doesn't resolve, so the
+// caller can surface that as a real form error. Returns nothing; mutation
+// is the interface.
+//
+// Used both right after signup (auto-guess only, no providedUsername yet —
+// there's no Credly-username field on the signup form) and on every save
+// of the candidate edit form.
+async function syncWithCredly(candidate, providedUsername) {
+  const usernameToTry = (providedUsername && providedUsername.trim())
+    ? providedUsername.trim()
+    : candidate.credlyUsername;
+
+  const applyBadges = (badges) => {
+    candidate.certifications = applyCredlyMatches(candidate.certifications, badges);
+    const unmatched = findUnmatchedBadges(candidate.certifications, badges);
+    candidate.credlyUnmatchedBadges = unmatched.map((badge) => ({
+      badgeId: getBadgeId(badge),
+      name: getBadgeName(badge),
+      issuerName: badge?.issuer?.entities?.[0]?.entity?.name || null,
+      issuedAt: badge?.issued_at_date || null,
+      expiresAt: badge?.expires_at_date || null,
+    }));
+  };
+
+  if (usernameToTry) {
+    try {
+      const badges = await fetchCredlyBadges(usernameToTry);
+      candidate.credlyUsername = usernameToTry;
+      candidate.credlyLastSyncedAt = new Date();
+      applyBadges(badges);
+      return;
+    } catch (error) {
+      if (providedUsername) {
+        throw new Error('Could not find a public Credly profile for that username. Please double-check it and try again.');
+      }
+      return;
+    }
+  }
+
+  const guess = await tryCredlyAutoGuess(candidate.firstName, candidate.lastName);
+  if (guess) {
+    candidate.credlyUsername = guess.username;
+    candidate.credlyLastSyncedAt = new Date();
+    applyBadges(guess.badges);
+  }
+}
+
 module.exports = {
   fetchCredlyBadges,
   findMatchingBadge,
@@ -110,4 +183,6 @@ module.exports = {
   normalizeCertName,
   getBadgeName,
   getBadgeId,
+  applyCredlyMatches,
+  syncWithCredly,
 };
