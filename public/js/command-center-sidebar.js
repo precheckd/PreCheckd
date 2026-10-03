@@ -32,7 +32,10 @@
 
   function applyCollapsed() {
     sidebar.classList.toggle('cc-collapsed', collapsed);
-    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+      toggleBtn.setAttribute('aria-label', collapsed ? 'Expand Command Center' : 'Collapse Command Center');
+    }
   }
   applyCollapsed();
 
@@ -87,4 +90,37 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeMobile();
   });
+
+  // Icon-only tooltips, shown only while the sidebar is collapsed — the
+  // label is already visible inline once expanded, so there's nothing to
+  // add there. The tooltip element lives outside .cc-sidebar in the DOM
+  // (see layouts/main.ejs) and is positioned here with fixed coordinates
+  // so it isn't clipped by the sidebar's own overflow-x: hidden.
+  var tooltip = document.getElementById('cc-icon-tooltip');
+  if (tooltip) {
+    var tooltipTargets = sidebar.querySelectorAll('.cc-nav-item-link[data-tooltip]');
+
+    var showTooltip = function (target) {
+      if (!sidebar.classList.contains('cc-collapsed')) return;
+      var rect = target.getBoundingClientRect();
+      tooltip.textContent = target.getAttribute('data-tooltip');
+      tooltip.style.top = (rect.top + rect.height / 2) + 'px';
+      tooltip.style.left = (rect.right + 10) + 'px';
+      tooltip.classList.add('cc-tooltip-visible');
+    };
+    var hideTooltip = function () {
+      tooltip.classList.remove('cc-tooltip-visible');
+    };
+
+    for (var k = 0; k < tooltipTargets.length; k++) {
+      tooltipTargets[k].addEventListener('mouseenter', function (e) { showTooltip(e.currentTarget); });
+      tooltipTargets[k].addEventListener('mouseleave', hideTooltip);
+      tooltipTargets[k].addEventListener('focus', function (e) { showTooltip(e.currentTarget); });
+      tooltipTargets[k].addEventListener('blur', hideTooltip);
+    }
+
+    // Expanding/collapsing mid-hover would otherwise leave a stale tooltip
+    // floating next to a now-labeled (or now-iconified) nav item.
+    if (toggleBtn) toggleBtn.addEventListener('click', hideTooltip);
+  }
 })();
