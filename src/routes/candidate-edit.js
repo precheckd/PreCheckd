@@ -5,6 +5,7 @@ const Candidate = require('../models/Candidate');
 const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils/s3Upload');
 const { parseResume } = require('../utils/resumeParser');
 const { syncWithCredly } = require('../utils/credlyVerification');
+const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -76,7 +77,8 @@ router.get('/:slug/edit', async (req, res) => {
     res.render('candidate-edit', {
       candidate,
       title: `Edit Profile | PreCheckd`,
-      error: null
+      error: null,
+      missingRequirements: getMissingMatchingRequirements(candidate)
     });
   } catch (error) {
     console.error('Error loading candidate edit page:', error);
@@ -165,7 +167,10 @@ router.post('/:slug/edit', upload.fields([
       return res.status(403).send('You do not have permission to edit this profile.');
     }
 
-    const { bio, credlyUsername, openToOpportunities } = req.body;
+    const {
+      bio, credlyUsername, openToOpportunities,
+      minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType
+    } = req.body;
     const submittedWorkHistory = parseJsonField(req.body.workHistory);
     const submittedEducationHistory = parseJsonField(req.body.educationHistory);
     const submittedCertifications = parseJsonField(req.body.certifications);
@@ -173,6 +178,17 @@ router.post('/:slug/edit', upload.fields([
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
     // Unchecked checkboxes aren't submitted at all, so absence means false.
     candidate.openToOpportunities = openToOpportunities === 'true';
+
+    // Salary fields are optional here — a candidate can leave either blank
+    // and come back later. Only search eligibility (a separate check) cares
+    // whether minSalaryAmount is actually filled in.
+    const parsedMinSalary = parseFloat(minSalaryAmount);
+    candidate.minSalaryAmount = Number.isFinite(parsedMinSalary) && parsedMinSalary > 0 ? parsedMinSalary : null;
+    candidate.minSalaryType = minSalaryType === 'hourly' ? 'hourly' : 'annual';
+
+    const parsedPreferredSalary = parseFloat(preferredSalaryAmount);
+    candidate.preferredSalaryAmount = Number.isFinite(parsedPreferredSalary) && parsedPreferredSalary > 0 ? parsedPreferredSalary : null;
+    candidate.preferredSalaryType = preferredSalaryType === 'hourly' ? 'hourly' : 'annual';
 
     const photoFile = req.files?.profilePhoto?.[0];
     const resumeFile = req.files?.resume?.[0];
@@ -187,7 +203,8 @@ router.post('/:slug/edit', upload.fields([
         return res.status(400).render('candidate-edit', {
           candidate,
           title: `Edit Profile | PreCheckd`,
-          error: uploadError.message
+          error: uploadError.message,
+          missingRequirements: getMissingMatchingRequirements(candidate)
         });
       }
     }
@@ -243,7 +260,8 @@ router.post('/:slug/edit', upload.fields([
       return res.render('candidate-edit', {
         candidate,
         title: `Edit Profile | PreCheckd`,
-        error: resumeParseError || credlyError
+        error: resumeParseError || credlyError,
+        missingRequirements: getMissingMatchingRequirements(candidate)
       });
     }
 

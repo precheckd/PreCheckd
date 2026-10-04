@@ -69,6 +69,21 @@
       flex-shrink: 0;
     }
 
+    .search-bar select {
+      padding: 0.85rem 1rem;
+      border: 1px solid #4A6F7B;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #24404A;
+      color: #F2F4F3;
+      flex-shrink: 0;
+    }
+
+    .search-bar select:focus {
+      outline: none;
+      border-color: #2ECC71;
+    }
+
     .candidate-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -262,6 +277,25 @@
     <% } %>
   </p>
 
+  <form class="search-bar" id="candidate-budget-form">
+    <input type="number" id="candidate-budget-amount" placeholder="Role's budget (e.g. 95000)" min="0" step="1" value="<%= budgetAmount !== null ? budgetAmount : '' %>">
+    <select id="candidate-budget-type">
+      <option value="annual" <%= budgetType === 'annual' ? 'selected' : '' %>>per year</option>
+      <option value="hourly" <%= budgetType === 'hourly' ? 'selected' : '' %>>per hour</option>
+    </select>
+    <button type="submit" class="btn btn-primary" id="candidate-budget-btn">Set Budget</button>
+    <% if (budgetAmount !== null) { %>
+      <button type="button" class="btn-cancel" id="candidate-budget-clear">Clear</button>
+    <% } %>
+  </form>
+  <p class="page-subtitle" style="margin: -1rem auto 1.5rem; max-width: 550px;">
+    <% if (budgetAmount !== null) { %>
+      Showing only candidates whose minimum acceptable salary fits this budget. Candidates never see this number.
+    <% } else { %>
+      Enter what this role actually pays to only see candidates whose minimum would accept it. Never shown to candidates.
+    <% } %>
+  </p>
+
   <div class="prompt-state hidden" id="prompt-state">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <p>Search for a candidate to get started.</p>
@@ -322,7 +356,8 @@
 
 <script>
   window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
-  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null) %>;
+  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null) %>;
 </script>
 <script src="/js/candidate-search.js"></script>
 <script src="/js/candidate-search-location.js"></script>
+<script src="/js/candidate-search-budget.js"></script>

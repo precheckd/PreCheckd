@@ -260,6 +260,42 @@ const candidateSchema = new mongoose.Schema({
     coordinates: mongoose.Schema.Types.Mixed,
   },
 
+  // Minimum salary the candidate would ever accept — a hard floor, never
+  // shown to recruiters, used only to silently filter them out of
+  // /candidate-search results a recruiter's stated budget can't meet.
+  // One of the required "matching fields" (see
+  // utils/candidateMatchingRequirements.js) that gate search visibility.
+  minSalaryAmount: {
+    type: Number,
+    default: null
+  },
+  minSalaryType: {
+    type: String,
+    enum: ['annual', 'hourly'],
+    default: 'annual'
+  },
+  // Pre-computed on save (hourly amounts * 2080, the standard 40hr/week x
+  // 52-week full-time year) so search can compare a single number instead
+  // of doing unit conversion inside a database query.
+  minSalaryAnnualEquivalent: {
+    type: Number,
+    default: null
+  },
+
+  // Preferred/target salary — collected now but not used to filter
+  // anything yet. Reserved for a future ranked-match feature (closer to
+  // "best fit" than "hard cutoff"); minSalary above stays the only thing
+  // that actually excludes a candidate from a recruiter's search.
+  preferredSalaryAmount: {
+    type: Number,
+    default: null
+  },
+  preferredSalaryType: {
+    type: String,
+    enum: ['annual', 'hourly'],
+    default: 'annual'
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -270,8 +306,19 @@ const candidateSchema = new mongoose.Schema({
   }
 });
 
+const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — standard full-time-year assumption
+
 candidateSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+
+  if (typeof this.minSalaryAmount === 'number' && this.minSalaryAmount > 0) {
+    this.minSalaryAnnualEquivalent = this.minSalaryType === 'hourly'
+      ? this.minSalaryAmount * FULL_TIME_ANNUAL_HOURS
+      : this.minSalaryAmount;
+  } else {
+    this.minSalaryAnnualEquivalent = null;
+  }
+
   next();
 });
 

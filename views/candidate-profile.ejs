@@ -19,6 +19,44 @@
     align-items: flex-start;
   }
 
+  .requirements-banner {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    background: #3A2020;
+    border: 2px solid #E53E3E;
+    border-radius: 8px;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .requirements-banner svg {
+    width: 24px;
+    height: 24px;
+    color: #FF8A8A;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .requirements-banner-title {
+    color: #FF8A8A;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .requirements-banner-body {
+    color: #F2C7C7;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .requirements-banner-body a {
+    color: #FF8A8A;
+    text-decoration: underline;
+  }
+
   .cprofile-photo {
     width: 100px;
     height: 100px;
@@ -319,6 +357,18 @@
 %>
 
 <div class="cprofile-content">
+  <% if (typeof missingRequirements !== 'undefined' && missingRequirements && missingRequirements.length > 0) { %>
+    <div class="requirements-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <div>
+        <div class="requirements-banner-title">Recruiters can't find you yet</div>
+        <div class="requirements-banner-body">
+          You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. <a href="/candidate/<%= candidate.slug %>/edit">Finish your profile</a> to start showing up in recruiter search.
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <div class="cprofile-header">
     <% if (candidate.profilePhotoUrl) { %>
       <div class="cprofile-photo">

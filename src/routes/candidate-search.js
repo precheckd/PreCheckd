@@ -3,6 +3,13 @@ const router = express.Router();
 const Candidate = require('../models/Candidate');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization');
+const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+
+const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — same assumption used on the candidate side
+
+function toAnnualEquivalent(amount, type) {
+  return type === 'hourly' ? amount * FULL_TIME_ANNUAL_HOURS : amount;
+}
 
 function requireRecruiterLogin(req, res, next) {
   if (!req.session.recruiterId) {
@@ -17,16 +24,24 @@ router.use(requireRecruiterLogin);
 // Same client-side substring-filter pattern for role/cert text search:
 // render every eligible candidate server-side with a data-search
 // attribute, let the browser do the filtering. "Eligible" means
-// openToOpportunities and at least identity-verified — no point surfacing
-// a half-signed-up profile.
+// openToOpportunities, identity-verified, AND having filled in every
+// required matching field (see utils/candidateMatchingRequirements.js —
+// currently work areas + minimum salary). That last part is a hard
+// requirement, not "unset means no filter" — Kent's call, borrowed from
+// how dating apps that ask real questions match better than ones that
+// let you skate by blank.
 //
-// A pinned job location (?lat=&lng=, set client-side via geocoding a
-// typed address) is a separate, server-side filter on top of that: only
-// candidates whose drawn work-area shape contains the pin are returned.
-// Recruiters don't get their own drawing tool — a point is all a job
-// needs, since it's the candidate's shape that decides reach, not a
-// recruiter-chosen radius. Candidates with no drawn shape are excluded
-// once a pin is set, since "no shape" means "anywhere" is unverifiable.
+// Two optional, recruiter-entered filters layer on top of that baseline:
+//
+// - A pinned job location (?lat=&lng=, set client-side via geocoding a
+//   typed address): only candidates whose drawn work-area shape contains
+//   the pin are returned. Recruiters don't get their own drawing tool —
+//   a point is all a job needs, since it's the candidate's shape that
+//   decides reach, not a recruiter-chosen radius.
+// - A role budget (?budgetAmount=&budgetType=annual|hourly): only
+//   candidates whose minimum salary is at or below that budget (both
+//   normalized to an annual-equivalent) are returned. The budget number
+//   itself is never stored or shown to the candidate.
 router.get('/', async (req, res) => {
   try {
     const query = {
@@ -47,7 +62,21 @@ router.get('/', async (req, res) => {
       };
     }
 
-    const candidates = await Candidate.find(query).sort({ createdAt: -1 });
+    const budgetAmountRaw = parseFloat(req.query.budgetAmount);
+    const budgetType = req.query.budgetType === 'hourly' ? 'hourly' : 'annual';
+    const hasBudget = Number.isFinite(budgetAmountRaw) && budgetAmountRaw > 0;
+    const budgetAnnualEquivalent = hasBudget ? toAnnualEquivalent(budgetAmountRaw, budgetType) : null;
+
+    let candidates = await Candidate.find(query).sort({ createdAt: -1 });
+
+    // Required-matching-fields check runs in app code (not the Mongo
+    // query) so this stays in sync with the one shared definition rather
+    // than duplicating field-by-field logic here.
+    candidates = candidates.filter(candidateMeetsMatchingRequirements);
+
+    if (hasBudget) {
+      candidates = candidates.filter((c) => c.minSalaryAnnualEquivalent <= budgetAnnualEquivalent);
+    }
 
     const candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
 
@@ -57,6 +86,8 @@ router.get('/', async (req, res) => {
       pinnedLat: hasPin ? lat : null,
       pinnedLng: hasPin ? lng : null,
       pinnedLabel: hasPin ? (req.query.label || '') : '',
+      budgetAmount: hasBudget ? budgetAmountRaw : null,
+      budgetType,
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {
@@ -76,7 +107,7 @@ router.get('/:anonId', async (req, res) => {
       isIdentityVerified: true
     });
 
-    if (!candidate) {
+    if (!candidate || !candidateMeetsMatchingRequirements(candidate)) {
       return res.status(404).send('Candidate not found.');
     }
 
@@ -108,7 +139,7 @@ router.post('/:anonId/connect', async (req, res) => {
       isIdentityVerified: true
     });
 
-    if (!candidate) {
+    if (!candidate || !candidateMeetsMatchingRequirements(candidate)) {
       return res.status(404).json({ error: 'Candidate not found.' });
     }
 
