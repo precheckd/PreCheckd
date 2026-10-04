@@ -6,6 +6,7 @@ const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils
 const { parseResume } = require('../utils/resumeParser');
 const { syncWithCredly } = require('../utils/credlyVerification');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+const { DAY_CODES, DAY_OPTIONS } = require('../utils/availabilityMatching');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -78,7 +79,8 @@ router.get('/:slug/edit', async (req, res) => {
       candidate,
       title: `Edit Profile | PreCheckd`,
       error: null,
-      missingRequirements: getMissingMatchingRequirements(candidate)
+      missingRequirements: getMissingMatchingRequirements(candidate),
+      dayOptions: DAY_OPTIONS
     });
   } catch (error) {
     console.error('Error loading candidate edit page:', error);
@@ -169,7 +171,8 @@ router.post('/:slug/edit', upload.fields([
 
     const {
       bio, credlyUsername, openToOpportunities,
-      minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType
+      minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType,
+      availableStartTime, availableEndTime
     } = req.body;
     const submittedWorkHistory = parseJsonField(req.body.workHistory);
     const submittedEducationHistory = parseJsonField(req.body.educationHistory);
@@ -190,6 +193,26 @@ router.post('/:slug/edit', upload.fields([
     candidate.preferredSalaryAmount = Number.isFinite(parsedPreferredSalary) && parsedPreferredSalary > 0 ? parsedPreferredSalary : null;
     candidate.preferredSalaryType = preferredSalaryType === 'hourly' ? 'hourly' : 'annual';
 
+    // Availability is all-or-nothing: it only means something as a
+    // complete picture (which days + what window), so a partial submission
+    // (e.g. days checked but a time field cleared) is treated as "opted
+    // out" rather than stored half-filled.
+    const submittedDaysRaw = req.body.availableDays;
+    const submittedDays = !submittedDaysRaw
+      ? []
+      : (Array.isArray(submittedDaysRaw) ? submittedDaysRaw : [submittedDaysRaw])
+          .filter((d) => DAY_CODES.includes(d));
+
+    if (submittedDays.length > 0 && availableStartTime && availableEndTime) {
+      candidate.availableDays = submittedDays;
+      candidate.availableStartTime = availableStartTime;
+      candidate.availableEndTime = availableEndTime;
+    } else {
+      candidate.availableDays = [];
+      candidate.availableStartTime = null;
+      candidate.availableEndTime = null;
+    }
+
     const photoFile = req.files?.profilePhoto?.[0];
     const resumeFile = req.files?.resume?.[0];
 
@@ -204,7 +227,8 @@ router.post('/:slug/edit', upload.fields([
           candidate,
           title: `Edit Profile | PreCheckd`,
           error: uploadError.message,
-          missingRequirements: getMissingMatchingRequirements(candidate)
+          missingRequirements: getMissingMatchingRequirements(candidate),
+          dayOptions: DAY_OPTIONS
         });
       }
     }
@@ -261,7 +285,8 @@ router.post('/:slug/edit', upload.fields([
         candidate,
         title: `Edit Profile | PreCheckd`,
         error: resumeParseError || credlyError,
-        missingRequirements: getMissingMatchingRequirements(candidate)
+        missingRequirements: getMissingMatchingRequirements(candidate),
+        dayOptions: DAY_OPTIONS
       });
     }
 

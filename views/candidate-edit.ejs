@@ -102,6 +102,45 @@
     margin-top: 0;
   }
 
+  .availability-days-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .availability-day-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #24404A;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #E8EBEA;
+    cursor: pointer;
+  }
+
+  .availability-day-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #2ECC71;
+  }
+
+  .availability-time-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .availability-time-row input[type="time"] {
+    margin-top: 0;
+  }
+
   .salary-input-row select {
     padding: 0.75rem;
     border: 1px solid #4A6F7B;
@@ -581,6 +620,31 @@
               <option value="hourly" <%= candidate.preferredSalaryType === 'hourly' ? 'selected' : '' %>>per hour</option>
             </select>
           </div>
+        </label>
+
+        <div class="section-label">Availability</div>
+        <p class="cert-hint">Optional — leave this blank if you're open to standard business hours. If you have real constraints (school hours, a second job, etc.) or you're specifically looking for odd-hours work, filling this in helps recruiters searching for those hours find you and skip the ones that won't work for you.</p>
+
+        <label>
+          Days you're available
+          <div class="availability-days-row">
+            <% dayOptions.forEach(function(day) { %>
+              <label class="availability-day-checkbox">
+                <input type="checkbox" name="availableDays" value="<%= day.code %>" <%= (candidate.availableDays || []).includes(day.code) ? 'checked' : '' %>>
+                <span><%= day.label %></span>
+              </label>
+            <% }); %>
+          </div>
+        </label>
+
+        <label>
+          Hours you're available on those days
+          <div class="availability-time-row">
+            <input type="time" name="availableStartTime" value="<%= candidate.availableStartTime || '' %>">
+            <span class="label-hint" style="margin: 0;">to</span>
+            <input type="time" name="availableEndTime" value="<%= candidate.availableEndTime || '' %>">
+          </div>
+          <span class="label-hint">An end time earlier than the start time means it wraps past midnight (an overnight shift) — that's expected, not a mistake.</span>
         </label>
 
         <div class="section-label">Work History</div>

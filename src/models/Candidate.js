@@ -296,6 +296,30 @@ const candidateSchema = new mongoose.Schema({
     default: 'annual'
   },
 
+  // Optional recurring weekly availability — NOT one of the required
+  // matching fields (unlike workAreas/minSalary). A candidate who leaves
+  // this blank still shows up normally; it only matters once a recruiter
+  // filters a search by a role's required hours (see
+  // utils/availabilityMatching.js), at which point it's used to group —
+  // not simply exclude — results, since "never set" isn't the same as
+  // "confirmed can't do it."
+  availableDays: {
+    type: [String],
+    enum: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    default: []
+  },
+  // "HH:MM" 24-hour time strings. An end time at or before the start time
+  // means the window wraps past midnight (an overnight shift) rather than
+  // being treated as invalid.
+  availableStartTime: {
+    type: String,
+    default: null
+  },
+  availableEndTime: {
+    type: String,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

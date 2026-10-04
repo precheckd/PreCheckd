@@ -4,6 +4,7 @@ const Candidate = require('../models/Candidate');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization');
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+const { DAY_CODES, DAY_OPTIONS, candidateAvailabilityGroup } = require('../utils/availabilityMatching');
 
 const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — same assumption used on the candidate side
 
@@ -42,6 +43,14 @@ router.use(requireRecruiterLogin);
 //   candidates whose minimum salary is at or below that budget (both
 //   normalized to an annual-equivalent) are returned. The budget number
 //   itself is never stored or shown to the candidate.
+// - A role's required days/hours (?availDays=mon,tue&availStart=&availEnd=):
+//   unlike the two filters above, this doesn't simply exclude non-matches.
+//   "Never set an availability preference" isn't the same as "confirmed
+//   can't do these hours," so candidates split into two groups: those who
+//   opted in and cover the required window (shown first), and those who
+//   never set availability at all (shown below, clearly labeled so the
+//   recruiter knows to just ask). Anyone who opted in but does NOT cover
+//   the required window is excluded outright.
 router.get('/', async (req, res) => {
   try {
     const query = {
@@ -78,7 +87,41 @@ router.get('/', async (req, res) => {
       candidates = candidates.filter((c) => c.minSalaryAnnualEquivalent <= budgetAnnualEquivalent);
     }
 
-    const candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+    const requiredDays = (req.query.availDays || '').split(',').filter((d) => DAY_CODES.includes(d));
+    const availStart = req.query.availStart || '';
+    const availEnd = req.query.availEnd || '';
+    const hasAvailabilityFilter = requiredDays.length > 0 && Boolean(availStart) && Boolean(availEnd);
+
+    let candidatesForView;
+    let showAvailabilityGrouping = false;
+
+    if (hasAvailabilityFilter) {
+      const matched = [];
+      const unset = [];
+
+      candidates.forEach((c) => {
+        const group = candidateAvailabilityGroup(c, requiredDays, availStart, availEnd);
+        if (group === 'matched') matched.push(c);
+        else if (group === 'unset') unset.push(c);
+        // 'excluded' candidates are dropped entirely.
+      });
+
+      candidatesForView = matched.map((c) => getAnonymizedCandidateView(c))
+        .concat(unset.map((c) => getAnonymizedCandidateView(c)));
+
+      // Mark exactly the first candidate of the "unset" group so the view
+      // knows where to drop in the divider, without the view needing to
+      // re-derive group membership itself.
+      if (matched.length > 0 && unset.length > 0) {
+        candidatesForView[matched.length].showNoAvailabilityDivider = true;
+      } else if (matched.length === 0 && unset.length > 0) {
+        candidatesForView[0].showNoAvailabilityDivider = true;
+      }
+
+      showAvailabilityGrouping = true;
+    } else {
+      candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+    }
 
     res.render('candidate-search', {
       candidates: candidatesForView,
@@ -88,6 +131,11 @@ router.get('/', async (req, res) => {
       pinnedLabel: hasPin ? (req.query.label || '') : '',
       budgetAmount: hasBudget ? budgetAmountRaw : null,
       budgetType,
+      dayOptions: DAY_OPTIONS,
+      requiredDays,
+      availStart,
+      availEnd,
+      showAvailabilityGrouping,
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {

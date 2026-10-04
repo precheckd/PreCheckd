@@ -84,6 +84,63 @@
       border-color: #2ECC71;
     }
 
+    .availability-filter-form {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .availability-days-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .availability-day-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: #24404A;
+      border: 1px solid #4A6F7B;
+      border-radius: 6px;
+      padding: 0.45rem 0.65rem;
+      font-size: 0.82rem;
+      color: #E8EBEA;
+      cursor: pointer;
+    }
+
+    .availability-day-checkbox input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: #2ECC71;
+    }
+
+    .search-bar input[type="time"] {
+      flex: 0 0 auto;
+      width: auto;
+    }
+
+    .availability-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.5rem 0 0.25rem;
+      color: #8FA6AC;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .availability-divider::before,
+    .availability-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #3B5860;
+    }
+
     .candidate-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -296,6 +353,31 @@
     <% } %>
   </p>
 
+  <form class="search-bar availability-filter-form" id="candidate-availability-form">
+    <div class="availability-days-row">
+      <% dayOptions.forEach(function(day) { %>
+        <label class="availability-day-checkbox">
+          <input type="checkbox" name="availDay" value="<%= day.code %>" <%= requiredDays.includes(day.code) ? 'checked' : '' %>>
+          <span><%= day.label %></span>
+        </label>
+      <% }); %>
+    </div>
+    <input type="time" id="candidate-avail-start" value="<%= availStart %>">
+    <span style="color: #8FA6AC; font-size: 0.9rem;">to</span>
+    <input type="time" id="candidate-avail-end" value="<%= availEnd %>">
+    <button type="submit" class="btn btn-primary" id="candidate-availability-btn">Set Required Hours</button>
+    <% if (showAvailabilityGrouping) { %>
+      <button type="button" class="btn-cancel" id="candidate-availability-clear">Clear</button>
+    <% } %>
+  </form>
+  <p class="page-subtitle" style="margin: -1rem auto 1.5rem; max-width: 550px;">
+    <% if (showAvailabilityGrouping) { %>
+      Candidates whose stated availability covers these hours are shown first; candidates who never set an availability preference are shown below, since that's not the same as a confirmed no.
+    <% } else { %>
+      If this role needs specific days/hours (overnight, school hours, weekends), set them here to see who's confirmed available first.
+    <% } %>
+  </p>
+
   <div class="prompt-state hidden" id="prompt-state">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <p>Search for a candidate to get started.</p>
@@ -307,6 +389,9 @@
 
   <div class="candidate-grid hidden" id="candidate-grid">
     <% candidates.forEach(function(candidate) { %>
+      <% if (candidate.showNoAvailabilityDivider) { %>
+        <div class="availability-divider">No availability info provided — ask directly</div>
+      <% } %>
       <%
         const jobTitles = (candidate.workHistory || []).map((j) => j.jobTitle).filter(Boolean);
         const certNames = (candidate.certifications || []).map((c) => c.name).filter(Boolean);
@@ -356,8 +441,9 @@
 
 <script>
   window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
-  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null) %>;
+  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null || showAvailabilityGrouping) %>;
 </script>
 <script src="/js/candidate-search.js"></script>
 <script src="/js/candidate-search-location.js"></script>
 <script src="/js/candidate-search-budget.js"></script>
+<script src="/js/candidate-search-availability.js"></script>
