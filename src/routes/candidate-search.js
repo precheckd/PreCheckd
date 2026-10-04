@@ -6,6 +6,7 @@ const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization'
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { DAY_CODES, DAY_OPTIONS, candidateAvailabilityGroup } = require('../utils/availabilityMatching');
 
+const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
 const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — same assumption used on the candidate side
 
 function toAnnualEquivalent(amount, type) {
@@ -43,6 +44,11 @@ router.use(requireRecruiterLogin);
 //   candidates whose minimum salary is at or below that budget (both
 //   normalized to an annual-equivalent) are returned. The budget number
 //   itself is never stored or shown to the candidate.
+// - A role's work arrangement (?workArrangement=remote|hybrid|in_office):
+//   a candidate's own preference defaults to "open_to_any" (not null), so
+//   unset means no constraint — only a candidate who specifically picked
+//   a different arrangement than the one the recruiter is filtering for
+//   gets excluded.
 // - A role's required days/hours (?availDays=mon,tue&availStart=&availEnd=):
 //   unlike the two filters above, this doesn't simply exclude non-matches.
 //   "Never set an availability preference" isn't the same as "confirmed
@@ -69,6 +75,11 @@ router.get('/', async (req, res) => {
           $geometry: { type: 'Point', coordinates: [lng, lat] }
         }
       };
+    }
+
+    const workArrangement = VALID_WORK_ARRANGEMENTS.includes(req.query.workArrangement) ? req.query.workArrangement : null;
+    if (workArrangement) {
+      query.workArrangement = { $in: [workArrangement, 'open_to_any'] };
     }
 
     const budgetAmountRaw = parseFloat(req.query.budgetAmount);
@@ -131,6 +142,7 @@ router.get('/', async (req, res) => {
       pinnedLabel: hasPin ? (req.query.label || '') : '',
       budgetAmount: hasBudget ? budgetAmountRaw : null,
       budgetType,
+      workArrangement,
       dayOptions: DAY_OPTIONS,
       requiredDays,
       availStart,

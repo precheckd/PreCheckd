@@ -296,6 +296,16 @@ const candidateSchema = new mongoose.Schema({
     default: 'annual'
   },
 
+  // Where the candidate is willing to work, arrangement-wise. Defaults to
+  // "open_to_any" rather than null — unset should mean "no constraint,"
+  // not "unknown/excluded," so a recruiter's optional work-arrangement
+  // filter (see candidate-search.js) always matches these candidates too.
+  workArrangement: {
+    type: String,
+    enum: ['remote', 'hybrid', 'in_office', 'open_to_any'],
+    default: 'open_to_any'
+  },
+
   // Optional recurring weekly availability — NOT one of the required
   // matching fields (unlike workAreas/minSalary). A candidate who leaves
   // this blank still shows up normally; it only matters once a recruiter

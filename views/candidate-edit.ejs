@@ -149,6 +149,7 @@
     background: #24404A;
     color: #F2F4F3;
     flex-shrink: 0;
+    margin-top: 0;
   }
 
   .requirements-banner {
@@ -184,7 +185,8 @@
   }
 
   input,
-  textarea {
+  textarea,
+  select {
     padding: 0.75rem;
     border: 1px solid #4A6F7B;
     border-radius: 6px;
@@ -595,6 +597,17 @@
             <span>Open to opportunities — show my anonymized profile to recruiters searching PreCheckd</span>
           </span>
           <span class="label-hint">Your name, employer, and school stay hidden until you accept a connection request. Turn this off if you only want to be found through recruiters you reach out to yourself.</span>
+        </label>
+
+        <label>
+          Work arrangement
+          <select name="workArrangement">
+            <option value="open_to_any" <%= (candidate.workArrangement || 'open_to_any') === 'open_to_any' ? 'selected' : '' %>>Open to remote, hybrid, or in-office</option>
+            <option value="remote" <%= candidate.workArrangement === 'remote' ? 'selected' : '' %>>Remote only</option>
+            <option value="hybrid" <%= candidate.workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid only</option>
+            <option value="in_office" <%= candidate.workArrangement === 'in_office' ? 'selected' : '' %>>In-office only</option>
+          </select>
+          <span class="label-hint">Recruiters can filter by this when a role is specifically remote, hybrid, or in-office.</span>
         </label>
 
         <div class="section-label">Salary</div>

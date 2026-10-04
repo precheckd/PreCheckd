@@ -170,10 +170,11 @@ router.post('/:slug/edit', upload.fields([
     }
 
     const {
-      bio, credlyUsername, openToOpportunities,
+      bio, credlyUsername, openToOpportunities, workArrangement,
       minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType,
       availableStartTime, availableEndTime
     } = req.body;
+    const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office', 'open_to_any'];
     const submittedWorkHistory = parseJsonField(req.body.workHistory);
     const submittedEducationHistory = parseJsonField(req.body.educationHistory);
     const submittedCertifications = parseJsonField(req.body.certifications);
@@ -181,6 +182,7 @@ router.post('/:slug/edit', upload.fields([
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
     // Unchecked checkboxes aren't submitted at all, so absence means false.
     candidate.openToOpportunities = openToOpportunities === 'true';
+    candidate.workArrangement = VALID_WORK_ARRANGEMENTS.includes(workArrangement) ? workArrangement : 'open_to_any';
 
     // Salary fields are optional here — a candidate can leave either blank
     // and come back later. Only search eligibility (a separate check) cares

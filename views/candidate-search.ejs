@@ -319,6 +319,16 @@
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
 
+  <form class="search-bar" id="candidate-arrangement-form">
+    <select id="candidate-arrangement-select">
+      <option value="" <%= !workArrangement ? 'selected' : '' %>>Any work arrangement</option>
+      <option value="remote" <%= workArrangement === 'remote' ? 'selected' : '' %>>Remote</option>
+      <option value="hybrid" <%= workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
+      <option value="in_office" <%= workArrangement === 'in_office' ? 'selected' : '' %>>In-office</option>
+    </select>
+    <button type="submit" class="btn btn-primary" id="candidate-arrangement-btn">Apply</button>
+  </form>
+
   <form class="search-bar" id="candidate-location-form">
     <input type="text" id="candidate-location-input" placeholder="Filter by job location (city or address)..." value="<%= pinnedLabel %>">
     <button type="submit" class="btn btn-primary" id="candidate-location-btn">Set Location</button>
@@ -441,9 +451,10 @@
 
 <script>
   window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
-  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null || showAvailabilityGrouping) %>;
+  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null || showAvailabilityGrouping || Boolean(workArrangement)) %>;
 </script>
 <script src="/js/candidate-search.js"></script>
 <script src="/js/candidate-search-location.js"></script>
 <script src="/js/candidate-search-budget.js"></script>
 <script src="/js/candidate-search-availability.js"></script>
+<script src="/js/candidate-search-arrangement.js"></script>
