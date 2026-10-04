@@ -210,8 +210,42 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
+  // Self-reported, not verified (no verification path for this exists —
+  // flagged as such wherever it's shown to a recruiter). A fixed list
+  // rather than free text so recruiters can actually filter by it.
   securityClearance: {
     type: String,
+    enum: ['none', 'public_trust', 'secret', 'top_secret', 'ts_sci', 'other'],
+    default: 'none'
+  },
+  // Free text, only meaningful when securityClearance === 'other'.
+  securityClearanceOther: {
+    type: String,
+    default: null
+  },
+
+  // Optional, informational only — not used to filter anything. Same tier
+  // as preferredSalary: good context for a recruiter who's already
+  // reaching out, not a search gate.
+  noticePeriod: {
+    type: String,
+    enum: ['immediately_available', 'two_weeks', 'currently_employed_flexible'],
+    default: null
+  },
+
+  // Computed from workHistory, never self-declared (Kent: no claiming 10
+  // years of experience when the work history only shows 3). Recomputed
+  // in the pre-save hook below whenever work history changes. null until
+  // there's at least one work-history entry with a usable start date —
+  // see utils/candidateMatchingRequirements.js, where having this
+  // computed is one of the required fields to show up in search.
+  experienceYears: {
+    type: Number,
+    default: null
+  },
+  experienceBand: {
+    type: String,
+    enum: ['entry', 'mid', 'senior', 'lead'],
     default: null
   },
 
@@ -341,6 +375,7 @@ const candidateSchema = new mongoose.Schema({
 });
 
 const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — standard full-time-year assumption
+const { computeExperience } = require('../utils/experienceLevel');
 
 candidateSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
@@ -352,6 +387,10 @@ candidateSchema.pre('save', function(next) {
   } else {
     this.minSalaryAnnualEquivalent = null;
   }
+
+  const { years, band } = computeExperience(this.workHistory);
+  this.experienceYears = years;
+  this.experienceBand = band;
 
   next();
 });

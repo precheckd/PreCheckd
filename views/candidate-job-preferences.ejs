@@ -1,0 +1,538 @@
+<style>
+  .cedit-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cedit-container {
+    max-width: 700px;
+    width: 100%;
+  }
+
+  .cedit-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .cedit-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .cedit-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+  }
+
+  .cedit-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .form-error {
+    background: #3A2020;
+    color: #FF8A8A;
+    padding: 0.85rem;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    border-left: 4px solid #E53E3E;
+    font-size: 0.9rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    color: #E8EBEA;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .label-hint {
+    font-weight: 400;
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+  }
+
+  .open-to-opportunities-label {
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+
+  .open-to-opportunities-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-weight: 600;
+    color: #F2F4F3;
+    font-size: 0.9rem;
+  }
+
+  .open-to-opportunities-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+    accent-color: #2ECC71;
+  }
+
+  .salary-input-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .salary-input-row input {
+    flex: 1;
+    margin-top: 0;
+  }
+
+  .salary-input-row select {
+    padding: 0.75rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: #24404A;
+    color: #F2F4F3;
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  .availability-days-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .availability-day-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #24404A;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #E8EBEA;
+    cursor: pointer;
+  }
+
+  .availability-day-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #2ECC71;
+  }
+
+  .availability-time-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .availability-time-row input[type="time"] {
+    margin-top: 0;
+  }
+
+  .requirements-banner {
+    background: #3A2020;
+    border: 2px solid #E53E3E;
+    border-radius: 8px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .requirements-banner svg {
+    width: 24px;
+    height: 24px;
+    color: #FF8A8A;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .requirements-banner-title {
+    color: #FF8A8A;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .requirements-banner-body {
+    color: #F2C7C7;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .requirements-banner-body a {
+    color: #FF8A8A;
+    text-decoration: underline;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 0.75rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    background: #24404A;
+    color: #F2F4F3;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #7A9096;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.75rem 0 1rem;
+  }
+
+  .section-divider-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8FA6AC;
+    white-space: nowrap;
+  }
+
+  .section-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #3B5860;
+  }
+
+  .required-group {
+    border: 1px solid #3B5860;
+    background: #24343A;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .required-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #FF8A8A;
+    background: #3A2020;
+    border-radius: 20px;
+    padding: 0.15rem 0.55rem;
+    margin-left: 0.4rem;
+  }
+
+  .optional-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .section-label {
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 1.25rem 0 0.5rem;
+  }
+
+  .experience-display {
+    background: #24404A;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-top: 0.5rem;
+    color: #F2F4F3;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .experience-display .experience-sub {
+    display: block;
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: #8FA6AC;
+    margin-top: 0.25rem;
+  }
+
+  .cert-hint {
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    margin-top: -0.3rem;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+
+  button[type="submit"] {
+    padding: 0.75rem 1.75rem;
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: auto;
+  }
+
+  button[type="submit"]:hover {
+    background: #4ADE80;
+  }
+
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.75rem;
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-cancel:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  @media (max-width: 768px) {
+    .cedit-content {
+      padding: 1rem;
+    }
+
+    .cedit-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="cedit-content">
+  <div class="cedit-container">
+    <div class="cedit-header">
+      <h1>Job Preferences</h1>
+      <p>These control whether — and how — you show up in recruiter search. Your name, employer, and school never show here or to recruiters until you accept a connection.</p>
+    </div>
+
+    <% if (typeof missingRequirements !== 'undefined' && missingRequirements && missingRequirements.length > 0) { %>
+      <div class="requirements-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div>
+          <div class="requirements-banner-title">Recruiters can't find you yet</div>
+          <div class="requirements-banner-body">
+            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Work history is added on your <a href="/candidate/<%= candidate.slug %>/edit">Edit Profile</a> page; work areas are drawn on your <a href="/candidate/<%= candidate.slug %>/work-areas">Work Areas</a> page.
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="cedit-card">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="form-error"><%= error %></p>
+      <% } %>
+
+      <form action="/candidate/<%= candidate.slug %>/job-preferences" method="POST">
+        <div class="section-divider">
+          <span class="section-divider-label">Required to show up in search</span>
+          <span class="section-divider-line"></span>
+        </div>
+
+        <div class="required-group">
+          <label>
+            Minimum you'd ever accept<span class="required-pill">Required</span>
+            <span class="label-hint">Recruiters never see this number — it's only used in the background to filter out searches that couldn't meet it.</span>
+            <div class="salary-input-row">
+              <input type="number" name="minSalaryAmount" min="0" step="1" placeholder="e.g. 65000" value="<%= candidate.minSalaryAmount || '' %>">
+              <select name="minSalaryType">
+                <option value="annual" <%= candidate.minSalaryType !== 'hourly' ? 'selected' : '' %>>per year</option>
+                <option value="hourly" <%= candidate.minSalaryType === 'hourly' ? 'selected' : '' %>>per hour</option>
+              </select>
+            </div>
+          </label>
+
+          <label>
+            Experience level<span class="required-pill">Required</span>
+            <span class="label-hint">Computed automatically from your work history — not something you fill in. Add or edit your work history on the <a href="/candidate/<%= candidate.slug %>/edit" style="color: #8FA6AC; text-decoration: underline;">Edit Profile</a> page to update this.</span>
+            <% if (candidate.experienceBand) { %>
+              <% const band = experienceBands.find(function(b) { return b.code === candidate.experienceBand; }); %>
+              <div class="experience-display">
+                <%= band ? band.label : candidate.experienceBand %>
+                <span class="experience-sub"><%= candidate.experienceYears %> year<%= candidate.experienceYears === 1 ? '' : 's' %> of experience, based on your earliest work-history start date through your most recent (or current) job.</span>
+              </div>
+            <% } else { %>
+              <div class="experience-display">
+                Not yet calculated
+                <span class="experience-sub">Add at least one work history entry with a start date to compute this.</span>
+              </div>
+            <% } %>
+          </label>
+
+          <label>
+            Where you're willing to work<span class="required-pill">Required</span>
+            <span class="label-hint">Drawn on a map rather than answered here.</span>
+            <a href="/candidate/<%= candidate.slug %>/work-areas" class="btn-cancel" style="display: inline-block; margin-top: 0.5rem; width: fit-content;">
+              <%= (candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length) ? 'Edit Work Areas' : 'Draw Work Areas' %>
+            </a>
+          </label>
+        </div>
+
+        <div class="section-divider">
+          <span class="section-divider-label">Optional</span>
+          <span class="section-divider-line"></span>
+        </div>
+
+        <div class="optional-group">
+          <label class="open-to-opportunities-label">
+            <span class="open-to-opportunities-row">
+              <input type="checkbox" name="openToOpportunities" value="true" <%= candidate.openToOpportunities !== false ? 'checked' : '' %>>
+              <span>Open to opportunities — show my anonymized profile to recruiters searching PreCheckd</span>
+            </span>
+            <span class="label-hint">Turn this off if you only want to be found through recruiters you reach out to yourself.</span>
+          </label>
+
+          <label>
+            Work arrangement
+            <select name="workArrangement">
+              <option value="open_to_any" <%= (candidate.workArrangement || 'open_to_any') === 'open_to_any' ? 'selected' : '' %>>Open to remote, hybrid, or in-office</option>
+              <option value="remote" <%= candidate.workArrangement === 'remote' ? 'selected' : '' %>>Remote only</option>
+              <option value="hybrid" <%= candidate.workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid only</option>
+              <option value="in_office" <%= candidate.workArrangement === 'in_office' ? 'selected' : '' %>>In-office only</option>
+            </select>
+            <span class="label-hint">Recruiters can filter by this when a role is specifically remote, hybrid, or in-office.</span>
+          </label>
+
+          <label>
+            Preferred / target salary
+            <span class="label-hint">Not used to filter anything yet — reserved for future ranked matching.</span>
+            <div class="salary-input-row">
+              <input type="number" name="preferredSalaryAmount" min="0" step="1" placeholder="e.g. 85000" value="<%= candidate.preferredSalaryAmount || '' %>">
+              <select name="preferredSalaryType">
+                <option value="annual" <%= candidate.preferredSalaryType !== 'hourly' ? 'selected' : '' %>>per year</option>
+                <option value="hourly" <%= candidate.preferredSalaryType === 'hourly' ? 'selected' : '' %>>per hour</option>
+              </select>
+            </div>
+          </label>
+
+          <div>
+            <div class="section-label" style="margin-top: 0.5rem;">Availability</div>
+            <p class="cert-hint">Leave this blank if you're open to standard business hours. If you have real constraints (school hours, a second job, etc.) or you're specifically looking for odd-hours work, filling this in helps recruiters searching for those hours find you and skip the ones that won't work for you.</p>
+
+            <label>
+              Days you're available
+              <div class="availability-days-row">
+                <% dayOptions.forEach(function(day) { %>
+                  <label class="availability-day-checkbox">
+                    <input type="checkbox" name="availableDays" value="<%= day.code %>" <%= (candidate.availableDays || []).includes(day.code) ? 'checked' : '' %>>
+                    <span><%= day.label %></span>
+                  </label>
+                <% }); %>
+              </div>
+            </label>
+
+            <label>
+              Hours you're available on those days
+              <div class="availability-time-row">
+                <input type="time" name="availableStartTime" value="<%= candidate.availableStartTime || '' %>">
+                <span class="label-hint" style="margin: 0;">to</span>
+                <input type="time" name="availableEndTime" value="<%= candidate.availableEndTime || '' %>">
+              </div>
+              <span class="label-hint">An end time earlier than the start time means it wraps past midnight (an overnight shift) — that's expected, not a mistake.</span>
+            </label>
+          </div>
+
+          <label>
+            Security clearance
+            <span class="label-hint">Self-reported — we don't have a way to verify this, but recruiters can still search by it.</span>
+            <select name="securityClearance" id="security-clearance-select">
+              <option value="none" <%= (candidate.securityClearance || 'none') === 'none' ? 'selected' : '' %>>None</option>
+              <option value="public_trust" <%= candidate.securityClearance === 'public_trust' ? 'selected' : '' %>>Public Trust</option>
+              <option value="secret" <%= candidate.securityClearance === 'secret' ? 'selected' : '' %>>Secret</option>
+              <option value="top_secret" <%= candidate.securityClearance === 'top_secret' ? 'selected' : '' %>>Top Secret</option>
+              <option value="ts_sci" <%= candidate.securityClearance === 'ts_sci' ? 'selected' : '' %>>TS/SCI</option>
+              <option value="other" <%= candidate.securityClearance === 'other' ? 'selected' : '' %>>Other</option>
+            </select>
+          </label>
+
+          <label id="security-clearance-other-label" style="<%= candidate.securityClearance === 'other' ? '' : 'display: none;' %>">
+            Describe your clearance
+            <input type="text" name="securityClearanceOther" placeholder="e.g. DOE Q Clearance" value="<%= candidate.securityClearanceOther || '' %>" maxlength="100">
+          </label>
+
+          <label>
+            Notice period
+            <span class="label-hint">Informational only — not used to filter anything.</span>
+            <select name="noticePeriod">
+              <option value="" <%= !candidate.noticePeriod ? 'selected' : '' %>>Prefer not to say</option>
+              <option value="immediately_available" <%= candidate.noticePeriod === 'immediately_available' ? 'selected' : '' %>>Immediately available</option>
+              <option value="two_weeks" <%= candidate.noticePeriod === 'two_weeks' ? 'selected' : '' %>>2 weeks' notice</option>
+              <option value="currently_employed_flexible" <%= candidate.noticePeriod === 'currently_employed_flexible' ? 'selected' : '' %>>Currently employed, flexible</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Save Changes</button>
+          <a href="/candidate/<%= candidate.slug %>/edit" class="btn-cancel">Back to Edit Profile</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var select = document.getElementById('security-clearance-select');
+    var otherLabel = document.getElementById('security-clearance-other-label');
+    if (!select || !otherLabel) return;
+    select.addEventListener('change', function () {
+      otherLabel.style.display = select.value === 'other' ? '' : 'none';
+    });
+  })();
+</script>

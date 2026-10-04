@@ -529,7 +529,7 @@
         <div>
           <div class="requirements-banner-title">Recruiters can't find you yet</div>
           <div class="requirements-banner-body">
-            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %> before you'll show up in recruiter search: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Fill these in below to start getting found.
+            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %> before you'll show up in recruiter search: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Fill these in on your <a href="/candidate/<%= candidate.slug %>/job-preferences" style="color: #FF8A8A; text-decoration: underline;">Job Preferences</a> and <a href="/candidate/<%= candidate.slug %>/work-areas" style="color: #FF8A8A; text-decoration: underline;">Work Areas</a> pages to start getting found.
           </div>
         </div>
       </div>
@@ -591,75 +591,6 @@
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>
 
-        <label class="open-to-opportunities-label">
-          <span class="open-to-opportunities-row">
-            <input type="checkbox" name="openToOpportunities" value="true" <%= candidate.openToOpportunities !== false ? 'checked' : '' %>>
-            <span>Open to opportunities — show my anonymized profile to recruiters searching PreCheckd</span>
-          </span>
-          <span class="label-hint">Your name, employer, and school stay hidden until you accept a connection request. Turn this off if you only want to be found through recruiters you reach out to yourself.</span>
-        </label>
-
-        <label>
-          Work arrangement
-          <select name="workArrangement">
-            <option value="open_to_any" <%= (candidate.workArrangement || 'open_to_any') === 'open_to_any' ? 'selected' : '' %>>Open to remote, hybrid, or in-office</option>
-            <option value="remote" <%= candidate.workArrangement === 'remote' ? 'selected' : '' %>>Remote only</option>
-            <option value="hybrid" <%= candidate.workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid only</option>
-            <option value="in_office" <%= candidate.workArrangement === 'in_office' ? 'selected' : '' %>>In-office only</option>
-          </select>
-          <span class="label-hint">Recruiters can filter by this when a role is specifically remote, hybrid, or in-office.</span>
-        </label>
-
-        <div class="section-label">Salary</div>
-        <p class="cert-hint">Recruiters never see either number — your minimum is only used in the background to filter out searches that couldn't meet it.</p>
-
-        <label>
-          Minimum you'd ever accept <span class="label-hint">(required to show up in recruiter search)</span>
-          <div class="salary-input-row">
-            <input type="number" name="minSalaryAmount" min="0" step="1" placeholder="e.g. 65000" value="<%= candidate.minSalaryAmount || '' %>">
-            <select name="minSalaryType">
-              <option value="annual" <%= candidate.minSalaryType !== 'hourly' ? 'selected' : '' %>>per year</option>
-              <option value="hourly" <%= candidate.minSalaryType === 'hourly' ? 'selected' : '' %>>per hour</option>
-            </select>
-          </div>
-        </label>
-
-        <label>
-          Preferred / target salary <span class="label-hint">(optional — not used to filter anything yet)</span>
-          <div class="salary-input-row">
-            <input type="number" name="preferredSalaryAmount" min="0" step="1" placeholder="e.g. 85000" value="<%= candidate.preferredSalaryAmount || '' %>">
-            <select name="preferredSalaryType">
-              <option value="annual" <%= candidate.preferredSalaryType !== 'hourly' ? 'selected' : '' %>>per year</option>
-              <option value="hourly" <%= candidate.preferredSalaryType === 'hourly' ? 'selected' : '' %>>per hour</option>
-            </select>
-          </div>
-        </label>
-
-        <div class="section-label">Availability</div>
-        <p class="cert-hint">Optional — leave this blank if you're open to standard business hours. If you have real constraints (school hours, a second job, etc.) or you're specifically looking for odd-hours work, filling this in helps recruiters searching for those hours find you and skip the ones that won't work for you.</p>
-
-        <label>
-          Days you're available
-          <div class="availability-days-row">
-            <% dayOptions.forEach(function(day) { %>
-              <label class="availability-day-checkbox">
-                <input type="checkbox" name="availableDays" value="<%= day.code %>" <%= (candidate.availableDays || []).includes(day.code) ? 'checked' : '' %>>
-                <span><%= day.label %></span>
-              </label>
-            <% }); %>
-          </div>
-        </label>
-
-        <label>
-          Hours you're available on those days
-          <div class="availability-time-row">
-            <input type="time" name="availableStartTime" value="<%= candidate.availableStartTime || '' %>">
-            <span class="label-hint" style="margin: 0;">to</span>
-            <input type="time" name="availableEndTime" value="<%= candidate.availableEndTime || '' %>">
-          </div>
-          <span class="label-hint">An end time earlier than the start time means it wraps past midnight (an overnight shift) — that's expected, not a mistake.</span>
-        </label>
-
         <div class="section-label">Work History</div>
         <div id="work-entries"></div>
         <button type="button" id="add-work-entry" class="add-entry-btn">+ Add work experience</button>
@@ -693,7 +624,13 @@
         </div>
       </form>
 
-      <div class="section-label">Video Introduction</div>
+      <div class="section-label">Job Preferences</div>
+      <p class="cert-hint">Salary, work arrangement, availability, security clearance, and notice period — everything that controls whether and how you show up in recruiter search.</p>
+      <a href="/candidate/<%= candidate.slug %>/job-preferences" class="btn-cancel" style="display: inline-block;">
+        Edit Job Preferences
+      </a>
+
+      <div class="section-label" style="margin-top: 1.5rem;">Video Introduction</div>
       <p class="cert-hint">Record a short intro video and answers to 5 interview questions for recruiters to watch alongside your profile.</p>
       <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-block;">
         <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>

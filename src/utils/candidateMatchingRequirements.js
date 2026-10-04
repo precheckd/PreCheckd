@@ -27,6 +27,15 @@ const requirements = [
       typeof candidate.minSalaryAmount === 'number' && candidate.minSalaryAmount > 0
     ),
   },
+  {
+    key: 'experience',
+    label: 'Work history with at least one dated job (used to compute your experience level)',
+    // experienceBand is computed on save from workHistory — see
+    // utils/experienceLevel.js — so this is really checking "do you have
+    // at least one work-history entry with a usable start date," not
+    // asking the candidate to fill in a number themselves.
+    isMet: (candidate) => Boolean(candidate.experienceBand),
+  },
 ];
 
 function getMissingMatchingRequirements(candidate) {
