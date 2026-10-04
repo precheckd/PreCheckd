@@ -236,16 +236,16 @@ const candidateSchema = new mongoose.Schema({
   // Computed from workHistory, never self-declared (Kent: no claiming 10
   // years of experience when the work history only shows 3). Recomputed
   // in the pre-save hook below whenever work history changes. null until
-  // there's at least one work-history entry with a usable start date —
-  // see utils/candidateMatchingRequirements.js, where having this
-  // computed is one of the required fields to show up in search.
+  // there's at least one work-history entry with a usable start date.
+  // Informational only — NOT a required field and NOT used to gate
+  // anything. An earlier pass also bucketed this into an overall
+  // Entry/Mid/Senior/Lead band and required it for search visibility;
+  // rolled back (Oct 3, 2026) since there's no honest single-number way
+  // to separate "25 years as a help-desk tech" from "25 years running
+  // infrastructure." That distinction is going to come from a future
+  // per-skill leveling system instead (see roadmap) — not this field.
   experienceYears: {
     type: Number,
-    default: null
-  },
-  experienceBand: {
-    type: String,
-    enum: ['entry', 'mid', 'senior', 'lead'],
     default: null
   },
 
@@ -330,14 +330,17 @@ const candidateSchema = new mongoose.Schema({
     default: 'annual'
   },
 
-  // Where the candidate is willing to work, arrangement-wise. Defaults to
-  // "open_to_any" rather than null — unset should mean "no constraint,"
-  // not "unknown/excluded," so a recruiter's optional work-arrangement
-  // filter (see candidate-search.js) always matches these candidates too.
+  // Where the candidate is willing to work, arrangement-wise. A multi-select
+  // — a candidate can pick more than one (e.g. remote + hybrid). Starts
+  // empty and is one of the required matching fields (see
+  // utils/candidateMatchingRequirements.js): leaving it blank would mean
+  // "I'm not willing to work remote, hybrid, or in-office," which isn't a
+  // real answer for someone job-hunting, so it's required rather than
+  // defaulting to "open to any" the way other optional fields do.
   workArrangement: {
-    type: String,
-    enum: ['remote', 'hybrid', 'in_office', 'open_to_any'],
-    default: 'open_to_any'
+    type: [String],
+    enum: ['remote', 'hybrid', 'in_office'],
+    default: []
   },
 
   // Optional recurring weekly availability — NOT one of the required
@@ -388,9 +391,8 @@ candidateSchema.pre('save', function(next) {
     this.minSalaryAnnualEquivalent = null;
   }
 
-  const { years, band } = computeExperience(this.workHistory);
+  const { years } = computeExperience(this.workHistory);
   this.experienceYears = years;
-  this.experienceBand = band;
 
   next();
 });

@@ -45,10 +45,11 @@ router.use(requireRecruiterLogin);
 //   normalized to an annual-equivalent) are returned. The budget number
 //   itself is never stored or shown to the candidate.
 // - A role's work arrangement (?workArrangement=remote|hybrid|in_office):
-//   a candidate's own preference defaults to "open_to_any" (not null), so
-//   unset means no constraint — only a candidate who specifically picked
-//   a different arrangement than the one the recruiter is filtering for
-//   gets excluded.
+//   work arrangement is a required, multi-select field on the candidate
+//   side (see utils/candidateMatchingRequirements.js), so every eligible
+//   candidate here has at least one value set — a candidate whose
+//   selections don't include the one the recruiter is filtering for gets
+//   excluded.
 // - A role's required days/hours (?availDays=mon,tue&availStart=&availEnd=):
 //   unlike the two filters above, this doesn't simply exclude non-matches.
 //   "Never set an availability preference" isn't the same as "confirmed
@@ -79,7 +80,10 @@ router.get('/', async (req, res) => {
 
     const workArrangement = VALID_WORK_ARRANGEMENTS.includes(req.query.workArrangement) ? req.query.workArrangement : null;
     if (workArrangement) {
-      query.workArrangement = { $in: [workArrangement, 'open_to_any'] };
+      // workArrangement is an array field on the candidate — querying it
+      // with a plain value matches any document whose array contains
+      // that value (standard Mongo array-field equality semantics).
+      query.workArrangement = workArrangement;
     }
 
     const budgetAmountRaw = parseFloat(req.query.budgetAmount);

@@ -4,14 +4,18 @@
 
   const saveUrl = window.PRECHECKD_WORK_AREAS_SAVE_URL;
   const existing = window.PRECHECKD_EXISTING_WORK_AREAS;
+  const jobPreferencesUrl = window.PRECHECKD_JOB_PREFERENCES_URL;
   const statusEl = document.getElementById('wa-status');
   const citySearchInput = document.getElementById('wa-city-search');
   const citySearchBtn = document.getElementById('wa-city-search-btn');
   const saveBtn = document.getElementById('wa-save-btn');
   const clearBtn = document.getElementById('wa-clear-btn');
+  const freehandBtn = document.getElementById('wa-freehand-btn');
 
   // Default view: continental US, zoomed out. Re-centered on load if the
-  // candidate already has saved shapes, or whenever they search a city.
+  // candidate already has saved shapes (below), or by the browser's
+  // geolocation if they don't (further below) — whichever is more
+  // specific wins. Also re-centered whenever they search a city.
   const map = L.map('wa-map').setView([39.8283, -98.5795], 4);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -59,11 +63,95 @@
       // getBounds() can throw if a layer's bounds are degenerate — fall
       // back to the default view rather than breaking the page.
     }
+  } else if (navigator.geolocation) {
+    // Nothing saved yet — try to center on the candidate instead of
+    // leaving them staring at the whole continental US. Silently falls
+    // back to the default view on denial/timeout/error; this is a
+    // convenience, not something to nag about with a visible error.
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        map.setView([position.coords.latitude, position.coords.longitude], 10);
+      },
+      () => {},
+      { timeout: 8000 }
+    );
   }
 
   map.on(L.Draw.Event.CREATED, (e) => {
     drawnItems.addLayer(e.layer);
   });
+
+  // Freehand drawing — a lightweight hand-rolled tool rather than the
+  // point-by-point Leaflet.Draw polygon tool, for tracing an irregular
+  // border (a river's edge, say) by just dragging instead of clicking a
+  // vertex at a time. Toggled on/off with its own button; while active,
+  // map panning is disabled so a drag draws a shape instead of moving the
+  // map. Works with both mouse and touch.
+  let freehandActive = false;
+  let freehandDrawing = false;
+  let freehandLatLngs = [];
+  let freehandPreviewLayer = null;
+
+  function setFreehandActive(active) {
+    freehandActive = active;
+    freehandBtn.textContent = active ? 'Exit Freehand Draw' : 'Freehand Draw';
+    freehandBtn.classList.toggle('active', active);
+    if (active) {
+      map.dragging.disable();
+    } else {
+      map.dragging.enable();
+    }
+  }
+
+  function freehandStart(latlng) {
+    freehandDrawing = true;
+    freehandLatLngs = [latlng];
+    freehandPreviewLayer = L.polyline(freehandLatLngs, { color: '#2ECC71', weight: 3 }).addTo(map);
+  }
+
+  function freehandMove(latlng) {
+    if (!freehandDrawing) return;
+    freehandLatLngs.push(latlng);
+    freehandPreviewLayer.setLatLngs(freehandLatLngs);
+  }
+
+  function freehandEnd() {
+    if (!freehandDrawing) return;
+    freehandDrawing = false;
+    if (freehandPreviewLayer) {
+      map.removeLayer(freehandPreviewLayer);
+      freehandPreviewLayer = null;
+    }
+    if (freehandLatLngs.length >= 3) {
+      drawnItems.addLayer(L.polygon(freehandLatLngs));
+    }
+    freehandLatLngs = [];
+  }
+
+  freehandBtn.addEventListener('click', () => setFreehandActive(!freehandActive));
+
+  map.on('mousedown', (e) => { if (freehandActive) freehandStart(e.latlng); });
+  map.on('mousemove', (e) => { if (freehandActive) freehandMove(e.latlng); });
+  map.on('mouseup', () => { if (freehandActive) freehandEnd(); });
+
+  // Touch support — Leaflet's own mouse-event shims don't reliably cover
+  // freehand dragging on mobile, so these are handled directly.
+  const mapContainer = map.getContainer();
+  mapContainer.addEventListener('touchstart', (e) => {
+    if (!freehandActive || e.touches.length !== 1) return;
+    e.preventDefault();
+    freehandStart(map.mouseEventToLatLng(e.touches[0]));
+  }, { passive: false });
+  mapContainer.addEventListener('touchmove', (e) => {
+    if (!freehandActive || !freehandDrawing || e.touches.length !== 1) return;
+    e.preventDefault();
+    freehandMove(map.mouseEventToLatLng(e.touches[0]));
+  }, { passive: false });
+  mapContainer.addEventListener('touchend', (e) => {
+    if (!freehandActive) return;
+    e.preventDefault();
+    freehandEnd();
+  }, { passive: false });
 
   function showStatus(text, isError) {
     statusEl.textContent = text;
@@ -108,13 +196,20 @@
       const data = await res.json();
 
       if (res.ok && data.success) {
-        showStatus(coordinates.length === 0 ? 'Cleared — no work areas saved.' : 'Saved.', false);
+        showStatus(coordinates.length === 0 ? 'Cleared — no work areas saved.' : 'Saved — back to Job Preferences...', false);
+        // Saving is the end of this step in the flow, not a page you'd
+        // stay on — send the candidate back to continue the rest of
+        // their Job Preferences instead of requiring the back button.
+        if (jobPreferencesUrl) {
+          setTimeout(() => { window.location.href = jobPreferencesUrl; }, 900);
+        }
       } else {
         showStatus(data.error || 'Something went wrong. Please try again.', true);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Work Areas';
       }
     } catch (err) {
       showStatus('Something went wrong. Please try again.', true);
-    } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save Work Areas';
     }

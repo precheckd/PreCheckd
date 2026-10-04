@@ -132,6 +132,16 @@
     color: #F2F4F3;
   }
 
+  .btn-cancel.active {
+    background: #2ECC71;
+    color: #1F363C;
+    border-color: #2ECC71;
+  }
+
+  .btn-cancel.active:hover {
+    background: #4ADE80;
+  }
+
   @media (max-width: 768px) {
     .wa-content {
       padding: 1rem;
@@ -153,7 +163,7 @@
 
 <div class="wa-content">
   <div class="wa-container">
-    <a href="/candidate/<%= candidate.slug %>/edit" class="wa-back">&larr; Back to edit profile</a>
+    <a href="/candidate/<%= candidate.slug %>/job-preferences" class="wa-back">&larr; Back to Job Preferences</a>
 
     <div class="wa-header">
       <h1>Where You're Willing to Work</h1>
@@ -168,9 +178,10 @@
 
       <div id="wa-map"></div>
 
-      <p class="wa-hint">Use the polygon tool (top-left of the map) to trace an area — click to add points, click the first point again to close the shape. You can draw as many separate areas as you like. Use the trash icon to remove a shape you don't want.</p>
+      <p class="wa-hint">Use the polygon tool (top-left of the map) to trace an area point by point, or use Freehand Draw below to trace a shape by dragging — handy for an irregular border like a river's edge. You can draw as many separate areas as you like, mixing both tools. Use the trash icon to remove a shape you don't want.</p>
 
       <div class="wa-actions">
+        <button type="button" id="wa-freehand-btn" class="btn-cancel">Freehand Draw</button>
         <button type="button" id="wa-save-btn" class="btn btn-primary">Save Work Areas</button>
         <button type="button" id="wa-clear-btn" class="btn-cancel">Clear All</button>
         <span id="wa-status" class="wa-status hidden"></span>
@@ -182,6 +193,7 @@
 <script>
   window.PRECHECKD_WORK_AREAS_SAVE_URL = <%- JSON.stringify(`/candidate/${candidate.slug}/work-areas`) %>;
   window.PRECHECKD_EXISTING_WORK_AREAS = <%- JSON.stringify(existingWorkAreas) %>;
+  window.PRECHECKD_JOB_PREFERENCES_URL = <%- JSON.stringify(`/candidate/${candidate.slug}/job-preferences`) %>;
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>

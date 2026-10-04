@@ -269,6 +269,84 @@
     margin: 1.5rem 0 0.75rem;
   }
 
+  .job-prefs-shortcut {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-color: #2ECC71;
+  }
+
+  .job-prefs-shortcut-title {
+    color: #F2F4F3;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+
+  @media (max-width: 600px) {
+    .job-prefs-shortcut {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .accordion-section {
+    border: 1px solid #3B5860;
+    background: #24343A;
+    border-radius: 8px;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+
+  .accordion-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    color: #F2F4F3;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .accordion-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .accordion-summary::before {
+    content: '▸';
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    transition: transform 0.15s;
+  }
+
+  .accordion-section[open] > .accordion-summary::before {
+    transform: rotate(90deg);
+  }
+
+  .accordion-summary:hover {
+    background: #2A4750;
+  }
+
+  .accordion-count {
+    background: #3B5860;
+    color: #C7D1CF;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 0.1rem 0.55rem;
+  }
+
+  .accordion-body {
+    padding: 0 1.1rem 1.1rem;
+    border-top: 1px solid #3B5860;
+    padding-top: 1rem;
+  }
+
   .entry-card {
     background: #24404A;
     border: 1px solid #3B5860;
@@ -529,11 +607,21 @@
         <div>
           <div class="requirements-banner-title">Recruiters can't find you yet</div>
           <div class="requirements-banner-body">
-            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %> before you'll show up in recruiter search: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Fill these in on your <a href="/candidate/<%= candidate.slug %>/job-preferences" style="color: #FF8A8A; text-decoration: underline;">Job Preferences</a> and <a href="/candidate/<%= candidate.slug %>/work-areas" style="color: #FF8A8A; text-decoration: underline;">Work Areas</a> pages to start getting found.
+            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %> before you'll show up in recruiter search: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. <a href="/candidate/<%= candidate.slug %>/<%= missingRequirements[0].page %>" style="color: #FF8A8A; text-decoration: underline;">Fix this</a> to start getting found.
           </div>
         </div>
       </div>
     <% } %>
+
+    <div class="cedit-card job-prefs-shortcut">
+      <div>
+        <div class="job-prefs-shortcut-title">Job Preferences</div>
+        <p class="cert-hint" style="margin-bottom: 0;">Salary, work arrangement, availability, security clearance, and notice period — everything that controls whether and how you show up in recruiter search.</p>
+      </div>
+      <a href="/candidate/<%= candidate.slug %>/job-preferences" class="btn-cancel" style="flex-shrink: 0;">
+        Edit Job Preferences
+      </a>
+    </div>
 
     <div class="cedit-card">
       <% if (typeof error !== 'undefined' && error) { %>
@@ -591,32 +679,52 @@
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>
 
-        <div class="section-label">Work History</div>
-        <div id="work-entries"></div>
-        <button type="button" id="add-work-entry" class="add-entry-btn">+ Add work experience</button>
-
-        <div class="section-label">Education</div>
-        <div id="education-entries"></div>
-        <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
-
-        <div class="section-label">Certifications</div>
-
-        <label>
-          Credly username <span class="label-hint">(optional, but recommended)</span>
-          <div class="credly-box">
-            <% if (candidate.credlyUsername) { %>
-              <p class="credly-synced-note">✓ Synced with Credly as "<%= candidate.credlyUsername %>"<% if (candidate.credlyLastSyncedAt) { %> — last checked <%= candidate.credlyLastSyncedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %><% } %>. Any matching certifications below will be auto-verified whenever you save.</p>
-            <% } else { %>
-              <p>Have certifications on Credly (AWS, Microsoft, Proofpoint, PMI, and many others use it)? Add your Credly username and we'll automatically verify any matching certifications below — no need to hunt down individual badge links. Find it in your Credly profile URL — for example, "kent-mayer" from credly.com/users/kent-mayer.</p>
-            <% } %>
-            <input type="text" name="credlyUsername" placeholder="e.g. kent-mayer" value="<%= candidate.credlyUsername || '' %>">
-            <span class="label-hint">Your Credly profile must be set to public for this to work.</span>
+        <details class="accordion-section" <%= (candidate.workHistory && candidate.workHistory.length > 0) ? 'open' : '' %>>
+          <summary class="accordion-summary">
+            Work History
+            <% if (candidate.workHistory && candidate.workHistory.length > 0) { %><span class="accordion-count"><%= candidate.workHistory.length %></span><% } %>
+          </summary>
+          <div class="accordion-body">
+            <div id="work-entries"></div>
+            <button type="button" id="add-work-entry" class="add-entry-btn">+ Add work experience</button>
           </div>
-        </label>
+        </details>
 
-        <p class="cert-hint">Add a credential ID to any certification not covered by Credly if you'd like us to verify it another way. Editing a credential ID or name resets that certification's verification status.</p>
-        <div id="certification-entries"></div>
-        <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
+        <details class="accordion-section" <%= (candidate.educationHistory && candidate.educationHistory.length > 0) ? 'open' : '' %>>
+          <summary class="accordion-summary">
+            Education
+            <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %><span class="accordion-count"><%= candidate.educationHistory.length %></span><% } %>
+          </summary>
+          <div class="accordion-body">
+            <div id="education-entries"></div>
+            <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
+          </div>
+        </details>
+
+        <details class="accordion-section" <%= (candidate.certifications && candidate.certifications.length > 0) ? 'open' : '' %>>
+          <summary class="accordion-summary">
+            Certifications
+            <% if (candidate.certifications && candidate.certifications.length > 0) { %><span class="accordion-count"><%= candidate.certifications.length %></span><% } %>
+          </summary>
+          <div class="accordion-body">
+            <label>
+              Credly username <span class="label-hint">(optional, but recommended)</span>
+              <div class="credly-box">
+                <% if (candidate.credlyUsername) { %>
+                  <p class="credly-synced-note">✓ Synced with Credly as "<%= candidate.credlyUsername %>"<% if (candidate.credlyLastSyncedAt) { %> — last checked <%= candidate.credlyLastSyncedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %><% } %>. Any matching certifications below will be auto-verified whenever you save.</p>
+                <% } else { %>
+                  <p>Have certifications on Credly (AWS, Microsoft, Proofpoint, PMI, and many others use it)? Add your Credly username and we'll automatically verify any matching certifications below — no need to hunt down individual badge links. Find it in your Credly profile URL — for example, "kent-mayer" from credly.com/users/kent-mayer.</p>
+                <% } %>
+                <input type="text" name="credlyUsername" placeholder="e.g. kent-mayer" value="<%= candidate.credlyUsername || '' %>">
+                <span class="label-hint">Your Credly profile must be set to public for this to work.</span>
+              </div>
+            </label>
+
+            <p class="cert-hint">Add a credential ID to any certification not covered by Credly if you'd like us to verify it another way. Editing a credential ID or name resets that certification's verification status.</p>
+            <div id="certification-entries"></div>
+            <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
+          </div>
+        </details>
 
         <div class="form-actions">
           <button type="submit" id="save-button">Save Changes</button>
@@ -624,13 +732,7 @@
         </div>
       </form>
 
-      <div class="section-label">Job Preferences</div>
-      <p class="cert-hint">Salary, work arrangement, availability, security clearance, and notice period — everything that controls whether and how you show up in recruiter search.</p>
-      <a href="/candidate/<%= candidate.slug %>/job-preferences" class="btn-cancel" style="display: inline-block;">
-        Edit Job Preferences
-      </a>
-
-      <div class="section-label" style="margin-top: 1.5rem;">Video Introduction</div>
+      <div class="section-label">Video Introduction</div>
       <p class="cert-hint">Record a short intro video and answers to 5 interview questions for recruiters to watch alongside your profile.</p>
       <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-block;">
         <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>

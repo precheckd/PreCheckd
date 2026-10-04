@@ -3,9 +3,8 @@ const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { DAY_CODES, DAY_OPTIONS } = require('../utils/availabilityMatching');
-const { EXPERIENCE_BANDS } = require('../utils/experienceLevel');
 
-const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office', 'open_to_any'];
+const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
 const VALID_SECURITY_CLEARANCES = ['none', 'public_trust', 'secret', 'top_secret', 'ts_sci', 'other'];
 const VALID_NOTICE_PERIODS = ['immediately_available', 'two_weeks', 'currently_employed_flexible'];
 
@@ -48,8 +47,7 @@ router.get('/:slug/job-preferences', async (req, res) => {
       title: `Job Preferences | PreCheckd`,
       error: null,
       missingRequirements: getMissingMatchingRequirements(candidate),
-      dayOptions: DAY_OPTIONS,
-      experienceBands: EXPERIENCE_BANDS
+      dayOptions: DAY_OPTIONS
     });
   } catch (error) {
     console.error('Error loading candidate job-preferences page:', error);
@@ -67,7 +65,7 @@ router.post('/:slug/job-preferences', async (req, res) => {
     }
 
     const {
-      openToOpportunities, workArrangement,
+      openToOpportunities,
       minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType,
       availableStartTime, availableEndTime,
       securityClearance, securityClearanceOther, noticePeriod
@@ -75,7 +73,18 @@ router.post('/:slug/job-preferences', async (req, res) => {
 
     // Unchecked checkboxes aren't submitted at all, so absence means false.
     candidate.openToOpportunities = openToOpportunities === 'true';
-    candidate.workArrangement = VALID_WORK_ARRANGEMENTS.includes(workArrangement) ? workArrangement : 'open_to_any';
+
+    // workArrangement is a multi-select checkbox group — req.body.workArrangement
+    // is a string (one box checked), an array (multiple checked), or absent
+    // (none checked). No default fallback: leaving it blank is a real,
+    // required-field-missing state, not "open to any" — see
+    // utils/candidateMatchingRequirements.js.
+    const submittedArrangementRaw = req.body.workArrangement;
+    const submittedArrangement = !submittedArrangementRaw
+      ? []
+      : (Array.isArray(submittedArrangementRaw) ? submittedArrangementRaw : [submittedArrangementRaw])
+          .filter((a) => VALID_WORK_ARRANGEMENTS.includes(a));
+    candidate.workArrangement = submittedArrangement;
 
     // Salary fields are optional here — a candidate can leave either blank
     // and come back later. Only search eligibility (a separate check) cares

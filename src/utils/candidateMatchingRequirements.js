@@ -9,11 +9,15 @@
 //
 // Each requirement's `isMet` takes the full candidate document (not just
 // one field) in case a future requirement needs to look at more than one
-// value to decide if it's satisfied.
+// value to decide if it's satisfied. `page` is the path segment (under
+// /candidate/:slug/) where a candidate goes to fix that requirement, used
+// to route the "recruiters can't find you yet" banner straight to the
+// right page instead of always landing on Edit Profile.
 const requirements = [
   {
     key: 'workAreas',
     label: 'Where you\'re willing to work',
+    page: 'work-areas',
     isMet: (candidate) => Boolean(
       candidate.workAreas &&
       candidate.workAreas.coordinates &&
@@ -23,23 +27,23 @@ const requirements = [
   {
     key: 'minSalary',
     label: 'Minimum salary',
+    page: 'job-preferences',
     isMet: (candidate) => Boolean(
       typeof candidate.minSalaryAmount === 'number' && candidate.minSalaryAmount > 0
     ),
   },
   {
-    key: 'experience',
-    label: 'Work history with at least one dated job (used to compute your experience level)',
-    // experienceBand is computed on save from workHistory — see
-    // utils/experienceLevel.js — so this is really checking "do you have
-    // at least one work-history entry with a usable start date," not
-    // asking the candidate to fill in a number themselves.
-    isMet: (candidate) => Boolean(candidate.experienceBand),
+    key: 'workArrangement',
+    label: 'Work arrangement (remote, hybrid, or in-office)',
+    page: 'job-preferences',
+    isMet: (candidate) => Boolean(
+      Array.isArray(candidate.workArrangement) && candidate.workArrangement.length > 0
+    ),
   },
 ];
 
 function getMissingMatchingRequirements(candidate) {
-  return requirements.filter((r) => !r.isMet(candidate)).map((r) => ({ key: r.key, label: r.label }));
+  return requirements.filter((r) => !r.isMet(candidate)).map((r) => ({ key: r.key, label: r.label, page: r.page }));
 }
 
 function candidateMeetsMatchingRequirements(candidate) {

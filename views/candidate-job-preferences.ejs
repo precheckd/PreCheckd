@@ -261,6 +261,19 @@
     margin-left: 0.4rem;
   }
 
+  .required-pill-complete {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #4ADE80;
+    background: #1E3A2E;
+    border-radius: 20px;
+    padding: 0.15rem 0.55rem;
+    margin-left: 0.4rem;
+  }
+
   .optional-group {
     display: flex;
     flex-direction: column;
@@ -367,7 +380,7 @@
         <div>
           <div class="requirements-banner-title">Recruiters can't find you yet</div>
           <div class="requirements-banner-body">
-            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Work history is added on your <a href="/candidate/<%= candidate.slug %>/edit">Edit Profile</a> page; work areas are drawn on your <a href="/candidate/<%= candidate.slug %>/work-areas">Work Areas</a> page.
+            You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. Fill in what's below, or draw your <a href="/candidate/<%= candidate.slug %>/work-areas">Work Areas</a> if that's what's missing.
           </div>
         </div>
       </div>
@@ -384,9 +397,13 @@
           <span class="section-divider-line"></span>
         </div>
 
+        <% const hasMinSalary = typeof candidate.minSalaryAmount === 'number' && candidate.minSalaryAmount > 0; %>
+        <% const hasWorkArrangement = Array.isArray(candidate.workArrangement) && candidate.workArrangement.length > 0; %>
+        <% const hasWorkAreas = Boolean(candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length); %>
+
         <div class="required-group">
           <label>
-            Minimum you'd ever accept<span class="required-pill">Required</span>
+            Minimum you'd ever accept<span class="<%= hasMinSalary ? 'required-pill-complete' : 'required-pill' %>"><%= hasMinSalary ? 'Complete' : 'Required' %></span>
             <span class="label-hint">Recruiters never see this number — it's only used in the background to filter out searches that couldn't meet it.</span>
             <div class="salary-input-row">
               <input type="number" name="minSalaryAmount" min="0" step="1" placeholder="e.g. 65000" value="<%= candidate.minSalaryAmount || '' %>">
@@ -398,29 +415,32 @@
           </label>
 
           <label>
-            Experience level<span class="required-pill">Required</span>
-            <span class="label-hint">Computed automatically from your work history — not something you fill in. Add or edit your work history on the <a href="/candidate/<%= candidate.slug %>/edit" style="color: #8FA6AC; text-decoration: underline;">Edit Profile</a> page to update this.</span>
-            <% if (candidate.experienceBand) { %>
-              <% const band = experienceBands.find(function(b) { return b.code === candidate.experienceBand; }); %>
-              <div class="experience-display">
-                <%= band ? band.label : candidate.experienceBand %>
-                <span class="experience-sub"><%= candidate.experienceYears %> year<%= candidate.experienceYears === 1 ? '' : 's' %> of experience, based on your earliest work-history start date through your most recent (or current) job.</span>
-              </div>
-            <% } else { %>
-              <div class="experience-display">
-                Not yet calculated
-                <span class="experience-sub">Add at least one work history entry with a start date to compute this.</span>
-              </div>
-            <% } %>
+            Work arrangement<span class="<%= hasWorkArrangement ? 'required-pill-complete' : 'required-pill' %>"><%= hasWorkArrangement ? 'Complete' : 'Required' %></span>
+            <span class="label-hint">Check every arrangement you'd take. Recruiters can filter by this when a role is specifically remote, hybrid, or in-office.</span>
+            <div class="availability-days-row">
+              <label class="availability-day-checkbox">
+                <input type="checkbox" name="workArrangement" value="remote" <%= (candidate.workArrangement || []).includes('remote') ? 'checked' : '' %>>
+                <span>Remote</span>
+              </label>
+              <label class="availability-day-checkbox">
+                <input type="checkbox" name="workArrangement" value="hybrid" <%= (candidate.workArrangement || []).includes('hybrid') ? 'checked' : '' %>>
+                <span>Hybrid</span>
+              </label>
+              <label class="availability-day-checkbox">
+                <input type="checkbox" name="workArrangement" value="in_office" <%= (candidate.workArrangement || []).includes('in_office') ? 'checked' : '' %>>
+                <span>In-office</span>
+              </label>
+            </div>
           </label>
 
           <label>
-            Where you're willing to work<span class="required-pill">Required</span>
+            Where you're willing to work<span class="<%= hasWorkAreas ? 'required-pill-complete' : 'required-pill' %>"><%= hasWorkAreas ? 'Complete' : 'Required' %></span>
             <span class="label-hint">Drawn on a map rather than answered here.</span>
             <a href="/candidate/<%= candidate.slug %>/work-areas" class="btn-cancel" style="display: inline-block; margin-top: 0.5rem; width: fit-content;">
-              <%= (candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length) ? 'Edit Work Areas' : 'Draw Work Areas' %>
+              <%= hasWorkAreas ? 'Edit Work Areas' : 'Draw Work Areas' %>
             </a>
           </label>
+
         </div>
 
         <div class="section-divider">
@@ -438,14 +458,19 @@
           </label>
 
           <label>
-            Work arrangement
-            <select name="workArrangement">
-              <option value="open_to_any" <%= (candidate.workArrangement || 'open_to_any') === 'open_to_any' ? 'selected' : '' %>>Open to remote, hybrid, or in-office</option>
-              <option value="remote" <%= candidate.workArrangement === 'remote' ? 'selected' : '' %>>Remote only</option>
-              <option value="hybrid" <%= candidate.workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid only</option>
-              <option value="in_office" <%= candidate.workArrangement === 'in_office' ? 'selected' : '' %>>In-office only</option>
-            </select>
-            <span class="label-hint">Recruiters can filter by this when a role is specifically remote, hybrid, or in-office.</span>
+            Years of experience
+            <span class="label-hint">Informational only — computed automatically from your work history, not something you fill in here. Add or edit your work history on the <a href="/candidate/<%= candidate.slug %>/edit" style="color: #8FA6AC; text-decoration: underline;">Edit Profile</a> page to update this.</span>
+            <% if (typeof candidate.experienceYears === 'number' && candidate.experienceYears !== null) { %>
+              <div class="experience-display">
+                <%= candidate.experienceYears %> year<%= candidate.experienceYears === 1 ? '' : 's' %>
+                <span class="experience-sub">Based on your earliest work-history start date through your most recent (or current) job.</span>
+              </div>
+            <% } else { %>
+              <div class="experience-display">
+                Not yet calculated
+                <span class="experience-sub">Add at least one work history entry with a start date to compute this.</span>
+              </div>
+            <% } %>
           </label>
 
           <label>

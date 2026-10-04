@@ -363,7 +363,7 @@
       <div>
         <div class="requirements-banner-title">Recruiters can't find you yet</div>
         <div class="requirements-banner-body">
-          You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. <a href="/candidate/<%= candidate.slug %>/edit">Finish your profile</a> to start showing up in recruiter search.
+          You're missing <%= missingRequirements.length %> required item<%= missingRequirements.length > 1 ? 's' : '' %>: <strong><%= missingRequirements.map((r) => r.label).join(', ') %></strong>. <a href="/candidate/<%= candidate.slug %>/<%= missingRequirements[0].page %>">Fix this</a> to start showing up in recruiter search.
         </div>
       </div>
     </div>
