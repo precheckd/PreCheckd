@@ -314,6 +314,10 @@
     <p class="page-subtitle">Every candidate listed here has completed identity verification and opted in to being found. Names, employers, and schools stay hidden until a connection is accepted — search by role or certification to get started.</p>
   </div>
 
+  <% if (typeof debugLines !== 'undefined' && debugLines) { %>
+    <pre style="background:#24404A;color:#F2F4F3;padding:1rem;border-radius:6px;max-width:700px;margin:0 auto 1.5rem;white-space:pre-wrap;"><%= debugLines.join('\n') %></pre>
+  <% } %>
+
   <form class="search-bar" id="candidate-search-form">
     <input type="text" id="candidate-search-input" placeholder="Search by job title or certification..." value="<%= prefilledQuery %>">
     <button type="submit" class="btn btn-primary">Search</button>

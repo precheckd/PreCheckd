@@ -91,6 +91,23 @@ router.get('/', async (req, res) => {
     const hasBudget = Number.isFinite(budgetAmountRaw) && budgetAmountRaw > 0;
     const budgetAnnualEquivalent = hasBudget ? toAnnualEquivalent(budgetAmountRaw, budgetType) : null;
 
+    // TEMPORARY DIAGNOSTIC (Oct 5, 2026): /candidate-search?debug=1 lists
+    // every candidate by anonId with the reason(s) they're hidden from
+    // search. Remove once the live work-area test is done.
+    let debugLines = null;
+    if (req.query.debug === '1') {
+      const all = await Candidate.find({});
+      debugLines = all.map((c) => {
+        const reasons = [];
+        if (!c.openToOpportunities) reasons.push('openToOpportunities is off');
+        if (!c.isIdentityVerified) reasons.push('identity not verified');
+        const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+        getMissingMatchingRequirements(c).forEach((m) => reasons.push(`missing: ${m.label}`));
+        return `${c.anonId}: ${reasons.length ? 'HIDDEN — ' + reasons.join('; ') : 'eligible'}`;
+      });
+      debugLines.unshift(`${all.length} candidate(s) total`);
+    }
+
     let candidates = await Candidate.find(query).sort({ createdAt: -1 });
 
     // Required-matching-fields check runs in app code (not the Mongo
@@ -152,6 +169,7 @@ router.get('/', async (req, res) => {
       availStart,
       availEnd,
       showAvailabilityGrouping,
+      debugLines,
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {
