@@ -19,6 +19,35 @@
     align-items: flex-start;
   }
 
+  .cert-download {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #3B5860;
+  }
+
+  .cert-download-btn {
+    display: inline-block;
+    background: #2ECC71;
+    color: #1F363C;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .cert-download-btn:hover {
+    background: #4ADE80;
+  }
+
+  .cert-download-note {
+    color: #8FA6AC;
+    font-size: 0.82rem;
+    margin-top: 0.6rem;
+    line-height: 1.5;
+  }
+
   .requirements-banner {
     max-width: 900px;
     margin: 0 auto 1.5rem;
@@ -542,6 +571,11 @@
         </div>
         <% } %>
 
+      </div>
+
+      <div class="cert-download">
+        <a href="/candidate/<%= candidate.slug %>/certificate" class="cert-download-btn">Download Certificate (PDF)</a>
+        <p class="cert-download-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
       </div>
     </div>
   </div>

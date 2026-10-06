@@ -1,0 +1,362 @@
+<style>
+  .conn-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .conn-header {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .conn-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.35rem;
+  }
+
+  .conn-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .conn-filter {
+    max-width: 900px;
+    margin: 0 auto 1.25rem;
+  }
+
+  .conn-filter input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .conn-filter input::placeholder {
+    color: #7A9096;
+  }
+
+  .conn-filter input:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .conn-list {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .conn-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .conn-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .conn-name-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .conn-photo,
+  .conn-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .conn-photo {
+    overflow: hidden;
+  }
+
+  .conn-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .conn-avatar {
+    background: #2ECC71;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1F363C;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .conn-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #F2F4F3;
+  }
+
+  .conn-name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .conn-name a:hover {
+    color: #4ADE80;
+  }
+
+  .conn-sub {
+    font-size: 0.85rem;
+    color: #8FA6AC;
+    margin-top: 0.1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .conn-badges {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .conn-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .conn-badge-connected {
+    background: rgba(46, 204, 113, 0.15);
+    color: #4ADE80;
+    border: 1px solid #2ECC71;
+  }
+
+  .conn-badge-saved {
+    background: rgba(251, 191, 36, 0.12);
+    color: #FBBF24;
+    border: 1px solid #B8860B;
+  }
+
+  .conn-note-label {
+    color: #8FA6AC;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.7rem;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .conn-note-textarea {
+    width: 100%;
+    padding: 0.65rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #24404A;
+    color: #F2F4F3;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.2s;
+  }
+
+  .conn-note-textarea::placeholder {
+    color: #7A9096;
+  }
+
+  .conn-note-textarea:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .conn-card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .conn-note-status {
+    font-size: 0.8rem;
+    color: #4ADE80;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .conn-note-status.visible {
+    opacity: 1;
+  }
+
+  .conn-note-status.error {
+    color: #FF8A8A;
+  }
+
+  .conn-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .conn-btn {
+    background: transparent;
+    border: 1px solid #4A6F7B;
+    color: #C7D1CF;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    width: auto;
+    display: inline-block;
+  }
+
+  .conn-btn:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .conn-btn-danger {
+    color: #FF8A8A;
+  }
+
+  .conn-btn-danger:hover {
+    background: #3A2020;
+    border-color: #E53E3E;
+    color: #FF8A8A;
+  }
+
+  .conn-empty {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    color: #8FA6AC;
+    padding: 3rem 1.5rem;
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+  }
+
+  .conn-empty a {
+    color: #4ADE80;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .conn-content {
+      padding: 1rem;
+    }
+
+    .conn-card-top {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .conn-badges {
+      justify-content: flex-start;
+    }
+  }
+</style>
+
+<div class="conn-content">
+  <div class="conn-header">
+    <h1>Connections</h1>
+    <% if (isCandidate) { %>
+      <p>Your address book: recruiters you're connected with and recruiters you've saved, each with a private note only you can see. Pending requests live under Requests.</p>
+    <% } else { %>
+      <p>Your address book: candidates you're connected with, each with a private note only you can see. Pending requests live under Requests.</p>
+    <% } %>
+  </div>
+
+  <% if (entries.length === 0) { %>
+    <div class="conn-empty">
+      <% if (isCandidate) { %>
+        No connections or saved recruiters yet. <a href="/recruiter-search">Browse recruiters</a> to get started.
+      <% } else { %>
+        No connections yet. <a href="/candidate-search">Find candidates</a> to get started.
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="conn-filter">
+      <input type="text" id="conn-filter-input" placeholder="Filter by name, company, or note...">
+    </div>
+
+    <div class="conn-list" id="conn-list">
+      <% entries.forEach(function(entry) { %>
+        <div class="conn-card" data-key="<%= entry.key %>" data-search="<%= [entry.name, entry.company || '', entry.email || ''].join(' ').toLowerCase() %>">
+          <div class="conn-card-top">
+            <div class="conn-name-group">
+              <% if (entry.photoUrl) { %>
+                <div class="conn-photo"><img src="<%= entry.photoUrl %>" alt=""></div>
+              <% } else { %>
+                <div class="conn-avatar"><%= entry.initials %></div>
+              <% } %>
+              <div>
+                <div class="conn-name">
+                  <% if (isCandidate) { %>
+                    <a href="/recruiter/<%= entry.slug %>"><%= entry.name %></a>
+                  <% } else { %>
+                    <a href="/recruiter-dashboard/requests/<%= entry.requestId %>/candidate"><%= entry.name %></a>
+                  <% } %>
+                </div>
+                <% if (entry.company) { %><div class="conn-sub"><%= entry.company %></div><% } %>
+                <% if (entry.email) { %><div class="conn-sub"><%= entry.email %></div><% } %>
+              </div>
+            </div>
+            <div class="conn-badges">
+              <% if (entry.connected) { %>
+                <span class="conn-badge conn-badge-connected">Connected <%= new Date(entry.connectedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+              <% } %>
+              <% if (entry.saved) { %>
+                <span class="conn-badge conn-badge-saved" data-saved-badge>&#9733; Saved</span>
+              <% } %>
+            </div>
+          </div>
+
+          <label class="conn-note-label">Your Private Note</label>
+          <textarea class="conn-note-textarea" maxlength="1000" placeholder="<%= isCandidate ? 'Why this recruiter matters, what you talked about, follow-ups...' : 'What you discussed, roles to revisit, follow-ups...' %>"><%= entry.note %></textarea>
+
+          <div class="conn-card-actions">
+            <span class="conn-note-status">Saved</span>
+            <div class="conn-action-buttons">
+              <% if (entry.connected && entry.requestId) { %>
+                <a class="conn-btn" href="/messages/compose?connectionRequestId=<%= entry.requestId %>">Send Message</a>
+              <% } %>
+              <% if (isCandidate && entry.saved) { %>
+                <button type="button" class="conn-btn conn-btn-danger" data-unsave="<%= entry.slug %>" data-still-connected="<%= entry.connected ? 'true' : 'false' %>">Remove from saved</button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="conn-empty hidden" id="conn-no-match" style="display:none;">No one matches that filter.</div>
+  <% } %>
+</div>
+
+<script src="/js/connections-page.js"></script>

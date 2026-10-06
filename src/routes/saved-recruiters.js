@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const SavedRecruiter = require('../models/SavedRecruiter');
 const Recruiter = require('../models/Recruiter');
+const RelationshipNote = require('../models/RelationshipNote');
 
 function requireCandidateLogin(req, res, next) {
   if (!req.session.candidateId) {
@@ -64,6 +65,16 @@ router.post('/save', async (req, res) => {
       } else {
         throw error;
       }
+    }
+
+    // The Connections address book keeps one private note per recruiter —
+    // a note typed while saving becomes that note, replacing any older one.
+    if (trimmedNote) {
+      await RelationshipNote.findOneAndUpdate(
+        { ownerType: 'candidate', ownerId: req.session.candidateId, otherId: recruiter._id },
+        { note: trimmedNote, updatedAt: new Date() },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
     }
 
     res.json({ success: true, saved: true });

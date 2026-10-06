@@ -33,6 +33,19 @@ async function expireStaleFullAccessRequest(request) {
   }
 }
 
+// GET /candidate-dashboard/saved-recruiters — saved recruiters now live in
+// the Connections address book; this keeps old links/bookmarks working.
+router.get('/saved-recruiters', (req, res) => {
+  res.redirect('/connections');
+});
+
+// GET /candidate-dashboard/scam-check — the sender-email checker (WHOIS
+// domain age, PreCheckd contact history, web-search link). Candidate-only,
+// like the /api/email-checker/check endpoint it calls.
+router.get('/scam-check', (req, res) => {
+  res.render('scam-check', { title: 'Scam-check | PreCheckd' });
+});
+
 // GET /candidate-dashboard/my-reports — reports this candidate filed while
 // logged in. Deliberately minimal: just a receipt that it was submitted
 // (date, who they reported, why, what they said) — no status, since

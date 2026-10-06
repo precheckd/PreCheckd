@@ -1,0 +1,163 @@
+<style>
+  .sc-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .sc-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .sc-header h1 {
+    font-size: 1.75rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .sc-header p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+
+  .sc-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .sc-form {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .sc-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .sc-form input::placeholder {
+    color: #7A9096;
+  }
+
+  .sc-form input:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .sc-form button {
+    flex-shrink: 0;
+  }
+
+  .sc-results {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #3B5860;
+    display: none;
+  }
+
+  .sc-results.visible {
+    display: block;
+  }
+
+  .sc-result-row {
+    font-size: 0.95rem;
+    color: #C7D1CF;
+    padding: 0.4rem 0;
+    line-height: 1.55;
+  }
+
+  .sc-result-row strong {
+    color: #E8EBEA;
+  }
+
+  .sc-flag {
+    color: #FBBF24;
+    font-weight: 600;
+  }
+
+  .sc-error {
+    color: #F87171;
+    font-size: 0.9rem;
+  }
+
+  .sc-search-link {
+    display: inline-block;
+    margin-top: 0.6rem;
+    color: #4ADE80;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .sc-search-link:hover {
+    text-decoration: underline;
+  }
+
+  .sc-disclaimer {
+    color: #8FA6AC;
+    font-size: 0.82rem;
+    margin-top: 1rem;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .sc-footer-link {
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+    color: #8FA6AC;
+  }
+
+  .sc-footer-link a {
+    color: #4ADE80;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .sc-content {
+      padding: 1rem;
+    }
+
+    .sc-form {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="sc-content">
+  <div class="sc-container">
+    <div class="sc-header">
+      <h1>Scam-check</h1>
+      <p>Got an email from a recruiter you don't know? Paste the sender's address to check how old their domain is, whether PreCheckd has contacted that account about a candidate report, and to jump to a web search for scam reports.</p>
+    </div>
+
+    <div class="sc-card">
+      <form class="sc-form" id="email-checker-form">
+        <input type="email" id="email-checker-input" placeholder="Paste a sender's email address..." required>
+        <button type="submit" id="email-checker-btn" class="btn btn-primary">Check</button>
+      </form>
+
+      <div class="sc-results" id="email-checker-results"></div>
+
+      <p class="sc-disclaimer">This tool provides informational signals only, not a verdict. Use your own judgment alongside these results.</p>
+    </div>
+
+    <p class="sc-footer-link">Already sure it's a scam? <a href="/fraud">Report it</a> so we can look into it. Reports you've filed are under <a href="/candidate-dashboard/my-reports">Reports</a>.</p>
+  </div>
+</div>
+
+<script src="/js/scam-check.js"></script>
