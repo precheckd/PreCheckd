@@ -267,6 +267,100 @@
       font-size: 1rem;
     }
 
+    .filter-form {
+      max-width: 700px;
+      margin: 2rem auto 2.5rem;
+      background: #2A4750;
+      border: 1px solid #3B5860;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .filter-section {
+      padding: 1rem 0;
+      border-bottom: 1px solid #3B5860;
+    }
+
+    .filter-section:first-of-type {
+      padding-top: 0;
+    }
+
+    .filter-section h2 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #8FA6AC;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.6rem;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-form input[type="text"],
+    .filter-form input[type="number"],
+    .filter-form input[type="time"],
+    .filter-form select {
+      padding: 0.75rem 0.9rem;
+      border: 1px solid #4A6F7B;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #24404A;
+      color: #F2F4F3;
+    }
+
+    .filter-form input[type="text"],
+    .filter-form input[type="number"] {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .filter-form input::placeholder {
+      color: #7A9096;
+    }
+
+    .filter-form input:focus,
+    .filter-form select:focus {
+      outline: none;
+      border-color: #2ECC71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+    }
+
+    .filter-hint {
+      color: #8FA6AC;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin-top: 0.5rem;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      padding-top: 1.25rem;
+    }
+
+    .filter-error {
+      color: #FF8A8A;
+      font-size: 0.9rem;
+      padding-top: 0.75rem;
+    }
+
+    .results-count {
+      color: #C7D1CF;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-cancel {
+      text-decoration: none;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -311,154 +405,141 @@
 
   <div class="page-header">
     <h1 class="page-title">Find Candidates</h1>
-    <p class="page-subtitle">Every candidate listed here has completed identity verification and opted in to being found. Names, employers, and schools stay hidden until a connection is accepted — search by role or certification to get started.</p>
+    <p class="page-subtitle">Every candidate listed here has completed identity verification and opted in to being found. Names, employers, and schools stay hidden until a connection is accepted. Set whatever criteria matter for your role, then search &mdash; or search with everything blank to see everyone.</p>
   </div>
 
-  <% if (typeof debugLines !== 'undefined' && debugLines) { %>
-    <pre style="background:#24404A;color:#F2F4F3;padding:1rem;border-radius:6px;max-width:700px;margin:0 auto 1.5rem;white-space:pre-wrap;"><%= debugLines.join('\n') %></pre>
-  <% } %>
+  <form class="filter-form" id="candidate-search-form" method="GET" action="/candidate-search" novalidate>
+    <input type="hidden" name="searched" value="1">
+    <input type="hidden" name="lat" id="filter-lat" value="<%= pinnedLat !== null ? pinnedLat : '' %>">
+    <input type="hidden" name="lng" id="filter-lng" value="<%= pinnedLng !== null ? pinnedLng : '' %>">
+    <input type="hidden" name="availDays" id="filter-avail-days" value="<%= requiredDays.join(',') %>">
 
-  <form class="search-bar" id="candidate-search-form">
-    <input type="text" id="candidate-search-input" placeholder="Search by job title or certification..." value="<%= prefilledQuery %>">
-    <button type="submit" class="btn btn-primary">Search</button>
+    <div class="filter-section">
+      <h2>Role</h2>
+      <div class="filter-row">
+        <input type="text" name="q" placeholder="Job title or certification (e.g. product support, AWS)" value="<%= keyword %>">
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <h2>Job location</h2>
+      <div class="filter-row">
+        <input type="text" name="label" id="filter-location" placeholder="City or address" value="<%= pinnedLabel %>" data-geocoded-label="<%= pinnedLat !== null ? pinnedLabel : '' %>">
+      </div>
+      <p class="filter-hint">Only candidates whose drawn work area includes this location. A specific address is more precise than a town name.</p>
+    </div>
+
+    <div class="filter-section">
+      <h2>Pay</h2>
+      <div class="filter-row">
+        <input type="number" name="budgetAmount" id="filter-budget-amount" placeholder="Role's budget (e.g. 95000)" min="0" step="1" value="<%= budgetAmount !== null ? budgetAmount : '' %>">
+        <select name="budgetType" id="filter-budget-type">
+          <option value="annual" <%= budgetType === 'annual' ? 'selected' : '' %>>per year</option>
+          <option value="hourly" <%= budgetType === 'hourly' ? 'selected' : '' %>>per hour</option>
+        </select>
+      </div>
+      <p class="filter-hint">Only candidates whose minimum acceptable pay fits this budget. Candidates never see this number.</p>
+    </div>
+
+    <div class="filter-section">
+      <h2>Work arrangement</h2>
+      <div class="filter-row">
+        <select name="workArrangement" id="filter-arrangement">
+          <option value="" <%= !workArrangement ? 'selected' : '' %>>Any work arrangement</option>
+          <option value="remote" <%= workArrangement === 'remote' ? 'selected' : '' %>>Remote</option>
+          <option value="hybrid" <%= workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
+          <option value="in_office" <%= workArrangement === 'in_office' ? 'selected' : '' %>>In-office</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <h2>Required days &amp; hours</h2>
+      <div class="availability-days-row" style="margin-bottom: 0.75rem;">
+        <% dayOptions.forEach(function(day) { %>
+          <label class="availability-day-checkbox">
+            <input type="checkbox" class="filter-day" value="<%= day.code %>" <%= requiredDays.includes(day.code) ? 'checked' : '' %>>
+            <span><%= day.label %></span>
+          </label>
+        <% }); %>
+      </div>
+      <div class="filter-row">
+        <input type="time" name="availStart" id="filter-avail-start" value="<%= availStart %>">
+        <span style="color: #8FA6AC; font-size: 0.9rem;">to</span>
+        <input type="time" name="availEnd" id="filter-avail-end" value="<%= availEnd %>">
+      </div>
+      <p class="filter-hint">Candidates confirmed available for these hours are shown first. Candidates who never set availability are listed below them &mdash; that's not a no, so just ask.</p>
+    </div>
+
+    <div class="filter-error hidden" id="filter-error"></div>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary" id="filter-submit">Search Candidates</button>
+      <a href="/candidate-search" class="btn-cancel">Clear All</a>
+    </div>
   </form>
 
-  <form class="search-bar" id="candidate-arrangement-form">
-    <select id="candidate-arrangement-select">
-      <option value="" <%= !workArrangement ? 'selected' : '' %>>Any work arrangement</option>
-      <option value="remote" <%= workArrangement === 'remote' ? 'selected' : '' %>>Remote</option>
-      <option value="hybrid" <%= workArrangement === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
-      <option value="in_office" <%= workArrangement === 'in_office' ? 'selected' : '' %>>In-office</option>
-    </select>
-    <button type="submit" class="btn btn-primary" id="candidate-arrangement-btn">Apply</button>
-  </form>
+  <% if (!hasSearched) { %>
+    <div class="prompt-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <p>Set your criteria above and click Search Candidates. Leave everything blank to see every eligible candidate.</p>
+    </div>
+  <% } else if (candidates.length === 0) { %>
+    <div class="empty-state">
+      <p>No candidates match your criteria. Try loosening a filter.</p>
+    </div>
+  <% } else { %>
+    <p class="results-count"><%= candidates.length %> candidate<%= candidates.length === 1 ? '' : 's' %> found</p>
+    <div class="candidate-grid">
+      <% candidates.forEach(function(candidate) { %>
+        <% if (candidate.showNoAvailabilityDivider) { %>
+          <div class="availability-divider">No availability info provided &mdash; ask directly</div>
+        <% } %>
+        <%
+          const jobTitles = (candidate.workHistory || []).map((j) => j.jobTitle).filter(Boolean);
+          const certNames = (candidate.certifications || []).map((c) => c.name).filter(Boolean);
+          const allVerified = Boolean(
+            candidate.verification.emailVerified &&
+            candidate.verification.phoneVerified &&
+            candidate.verification.identityVerified
+          );
+        %>
+        <a href="/candidate-search/<%= candidate.anonId %>" class="candidate-card">
+          <div class="card-top">
+            <div class="card-avatar-circle">?</div>
+            <div>
+              <div class="card-name">Candidate <%= candidate.anonId %></div>
+              <div class="card-anon-note">Identity hidden until connected</div>
+            </div>
+          </div>
 
-  <form class="search-bar" id="candidate-location-form">
-    <input type="text" id="candidate-location-input" placeholder="Filter by job location (city or address)..." value="<%= pinnedLabel %>">
-    <button type="submit" class="btn btn-primary" id="candidate-location-btn">Set Location</button>
-    <% if (pinnedLat !== null) { %>
-      <button type="button" class="btn-cancel" id="candidate-location-clear">Clear</button>
-    <% } %>
-  </form>
-  <p class="page-subtitle" style="margin: -1rem auto 1.5rem; max-width: 550px;">
-    <% if (pinnedLat !== null) { %>
-      Showing only candidates whose drawn work area includes this location.
-    <% } else { %>
-      Pin a job location to only see candidates who've marked that area as somewhere they'll work.
-    <% } %>
-  </p>
+          <% if (allVerified) { %>
+            <div class="card-verified-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              PreCheckd Verified
+            </div>
+          <% } else { %>
+            <div class="card-pending-badge">
+              Verification Pending
+            </div>
+          <% } %>
 
-  <form class="search-bar" id="candidate-budget-form">
-    <input type="number" id="candidate-budget-amount" placeholder="Role's budget (e.g. 95000)" min="0" step="1" value="<%= budgetAmount !== null ? budgetAmount : '' %>">
-    <select id="candidate-budget-type">
-      <option value="annual" <%= budgetType === 'annual' ? 'selected' : '' %>>per year</option>
-      <option value="hourly" <%= budgetType === 'hourly' ? 'selected' : '' %>>per hour</option>
-    </select>
-    <button type="submit" class="btn btn-primary" id="candidate-budget-btn">Set Budget</button>
-    <% if (budgetAmount !== null) { %>
-      <button type="button" class="btn-cancel" id="candidate-budget-clear">Clear</button>
-    <% } %>
-  </form>
-  <p class="page-subtitle" style="margin: -1rem auto 1.5rem; max-width: 550px;">
-    <% if (budgetAmount !== null) { %>
-      Showing only candidates whose minimum acceptable salary fits this budget. Candidates never see this number.
-    <% } else { %>
-      Enter what this role actually pays to only see candidates whose minimum would accept it. Never shown to candidates.
-    <% } %>
-  </p>
+          <% if (jobTitles.length > 0) { %>
+            <div class="card-roles">
+              <span class="card-section-label">Recent Roles</span>
+              <%= jobTitles.join(', ') %>
+            </div>
+          <% } %>
 
-  <form class="search-bar availability-filter-form" id="candidate-availability-form">
-    <div class="availability-days-row">
-      <% dayOptions.forEach(function(day) { %>
-        <label class="availability-day-checkbox">
-          <input type="checkbox" name="availDay" value="<%= day.code %>" <%= requiredDays.includes(day.code) ? 'checked' : '' %>>
-          <span><%= day.label %></span>
-        </label>
+          <% if (certNames.length > 0) { %>
+            <div class="card-certs">
+              <span class="card-section-label">Certifications</span>
+              <%= certNames.join(', ') %>
+            </div>
+          <% } %>
+        </a>
       <% }); %>
     </div>
-    <input type="time" id="candidate-avail-start" value="<%= availStart %>">
-    <span style="color: #8FA6AC; font-size: 0.9rem;">to</span>
-    <input type="time" id="candidate-avail-end" value="<%= availEnd %>">
-    <button type="submit" class="btn btn-primary" id="candidate-availability-btn">Set Required Hours</button>
-    <% if (showAvailabilityGrouping) { %>
-      <button type="button" class="btn-cancel" id="candidate-availability-clear">Clear</button>
-    <% } %>
-  </form>
-  <p class="page-subtitle" style="margin: -1rem auto 1.5rem; max-width: 550px;">
-    <% if (showAvailabilityGrouping) { %>
-      Candidates whose stated availability covers these hours are shown first; candidates who never set an availability preference are shown below, since that's not the same as a confirmed no.
-    <% } else { %>
-      If this role needs specific days/hours (overnight, school hours, weekends), set them here to see who's confirmed available first.
-    <% } %>
-  </p>
+  <% } %>
 
-  <div class="prompt-state hidden" id="prompt-state">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <p>Search for a candidate to get started.</p>
-  </div>
-
-  <div class="empty-state hidden" id="empty-state">
-    <p>No candidates match your search.</p>
-  </div>
-
-  <div class="candidate-grid hidden" id="candidate-grid">
-    <% candidates.forEach(function(candidate) { %>
-      <% if (candidate.showNoAvailabilityDivider) { %>
-        <div class="availability-divider">No availability info provided — ask directly</div>
-      <% } %>
-      <%
-        const jobTitles = (candidate.workHistory || []).map((j) => j.jobTitle).filter(Boolean);
-        const certNames = (candidate.certifications || []).map((c) => c.name).filter(Boolean);
-        const searchableText = [candidate.anonId, jobTitles.join(' '), certNames.join(' ')].join(' ').toLowerCase();
-        const allVerified = Boolean(
-          candidate.verification.emailVerified &&
-          candidate.verification.phoneVerified &&
-          candidate.verification.identityVerified
-        );
-      %>
-      <a href="/candidate-search/<%= candidate.anonId %>" class="candidate-card" data-search="<%= searchableText %>">
-        <div class="card-top">
-          <div class="card-avatar-circle">?</div>
-          <div>
-            <div class="card-name">Candidate <%= candidate.anonId %></div>
-            <div class="card-anon-note">Identity hidden until connected</div>
-          </div>
-        </div>
-
-        <% if (allVerified) { %>
-          <div class="card-verified-badge">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            PreCheckd Verified
-          </div>
-        <% } else { %>
-          <div class="card-pending-badge">
-            Verification Pending
-          </div>
-        <% } %>
-
-        <% if (jobTitles.length > 0) { %>
-          <div class="card-roles">
-            <span class="card-section-label">Recent Roles</span>
-            <%= jobTitles.join(', ') %>
-          </div>
-        <% } %>
-
-        <% if (certNames.length > 0) { %>
-          <div class="card-certs">
-            <span class="card-section-label">Certifications</span>
-            <%= certNames.join(', ') %>
-          </div>
-        <% } %>
-      </a>
-    <% }); %>
-  </div>
-
-<script>
-  window.PRECHECKD_PREFILLED_QUERY = <%- JSON.stringify(prefilledQuery || '') %>;
-  window.PRECHECKD_HAS_LOCATION_PIN = <%- JSON.stringify(pinnedLat !== null || budgetAmount !== null || showAvailabilityGrouping || Boolean(workArrangement)) %>;
-</script>
-<script src="/js/candidate-search.js"></script>
-<script src="/js/candidate-search-location.js"></script>
-<script src="/js/candidate-search-budget.js"></script>
-<script src="/js/candidate-search-availability.js"></script>
-<script src="/js/candidate-search-arrangement.js"></script>
+<script src="/js/candidate-search-form.js"></script>

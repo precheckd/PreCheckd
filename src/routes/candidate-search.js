@@ -23,23 +23,29 @@ function requireRecruiterLogin(req, res, next) {
 router.use(requireRecruiterLogin);
 
 // GET /candidate-search — the recruiter-side mirror of /recruiter-search.
-// Same client-side substring-filter pattern for role/cert text search:
-// render every eligible candidate server-side with a data-search
-// attribute, let the browser do the filtering. "Eligible" means
-// openToOpportunities, identity-verified, AND having filled in every
-// required matching field (see utils/candidateMatchingRequirements.js —
-// currently work areas + minimum salary). That last part is a hard
+// One form, one Search button: the recruiter sets whatever criteria they
+// want and submits them all together (GET, so a search is a shareable URL).
+// Every filter runs server-side. "Eligible" means openToOpportunities,
+// identity-verified, AND having filled in every required matching field
+// (see utils/candidateMatchingRequirements.js — currently work areas,
+// minimum salary and work arrangement). That last part is a hard
 // requirement, not "unset means no filter" — Kent's call, borrowed from
 // how dating apps that ask real questions match better than ones that
 // let you skate by blank.
 //
-// Two optional, recruiter-entered filters layer on top of that baseline:
+// Submitting the form with nothing filled in is a valid search and returns
+// every eligible candidate. Visiting the page with no query string at all
+// shows the form and a prompt instead.
 //
-// - A pinned job location (?lat=&lng=, set client-side via geocoding a
-//   typed address): only candidates whose drawn work-area shape contains
-//   the pin are returned. Recruiters don't get their own drawing tool —
-//   a point is all a job needs, since it's the candidate's shape that
-//   decides reach, not a recruiter-chosen radius.
+// Optional, recruiter-entered criteria layered on top of that baseline:
+//
+// - A keyword (?q=): every word must appear in the candidate's job titles,
+//   certification names or anonymous id (case-insensitive).
+// - A pinned job location (?lat=&lng=&label=, geocoded client-side from a
+//   typed address on submit): only candidates whose drawn work-area shape
+//   contains the pin are returned. Recruiters don't get their own drawing
+//   tool — a point is all a job needs, since it's the candidate's shape
+//   that decides reach, not a recruiter-chosen radius.
 // - A role budget (?budgetAmount=&budgetType=annual|hourly): only
 //   candidates whose minimum salary is at or below that budget (both
 //   normalized to an annual-equivalent) are returned. The budget number
@@ -51,7 +57,7 @@ router.use(requireRecruiterLogin);
 //   selections don't include the one the recruiter is filtering for gets
 //   excluded.
 // - A role's required days/hours (?availDays=mon,tue&availStart=&availEnd=):
-//   unlike the two filters above, this doesn't simply exclude non-matches.
+//   unlike the filters above, this doesn't simply exclude non-matches.
 //   "Never set an availability preference" isn't the same as "confirmed
 //   can't do these hours," so candidates split into two groups: those who
 //   opted in and cover the required window (shown first), and those who
@@ -64,6 +70,9 @@ router.get('/', async (req, res) => {
       openToOpportunities: true,
       isIdentityVerified: true
     };
+
+    const keyword = (req.query.q || '').trim();
+    const keywordTerms = keyword.toLowerCase().split(/\s+/).filter(Boolean);
 
     const lat = parseFloat(req.query.lat);
     const lng = parseFloat(req.query.lng);
@@ -91,73 +100,74 @@ router.get('/', async (req, res) => {
     const hasBudget = Number.isFinite(budgetAmountRaw) && budgetAmountRaw > 0;
     const budgetAnnualEquivalent = hasBudget ? toAnnualEquivalent(budgetAmountRaw, budgetType) : null;
 
-    // TEMPORARY DIAGNOSTIC (Oct 5, 2026): /candidate-search?debug=1 lists
-    // every candidate by anonId with the reason(s) they're hidden from
-    // search. Remove once the live work-area test is done.
-    let debugLines = null;
-    if (req.query.debug === '1') {
-      const all = await Candidate.find({});
-      debugLines = all.map((c) => {
-        const reasons = [];
-        if (!c.openToOpportunities) reasons.push('openToOpportunities is off');
-        if (!c.isIdentityVerified) reasons.push('identity not verified');
-        const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
-        getMissingMatchingRequirements(c).forEach((m) => reasons.push(`missing: ${m.label}`));
-        return `${c.anonId}: ${reasons.length ? 'HIDDEN — ' + reasons.join('; ') : 'eligible'}`;
-      });
-      debugLines.unshift(`${all.length} candidate(s) total`);
-    }
-
-    let candidates = await Candidate.find(query).sort({ createdAt: -1 });
-
-    // Required-matching-fields check runs in app code (not the Mongo
-    // query) so this stays in sync with the one shared definition rather
-    // than duplicating field-by-field logic here.
-    candidates = candidates.filter(candidateMeetsMatchingRequirements);
-
-    if (hasBudget) {
-      candidates = candidates.filter((c) => c.minSalaryAnnualEquivalent <= budgetAnnualEquivalent);
-    }
-
     const requiredDays = (req.query.availDays || '').split(',').filter((d) => DAY_CODES.includes(d));
     const availStart = req.query.availStart || '';
     const availEnd = req.query.availEnd || '';
     const hasAvailabilityFilter = requiredDays.length > 0 && Boolean(availStart) && Boolean(availEnd);
 
-    let candidatesForView;
+    // Any query string at all counts as a search — including the bare
+    // ?searched=1 the form sends when nothing is filled in (show everyone).
+    const hasSearched = Object.keys(req.query).length > 0;
+
+    let candidatesForView = [];
     let showAvailabilityGrouping = false;
 
-    if (hasAvailabilityFilter) {
-      const matched = [];
-      const unset = [];
+    if (hasSearched) {
+      let candidates = await Candidate.find(query).sort({ createdAt: -1 });
 
-      candidates.forEach((c) => {
-        const group = candidateAvailabilityGroup(c, requiredDays, availStart, availEnd);
-        if (group === 'matched') matched.push(c);
-        else if (group === 'unset') unset.push(c);
-        // 'excluded' candidates are dropped entirely.
-      });
+      // Required-matching-fields check runs in app code (not the Mongo
+      // query) so this stays in sync with the one shared definition rather
+      // than duplicating field-by-field logic here.
+      candidates = candidates.filter(candidateMeetsMatchingRequirements);
 
-      candidatesForView = matched.map((c) => getAnonymizedCandidateView(c))
-        .concat(unset.map((c) => getAnonymizedCandidateView(c)));
-
-      // Mark exactly the first candidate of the "unset" group so the view
-      // knows where to drop in the divider, without the view needing to
-      // re-derive group membership itself.
-      if (matched.length > 0 && unset.length > 0) {
-        candidatesForView[matched.length].showNoAvailabilityDivider = true;
-      } else if (matched.length === 0 && unset.length > 0) {
-        candidatesForView[0].showNoAvailabilityDivider = true;
+      if (hasBudget) {
+        candidates = candidates.filter((c) => c.minSalaryAnnualEquivalent <= budgetAnnualEquivalent);
       }
 
-      showAvailabilityGrouping = true;
-    } else {
-      candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+      if (keywordTerms.length > 0) {
+        candidates = candidates.filter((c) => {
+          const searchable = [
+            c.anonId,
+            ...(c.workHistory || []).map((j) => j.jobTitle),
+            ...(c.certifications || []).map((cert) => cert.name)
+          ].filter(Boolean).join(' ').toLowerCase();
+          return keywordTerms.every((term) => searchable.includes(term));
+        });
+      }
+
+      if (hasAvailabilityFilter) {
+        const matched = [];
+        const unset = [];
+
+        candidates.forEach((c) => {
+          const group = candidateAvailabilityGroup(c, requiredDays, availStart, availEnd);
+          if (group === 'matched') matched.push(c);
+          else if (group === 'unset') unset.push(c);
+          // 'excluded' candidates are dropped entirely.
+        });
+
+        candidatesForView = matched.map((c) => getAnonymizedCandidateView(c))
+          .concat(unset.map((c) => getAnonymizedCandidateView(c)));
+
+        // Mark exactly the first candidate of the "unset" group so the view
+        // knows where to drop in the divider, without the view needing to
+        // re-derive group membership itself.
+        if (matched.length > 0 && unset.length > 0) {
+          candidatesForView[matched.length].showNoAvailabilityDivider = true;
+        } else if (matched.length === 0 && unset.length > 0) {
+          candidatesForView[0].showNoAvailabilityDivider = true;
+        }
+
+        showAvailabilityGrouping = true;
+      } else {
+        candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+      }
     }
 
     res.render('candidate-search', {
       candidates: candidatesForView,
-      prefilledQuery: req.query.q || '',
+      hasSearched,
+      keyword,
       pinnedLat: hasPin ? lat : null,
       pinnedLng: hasPin ? lng : null,
       pinnedLabel: hasPin ? (req.query.label || '') : '',
@@ -169,7 +179,6 @@ router.get('/', async (req, res) => {
       availStart,
       availEnd,
       showAvailabilityGrouping,
-      debugLines,
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {
