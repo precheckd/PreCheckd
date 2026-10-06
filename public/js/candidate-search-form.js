@@ -30,7 +30,13 @@
   // Looks up the typed location only when it's new or changed — an
   // unchanged location reuses the lat/lng already in the hidden fields.
   async function geocodeLocation(query) {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`, {
+    // A bare US zip code (12345 or 12345-6789) geocodes unreliably as
+    // free text, so it goes through Nominatim's dedicated postalcode lookup.
+    const zipMatch = query.match(/^(\d{5})(?:-\d{4})?$/);
+    const searchParams = zipMatch
+      ? `postalcode=${zipMatch[1]}&countrycodes=us`
+      : `q=${encodeURIComponent(query)}`;
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&${searchParams}`, {
       headers: { 'Accept': 'application/json' },
     });
     const results = await res.json();

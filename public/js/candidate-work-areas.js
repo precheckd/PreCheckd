@@ -228,7 +228,13 @@
     citySearchBtn.textContent = '...';
 
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`, {
+      // A bare US zip code geocodes unreliably as free text, so it goes
+      // through Nominatim's dedicated postalcode lookup.
+      const zipMatch = query.match(/^(\d{5})(?:-\d{4})?$/);
+      const searchParams = zipMatch
+        ? `postalcode=${zipMatch[1]}&countrycodes=us`
+        : `q=${encodeURIComponent(query)}`;
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&${searchParams}`, {
         headers: { 'Accept': 'application/json' },
       });
       const results = await res.json();
