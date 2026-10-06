@@ -341,6 +341,30 @@
     padding: 0.1rem 0.55rem;
   }
 
+  .accordion-status {
+    margin-left: auto;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .accordion-status.status-verified {
+    color: #4ADE80;
+  }
+
+  .accordion-status.status-partial {
+    color: #FBBF24;
+  }
+
+  .accordion-status.status-pending {
+    color: #F87171;
+  }
+
+  .accordion-status.status-empty {
+    color: #8FA6AC;
+    font-weight: 500;
+  }
+
   .accordion-body {
     padding: 0 1.1rem 1.1rem;
     border-top: 1px solid #3B5860;
@@ -594,6 +618,29 @@
   }
 </style>
 
+<%
+  // Same wording/colors as the Verification Status section on the
+  // candidate's Home page, so a section reads the same on both pages.
+  function sectionStatus(entries) {
+    if (!entries || entries.length === 0) return null;
+    const verifiedCount = entries.filter((e) => e.verified).length;
+    if (verifiedCount === entries.length) return 'verified';
+    if (verifiedCount === 0) return 'pending';
+    return 'partial';
+  }
+
+  function sectionStatusLabel(status) {
+    if (status === 'verified') return '✓ Verified';
+    if (status === 'partial') return 'Partially Verified';
+    if (status === 'pending') return 'Verification Pending';
+    return 'Not added yet';
+  }
+
+  const workSectionStatus = sectionStatus(candidate.workHistory);
+  const eduSectionStatus = sectionStatus(candidate.educationHistory);
+  const certSectionStatus = sectionStatus(candidate.certifications);
+%>
+
 <div class="cedit-content">
   <div class="cedit-container">
     <div class="cedit-header">
@@ -679,10 +726,11 @@
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>
 
-        <details class="accordion-section" <%= (candidate.workHistory && candidate.workHistory.length > 0) ? 'open' : '' %>>
+        <details class="accordion-section">
           <summary class="accordion-summary">
             Work History
             <% if (candidate.workHistory && candidate.workHistory.length > 0) { %><span class="accordion-count"><%= candidate.workHistory.length %></span><% } %>
+            <span class="accordion-status status-<%= workSectionStatus || 'empty' %>"><%= sectionStatusLabel(workSectionStatus) %></span>
           </summary>
           <div class="accordion-body">
             <div id="work-entries"></div>
@@ -690,10 +738,11 @@
           </div>
         </details>
 
-        <details class="accordion-section" <%= (candidate.educationHistory && candidate.educationHistory.length > 0) ? 'open' : '' %>>
+        <details class="accordion-section">
           <summary class="accordion-summary">
             Education
             <% if (candidate.educationHistory && candidate.educationHistory.length > 0) { %><span class="accordion-count"><%= candidate.educationHistory.length %></span><% } %>
+            <span class="accordion-status status-<%= eduSectionStatus || 'empty' %>"><%= sectionStatusLabel(eduSectionStatus) %></span>
           </summary>
           <div class="accordion-body">
             <div id="education-entries"></div>
@@ -701,10 +750,11 @@
           </div>
         </details>
 
-        <details class="accordion-section" <%= (candidate.certifications && candidate.certifications.length > 0) ? 'open' : '' %>>
+        <details class="accordion-section">
           <summary class="accordion-summary">
             Certifications
             <% if (candidate.certifications && candidate.certifications.length > 0) { %><span class="accordion-count"><%= candidate.certifications.length %></span><% } %>
+            <span class="accordion-status status-<%= certSectionStatus || 'empty' %>"><%= sectionStatusLabel(certSectionStatus) %></span>
           </summary>
           <div class="accordion-body">
             <label>
