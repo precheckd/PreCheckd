@@ -86,6 +86,50 @@ router.get('/:slug/edit', async (req, res) => {
   }
 });
 
+// POST /candidate/:slug/edit/recheck-credly — re-runs the Credly check on
+// demand, so a cert earned after signup can be picked up without having to
+// re-save the whole form. Verifies any matching existing certs and queues
+// new badges for the candidate to add or dismiss.
+router.post('/:slug/edit/recheck-credly', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    const username = typeof req.body.credlyUsername === 'string' ? req.body.credlyUsername.trim() : '';
+    if (!username && !candidate.credlyUsername) {
+      return res.status(400).json({ error: 'Enter your Credly username first, then check again.' });
+    }
+
+    const verifiedBefore = candidate.certifications.filter((c) => c.verified).length;
+
+    try {
+      await syncWithCredly(candidate, username);
+    } catch (syncError) {
+      return res.status(400).json({ error: syncError.message });
+    }
+
+    await candidate.save();
+
+    const verifiedNow = candidate.certifications.filter((c) => c.verified).length;
+
+    res.json({
+      success: true,
+      newlyVerified: verifiedNow - verifiedBefore,
+      newBadges: (candidate.credlyUnmatchedBadges || []).length
+    });
+  } catch (error) {
+    console.error('Error rechecking Credly:', error);
+    res.status(500).json({ error: 'Something went wrong checking Credly. Please try again.' });
+  }
+});
+
 // POST /candidate/:slug/edit/add-credly-badge — candidate opts to add one
 // of the unmatched badges found during a sync as a real certification entry.
 router.post('/:slug/edit/add-credly-badge', async (req, res) => {

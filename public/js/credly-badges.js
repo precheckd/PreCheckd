@@ -1,4 +1,32 @@
 (function () {
+  const recheckBtn = document.getElementById('credly-recheck-btn');
+  if (recheckBtn && window.PRECHECKD_CANDIDATE_SLUG) {
+    const status = document.getElementById('credly-recheck-status');
+    recheckBtn.addEventListener('click', async function () {
+      const input = document.querySelector('input[name="credlyUsername"]');
+      recheckBtn.disabled = true;
+      status.textContent = 'Checking Credly…';
+      try {
+        const response = await fetch(`/candidate/${window.PRECHECKD_CANDIDATE_SLUG}/edit/recheck-credly`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credlyUsername: input ? input.value : '' }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          status.textContent = data.error || 'Something went wrong. Please try again.';
+          recheckBtn.disabled = false;
+          return;
+        }
+        status.textContent = 'Done — refreshing…';
+        window.location.reload();
+      } catch (error) {
+        status.textContent = 'Could not reach the server. Please try again.';
+        recheckBtn.disabled = false;
+      }
+    });
+  }
+
   const container = document.getElementById('credly-found-list');
   if (!container) return;
 

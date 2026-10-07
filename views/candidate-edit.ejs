@@ -465,6 +465,14 @@
     margin-bottom: 0.6rem;
   }
 
+  .credly-recheck {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.25rem 0 1rem;
+  }
+
   .credly-found-box {
     background: #24343A;
     border: 1px solid #2ECC71;
@@ -769,6 +777,12 @@
                 <span class="label-hint">Your Credly profile must be set to public for this to work.</span>
               </div>
             </label>
+
+            <div class="credly-recheck">
+              <button type="button" id="credly-recheck-btn" class="credly-add-btn">Check for new certifications</button>
+              <span id="credly-recheck-status" class="label-hint" role="status"></span>
+              <span class="label-hint">Earned a new cert since you signed up? This re-checks Credly. Save any other edits first — the page reloads.</span>
+            </div>
 
             <p class="cert-hint">Add a credential ID to any certification not covered by Credly if you'd like us to verify it another way. Editing a credential ID or name resets that certification's verification status.</p>
             <div id="certification-entries"></div>
