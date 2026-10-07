@@ -6,6 +6,7 @@ const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
 const { getAnonymizedCandidateView, getFullCandidateView } = require('../utils/candidateAnonymization');
 const { generateCertificate } = require('../utils/certificateGenerator');
+const { sharedContactFor } = require('../utils/contactSharing');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
@@ -136,7 +137,7 @@ router.get('/requests', async (req, res) => {
         createdAt: r.createdAt,
         respondedAt: r.respondedAt,
         fullAccessStatus: r.fullAccessStatus,
-        candidate: isPending ? getAnonymizedCandidateView(candidate) : getFullCandidateView(candidate)
+        candidate: isPending ? getAnonymizedCandidateView(candidate) : getFullCandidateView(candidate, sharedContactFor(r, 'recruiter', candidate))
       };
     });
 
@@ -171,7 +172,7 @@ router.get('/requests/:id/candidate', async (req, res) => {
     res.render('recruiter-candidate-profile', {
       requestId: request._id,
       fullAccessStatus: request.fullAccessStatus,
-      candidate: getFullCandidateView(candidate),
+      candidate: getFullCandidateView(candidate, sharedContactFor(request, 'recruiter', candidate)),
       video: hasFullAccess ? {
         introVideoUrl: candidate.introVideoUrl,
         interviewVideos: candidate.interviewVideos || []
@@ -283,8 +284,7 @@ router.post('/requests/:id/accept', async (req, res) => {
     sendConnectionAcceptedEmail(
       request.candidateId.email,
       request.candidateId.firstName,
-      `${recruiter.firstName} ${recruiter.lastName}`,
-      recruiter.email
+      `${recruiter.firstName} ${recruiter.lastName}`
     ).catch((err) => {
       console.error('Failed to send acceptance email:', err);
     });

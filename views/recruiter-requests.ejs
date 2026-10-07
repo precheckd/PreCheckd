@@ -284,7 +284,7 @@
 
           <% if (request.status !== 'pending' && (candidate.email || candidate.phone)) { %>
             <div class="contact-info">
-              <% if (candidate.email) { %><%= candidate.email %><% } %>
+              Shared contact: <% if (candidate.email) { %><%= candidate.email %><% } %>
               <% if (candidate.email && candidate.phone) { %> · <% } %>
               <% if (candidate.phone) { %><%= candidate.phone %><% } %>
             </div>

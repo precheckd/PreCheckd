@@ -3,6 +3,7 @@ const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
 const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
+const { sharedContactFor } = require('../utils/contactSharing');
 const {
   sendRecruiterConnectionAcceptedEmail,
   sendRecruiterConnectionDeclinedEmail
@@ -101,7 +102,9 @@ router.get('/requests', async (req, res) => {
           company: recruiter.company && recruiter.company !== 'Not provided' ? recruiter.company : null,
           slug: recruiter.slug,
           photoUrl: recruiter.profilePhotoUrl,
-          email: r.status === 'accepted' ? recruiter.email : null
+          // Only what the recruiter chose to share via the contact request
+          // flow in messaging — never their email by default.
+          contact: r.status === 'accepted' ? sharedContactFor(r, 'candidate', recruiter) : null
         }
       };
     };

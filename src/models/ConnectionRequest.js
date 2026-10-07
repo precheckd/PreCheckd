@@ -67,6 +67,41 @@ const connectionRequestSchema = new mongoose.Schema({
   fullAccessExpiresAt: {
     type: Date,
     default: null
+  },
+
+  // Contact info stays hidden after a connection is accepted — the product
+  // wants the conversation to stay inside PreCheckd's messaging. Either
+  // party can ask the other for their email/phone from inside a message
+  // (after a warning that going off-platform drops PreCheckd's
+  // protections), and the other chooses what, if anything, to share.
+  // contactShared.<side> holds what that side has chosen to reveal to the
+  // other; once shared it can't be taken back. 'declined' is a quiet "not
+  // now" — the asker can ask again.
+  contactRequestStatus: {
+    type: String,
+    enum: ['none', 'requested', 'declined'],
+    default: 'none'
+  },
+  contactRequestedBy: {
+    type: String,
+    enum: ['candidate', 'recruiter', null],
+    default: null
+  },
+  contactRequestedAt: {
+    type: Date,
+    default: null
+  },
+  contactShared: {
+    candidate: {
+      email: { type: Boolean, default: false },
+      phone: { type: Boolean, default: false },
+      sharedAt: { type: Date, default: null }
+    },
+    recruiter: {
+      email: { type: Boolean, default: false },
+      phone: { type: Boolean, default: false },
+      sharedAt: { type: Date, default: null }
+    }
   }
 });
 

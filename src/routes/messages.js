@@ -5,6 +5,12 @@ const ConnectionRequest = require('../models/ConnectionRequest');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const { sendNewMessageEmail } = require('../services/emailService');
+const {
+  CONTACT_WARNING_TITLE,
+  CONTACT_WARNING_POINTS,
+  otherSide,
+  hasSharedAnything
+} = require('../utils/contactSharing');
 
 function getCurrentUser(req) {
   if (req.session.recruiterId) {
@@ -122,6 +128,199 @@ router.get('/sent', (req, res) => {
   res.render('message-sent', { currentUserType: req.currentUser.type });
 });
 
+
+// --- Contact-info request flow -------------------------------------------
+// Contact details stay hidden after a connection is accepted. Either side
+// can ask for the other's email/phone from here, after a warning that
+// moving off PreCheckd drops its protections; the other chooses what to
+// share (or "Not now"). The request and the answer travel as messages so
+// they use the existing unread badge and notification email.
+
+// Loads the accepted connection and works out who the current user and the
+// other party are. Returns null if the user isn't a party to it.
+async function loadContactContext(req, connectionRequestId) {
+  if (!connectionRequestId) return null;
+
+  const connection = await ConnectionRequest.findById(connectionRequestId).catch(() => null);
+  if (!connection || connection.status !== 'accepted') return null;
+
+  const { type, id } = req.currentUser;
+  const isRecruiterParty = type === 'recruiter' && connection.recruiterId.toString() === id;
+  const isCandidateParty = type === 'candidate' && connection.candidateId.toString() === id;
+  if (!isRecruiterParty && !isCandidateParty) return null;
+
+  const otherType = otherSide(type);
+  const otherId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
+  const OtherModel = otherType === 'recruiter' ? Recruiter : Candidate;
+  const SelfModel = type === 'recruiter' ? Recruiter : Candidate;
+
+  const [other, self] = await Promise.all([
+    OtherModel.findById(otherId).select('firstName lastName isSuspended'),
+    SelfModel.findById(id).select('firstName lastName email phone')
+  ]);
+
+  if (!other || !self || (otherType === 'recruiter' && other.isSuspended)) return null;
+
+  return { connection, type, id, otherType, otherId, other, self };
+}
+
+async function sendContactNotice({ ctx, kind, subject, body }) {
+  const message = await Message.create({
+    connectionRequestId: ctx.connection._id,
+    senderType: ctx.type,
+    senderId: ctx.id,
+    recipientType: ctx.otherType,
+    recipientId: ctx.otherId,
+    kind,
+    subject,
+    body
+  });
+
+  const RecipientModel = ctx.otherType === 'recruiter' ? Recruiter : Candidate;
+  const recipient = await RecipientModel.findById(ctx.otherId).select('email firstName');
+  if (recipient) {
+    sendNewMessageEmail(
+      recipient.email,
+      recipient.firstName,
+      `${ctx.self.firstName} ${ctx.self.lastName}`,
+      subject
+    ).catch((err) => {
+      console.error('Failed to send contact notice email:', err);
+    });
+  }
+
+  return message;
+}
+
+// GET /messages/contact/request — warning + confirm screen
+router.get('/contact/request', async (req, res) => {
+  try {
+    const ctx = await loadContactContext(req, req.query.connectionRequestId);
+    if (!ctx) return res.status(403).send('Not authorized.');
+
+    // Nothing to ask for if they've already shared, or you've already asked.
+    const alreadyShared = hasSharedAnything(ctx.connection, ctx.otherType);
+    const alreadyRequested =
+      ctx.connection.contactRequestStatus === 'requested' && ctx.connection.contactRequestedBy === ctx.type;
+    const theyAsked =
+      ctx.connection.contactRequestStatus === 'requested' && ctx.connection.contactRequestedBy === ctx.otherType;
+
+    res.render('contact-request', {
+      connectionRequestId: ctx.connection._id.toString(),
+      otherName: `${ctx.other.firstName} ${ctx.other.lastName}`,
+      warningTitle: CONTACT_WARNING_TITLE,
+      warningPoints: CONTACT_WARNING_POINTS,
+      alreadyShared,
+      alreadyRequested,
+      theyAsked,
+      currentUserType: ctx.type
+    });
+  } catch (error) {
+    console.error('Error loading contact request page:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /messages/contact/request — send the request
+router.post('/contact/request', async (req, res) => {
+  try {
+    const ctx = await loadContactContext(req, req.body.connectionRequestId);
+    if (!ctx) return res.status(403).send('Not authorized.');
+
+    const { connection } = ctx;
+
+    if (hasSharedAnything(connection, ctx.otherType)) {
+      return res.redirect('/connections');
+    }
+
+    if (connection.contactRequestStatus === 'requested') {
+      // Already open — either you asked, or they did and are waiting on you.
+      return res.redirect(connection.contactRequestedBy === ctx.type ? '/connections' : '/messages');
+    }
+
+    connection.contactRequestStatus = 'requested';
+    connection.contactRequestedBy = ctx.type;
+    connection.contactRequestedAt = new Date();
+    await connection.save();
+
+    await sendContactNotice({
+      ctx,
+      kind: 'contact_request',
+      subject: 'Contact info request',
+      body: `${ctx.self.firstName} ${ctx.self.lastName} would like to exchange contact details outside PreCheckd. ` +
+        'You decide what, if anything, to share — you can also choose "Not now" and keep talking here.'
+    });
+
+    res.redirect('/messages/sent');
+  } catch (error) {
+    console.error('Error sending contact request:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /messages/contact/respond — the person who was asked shares or declines
+router.post('/contact/respond', async (req, res) => {
+  try {
+    const ctx = await loadContactContext(req, req.body.connectionRequestId);
+    if (!ctx) return res.status(403).send('Not authorized.');
+
+    const { connection } = ctx;
+
+    // Only the person who was asked can answer, and only while it's open.
+    if (connection.contactRequestStatus !== 'requested' || connection.contactRequestedBy === ctx.type) {
+      return res.status(400).send('There is no open contact request to answer.');
+    }
+
+    if (req.body.action === 'share') {
+      const shareEmail = req.body.shareEmail === 'on';
+      const sharePhone = req.body.sharePhone === 'on' && Boolean(ctx.self.phone);
+
+      if (!shareEmail && !sharePhone) {
+        return res.status(400).send('Choose at least one thing to share, or pick "Not now".');
+      }
+
+      connection.contactShared[ctx.type] = {
+        email: shareEmail,
+        phone: sharePhone,
+        sharedAt: new Date()
+      };
+      connection.contactRequestStatus = 'none';
+      connection.contactRequestedBy = null;
+      connection.markModified('contactShared');
+      await connection.save();
+
+      await sendContactNotice({
+        ctx,
+        kind: 'contact_shared',
+        subject: 'Contact info shared',
+        body: `${ctx.self.firstName} ${ctx.self.lastName} shared their contact details with you. You'll find them under Connections.`
+      });
+
+      return res.redirect('/connections');
+    }
+
+    if (req.body.action === 'decline') {
+      connection.contactRequestStatus = 'declined';
+      connection.contactRequestedBy = null;
+      await connection.save();
+
+      await sendContactNotice({
+        ctx,
+        kind: 'contact_declined',
+        subject: 'Contact info request',
+        body: `${ctx.self.firstName} ${ctx.self.lastName} would rather keep talking on PreCheckd for now.`
+      });
+
+      return res.redirect('/messages');
+    }
+
+    res.status(400).send('Unknown action.');
+  } catch (error) {
+    console.error('Error responding to contact request:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET /messages/:id — view a single message, marks it read
 router.get('/:id', async (req, res) => {
   try {
@@ -159,10 +358,30 @@ router.get('/:id', async (req, res) => {
       if (sender) senderName = `${sender.firstName} ${sender.lastName}`;
     }
 
+    // An open contact request shows Share / Not now for its recipient.
+    let contactPrompt = null;
+    if (message.kind === 'contact_request' && message.connectionRequestId) {
+      const ctx = await loadContactContext(req, message.connectionRequestId);
+      if (
+        ctx &&
+        ctx.connection.contactRequestStatus === 'requested' &&
+        ctx.connection.contactRequestedBy === ctx.otherType
+      ) {
+        contactPrompt = {
+          connectionRequestId: ctx.connection._id.toString(),
+          warningTitle: CONTACT_WARNING_TITLE,
+          warningPoints: CONTACT_WARNING_POINTS,
+          ownEmail: ctx.self.email,
+          ownPhone: ctx.self.phone || null
+        };
+      }
+    }
+
     res.render('message-detail', {
       message,
       senderName,
       senderUnavailable,
+      contactPrompt,
       currentUserType: type
     });
   } catch (error) {

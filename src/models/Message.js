@@ -46,6 +46,16 @@ const messageSchema = new mongoose.Schema({
     default: null
   },
 
+  // 'message' is an ordinary message. The contact_* kinds are the
+  // automated notices in the contact-info request flow (see
+  // routes/messages.js); contact_request additionally renders Share /
+  // Not now buttons for its recipient while the request is open.
+  kind: {
+    type: String,
+    enum: ['message', 'contact_request', 'contact_shared', 'contact_declined'],
+    default: 'message'
+  },
+
   subject: {
     type: String,
     default: null

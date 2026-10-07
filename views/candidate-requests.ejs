@@ -327,8 +327,10 @@
             </div>
           <% } %>
 
-          <% if (request.status === 'accepted' && recruiter.email) { %>
-            <div class="contact-info">✓ Contact: <%= recruiter.email %></div>
+          <% if (request.status === 'accepted') { %>
+            <% if (recruiter.contact) { %>
+              <div class="contact-info">✓ Shared contact: <%= [recruiter.contact.email, recruiter.contact.phone].filter(Boolean).join(' · ') %></div>
+            <% } %>
             <div class="accepted-actions">
               <a href="/messages/compose?connectionRequestId=<%= request._id %>" class="btn-message">Send Message</a>
             </div>
@@ -395,8 +397,10 @@
             <div class="request-note"><%= request.note %></div>
           <% } %>
 
-          <% if (request.status === 'accepted' && recruiter.email) { %>
-            <div class="contact-info">✓ Contact: <%= recruiter.email %></div>
+          <% if (request.status === 'accepted') { %>
+            <% if (recruiter.contact) { %>
+              <div class="contact-info">✓ Shared contact: <%= [recruiter.contact.email, recruiter.contact.phone].filter(Boolean).join(' · ') %></div>
+            <% } %>
             <div class="accepted-actions">
               <a href="/messages/compose?connectionRequestId=<%= request._id %>" class="btn-message">Send Message</a>
             </div>

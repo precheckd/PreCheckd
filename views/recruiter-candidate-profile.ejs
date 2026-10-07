@@ -175,7 +175,7 @@
       <% if (hasBio) { %><p class="cprofile-bio"><%= candidate.bio %></p><% } %>
       <% if (candidate.email || candidate.phone) { %>
         <div class="contact-line">
-          <% if (candidate.email) { %><%= candidate.email %><% } %>
+          Shared contact: <% if (candidate.email) { %><%= candidate.email %><% } %>
           <% if (candidate.email && candidate.phone) { %> · <% } %>
           <% if (candidate.phone) { %><%= candidate.phone %><% } %>
         </div>

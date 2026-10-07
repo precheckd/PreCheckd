@@ -4,6 +4,7 @@ const ConnectionRequest = require('../models/ConnectionRequest');
 const SavedRecruiter = require('../models/SavedRecruiter');
 const RelationshipNote = require('../models/RelationshipNote');
 const Recruiter = require('../models/Recruiter');
+const { sharedContactFor } = require('../utils/contactSharing');
 
 const MAX_NOTE_LENGTH = 1000;
 
@@ -21,6 +22,13 @@ function requireLogin(req, res, next) {
 }
 
 router.use(requireLogin);
+
+// Where the contact-info request flow stands for this viewer on one
+// connection: 'requested_by_me', 'requested_of_me', or 'none'.
+function contactRequestState(request, viewerType) {
+  if (request.contactRequestStatus !== 'requested') return 'none';
+  return request.contactRequestedBy === viewerType ? 'requested_by_me' : 'requested_of_me';
+}
 
 function realCompany(company) {
   return company && company !== 'Not provided' ? company : null;
@@ -63,7 +71,8 @@ async function renderCandidateConnections(req, res) {
         slug: recruiter.slug,
         photoUrl: recruiter.profilePhotoUrl || null,
         initials: `${(recruiter.firstName || '?').charAt(0)}${(recruiter.lastName || '').charAt(0)}`.toUpperCase(),
-        email: null,
+        contact: null,
+        contactRequest: 'none',
         connected: false,
         connectedAt: null,
         requestId: null,
@@ -84,7 +93,8 @@ async function renderCandidateConnections(req, res) {
       entry.connected = true;
       entry.connectedAt = r.respondedAt || r.createdAt;
       entry.requestId = r._id.toString();
-      entry.email = r.recruiterId.email;
+      entry.contact = sharedContactFor(r, 'candidate', r.recruiterId);
+      entry.contactRequest = contactRequestState(r, 'candidate');
     }
   });
 
@@ -140,7 +150,8 @@ async function renderRecruiterConnections(req, res) {
       slug: null,
       photoUrl: candidate.profilePhotoUrl || null,
       initials: `${(candidate.firstName || '?').charAt(0)}${(candidate.lastName || '').charAt(0)}`.toUpperCase(),
-      email: candidate.email,
+      contact: sharedContactFor(r, 'recruiter', candidate),
+      contactRequest: contactRequestState(r, 'recruiter'),
       connected: true,
       connectedAt: r.respondedAt || r.createdAt,
       requestId: r._id.toString(),

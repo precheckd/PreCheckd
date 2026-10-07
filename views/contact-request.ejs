@@ -1,0 +1,139 @@
+<style>
+  .cr-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cr-container {
+    max-width: 640px;
+    width: 100%;
+  }
+
+  .cr-back {
+    display: inline-block;
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    text-decoration: none;
+    margin-bottom: 1rem;
+  }
+
+  .cr-back:hover {
+    color: #F2F4F3;
+  }
+
+  .cr-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .cr-card h1 {
+    font-size: 1.3rem;
+    color: #F2F4F3;
+    margin-bottom: 0.5rem;
+  }
+
+  .cr-card p {
+    color: #C7D1CF;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .cr-warning {
+    background: #3A3320;
+    border: 1px solid #B8860B;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.25rem 0;
+    color: #F2E6C0;
+  }
+
+  .cr-warning h2 {
+    color: #FBBF24;
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .cr-warning ul {
+    margin: 0 0 0 1.1rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .cr-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .cr-actions button {
+    padding: 0.75rem 1.5rem;
+    background: #2ECC71;
+    color: #1F363C;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: auto;
+  }
+
+  .cr-actions button:hover {
+    background: #4ADE80;
+  }
+
+  .cr-actions a {
+    color: #8FA6AC;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .cr-content {
+      padding: 1rem;
+    }
+
+    .cr-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="cr-content">
+  <div class="cr-container">
+    <a href="/connections" class="cr-back">← Back to Connections</a>
+
+    <div class="cr-card">
+      <h1>Request contact info</h1>
+
+      <% if (alreadyShared) { %>
+        <p><%= otherName %> has already shared their contact details with you — you'll find them under <a href="/connections" style="color: #4ADE80;">Connections</a>.</p>
+      <% } else if (alreadyRequested) { %>
+        <p>You've already asked <%= otherName %> for their contact details. They'll see the request in their inbox.</p>
+      <% } else if (theyAsked) { %>
+        <p><%= otherName %> has asked you for your contact details. Check your <a href="/messages" style="color: #4ADE80;">inbox</a> to answer.</p>
+      <% } else { %>
+        <p>You're asking <strong><%= otherName %></strong> to share their email and/or phone. They'll decide whether to share, and you can keep talking here either way.</p>
+
+        <div class="cr-warning">
+          <h2><%= warningTitle %></h2>
+          <ul>
+            <% warningPoints.forEach(function(point) { %><li><%= point %></li><% }); %>
+          </ul>
+        </div>
+
+        <form action="/messages/contact/request" method="POST" class="cr-actions">
+          <input type="hidden" name="connectionRequestId" value="<%= connectionRequestId %>">
+          <button type="submit">I understand — send request</button>
+          <a href="/connections">Cancel</a>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</div>

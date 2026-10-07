@@ -48,7 +48,11 @@ function getAnonymizedCandidateView(candidate) {
 // that need them check fullAccessStatus === 'granted' on the
 // ConnectionRequest themselves before exposing introVideoUrl/interviewVideos/
 // resumeUrl.
-function getFullCandidateView(candidate) {
+//
+// Email and phone are NOT included by default — a recruiter only gets them
+// if the candidate chose to share them (see utils/contactSharing.js), which
+// callers pass in as `sharedContact` ({ email, phone } or null).
+function getFullCandidateView(candidate, sharedContact) {
   return {
     anonId: candidate.anonId,
     displayName: `${candidate.firstName} ${candidate.lastName}`,
@@ -62,8 +66,8 @@ function getFullCandidateView(candidate) {
       phoneVerified: Boolean(candidate.isPhoneVerified),
       identityVerified: Boolean(candidate.isIdentityVerified)
     },
-    email: candidate.email,
-    phone: candidate.phone
+    email: sharedContact ? sharedContact.email : null,
+    phone: sharedContact ? sharedContact.phone : null
   };
 }
 

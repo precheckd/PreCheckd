@@ -86,7 +86,7 @@ async function sendCandidateVerificationLink(toEmail, firstName, token) {
   });
 }
 
-async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, recruiterName, recruiterEmail) {
+async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, recruiterName) {
   return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: candidateEmail,
@@ -94,8 +94,7 @@ async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, r
     html: `
       <p>Hi ${candidateFirstName},</p>
       <p><strong>${recruiterName}</strong> accepted your connection request on PreCheckd.</p>
-      <p>You can now reach them directly at: <strong>${recruiterEmail}</strong></p>
-      <p>You can also message them directly through your PreCheckd inbox.</p>
+      <p>You can now message them directly through your PreCheckd inbox.</p>
     `,
   });
 }

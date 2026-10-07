@@ -317,7 +317,7 @@
 
     <div class="conn-list" id="conn-list">
       <% entries.forEach(function(entry) { %>
-        <div class="conn-card" data-key="<%= entry.key %>" data-search="<%= [entry.name, entry.company || '', entry.email || ''].join(' ').toLowerCase() %>">
+        <div class="conn-card" data-key="<%= entry.key %>" data-search="<%= [entry.name, entry.company || '', entry.contact ? (entry.contact.email || '') : ''].join(' ').toLowerCase() %>">
           <div class="conn-card-top">
             <div class="conn-name-group">
               <% if (entry.photoUrl) { %>
@@ -334,7 +334,9 @@
                   <% } %>
                 </div>
                 <% if (entry.company) { %><div class="conn-sub"><%= entry.company %></div><% } %>
-                <% if (entry.email) { %><div class="conn-sub"><%= entry.email %></div><% } %>
+                <% if (entry.contact) { %>
+                  <div class="conn-sub">Shared contact: <%= [entry.contact.email, entry.contact.phone].filter(Boolean).join(' · ') %></div>
+                <% } %>
               </div>
             </div>
             <div class="conn-badges">
@@ -355,6 +357,15 @@
             <div class="conn-action-buttons">
               <% if (entry.connected && entry.requestId) { %>
                 <a class="conn-btn" href="/messages/compose?connectionRequestId=<%= entry.requestId %>">Send Message</a>
+                <% if (!entry.contact) { %>
+                  <% if (entry.contactRequest === 'requested_by_me') { %>
+                    <span class="conn-btn conn-btn-static">Contact Requested</span>
+                  <% } else if (entry.contactRequest === 'requested_of_me') { %>
+                    <a class="conn-btn" href="/messages">Contact Request Waiting</a>
+                  <% } else { %>
+                    <a class="conn-btn" href="/messages/contact/request?connectionRequestId=<%= entry.requestId %>">Request Contact Info</a>
+                  <% } %>
+                <% } %>
               <% } %>
               <% if (!isCandidate && entry.requestId) { %>
                 <% if (entry.fullAccessStatus === 'granted') { %>

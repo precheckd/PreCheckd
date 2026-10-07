@@ -147,6 +147,61 @@
     }
   }
 
+  .contact-prompt-card {
+    background: #3A3320;
+    border: 1px solid #B8860B;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    color: #F2E6C0;
+  }
+
+  .contact-prompt-card h3 {
+    color: #FBBF24;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-prompt-card ul {
+    margin: 0 0 1rem 1.1rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .contact-prompt-card label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 400;
+    color: #F2E6C0;
+  }
+
+  .contact-prompt-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #C7D1CF;
+    border: 1px solid #4A6F7B;
+  }
+
+  .btn-secondary:hover {
+    background: #24404A;
+    color: #F2F4F3;
+  }
+
+  .request-contact-link {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    text-decoration: underline;
+  }
+
   .unavailable-card {
     background: #2A4750;
     border: 1px solid #3B5860;
@@ -173,6 +228,26 @@
       <div class="message-body"><%= message.body %></div>
     </div>
 
+    <% if (contactPrompt) { %>
+      <div class="contact-prompt-card">
+        <h3><%= contactPrompt.warningTitle %></h3>
+        <ul>
+          <% contactPrompt.warningPoints.forEach(function(point) { %><li><%= point %></li><% }); %>
+        </ul>
+        <form action="/messages/contact/respond" method="POST">
+          <input type="hidden" name="connectionRequestId" value="<%= contactPrompt.connectionRequestId %>">
+          <label class="check"><input type="checkbox" name="shareEmail" checked> Share my email (<%= contactPrompt.ownEmail %>)</label>
+          <% if (contactPrompt.ownPhone) { %>
+            <label class="check"><input type="checkbox" name="sharePhone"> Share my phone (<%= contactPrompt.ownPhone %>)</label>
+          <% } %>
+          <div class="contact-prompt-actions">
+            <button type="submit" name="action" value="share">Share what's checked</button>
+            <button type="submit" name="action" value="decline" class="btn-secondary">Not now</button>
+          </div>
+        </form>
+      </div>
+    <% } %>
+
     <% if (senderUnavailable) { %>
       <div class="unavailable-card">
         This recruiter's profile is no longer active on PreCheckd, so you can't reply here. This isn't about anything you did — you're not being ignored.
@@ -191,6 +266,9 @@
           </label>
           <button type="submit">Send Reply</button>
         </form>
+        <% if (!message.fraudReportId && message.connectionRequestId) { %>
+          <a class="request-contact-link" href="/messages/contact/request?connectionRequestId=<%= message.connectionRequestId %>">Request contact info</a>
+        <% } %>
       </div>
     <% } %>
   </div>
