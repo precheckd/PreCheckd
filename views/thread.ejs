@@ -1,0 +1,49 @@
+<style>
+  .thread-content {
+    flex: 1;
+    padding: 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+  }
+
+  .thread-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .thread-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .thread-links a {
+    color: #8FA6AC;
+    text-decoration: none;
+  }
+
+  .thread-links a:hover { color: #F2F4F3; }
+
+  .thread-pane {
+    height: calc(100vh - 8.5rem);
+    min-height: 460px;
+  }
+
+  @media (max-width: 768px) {
+    .thread-content { padding: 1rem; }
+  }
+</style>
+
+<div class="thread-content">
+  <div class="thread-wrap">
+    <div class="thread-links">
+      <a href="/messages">&larr; Back to Inbox</a>
+      <% if (pane.profileUrl) { %><a href="<%= pane.profileUrl %>">View profile</a><% } %>
+    </div>
+    <div class="thread-pane">
+      <%- include('partials/conversation-pane', { pane: pane }) %>
+    </div>
+  </div>
+</div>

@@ -374,6 +374,14 @@ const candidateSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+
+  // When this account's last unread-messages digest email went out (see
+  // services/messageDigest.js) — at most one a day, and also what stops two
+  // server instances from both sending it.
+  lastMessageDigestAt: {
+    type: Date,
+    default: null
   }
 });
 

@@ -410,6 +410,12 @@
 %>
 
 <div class="profile-content">
+  <% const hasPane = typeof pane !== 'undefined' && pane; %>
+  <% if (hasPane) { %>
+  <div class="split-layout" data-active="profile">
+    <%- include('partials/split-tabs') %>
+    <div class="split-profile">
+  <% } %>
   <% if (!isOwner) { %>
     <div class="contact-card">
       <div class="contact-card-inner">
@@ -603,6 +609,13 @@
       <% } %>
     </div>
   </div>
+<% if (hasPane) { %>
+    </div>
+    <aside class="split-convo">
+      <%- include('partials/conversation-pane', { pane: pane }) %>
+    </aside>
+  </div>
+  <% } %>
 </div>
 
 <% if (showSaveButton) { %>

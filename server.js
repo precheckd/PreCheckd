@@ -1,6 +1,7 @@
 require('dotenv').config();
 const app = require('./src/app');
 const { connectDatabase } = require('./src/config/database');
+const { startMessageDigestJob } = require('./src/jobs/messageDigestJob');
 
 const PORT = process.env.PORT || 3000;
 
@@ -9,6 +10,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`PreCheckd app listening on port ${PORT}`);
   });
+  startMessageDigestJob();
 }
 
 start().catch((err) => {

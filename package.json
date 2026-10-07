@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "migrate:passwords": "node scripts/send-password-migration-emails.js"
+    "migrate:passwords": "node scripts/send-password-migration-emails.js",
+    "digest": "node scripts/send-message-digests.js"
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1131.0",

@@ -164,6 +164,11 @@
 %>
 
 <div class="cprofile-content">
+  <% if (pane) { %>
+  <div class="split-layout" data-active="profile">
+    <%- include('partials/split-tabs') %>
+    <div class="split-profile">
+  <% } %>
   <div class="cprofile-header">
     <% if (candidate.photoUrl) { %>
       <div class="cprofile-photo"><img src="<%= candidate.photoUrl %>" alt="<%= candidate.displayName %>"></div>
@@ -258,4 +263,11 @@
     </div>
     <% } %>
   </div>
+  <% if (pane) { %>
+    </div>
+    <aside class="split-convo">
+      <%- include('partials/conversation-pane', { pane: pane }) %>
+    </aside>
+  </div>
+  <% } %>
 </div>

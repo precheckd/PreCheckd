@@ -4,13 +4,26 @@ const Message = require('../models/Message');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
-const { sendNewMessageEmail } = require('../services/emailService');
 const {
   CONTACT_WARNING_TITLE,
   CONTACT_WARNING_POINTS,
-  otherSide,
-  hasSharedAnything
+  otherSide
 } = require('../utils/contactSharing');
+const {
+  loadConversationContext,
+  messageToJson,
+  contactSummary,
+  fetchMessages,
+  markThreadRead,
+  buildPane,
+  sendThreadMessage,
+  requestContact,
+  respondToContactRequest
+} = require('../utils/conversation');
+
+// Messages no longer trigger a notification email each — unread messages go
+// out in a once-a-day digest instead (see services/messageDigest.js), so a
+// back-and-forth doesn't turn into a pile of emails.
 
 function getCurrentUser(req) {
   if (req.session.recruiterId) {
@@ -25,6 +38,9 @@ function getCurrentUser(req) {
 function requireLoggedIn(req, res, next) {
   const user = getCurrentUser(req);
   if (!user) {
+    if (req.path.endsWith('/poll') || req.method === 'POST') {
+      return res.status(403).json({ error: 'You must be logged in.' });
+    }
     return res.status(403).send('You must be logged in to view this page.');
   }
   req.currentUser = user;
@@ -33,94 +49,88 @@ function requireLoggedIn(req, res, next) {
 
 router.use(requireLoggedIn);
 
-// GET /messages — inbox for whichever user type is logged in
+// What to show as a conversation's one-line preview.
+function previewFor(m, meType, meId) {
+  const mine = m.senderType === meType && m.senderId && m.senderId.toString() === meId;
+  if (m.kind === 'contact_request') return mine ? 'You asked for contact info' : 'Asked for your contact info';
+  if (m.kind === 'contact_shared') return mine ? 'You shared your contact info' : 'Shared their contact info';
+  if (m.kind === 'contact_declined') return mine ? 'You chose to keep talking here for now' : 'Would rather keep talking here for now';
+  return `${mine ? 'You: ' : ''}${m.body}`;
+}
+
+// GET /messages — inbox: one row per conversation (accepted connection that
+// has messages), plus any Trust & Safety dispute messages, newest first.
 router.get('/', async (req, res) => {
   try {
     const { type, id } = req.currentUser;
+    const isRecruiter = type === 'recruiter';
 
-    const messages = await Message.find({ recipientType: type, recipientId: id })
-      .sort({ sentAt: -1 });
+    const connections = await ConnectionRequest.find(
+      isRecruiter ? { recruiterId: id, status: 'accepted' } : { candidateId: id, status: 'accepted' }
+    ).populate(isRecruiter ? 'candidateId' : 'recruiterId');
 
-    const messagesForView = await Promise.all(messages.map(async (m) => {
-      let senderName = 'Unknown';
-      let senderSlug = null;
+    const connById = new Map(connections.map((c) => [c._id.toString(), c]));
 
-      if (m.senderType === 'system') {
-        senderName = 'PreCheckd Trust & Safety';
-      } else if (m.senderType === 'recruiter') {
-        const sender = await Recruiter.findById(m.senderId).select('firstName lastName slug');
-        if (sender) {
-          senderName = `${sender.firstName} ${sender.lastName}`;
-          senderSlug = sender.slug;
-        }
-      } else {
-        const sender = await Candidate.findById(m.senderId).select('firstName lastName slug');
-        if (sender) {
-          senderName = `${sender.firstName} ${sender.lastName}`;
-          senderSlug = sender.slug;
-        }
-      }
+    const [convoMessages, disputeMessages] = await Promise.all([
+      connections.length > 0
+        ? Message.find({ connectionRequestId: { $in: connections.map((c) => c._id) } }).sort({ _id: -1 })
+        : [],
+      Message.find({ recipientType: type, recipientId: id, fraudReportId: { $ne: null } }).sort({ sentAt: -1 })
+    ]);
 
-      return {
-        _id: m._id,
-        subject: m.subject,
-        body: m.body,
+    // Messages are newest-first, so the first one seen per connection is
+    // its latest.
+    const rowsByConn = new Map();
+    convoMessages.forEach((m) => {
+      const key = m.connectionRequestId.toString();
+      if (!rowsByConn.has(key)) rowsByConn.set(key, { last: m, unreadCount: 0 });
+      const isUnreadForMe = !m.readAt && m.recipientType === type && m.recipientId && m.recipientId.toString() === id;
+      if (isUnreadForMe) rowsByConn.get(key).unreadCount += 1;
+    });
+
+    const rows = [];
+
+    rowsByConn.forEach(({ last, unreadCount }, key) => {
+      const conn = connById.get(key);
+      const other = conn && (isRecruiter ? conn.candidateId : conn.recruiterId);
+      if (!other) return;
+
+      rows.push({
+        href: `/messages/thread/${key}`,
+        name: `${other.firstName} ${other.lastName}`,
+        preview: previewFor(last, type, id),
+        sentAt: last.sentAt,
+        unreadCount
+      });
+    });
+
+    disputeMessages.forEach((m) => {
+      rows.push({
+        href: `/messages/${m._id}`,
+        name: 'PreCheckd Trust & Safety',
+        preview: m.subject || m.body,
         sentAt: m.sentAt,
-        readAt: m.readAt,
-        senderType: m.senderType,
-        senderName,
-        senderSlug,
-        connectionRequestId: m.connectionRequestId
-      };
-    }));
+        unreadCount: m.readAt ? 0 : 1
+      });
+    });
 
-    res.render('inbox', { messages: messagesForView, currentUserType: type });
+    rows.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+
+    res.render('inbox', { rows, currentUserType: type });
   } catch (error) {
     console.error('Error loading inbox:', error);
     res.status(500).send('Server error');
   }
 });
 
-// GET /messages/compose — blank compose form, tied to an accepted connection
-router.get('/compose', async (req, res) => {
-  try {
-    const { type, id } = req.currentUser;
-    const { connectionRequestId } = req.query;
-
-    if (!connectionRequestId) {
-      return res.status(400).send('Missing connection request.');
-    }
-
-    const connection = await ConnectionRequest.findById(connectionRequestId);
-
-    if (!connection || connection.status !== 'accepted') {
-      return res.status(403).send('You can only message someone through an accepted connection.');
-    }
-
-    const isRecruiterParty = type === 'recruiter' && connection.recruiterId.toString() === id;
-    const isCandidateParty = type === 'candidate' && connection.candidateId.toString() === id;
-
-    if (!isRecruiterParty && !isCandidateParty) {
-      return res.status(403).send('Not authorized to message on this connection.');
-    }
-
-    const recipientType = type === 'recruiter' ? 'candidate' : 'recruiter';
-    const recipientId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
-    const RecipientModel = recipientType === 'recruiter' ? Recruiter : Candidate;
-    const recipient = await RecipientModel.findById(recipientId).select('firstName lastName isSuspended');
-
-    if (!recipient || (recipientType === 'recruiter' && recipient.isSuspended)) {
-      return res.status(404).send('Recipient not found.');
-    }
-
-    res.render('message-compose', {
-      connectionRequestId,
-      recipientName: `${recipient.firstName} ${recipient.lastName}`
-    });
-  } catch (error) {
-    console.error('Error loading compose page:', error);
-    res.status(500).send('Server error');
+// GET /messages/compose — the old standalone compose form. Messaging now
+// lives in the conversation view, so every Send Message link lands there.
+router.get('/compose', (req, res) => {
+  const { connectionRequestId } = req.query;
+  if (!connectionRequestId) {
+    return res.status(400).send('Missing connection request.');
   }
+  res.redirect(`/messages/thread/${encodeURIComponent(connectionRequestId)}`);
 });
 
 // GET /messages/sent — simple confirmation shown to the sender after sending
@@ -129,90 +139,120 @@ router.get('/sent', (req, res) => {
 });
 
 
-// --- Contact-info request flow -------------------------------------------
-// Contact details stay hidden after a connection is accepted. Either side
-// can ask for the other's email/phone from here, after a warning that
-// moving off PreCheckd drops its protections; the other chooses what to
-// share (or "Not now"). The request and the answer travel as messages so
-// they use the existing unread badge and notification email.
+// --- Conversation view (one running thread per accepted connection) ------
 
-// Loads the accepted connection and works out who the current user and the
-// other party are. Returns null if the user isn't a party to it.
-async function loadContactContext(req, connectionRequestId) {
-  if (!connectionRequestId) return null;
+// GET /messages/thread/:connectionRequestId — the standalone conversation
+// page. The same pane is embedded next to each profile.
+router.get('/thread/:connectionRequestId', async (req, res) => {
+  try {
+    const pane = await buildPane(req.currentUser, req.params.connectionRequestId, { markRead: true });
+    if (!pane) return res.status(403).send('Not authorized.');
 
-  const connection = await ConnectionRequest.findById(connectionRequestId).catch(() => null);
-  if (!connection || connection.status !== 'accepted') return null;
-
-  const { type, id } = req.currentUser;
-  const isRecruiterParty = type === 'recruiter' && connection.recruiterId.toString() === id;
-  const isCandidateParty = type === 'candidate' && connection.candidateId.toString() === id;
-  if (!isRecruiterParty && !isCandidateParty) return null;
-
-  const otherType = otherSide(type);
-  const otherId = type === 'recruiter' ? connection.candidateId : connection.recruiterId;
-  const OtherModel = otherType === 'recruiter' ? Recruiter : Candidate;
-  const SelfModel = type === 'recruiter' ? Recruiter : Candidate;
-
-  const [other, self] = await Promise.all([
-    OtherModel.findById(otherId).select('firstName lastName isSuspended'),
-    SelfModel.findById(id).select('firstName lastName email phone')
-  ]);
-
-  if (!other || !self || (otherType === 'recruiter' && other.isSuspended)) return null;
-
-  return { connection, type, id, otherType, otherId, other, self };
-}
-
-async function sendContactNotice({ ctx, kind, subject, body }) {
-  const message = await Message.create({
-    connectionRequestId: ctx.connection._id,
-    senderType: ctx.type,
-    senderId: ctx.id,
-    recipientType: ctx.otherType,
-    recipientId: ctx.otherId,
-    kind,
-    subject,
-    body
-  });
-
-  const RecipientModel = ctx.otherType === 'recruiter' ? Recruiter : Candidate;
-  const recipient = await RecipientModel.findById(ctx.otherId).select('email firstName');
-  if (recipient) {
-    sendNewMessageEmail(
-      recipient.email,
-      recipient.firstName,
-      `${ctx.self.firstName} ${ctx.self.lastName}`,
-      subject
-    ).catch((err) => {
-      console.error('Failed to send contact notice email:', err);
-    });
+    res.render('thread', { pane, title: `${pane.otherName} | PreCheckd` });
+  } catch (error) {
+    console.error('Error loading conversation:', error);
+    res.status(500).send('Server error');
   }
+});
 
-  return message;
-}
+// GET /messages/thread/:connectionRequestId/poll?afterId=&markRead=1 — new
+// messages since afterId plus the current contact-request state. The pane
+// calls this every ~12s; markRead is only set while the pane is actually on
+// screen, so a hidden tab doesn't mark things read.
+router.get('/thread/:connectionRequestId/poll', async (req, res) => {
+  try {
+    const ctx = await loadConversationContext(req.currentUser, req.params.connectionRequestId);
+    if (!ctx) return res.status(403).json({ error: 'Not authorized.' });
+
+    const afterId = /^[a-f0-9]{24}$/i.test(req.query.afterId || '') ? req.query.afterId : null;
+    const messages = await fetchMessages(ctx, { afterId });
+
+    if (req.query.markRead === '1') await markThreadRead(ctx);
+
+    res.json({
+      messages: messages.map((m) => messageToJson(m, ctx)),
+      canSend: !ctx.otherUnavailable,
+      contact: contactSummary(ctx)
+    });
+  } catch (error) {
+    console.error('Error polling conversation:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /messages/thread/:connectionRequestId/send  { body }
+router.post('/thread/:connectionRequestId/send', async (req, res) => {
+  try {
+    const ctx = await loadConversationContext(req.currentUser, req.params.connectionRequestId);
+    if (!ctx) return res.status(403).json({ error: 'Not authorized.' });
+
+    const result = await sendThreadMessage(ctx, req.body.body);
+    if (result.error) return res.status(result.status).json({ error: result.error });
+
+    res.json({ message: messageToJson(result.message, ctx) });
+  } catch (error) {
+    console.error('Error sending conversation message:', error);
+    res.status(500).json({ error: 'Something went wrong sending your message.' });
+  }
+});
+
+// POST /messages/thread/:connectionRequestId/contact/request
+router.post('/thread/:connectionRequestId/contact/request', async (req, res) => {
+  try {
+    const ctx = await loadConversationContext(req.currentUser, req.params.connectionRequestId);
+    if (!ctx) return res.status(403).json({ error: 'Not authorized.' });
+
+    const result = await requestContact(ctx);
+    res.json({ outcome: result.outcome, contact: contactSummary(ctx) });
+  } catch (error) {
+    console.error('Error requesting contact info:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// POST /messages/thread/:connectionRequestId/contact/respond
+//   { action: 'share'|'decline', shareEmail, sharePhone }
+router.post('/thread/:connectionRequestId/contact/respond', async (req, res) => {
+  try {
+    const ctx = await loadConversationContext(req.currentUser, req.params.connectionRequestId);
+    if (!ctx) return res.status(403).json({ error: 'Not authorized.' });
+
+    const result = await respondToContactRequest(ctx, {
+      action: req.body.action,
+      shareEmail: req.body.shareEmail === true || req.body.shareEmail === 'on',
+      sharePhone: req.body.sharePhone === true || req.body.sharePhone === 'on'
+    });
+    if (result.error) return res.status(result.status).json({ error: result.error });
+
+    res.json({ ok: true, contact: contactSummary(ctx) });
+  } catch (error) {
+    console.error('Error responding to contact request:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// --- Contact-info request flow: standalone pages -------------------------
+// (Same flow as the pane's buttons, for the Connections page and the
+// legacy single-message view.) Contact details stay hidden after a
+// connection is accepted; either side can ask, after a warning that moving
+// off PreCheckd drops its protections, and the other chooses what to share.
 
 // GET /messages/contact/request — warning + confirm screen
 router.get('/contact/request', async (req, res) => {
   try {
-    const ctx = await loadContactContext(req, req.query.connectionRequestId);
+    const ctx = await loadConversationContext(req.currentUser, req.query.connectionRequestId);
     if (!ctx) return res.status(403).send('Not authorized.');
 
-    // Nothing to ask for if they've already shared, or you've already asked.
-    const alreadyShared = hasSharedAnything(ctx.connection, ctx.otherType);
-    const alreadyRequested =
-      ctx.connection.contactRequestStatus === 'requested' && ctx.connection.contactRequestedBy === ctx.type;
-    const theyAsked =
-      ctx.connection.contactRequestStatus === 'requested' && ctx.connection.contactRequestedBy === ctx.otherType;
+    const summary = contactSummary(ctx);
 
     res.render('contact-request', {
       connectionRequestId: ctx.connection._id.toString(),
       otherName: `${ctx.other.firstName} ${ctx.other.lastName}`,
       warningTitle: CONTACT_WARNING_TITLE,
       warningPoints: CONTACT_WARNING_POINTS,
-      alreadyShared,
-      alreadyRequested,
-      theyAsked,
+      alreadyShared: Boolean(summary.shared),
+      alreadyRequested: summary.iAsked,
+      theyAsked: summary.iAmAsked,
       currentUserType: ctx.type
     });
   } catch (error) {
@@ -224,34 +264,14 @@ router.get('/contact/request', async (req, res) => {
 // POST /messages/contact/request — send the request
 router.post('/contact/request', async (req, res) => {
   try {
-    const ctx = await loadContactContext(req, req.body.connectionRequestId);
+    const ctx = await loadConversationContext(req.currentUser, req.body.connectionRequestId);
     if (!ctx) return res.status(403).send('Not authorized.');
 
-    const { connection } = ctx;
+    const result = await requestContact(ctx);
 
-    if (hasSharedAnything(connection, ctx.otherType)) {
-      return res.redirect('/connections');
-    }
-
-    if (connection.contactRequestStatus === 'requested') {
-      // Already open — either you asked, or they did and are waiting on you.
-      return res.redirect(connection.contactRequestedBy === ctx.type ? '/connections' : '/messages');
-    }
-
-    connection.contactRequestStatus = 'requested';
-    connection.contactRequestedBy = ctx.type;
-    connection.contactRequestedAt = new Date();
-    await connection.save();
-
-    await sendContactNotice({
-      ctx,
-      kind: 'contact_request',
-      subject: 'Contact info request',
-      body: `${ctx.self.firstName} ${ctx.self.lastName} would like to exchange contact details outside PreCheckd. ` +
-        'You decide what, if anything, to share — you can also choose "Not now" and keep talking here.'
-    });
-
-    res.redirect('/messages/sent');
+    if (result.outcome === 'already_shared') return res.redirect('/connections');
+    if (result.outcome === 'open_by_them') return res.redirect(`/messages/thread/${ctx.connection._id}`);
+    res.redirect(`/messages/thread/${ctx.connection._id}`);
   } catch (error) {
     console.error('Error sending contact request:', error);
     res.status(500).send('Server error');
@@ -261,60 +281,17 @@ router.post('/contact/request', async (req, res) => {
 // POST /messages/contact/respond — the person who was asked shares or declines
 router.post('/contact/respond', async (req, res) => {
   try {
-    const ctx = await loadContactContext(req, req.body.connectionRequestId);
+    const ctx = await loadConversationContext(req.currentUser, req.body.connectionRequestId);
     if (!ctx) return res.status(403).send('Not authorized.');
 
-    const { connection } = ctx;
+    const result = await respondToContactRequest(ctx, {
+      action: req.body.action,
+      shareEmail: req.body.shareEmail === 'on',
+      sharePhone: req.body.sharePhone === 'on'
+    });
+    if (result.error) return res.status(result.status).send(result.error);
 
-    // Only the person who was asked can answer, and only while it's open.
-    if (connection.contactRequestStatus !== 'requested' || connection.contactRequestedBy === ctx.type) {
-      return res.status(400).send('There is no open contact request to answer.');
-    }
-
-    if (req.body.action === 'share') {
-      const shareEmail = req.body.shareEmail === 'on';
-      const sharePhone = req.body.sharePhone === 'on' && Boolean(ctx.self.phone);
-
-      if (!shareEmail && !sharePhone) {
-        return res.status(400).send('Choose at least one thing to share, or pick "Not now".');
-      }
-
-      connection.contactShared[ctx.type] = {
-        email: shareEmail,
-        phone: sharePhone,
-        sharedAt: new Date()
-      };
-      connection.contactRequestStatus = 'none';
-      connection.contactRequestedBy = null;
-      connection.markModified('contactShared');
-      await connection.save();
-
-      await sendContactNotice({
-        ctx,
-        kind: 'contact_shared',
-        subject: 'Contact info shared',
-        body: `${ctx.self.firstName} ${ctx.self.lastName} shared their contact details with you. You'll find them under Connections.`
-      });
-
-      return res.redirect('/connections');
-    }
-
-    if (req.body.action === 'decline') {
-      connection.contactRequestStatus = 'declined';
-      connection.contactRequestedBy = null;
-      await connection.save();
-
-      await sendContactNotice({
-        ctx,
-        kind: 'contact_declined',
-        subject: 'Contact info request',
-        body: `${ctx.self.firstName} ${ctx.self.lastName} would rather keep talking on PreCheckd for now.`
-      });
-
-      return res.redirect('/messages');
-    }
-
-    res.status(400).send('Unknown action.');
+    res.redirect(result.action === 'share' ? '/connections' : `/messages/thread/${ctx.connection._id}`);
   } catch (error) {
     console.error('Error responding to contact request:', error);
     res.status(500).send('Server error');
@@ -361,7 +338,7 @@ router.get('/:id', async (req, res) => {
     // An open contact request shows Share / Not now for its recipient.
     let contactPrompt = null;
     if (message.kind === 'contact_request' && message.connectionRequestId) {
-      const ctx = await loadContactContext(req, message.connectionRequestId);
+      const ctx = await loadConversationContext(req.currentUser, message.connectionRequestId);
       if (
         ctx &&
         ctx.connection.contactRequestStatus === 'requested' &&
@@ -455,7 +432,7 @@ router.post('/send', async (req, res) => {
       }
     }
 
-    const message = await Message.create({
+    await Message.create({
       connectionRequestId,
       senderType: type,
       senderId: id,
@@ -465,26 +442,9 @@ router.post('/send', async (req, res) => {
       body: body.trim()
     });
 
-    const RecipientModel = recipientType === 'recruiter' ? Recruiter : Candidate;
-    const recipient = await RecipientModel.findById(recipientId).select('email firstName');
-    const SenderModel = type === 'recruiter' ? Recruiter : Candidate;
-    const sender = await SenderModel.findById(id).select('firstName lastName');
-
-    if (recipient) {
-      sendNewMessageEmail(
-        recipient.email,
-        recipient.firstName,
-        sender ? `${sender.firstName} ${sender.lastName}` : 'Someone',
-        message.subject
-      ).catch((err) => {
-        console.error('Failed to send new message notification email:', err);
-      });
-    }
-
-    // Redirect the sender to a confirmation page — the sender is never
-    // the recipient, so redirecting to the message detail view (which is
-    // recipient-only) would always deny them access.
-    res.redirect('/messages/sent');
+    // A reply sent from the old single-message view lands back in the
+    // conversation it belongs to.
+    res.redirect(`/messages/thread/${connection._id}`);
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).send('Server error');

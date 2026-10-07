@@ -157,6 +157,31 @@ async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subj
   });
 }
 
+// Daily digest of unread messages. Deliberately names who they're from and
+// how many, never what they said — the point is to bring people back to the
+// site, and message content doesn't belong in email.
+async function sendMessageDigestEmail(toEmail, recipientFirstName, senders) {
+  const inboxUrl = `${process.env.APP_BASE_URL}/messages`;
+  const total = senders.reduce((sum, s) => sum + s.count, 0);
+  const escape = (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const lines = senders
+    .map((s) => `<li><strong>${escape(s.name)}</strong> — ${s.count} unread message${s.count === 1 ? '' : 's'}</li>`)
+    .join('');
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: total === 1 ? 'You have an unread message on PreCheckd' : `You have ${total} unread messages on PreCheckd`,
+    html: `
+      <p>Hi ${escape(recipientFirstName)},</p>
+      <p>You have messages waiting on PreCheckd:</p>
+      <ul>${lines}</ul>
+      <p><a href="${inboxUrl}">Open your inbox</a> to read and reply — conversations stay on PreCheckd, where your verified identity protects you.</p>
+    `,
+  });
+}
+
 async function sendFraudReportThankYouEmail(toEmail, couponCode) {
   const candidateLandingUrl = `${process.env.APP_BASE_URL}/candidate-landing`;
   const recruiterSearchUrl = `${process.env.APP_BASE_URL}/recruiter-search`;
@@ -311,6 +336,7 @@ module.exports = {
   sendRecruiterConnectionAcceptedEmail,
   sendRecruiterConnectionDeclinedEmail,
   sendNewMessageEmail,
+  sendMessageDigestEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,

@@ -91,6 +91,20 @@
     flex-shrink: 0;
   }
 
+  .inbox-badge {
+    display: inline-block;
+    min-width: 1.2rem;
+    padding: 0 0.4rem;
+    margin-left: 0.4rem;
+    background: #E53E3E;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    line-height: 1.2rem;
+    text-align: center;
+    font-weight: 700;
+  }
+
   .empty-state {
     max-width: 900px;
     margin: 0 auto;
@@ -118,26 +132,26 @@
 <div class="inbox-content">
   <div class="inbox-header">
     <h1>Inbox</h1>
-    <p>Messages from your connections on PreCheckd.</p>
+    <p>Your conversations with connections on PreCheckd.</p>
   </div>
 
-  <% if (messages.length === 0) { %>
+  <% if (rows.length === 0) { %>
     <div class="empty-state">
-      <p>No messages yet. Once you have an accepted connection, you can message them here.</p>
+      <p>No conversations yet. Once you have an accepted connection, you can message them from Connections or from their profile.</p>
     </div>
   <% } else { %>
     <div class="inbox-list">
-      <% messages.forEach(function(message) { %>
-        <% const isUnread = !message.readAt; %>
-        <a href="/messages/<%= message._id %>" class="message-row <%= isUnread ? 'unread' : '' %>">
+      <% rows.forEach(function(row) { %>
+        <% const isUnread = row.unreadCount > 0; %>
+        <a href="<%= row.href %>" class="message-row <%= isUnread ? 'unread' : '' %>">
           <div class="message-info">
-            <div class="message-sender <%= isUnread ? 'unread-text' : '' %>"><%= message.senderName %></div>
-            <% if (message.subject) { %>
-              <div class="message-subject"><%= message.subject %></div>
-            <% } %>
-            <div class="message-preview"><%= message.body.slice(0, 100) %><%= message.body.length > 100 ? '...' : '' %></div>
+            <div class="message-sender <%= isUnread ? 'unread-text' : '' %>">
+              <%= row.name %>
+              <% if (row.unreadCount > 0) { %><span class="inbox-badge"><%= row.unreadCount %></span><% } %>
+            </div>
+            <div class="message-preview"><%= row.preview.slice(0, 100) %><%= row.preview.length > 100 ? '...' : '' %></div>
           </div>
-          <div class="message-date"><%= message.sentAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
+          <div class="message-date"><%= new Date(row.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
         </a>
       <% }); %>
     </div>

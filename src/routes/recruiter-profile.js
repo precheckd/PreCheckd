@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Recruiter = require('../models/Recruiter');
+const ConnectionRequest = require('../models/ConnectionRequest');
+const { buildPane } = require('../utils/conversation');
 const { uploadProfilePhoto, uploadRecruiterIntroVideo, deleteS3Object } = require('../utils/s3Upload');
 
 const upload = multer({
@@ -34,10 +36,26 @@ router.get('/:slug', async (req, res) => {
       req.session.recruiterId === recruiter._id.toString()
     );
 
+    // A candidate with an accepted connection to this recruiter gets the
+    // running conversation next to the profile.
+    let pane = null;
+    if (req.session.candidateId) {
+      const connection = await ConnectionRequest.findOne({
+        candidateId: req.session.candidateId,
+        recruiterId: recruiter._id,
+        status: 'accepted'
+      }).select('_id');
+
+      if (connection) {
+        pane = await buildPane({ type: 'candidate', id: req.session.candidateId }, connection._id.toString());
+      }
+    }
+
     // Render profile
     res.render('recruiter-profile', {
       recruiter: recruiter,
       isOwner: isOwner,
+      pane: pane,
       title: `${recruiter.firstName} ${recruiter.lastName} - Verified Recruiter | PreCheckd`
     });
 

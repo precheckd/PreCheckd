@@ -67,6 +67,14 @@ const recruiterSchema = new mongoose.Schema({
     default: false
   },
   
+  // When this account's last unread-messages digest email went out (see
+  // services/messageDigest.js) — at most one a day, and also what stops two
+  // server instances from both sending it.
+  lastMessageDigestAt: {
+    type: Date,
+    default: null
+  },
+
   // Verification Timestamps
   phoneVerifiedAt: {
     type: Date,
