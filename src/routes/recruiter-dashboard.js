@@ -5,6 +5,7 @@ const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
 const { getAnonymizedCandidateView, getFullCandidateView } = require('../utils/candidateAnonymization');
+const { generateCertificate } = require('../utils/certificateGenerator');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
@@ -175,12 +176,60 @@ router.get('/requests/:id/candidate', async (req, res) => {
         introVideoUrl: candidate.introVideoUrl,
         interviewVideos: candidate.interviewVideos || []
       } : null,
-      resumeUrl: hasFullAccess ? candidate.resumeUrl : null,
+      resumeUrl: hasFullAccess && candidate.resumeUrl ? `/recruiter-dashboard/requests/${request._id}/resume` : null,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`
     });
   } catch (error) {
     console.error('Error loading recruiter candidate profile:', error);
     res.status(500).send('Server error');
+  }
+});
+
+// GET /recruiter-dashboard/requests/:id/resume — the candidate's resume with
+// the PreCheckd Certificate of Verification appended, instead of the raw
+// upload. Same access rule as the resume link it replaces: accepted
+// connection AND full access granted.
+router.get('/requests/:id/resume', async (req, res) => {
+  try {
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
+
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) {
+      return res.status(403).send('Not authorized.');
+    }
+
+    if (request.status !== 'accepted' || request.fullAccessStatus !== 'granted') {
+      return res.status(403).send('Full access has not been granted for this candidate.');
+    }
+
+    const candidate = request.candidateId;
+    if (!candidate || !candidate.resumeUrl) {
+      return res.status(404).send('No resume on file.');
+    }
+
+    let resumeBuffer = null;
+    try {
+      const resumeResponse = await fetch(candidate.resumeUrl);
+      if (resumeResponse.ok) {
+        resumeBuffer = Buffer.from(await resumeResponse.arrayBuffer());
+      }
+    } catch (fetchError) {
+      console.error('Could not fetch resume for verified download:', fetchError);
+    }
+
+    if (!resumeBuffer) {
+      return res.status(502).send('Could not load the resume. Please try again.');
+    }
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const pdfBuffer = await generateCertificate(candidate, resumeBuffer, baseUrl);
+
+    const filename = `PreCheckd-Verified-Resume-${candidate.firstName}-${candidate.lastName}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating verified resume:', error);
+    res.status(500).send('Something went wrong. Please try again.');
   }
 });
 

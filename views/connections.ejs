@@ -239,6 +239,16 @@
     color: #F2F4F3;
   }
 
+  .conn-btn-static {
+    cursor: default;
+    color: #8FA6AC;
+  }
+
+  .conn-btn-static:hover {
+    background: transparent;
+    color: #8FA6AC;
+  }
+
   .conn-btn-danger {
     color: #FF8A8A;
   }
@@ -345,6 +355,19 @@
             <div class="conn-action-buttons">
               <% if (entry.connected && entry.requestId) { %>
                 <a class="conn-btn" href="/messages/compose?connectionRequestId=<%= entry.requestId %>">Send Message</a>
+              <% } %>
+              <% if (!isCandidate && entry.requestId) { %>
+                <% if (entry.fullAccessStatus === 'granted') { %>
+                  <a class="conn-btn" href="/recruiter-dashboard/requests/<%= entry.requestId %>/candidate">View Video &amp; Resume</a>
+                <% } else if (entry.fullAccessStatus === 'requested') { %>
+                  <span class="conn-btn conn-btn-static">Full Access Requested</span>
+                <% } else if (entry.fullAccessStatus === 'denied') { %>
+                  <span class="conn-btn conn-btn-static">Full Access Declined</span>
+                <% } else { %>
+                  <form action="/recruiter-dashboard/requests/<%= entry.requestId %>/request-full-access" method="POST" style="display:inline;">
+                    <button type="submit" class="conn-btn">Request Full Access</button>
+                  </form>
+                <% } %>
               <% } %>
               <% if (isCandidate && entry.saved) { %>
                 <button type="button" class="conn-btn conn-btn-danger" data-unsave="<%= entry.slug %>" data-still-connected="<%= entry.connected ? 'true' : 'false' %>">Remove from saved</button>

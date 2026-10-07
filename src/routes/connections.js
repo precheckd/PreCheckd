@@ -146,6 +146,10 @@ async function renderRecruiterConnections(req, res) {
       requestId: r._id.toString(),
       saved: false,
       savedAt: null,
+      fullAccessStatus: r.fullAccessStatus === 'requested' &&
+        r.fullAccessExpiresAt && r.fullAccessExpiresAt.getTime() < Date.now()
+        ? 'none'
+        : (r.fullAccessStatus || 'none'),
       note: noteByCandidate.get(id) || ''
     });
   });

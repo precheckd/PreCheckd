@@ -128,16 +128,25 @@ app.use(async (req, res, next) => {
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
 
-        const [fraudReportCount, unreadCount, pendingRequestCount] = await Promise.all([
+        const [fraudReportCount, unreadCount, pendingConnectionCount, pendingFullAccessCount] = await Promise.all([
           FraudReport.countDocuments({ reporterCandidateId: candidate._id }),
           Message.countDocuments({ recipientType: 'candidate', recipientId: req.session.candidateId, readAt: null }),
           // Only requests waiting on THIS candidate to act — see the
           // identical comment on the recruiter branch above.
-          ConnectionRequest.countDocuments({ candidateId: req.session.candidateId, status: 'pending', initiatedBy: { $ne: 'candidate' } })
+          ConnectionRequest.countDocuments({ candidateId: req.session.candidateId, status: 'pending', initiatedBy: { $ne: 'candidate' } }),
+          // A recruiter's full-access (video + resume) request is also
+          // waiting on this candidate; unanswered ones past their expiry
+          // window no longer count.
+          ConnectionRequest.countDocuments({
+            candidateId: req.session.candidateId,
+            status: 'accepted',
+            fullAccessStatus: 'requested',
+            $or: [{ fullAccessExpiresAt: null }, { fullAccessExpiresAt: { $gt: new Date() } }]
+          })
         ]);
         res.locals.commandCenterFraudReportCount = fraudReportCount;
         res.locals.commandCenterUnreadCount = unreadCount;
-        res.locals.commandCenterPendingRequestCount = pendingRequestCount;
+        res.locals.commandCenterPendingRequestCount = pendingConnectionCount + pendingFullAccessCount;
       }
     }
   } catch (error) {
