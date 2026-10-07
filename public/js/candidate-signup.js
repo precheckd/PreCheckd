@@ -9,6 +9,10 @@
   let candidateSlug = null;
   let workEntryCount = 0;
   let educationEntryCount = 0;
+  // Set when an already-logged-in candidate came from the profile/banner
+  // just to finish identity verification: skip the email gate and resume
+  // review screens, and send them home when it's done.
+  const verifyIdentitySlug = window.PRECHECKD_VERIFY_IDENTITY_SLUG || null;
 
   function showStep(id) {
     document.querySelectorAll('.form-step').forEach((el) => el.classList.add('hidden'));
@@ -316,6 +320,10 @@
 
         if (response.success) {
           candidateSlug = response.slug;
+          if (verifyIdentitySlug) {
+            window.location.href = `/candidate/${verifyIdentitySlug}`;
+            return;
+          }
           await waitForResumeAndShowReview(signupHadResume);
         } else {
           showError(response.message || 'Something went wrong.');
@@ -354,7 +362,11 @@
 
       if (response.success) {
         candidateSlug = response.slug;
-        await waitForResumeAndShowReview(signupHadResume);
+        if (verifyIdentitySlug) {
+            window.location.href = `/candidate/${verifyIdentitySlug}`;
+            return;
+          }
+          await waitForResumeAndShowReview(signupHadResume);
       } else {
         showError(response.message || 'Verification is still processing. Please check back shortly.');
       }
@@ -411,5 +423,11 @@
         showError(err.message);
       }
     });
+  }
+  if (verifyIdentitySlug) {
+    candidateSlug = verifyIdentitySlug;
+    document.getElementById('page-header-text').querySelector('h1').textContent = 'Verify Your Identity';
+    showStep('step-identity');
+    prepareIdentitySession();
   }
 })();

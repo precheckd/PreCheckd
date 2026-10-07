@@ -10,6 +10,28 @@ function requireCandidateLogin(req, res, next) {
   next();
 }
 
+// GET /candidate/:slug/verify-identity — owner-only shortcut into the
+// identity step (Government ID + facial recognition) of the signup flow,
+// for candidates who skipped it. Already-verified candidates just go home.
+router.get('/:slug/verify-identity', requireCandidateLogin, async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate || candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).send('You do not have permission to view this page.');
+    }
+
+    if (candidate.isIdentityVerified) {
+      return res.redirect(`/candidate/${candidate.slug}`);
+    }
+
+    res.redirect('/candidate-signup?verify=identity');
+  } catch (error) {
+    console.error('Error starting identity verification:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET /candidate/:slug — private, owner-only
 router.get('/:slug', requireCandidateLogin, async (req, res) => {
   try {

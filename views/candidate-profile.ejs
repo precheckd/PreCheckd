@@ -470,7 +470,7 @@
             <% if (candidate.identityVerifiedAt) { %>
               <span class="verification-status status-verified">✓ Verified <%= candidate.identityVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
             <% } else { %>
-              <span class="verification-status status-pending">Verification Pending</span>
+              <a class="verification-status status-pending" href="/candidate/<%= candidate.slug %>/verify-identity" style="text-decoration: underline;">Verification Pending — Verify now</a>
             <% } %>
           </div>
         </div>
@@ -481,7 +481,7 @@
             <% if (candidate.facialRecognitionVerifiedAt) { %>
               <span class="verification-status status-verified">✓ Verified <%= candidate.facialRecognitionVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
             <% } else { %>
-              <span class="verification-status status-pending">Verification Pending</span>
+              <a class="verification-status status-pending" href="/candidate/<%= candidate.slug %>/verify-identity" style="text-decoration: underline;">Verification Pending — Verify now</a>
             <% } %>
           </div>
         </div>

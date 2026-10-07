@@ -58,9 +58,23 @@ router.get('/candidate-signup', async (req, res) => {
       }
     }
 
+    // A logged-in, unverified candidate arriving from the profile/banner
+    // jumps straight to the identity step instead of the email gate.
+    let verifyIdentityOnly = false;
+    let verifyCandidateSlug = null;
+    if (req.query.verify === 'identity' && req.session.candidateId) {
+      const loggedIn = await Candidate.findById(req.session.candidateId);
+      if (loggedIn && !loggedIn.isIdentityVerified) {
+        verifyIdentityOnly = true;
+        verifyCandidateSlug = loggedIn.slug;
+      }
+    }
+
     res.render('candidate-signup', {
       recruiter: recruiter,
       alreadyVerified: false,
+      verifyIdentityOnly,
+      verifyCandidateSlug,
       pageTitle: 'PreCheckd - Get Verified'
     });
   } catch (error) {

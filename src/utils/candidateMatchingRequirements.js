@@ -40,6 +40,17 @@ const requirements = [
       Array.isArray(candidate.workArrangement) && candidate.workArrangement.length > 0
     ),
   },
+  {
+    // Government ID + facial recognition happen together in one Stripe
+    // Identity step. Search already requires isIdentityVerified, but it
+    // used to be invisible here, so a candidate who skipped it was hidden
+    // from recruiters while the banner showed clear. `page` is a redirect
+    // route (see routes/candidate-profile.js) into that step.
+    key: 'identity',
+    label: 'Identity verification (Government ID + Facial Recognition)',
+    page: 'verify-identity',
+    isMet: (candidate) => Boolean(candidate.isIdentityVerified),
+  },
 ];
 
 function getMissingMatchingRequirements(candidate) {

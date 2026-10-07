@@ -270,7 +270,7 @@
     <p id="form-error" class="form-error hidden"></p>
 
     <!-- Step 0: Email gate -->
-    <section id="step-email-gate" class="form-step <%= (typeof alreadyVerified !== 'undefined' && alreadyVerified) ? 'hidden' : '' %>">
+    <section id="step-email-gate" class="form-step <%= ((typeof alreadyVerified !== 'undefined' && alreadyVerified) || (typeof verifyIdentityOnly !== 'undefined' && verifyIdentityOnly)) ? 'hidden' : '' %>">
       <h2>Enter your email to get started</h2>
       <form id="email-gate-form">
         <label>Email<input type="email" name="email" required></label>
@@ -397,6 +397,7 @@
 </div>
 
 <script>
+  window.PRECHECKD_VERIFY_IDENTITY_SLUG = <%- (typeof verifyIdentityOnly !== 'undefined' && verifyIdentityOnly) ? JSON.stringify(verifyCandidateSlug) : 'null' %>;
   window.PRECHECKD_RECRUITER = <%- recruiter ? JSON.stringify({ slug: recruiter.slug, name: `${recruiter.firstName} ${recruiter.lastName}` }) : 'null' %>;
 </script>
 <script src="https://js.stripe.com/v3"></script>
