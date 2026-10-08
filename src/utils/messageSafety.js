@@ -118,6 +118,15 @@ const WARNING_RULES = [
     text: 'This message suggests moving the conversation off PreCheckd. Off-platform, verification and safety protections no longer apply. If you do want to share contact details, use "Request contact info" so you stay in control.'
   },
   {
+    // The fake-technical-interview attack: the "recruiter" asks the candidate
+    // to clone a repo / run a script / open a project in VS Code or Cursor,
+    // which silently runs code that steals credentials. Also catches
+    // remote-control tools.
+    key: 'run_code',
+    pattern: /(git\s+clone|clone\s+(this|our|my|the\s+following)\s+(repo|repository|project)|run\s+(this|the\s+following)\s+(script|command|code)|(download|install)\s+(and\s+(run|install)\s+)?(this|the\s+attached)\s+(file|app|software|tool|extension|script|project)|open\s+(it|this|the\s+(project|repo|repository))\s+in\s+(vs\s?code|visual\s+studio|cursor)|anydesk|team\s?viewer|remote\s+(desktop|access|control))/i,
+    text: 'This message asks you to clone a repo, run a script, install something or give remote access. Never do that for someone you met through hiring — it is a common attack that steals your passwords and takes over your computer. Legitimate technical screens run in your browser.'
+  },
+  {
     key: 'documents_codes',
     pattern: /(passport|driver'?s?\s*licen[sc]e|photo\s+of\s+your\s+id|copy\s+of\s+your\s+id|bank\s+statement|your\s+password|login\s+(details|credentials|info)|(send|share|give|forward|read)\s+(me\s+)?(the\s+|your\s+|that\s+)?(verification\s+|security\s+|one[-\s]?time\s+|login\s+|sms\s+|text\s+)?(code|passcode|otp)\b)/i,
     text: 'This message asks for an ID document, a password or a code. Be careful: never share passwords or verification codes with anyone, and only send ID documents through an official process after you have verified who is asking.'
