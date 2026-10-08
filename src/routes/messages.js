@@ -20,6 +20,7 @@ const {
   requestContact,
   respondToContactRequest
 } = require('../utils/conversation');
+const { checkOutgoing, warningsFor } = require('../utils/messageSafety');
 
 // Messages no longer trigger a notification email each — unread messages go
 // out in a once-a-day digest instead (see services/messageDigest.js), so a
@@ -356,6 +357,7 @@ router.get('/:id', async (req, res) => {
 
     res.render('message-detail', {
       message,
+      warnings: message.senderType === 'system' || (message.kind || 'message') !== 'message' ? [] : warningsFor(message.body),
       senderName,
       senderUnavailable,
       contactPrompt,
@@ -376,6 +378,13 @@ router.post('/send', async (req, res) => {
 
     if (!body || !body.trim()) {
       return res.status(400).send('Message body is required.');
+    }
+
+    // Same safety rules as the conversation pane: no SSNs, card numbers or
+    // bank account details in messages.
+    const unsafe = checkOutgoing(body);
+    if (unsafe) {
+      return res.status(400).send(unsafe.message);
     }
 
     // --- Dispute-thread reply: addressed to the system mailbox, not a

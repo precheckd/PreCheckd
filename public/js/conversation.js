@@ -81,6 +81,16 @@
     time.textContent = formatTime(m.sentAt);
 
     wrap.appendChild(bubble);
+
+    // Scam-pattern warnings, only ever sent for messages from the other person.
+    (m.warnings || []).forEach((text) => {
+      const warn = document.createElement('div');
+      warn.className = 'convo-warning';
+      warn.setAttribute('role', 'alert');
+      warn.textContent = `⚠ ${text}`;
+      wrap.appendChild(warn);
+    });
+
     wrap.appendChild(time);
     return wrap;
   }

@@ -19,6 +19,8 @@ const {
   hasSharedAnything
 } = require('./contactSharing');
 
+const { checkOutgoing, warningsFor } = require('./messageSafety');
+
 const MAX_MESSAGE_LENGTH = 2000;
 const INITIAL_MESSAGE_LIMIT = 200;
 const POLL_MESSAGE_LIMIT = 200;
@@ -62,12 +64,19 @@ async function loadConversationContext(currentUser, connectionRequestId) {
 }
 
 function messageToJson(m, ctx) {
+  const mine = m.senderType === ctx.type && Boolean(m.senderId) && m.senderId.toString() === ctx.id;
+  const kind = m.kind || 'message';
+
   return {
     id: m._id.toString(),
-    mine: m.senderType === ctx.type && Boolean(m.senderId) && m.senderId.toString() === ctx.id,
-    kind: m.kind || 'message',
+    mine,
+    kind,
     body: m.body,
-    sentAt: new Date(m.sentAt).toISOString()
+    sentAt: new Date(m.sentAt).toISOString(),
+    // Scam-pattern warnings are for the person RECEIVING a message, worked
+    // out when it's displayed so the rules can improve without touching
+    // stored messages.
+    warnings: !mine && kind === 'message' ? warningsFor(m.body) : []
   };
 }
 
@@ -159,6 +168,12 @@ async function sendThreadMessage(ctx, rawBody) {
   }
   if (ctx.otherUnavailable) {
     return { error: 'This person is no longer active on PreCheckd, so you can\'t send a message here.', status: 403 };
+  }
+
+  // Never send or store SSNs, card numbers or bank account details.
+  const unsafe = checkOutgoing(body);
+  if (unsafe) {
+    return { error: unsafe.message, status: 400, blocked: unsafe.reason };
   }
 
   const message = await Message.create({

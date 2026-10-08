@@ -68,6 +68,17 @@
     white-space: pre-wrap;
   }
 
+  .safety-warning {
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    background: #3A3320;
+    border: 1px solid #B8860B;
+    border-radius: 6px;
+    color: #F2E6C0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
   .reply-card {
     background: #2A4750;
     border: 1px solid #3B5860;
@@ -226,6 +237,9 @@
         <div class="message-subject-line"><%= message.subject %></div>
       <% } %>
       <div class="message-body"><%= message.body %></div>
+      <% (typeof warnings !== 'undefined' ? warnings : []).forEach(function(text) { %>
+        <div class="safety-warning" role="alert">⚠ <%= text %></div>
+      <% }); %>
     </div>
 
     <% if (contactPrompt) { %>
