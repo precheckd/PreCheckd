@@ -151,13 +151,6 @@
     text-decoration: none;
   }
 
-  .verify-cta-btn-alt {
-    background: transparent;
-    color: #4ADE80;
-    border: 2px solid #4ADE80;
-    padding: 0.5rem 1.1rem;
-  }
-
   /* Below ~1000px: single column, ordered recruiter box, card, job-seeker
      box, notice. The side columns dissolve so each box can be ordered
      individually. */
@@ -183,7 +176,7 @@
       <aside class="verify-side verify-left">
         <div class="verify-cta verify-notice">
           <div class="verify-cta-title">About this page</div>
-          <p>This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
+          <p>Every item on this page has been verified by PreCheckd. This page shows each person's current verification status every time it loads. If something here doesn't match the person you're dealing with, don't continue.</p>
         </div>
       </aside>
     <% } %>
@@ -264,7 +257,7 @@
           <div class="verify-cta verify-jobseeker">
             <div class="verify-cta-title">Looking for a job?</div>
             <p>Get verified and let verified recruiters come to you.</p>
-            <a class="verify-cta-btn verify-cta-btn-alt" href="/candidate-landing">Get verified</a>
+            <a class="verify-cta-btn" href="/candidate-landing">Sign up as a candidate</a>
           </div>
         <% } %>
       </aside>
