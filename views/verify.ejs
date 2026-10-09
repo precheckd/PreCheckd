@@ -9,8 +9,26 @@
     align-items: flex-start;
   }
 
-  .verify-card {
+  .verify-layout {
     width: 100%;
+    max-width: 960px;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .verify-side {
+    flex: 0 0 300px;
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .verify-side .verify-cta { margin-top: 0; }
+
+  .verify-card {
+    flex: 1 1 0;
+    min-width: 0;
     max-width: 520px;
     background: #2A4750;
     border: 1px solid #3B5860;
@@ -137,6 +155,12 @@
 
   .verify-cta-alt a { color: #4ADE80; text-decoration: none; font-weight: 600; }
 
+  @media (max-width: 800px) {
+    .verify-layout { flex-direction: column; align-items: stretch; }
+    .verify-side { flex: none; position: static; width: 100%; }
+    .verify-card { max-width: none; }
+  }
+
   @media (max-width: 600px) {
     .verify-wrap { padding: 1.5rem 1rem; }
     .verify-card { padding: 1.5rem; }
@@ -145,6 +169,26 @@
 </style>
 
 <div class="verify-wrap">
+  <div class="verify-layout">
+    <% if (v && v.kind === 'candidate') { %>
+      <aside class="verify-side">
+        <% if (v.kind === 'candidate') { %>
+          <div class="verify-cta">
+            <% if (typeof viewerIsRecruiter !== 'undefined' && viewerIsRecruiter) { %>
+              <div class="verify-cta-title">Looking for verified candidates?</div>
+              <p>Search verified job seekers and send a request to connect. Full profiles unlock once a candidate accepts.</p>
+              <a class="verify-cta-btn" href="/candidate-search">Search candidates</a>
+            <% } else { %>
+              <div class="verify-cta-title">Are you a recruiter?</div>
+              <p>Join PreCheckd to search verified candidates and request to connect. Candidates accept before you see their full profile, so every conversation is with a real, verified person.</p>
+              <a class="verify-cta-btn" href="/recruiter-landing">Sign up as a recruiter</a>
+              <div class="verify-cta-alt">Job seeker? <a href="/candidate-landing">Get verified too</a></div>
+            <% } %>
+          </div>
+        <% } %>
+
+      </aside>
+    <% } %>
   <div class="verify-card">
     <% if (!v) { %>
       <div class="verify-status none">No verification found</div>
@@ -185,22 +229,8 @@
         <a class="verify-link" href="<%= v.profileUrl %>">View full PreCheckd profile →</a>
       <% } %>
 
-      <% if (v.kind === 'candidate') { %>
-        <div class="verify-cta">
-          <% if (typeof viewerIsRecruiter !== 'undefined' && viewerIsRecruiter) { %>
-            <div class="verify-cta-title">Looking for verified candidates?</div>
-            <p>Search verified job seekers and send a request to connect. Full profiles unlock once a candidate accepts.</p>
-            <a class="verify-cta-btn" href="/candidate-search">Search candidates</a>
-          <% } else { %>
-            <div class="verify-cta-title">Are you a recruiter?</div>
-            <p>Join PreCheckd to search verified candidates and request to connect. Candidates accept before you see their full profile, so every conversation is with a real, verified person.</p>
-            <a class="verify-cta-btn" href="/recruiter-landing">Sign up as a recruiter</a>
-            <div class="verify-cta-alt">Job seeker? <a href="/candidate-landing">Get verified too</a></div>
-          <% } %>
-        </div>
-      <% } %>
-
       <p class="verify-note">This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
     <% } %>
+  </div>
   </div>
 </div>
