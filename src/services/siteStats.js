@@ -21,9 +21,9 @@ function envInt(name, fallback) {
 
 function minimums() {
   return {
-    candidates: envInt('TICKER_MIN_CANDIDATES', 50),
-    recruiters: envInt('TICKER_MIN_RECRUITERS', 20),
-    connections: envInt('TICKER_MIN_CONNECTIONS', 50)
+    candidates: envInt('TICKER_MIN_CANDIDATES', 250),
+    recruiters: envInt('TICKER_MIN_RECRUITERS', 50),
+    connections: envInt('TICKER_MIN_CONNECTIONS', 100)
   };
 }
 
