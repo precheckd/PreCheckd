@@ -26,7 +26,9 @@
 
   .verify-side .verify-cta { margin-top: 0; }
   .verify-side .verify-cta + .verify-cta { margin-top: 1rem; }
-  .verify-notice p { margin-bottom: 0; font-size: 0.85rem; }
+  .verify-notice { padding: 1.5rem; }
+  .verify-notice p { margin-bottom: 0; font-size: 1.1rem; line-height: 1.55; color: #F2F4F3; }
+  .verify-notice strong { color: #4ADE80; }
 
   .verify-card {
     flex: 1 1 0;
@@ -175,8 +177,7 @@
     <% if (v && v.kind === 'candidate') { %>
       <aside class="verify-side verify-left">
         <div class="verify-cta verify-notice">
-          <div class="verify-cta-title">About this page</div>
-          <p>Every item on this page has been verified by PreCheckd. This page shows each person's current verification status every time it loads. If something here doesn't match the person you're dealing with, don't continue.</p>
+          <p><strong>Every item on this page has been verified by PreCheckd.</strong> This page shows each person's current verification status every time it loads. If something here doesn't match the person you're dealing with, don't continue.</p>
         </div>
       </aside>
     <% } %>
