@@ -267,6 +267,14 @@ const candidateSchema = new mongoose.Schema({
     default: true
   },
 
+  // Whether this candidate has a public /verify/:slug page. Off by default
+  // and always an explicit opt-in: the page shows they're on PreCheckd, which
+  // is exactly what the pre-connection anonymization otherwise hides.
+  publicVerifyPage: {
+    type: Boolean,
+    default: false
+  },
+
   // GeoJSON MultiPolygon of the area(s) a candidate is willing to work —
   // drawn freehand on a map rather than expressed as a commute radius, so
   // a candidate can trace exactly where they'll go (e.g. Manhattan but not

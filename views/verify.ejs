@@ -1,0 +1,152 @@
+<style>
+  .verify-wrap {
+    flex: 1;
+    min-height: 70vh;
+    background: #1F363C;
+    padding: 3rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .verify-card {
+    width: 100%;
+    max-width: 520px;
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    color: #C7D1CF;
+  }
+
+  .verify-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .verify-status.ok { color: #4ADE80; }
+  .verify-status.pending { color: #FBBF24; }
+  .verify-status.none { color: #FF8A8A; }
+
+  .verify-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #F2F4F3;
+    line-height: 1.25;
+  }
+
+  .verify-sub {
+    margin-top: 0.15rem;
+    font-size: 1rem;
+  }
+
+  .verify-checks {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    border-top: 1px solid #3B5860;
+  }
+
+  .verify-checks li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #3B5860;
+    font-size: 0.97rem;
+  }
+
+  .verify-mark.ok { color: #4ADE80; font-weight: 700; }
+  .verify-mark.no { color: #FF8A8A; font-weight: 700; }
+
+  .verify-certs-title {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #F2F4F3;
+  }
+
+  .verify-meta {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  .verify-link {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #4ADE80;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .verify-note {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #3B5860;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+
+  @media (max-width: 600px) {
+    .verify-wrap { padding: 1.5rem 1rem; }
+    .verify-card { padding: 1.5rem; }
+    .verify-name { font-size: 1.5rem; }
+  }
+</style>
+
+<div class="verify-wrap">
+  <div class="verify-card">
+    <% if (!v) { %>
+      <div class="verify-status none">No verification found</div>
+      <div class="verify-name">We couldn't find a verified profile at this link</div>
+      <p class="verify-sub">If you were sent here from an email or message, treat it with caution: the person may not be verified by PreCheckd, or may have chosen not to make their page public.</p>
+    <% } else { %>
+      <% if (v.verified) { %>
+        <div class="verify-status ok">✓ Verified by PreCheckd</div>
+      <% } else { %>
+        <div class="verify-status pending">Verification in progress</div>
+      <% } %>
+
+      <div class="verify-name"><%= v.displayName %></div>
+      <% if (v.subtitle) { %><div class="verify-sub"><%= v.subtitle %></div><% } %>
+      <div class="verify-sub"><%= v.kind === 'recruiter' ? 'Recruiter' : 'Job seeker' %></div>
+
+      <ul class="verify-checks">
+        <% v.checks.forEach(function(check) { %>
+          <li>
+            <span class="verify-mark <%= check.ok ? 'ok' : 'no' %>"><%= check.ok ? '✓' : '✗' %></span>
+            <span><%= check.ok ? check.label : check.label.replace(' verified', ' not yet verified') %></span>
+          </li>
+        <% }); %>
+      </ul>
+
+      <% if (v.certs && v.certs.length > 0) { %>
+        <div class="verify-certs-title">Verified certifications</div>
+        <ul class="verify-checks" style="margin-top: 0.5rem;">
+          <% v.certs.forEach(function(name) { %>
+            <li><span class="verify-mark ok">✓</span><span><%= name %></span></li>
+          <% }); %>
+        </ul>
+      <% } %>
+
+      <div class="verify-meta">Member since <%= v.memberSince.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %></div>
+
+      <% if (v.profileUrl) { %>
+        <a class="verify-link" href="<%= v.profileUrl %>">View full PreCheckd profile →</a>
+      <% } %>
+
+      <p class="verify-note">This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
+    <% } %>
+  </div>
+</div>

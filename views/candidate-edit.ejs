@@ -465,6 +465,17 @@
     margin-bottom: 0.6rem;
   }
 
+  .public-page-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .public-page-toggle input { width: auto; margin: 0; }
+
   .credly-recheck {
     display: flex;
     flex-wrap: wrap;
@@ -678,6 +689,23 @@
       </a>
     </div>
 
+    <div class="cedit-card public-page-card">
+      <div class="job-prefs-shortcut-title">Public verification page</div>
+      <p class="cert-hint">Get a link that proves you're verified, to use in your email signature or send to someone who wants to check you out. It shows only your first name and last initial, your identity and phone checkmarks, and your verified certifications. It's hidden from search engines, but anyone with the link can see it, and it shows you're on PreCheckd. It's off unless you turn it on.</p>
+      <% const canPublish = candidate.isPhoneVerified && candidate.isIdentityVerified; %>
+      <label class="public-page-toggle">
+        <input type="checkbox" id="public-page-toggle" <%= candidate.publicVerifyPage ? 'checked' : '' %> <%= canPublish ? '' : 'disabled' %>>
+        <span>Make my verification page public</span>
+      </label>
+      <% if (!canPublish) { %>
+        <p class="cert-hint" style="margin-top: 0.5rem;">Finish phone and identity verification to turn this on.</p>
+      <% } %>
+      <p class="cert-hint public-page-link" id="public-page-link" <%= candidate.publicVerifyPage ? '' : 'hidden' %>>
+        Your page: <a href="/verify/<%= candidate.slug %>" id="public-page-url" target="_blank" rel="noopener" style="color: #4ADE80;">/verify/<%= candidate.slug %></a>
+      </p>
+      <p class="form-error" id="public-page-error" hidden></p>
+    </div>
+
     <div class="cedit-card">
       <% if (typeof error !== 'undefined' && error) { %>
         <p class="form-error"><%= error %></p>
@@ -820,4 +848,32 @@
   window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
 <script src="/js/candidate-edit.js"></script>
+<script>
+(function () {
+  var box = document.getElementById('public-page-toggle');
+  if (!box) return;
+  var err = document.getElementById('public-page-error');
+  var link = document.getElementById('public-page-link');
+  box.addEventListener('change', function () {
+    var wanted = box.checked;
+    err.hidden = true;
+    box.disabled = true;
+    fetch('/candidate/<%= candidate.slug %>/public-page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: wanted })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.data.error || 'Something went wrong. Please try again.');
+      box.checked = r.data.enabled;
+      link.hidden = !r.data.enabled;
+    }).catch(function (e) {
+      box.checked = !wanted;
+      err.textContent = e.message;
+      err.hidden = false;
+    }).then(function () { box.disabled = false; });
+  });
+})();
+</script>
 <script src="/js/credly-badges.js"></script>

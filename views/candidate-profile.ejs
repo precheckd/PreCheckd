@@ -430,8 +430,8 @@
         <p class="cprofile-bio"><%= candidate.bio %></p>
       <% } %>
       <% if (typeof viewCounts !== 'undefined' && viewCounts) { %>
-        <div class="view-counts" title="Verified recruiters who viewed your profile. Each recruiter is counted once per month.">
-          <span><strong><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'recruiter view' : 'recruiter views' %> this month</span>
+        <div class="view-counts" title="Recruiters who viewed your profile, plus visits to your public verification page if it's on. Each visitor is counted once per month.">
+          <span><strong><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'view' : 'views' %> this month</span>
           <span class="view-counts-sep">·</span>
           <span><strong><%= viewCounts.allTime.toLocaleString('en-US') %></strong> all time</span>
         </div>

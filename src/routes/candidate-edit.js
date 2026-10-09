@@ -130,6 +130,37 @@ router.post('/:slug/edit/recheck-credly', async (req, res) => {
   }
 });
 
+// POST /candidate/:slug/public-page — owner switches their public
+// /verify/:slug page on or off. Only fully verified candidates can turn it
+// on, so the public page never has to say "not verified yet".
+router.post('/:slug/public-page', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    const enabled = req.body.enabled === true || req.body.enabled === 'true';
+
+    if (enabled && !(candidate.isPhoneVerified && candidate.isIdentityVerified)) {
+      return res.status(400).json({ error: 'Finish phone and identity verification first, then you can turn on your public page.' });
+    }
+
+    candidate.publicVerifyPage = enabled;
+    await candidate.save();
+
+    res.json({ success: true, enabled: candidate.publicVerifyPage, url: `/verify/${candidate.slug}` });
+  } catch (error) {
+    console.error('Error updating public verification page setting:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
 // POST /candidate/:slug/edit/add-credly-badge — candidate opts to add one
 // of the unmatched badges found during a sync as a real certification entry.
 router.post('/:slug/edit/add-credly-badge', async (req, res) => {

@@ -187,6 +187,7 @@ app.get('/founding-recruiter', (req, res) => {
   res.render('founding-recruiter', { pageTitle: 'PreCheckd - Founding Recruiter Signup' });
 });
 
+app.use('/verify', require('./routes/verify'));
 app.use('/recruiter', recruiterProfileRoutes);
 app.use('/candidate', candidateProfileRoutes);
 app.use('/candidate', candidateEditRoutes);
