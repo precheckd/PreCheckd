@@ -34,6 +34,7 @@ router.get('/:slug', async (req, res) => {
       const lastInitial = (candidate.lastName || '').trim().charAt(0).toUpperCase();
       return res.render('verify', {
         pageTitle: 'PreCheckd Verification',
+        viewerIsRecruiter: Boolean(req.session.recruiterId),
         v: {
           kind: 'candidate',
           displayName: lastInitial ? `${candidate.firstName} ${lastInitial}.` : candidate.firstName,
