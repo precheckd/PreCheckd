@@ -4,6 +4,7 @@ const multer = require('multer');
 const Recruiter = require('../models/Recruiter');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { buildPane } = require('../utils/conversation');
+const { recordView, getViewCounts } = require('../utils/viewTracker');
 const { uploadProfilePhoto, uploadRecruiterIntroVideo, deleteS3Object } = require('../utils/s3Upload');
 
 const upload = multer({
@@ -51,10 +52,20 @@ router.get('/:slug', async (req, res) => {
       }
     }
 
+    // Count this visit (unique per viewer per month) or, for the owner,
+    // load their own numbers.
+    let viewCounts = null;
+    if (isOwner) {
+      viewCounts = await getViewCounts('recruiter', recruiter._id);
+    } else {
+      await recordView(req, 'recruiter', recruiter._id);
+    }
+
     // Render profile
     res.render('recruiter-profile', {
       recruiter: recruiter,
       isOwner: isOwner,
+      viewCounts: viewCounts,
       pane: pane,
       title: `${recruiter.firstName} ${recruiter.lastName} - Verified Recruiter | PreCheckd`
     });

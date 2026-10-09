@@ -451,6 +451,13 @@
         <p class="intro-bio"><%= recruiter.bio %></p>
       <% } %>
       <p class="intro-text">This recruiter has completed PreCheckd's rigorous verification process. This ensures they are a legitimate, vetted recruiting professional. Verification details are re-checked every three months to maintain trust and accuracy.</p>
+      <% if (isOwner && typeof viewCounts !== 'undefined' && viewCounts) { %>
+        <div title="People who viewed your profile. Each visitor is counted once per month." style="display: inline-flex; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-top: 0.75rem; padding: 0.4rem 0.8rem; background: #24404A; border: 1px solid #3B5860; border-radius: 999px; color: #C7D1CF; font-size: 0.88rem;">
+          <span><strong style="color: #F2F4F3;"><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'view' : 'views' %> this month</span>
+          <span style="opacity: 0.5;">·</span>
+          <span><strong style="color: #F2F4F3;"><%= viewCounts.allTime.toLocaleString('en-US') %></strong> all time</span>
+        </div>
+      <% } %>
       <% if (isOwner) { %>
         <p style="margin-top: 0.85rem;">
           <a href="/recruiter/<%= recruiter.slug %>/intro-video" style="color: #4ADE80; font-size: 0.9rem; font-weight: 600; text-decoration: none;">

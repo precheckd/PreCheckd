@@ -4,6 +4,7 @@ const Candidate = require('../models/Candidate');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization');
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+const { recordView } = require('../utils/viewTracker');
 const { DAY_CODES, DAY_OPTIONS, candidateAvailabilityGroup } = require('../utils/availabilityMatching');
 
 const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
@@ -206,6 +207,9 @@ router.get('/:anonId', async (req, res) => {
       candidateId: candidate._id,
       recruiterId: req.session.recruiterId
     }).sort({ createdAt: -1 });
+
+    // A recruiter looking at this candidate counts as one view this month.
+    await recordView(req, 'candidate', candidate._id);
 
     res.render('candidate-search-profile', {
       candidate: getAnonymizedCandidateView(candidate),

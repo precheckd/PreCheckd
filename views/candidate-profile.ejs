@@ -6,6 +6,21 @@
     min-height: 100vh;
   }
 
+  .view-counts {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.6rem;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-radius: 999px;
+    color: #C7D1CF;
+    font-size: 0.88rem;
+  }
+  .view-counts strong { color: #F2F4F3; }
+  .view-counts-sep { opacity: 0.5; }
+
   .cprofile-header {
     max-width: 900px;
     margin: 0 auto 2rem;
@@ -413,6 +428,13 @@
       <div class="cprofile-meta">Member since <%= candidate.createdAt.toLocaleDateString('en-US', memberSinceOpts) %></div>
       <% if (hasBio) { %>
         <p class="cprofile-bio"><%= candidate.bio %></p>
+      <% } %>
+      <% if (typeof viewCounts !== 'undefined' && viewCounts) { %>
+        <div class="view-counts" title="Verified recruiters who viewed your profile. Each recruiter is counted once per month.">
+          <span><strong><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'recruiter view' : 'recruiter views' %> this month</span>
+          <span class="view-counts-sep">·</span>
+          <span><strong><%= viewCounts.allTime.toLocaleString('en-US') %></strong> all time</span>
+        </div>
       <% } %>
       <p style="margin-top: 0.85rem;">
         <a href="/candidate/<%= candidate.slug %>/videos" style="color: #4ADE80; font-size: 0.9rem; font-weight: 600; text-decoration: none;">

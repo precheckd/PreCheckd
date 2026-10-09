@@ -8,6 +8,7 @@ const { getAnonymizedCandidateView, getFullCandidateView } = require('../utils/c
 const { generateCertificate } = require('../utils/certificateGenerator');
 const { sharedContactFor } = require('../utils/contactSharing');
 const { buildPane } = require('../utils/conversation');
+const { recordView } = require('../utils/viewTracker');
 const {
   sendConnectionAcceptedEmail,
   sendConnectionDeclinedEmail
@@ -171,6 +172,8 @@ router.get('/requests/:id/candidate', async (req, res) => {
     const hasFullAccess = request.fullAccessStatus === 'granted';
 
     const pane = await buildPane({ type: 'recruiter', id: req.session.recruiterId }, request._id.toString());
+
+    await recordView(req, 'candidate', candidate._id);
 
     res.render('recruiter-candidate-profile', {
       pane,

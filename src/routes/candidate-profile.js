@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+const { getViewCounts } = require('../utils/viewTracker');
 
 function requireCandidateLogin(req, res, next) {
   if (!req.session.candidateId) {
@@ -45,8 +46,11 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
       return res.status(403).send('You do not have permission to view this page.');
     }
 
+    const viewCounts = await getViewCounts('candidate', candidate._id);
+
     res.render('candidate-profile', {
       candidate,
+      viewCounts,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`,
       missingRequirements: getMissingMatchingRequirements(candidate)
     });
