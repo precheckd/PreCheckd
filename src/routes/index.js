@@ -2,9 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
+const { getTickerItems } = require('../services/siteStats');
 
-router.get('/', (req, res) => {
-  res.render('home', { pageTitle: 'PreCheckd - Choose Your Path' });
+router.get('/', async (req, res) => {
+  // Real PreCheckd-wide totals, each hidden until it's big enough to help
+  // (see services/siteStats.js). Empty list = no ticker.
+  const tickerItems = await getTickerItems();
+  res.render('home', { pageTitle: 'PreCheckd - Choose Your Path', tickerItems });
 });
 
 // The nicer, newer recruiter-landing page (founding-recruiter-landing.ejs —
