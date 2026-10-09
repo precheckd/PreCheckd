@@ -25,6 +25,8 @@
   }
 
   .verify-side .verify-cta { margin-top: 0; }
+  .verify-side .verify-cta + .verify-cta { margin-top: 1rem; }
+  .verify-notice p { margin-bottom: 0; font-size: 0.85rem; }
 
   .verify-card {
     flex: 1 1 0;
@@ -172,6 +174,11 @@
   <div class="verify-layout">
     <% if (v && v.kind === 'candidate') { %>
       <aside class="verify-side">
+        <div class="verify-cta verify-notice">
+          <div class="verify-cta-title">About this page</div>
+          <p>This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
+        </div>
+
         <% if (v.kind === 'candidate') { %>
           <div class="verify-cta">
             <% if (typeof viewerIsRecruiter !== 'undefined' && viewerIsRecruiter) { %>
@@ -223,13 +230,29 @@
         </ul>
       <% } %>
 
+      <% if (v.degrees && v.degrees.length > 0) { %>
+        <div class="verify-certs-title">Verified degrees</div>
+        <ul class="verify-checks" style="margin-top: 0.5rem;">
+          <% v.degrees.forEach(function(name) { %>
+            <li><span class="verify-mark ok">✓</span><span><%= name %></span></li>
+          <% }); %>
+        </ul>
+      <% } %>
+
+      <% if (v.jobs && v.jobs.length > 0) { %>
+        <div class="verify-certs-title">Verified experience</div>
+        <ul class="verify-checks" style="margin-top: 0.5rem;">
+          <% v.jobs.forEach(function(job) { %>
+            <li><span class="verify-mark ok">✓</span><span><%= job.title %><% if (job.tenure) { %>, <%= job.tenure %><% } %></span></li>
+          <% }); %>
+        </ul>
+      <% } %>
+
       <div class="verify-meta">Member since <%= v.memberSince.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %></div>
 
       <% if (v.profileUrl) { %>
         <a class="verify-link" href="<%= v.profileUrl %>">View full PreCheckd profile →</a>
       <% } %>
-
-      <p class="verify-note">This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
     <% } %>
   </div>
   </div>

@@ -18,6 +18,46 @@ const { recordView } = require('../utils/viewTracker');
 // employers, schools, bio or contact details. A private candidate and a slug
 // that doesn't exist look identical (same 404) so the page can't be used to
 // probe who is on PreCheckd.
+// Whole months between a "YYYY-MM" start and an end ("YYYY-MM" or null = now).
+function monthsBetween(start, end, now = new Date()) {
+  const parse = (value) => {
+    const match = /^(\d{4})-(\d{2})$/.exec(value || '');
+    return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : null;
+  };
+  const from = parse(start);
+  if (from === null) return null;
+  const to = end ? parse(end) : now.getUTCFullYear() * 12 + now.getUTCMonth();
+  if (to === null || to < from) return null;
+  return to - from;
+}
+
+function yearsLabel(months) {
+  if (months === null) return null;
+  if (months < 12) return 'under 1 year';
+  const years = Math.floor(months / 12);
+  return `${years} ${years === 1 ? 'year' : 'years'}`;
+}
+
+// Verified job titles with total tenure per title. Employer names are never
+// included. Entries with the same title are combined.
+function verifiedJobTitles(workHistory, now) {
+  const byTitle = new Map();
+  (workHistory || []).filter((job) => job.verified).forEach((job) => {
+    const key = job.jobTitle.trim().toLowerCase();
+    const months = monthsBetween(job.startDate, job.endDate, now);
+    const entry = byTitle.get(key) || { title: job.jobTitle.trim(), months: 0, known: false };
+    if (months !== null) {
+      entry.months += months;
+      entry.known = true;
+    }
+    byTitle.set(key, entry);
+  });
+  return [...byTitle.values()].map((entry) => ({
+    title: entry.title,
+    tenure: entry.known ? yearsLabel(entry.months) : null
+  }));
+}
+
 router.get('/:slug', async (req, res) => {
   try {
     const slug = req.params.slug;
@@ -30,6 +70,13 @@ router.get('/:slug', async (req, res) => {
       await recordView(req, 'candidate', candidate._id, {
         viewerIsOwner: Boolean(req.session.candidateId && req.session.candidateId === candidate._id.toString())
       });
+
+      const saved = candidate.publicSections || {};
+      const sections = {
+        certifications: saved.certifications !== false,
+        degrees: saved.degrees === true,
+        jobTitles: saved.jobTitles === true
+      };
 
       const lastInitial = (candidate.lastName || '').trim().charAt(0).toUpperCase();
       return res.render('verify', {
@@ -44,7 +91,13 @@ router.get('/:slug', async (req, res) => {
             { label: 'Identity verified', ok: Boolean(candidate.isIdentityVerified) },
             { label: 'Phone verified', ok: Boolean(candidate.isPhoneVerified) }
           ],
-          certs: (candidate.certifications || []).filter((c) => c.verified).map((c) => c.name),
+          certs: sections.certifications
+            ? (candidate.certifications || []).filter((c) => c.verified).map((c) => c.name)
+            : [],
+          degrees: sections.degrees
+            ? (candidate.educationHistory || []).filter((e) => e.verified).map((e) => e.degree)
+            : [],
+          jobs: sections.jobTitles ? verifiedJobTitles(candidate.workHistory) : [],
           memberSince: candidate.createdAt,
           profileUrl: null
         }
@@ -59,3 +112,4 @@ router.get('/:slug', async (req, res) => {
 });
 
 module.exports = router;
+module.exports._verifiedJobTitles = verifiedJobTitles;

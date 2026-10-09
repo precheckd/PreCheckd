@@ -145,16 +145,36 @@ router.post('/:slug/public-page', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized.' });
     }
 
-    const enabled = req.body.enabled === true || req.body.enabled === 'true';
+    const enabled = typeof req.body.enabled === 'undefined'
+      ? candidate.publicVerifyPage === true
+      : (req.body.enabled === true || req.body.enabled === 'true');
 
     if (enabled && !(candidate.isPhoneVerified && candidate.isIdentityVerified)) {
       return res.status(400).json({ error: 'Finish phone and identity verification first, then you can turn on your public page.' });
     }
 
     candidate.publicVerifyPage = enabled;
+
+    // Section checkboxes (any subset may be sent).
+    const sent = req.body.sections && typeof req.body.sections === 'object' ? req.body.sections : {};
+    ['certifications', 'degrees', 'jobTitles'].forEach((key) => {
+      if (typeof sent[key] === 'boolean') {
+        candidate.set(`publicSections.${key}`, sent[key]);
+      }
+    });
+
     await candidate.save();
 
-    res.json({ success: true, enabled: candidate.publicVerifyPage, url: `/verify/${candidate.slug}` });
+    res.json({
+      success: true,
+      enabled: candidate.publicVerifyPage,
+      sections: {
+        certifications: candidate.publicSections.certifications !== false,
+        degrees: candidate.publicSections.degrees === true,
+        jobTitles: candidate.publicSections.jobTitles === true
+      },
+      url: `/verify/${candidate.slug}`
+    });
   } catch (error) {
     console.error('Error updating public verification page setting:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });

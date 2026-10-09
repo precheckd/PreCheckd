@@ -475,6 +475,8 @@
   }
 
   .public-page-toggle input { width: auto; margin: 0; }
+  .public-page-section { font-weight: 500; margin-top: 0.4rem; }
+  .public-page-sections { margin-top: 1rem; }
 
   .credly-recheck {
     display: flex;
@@ -691,7 +693,7 @@
 
     <div class="cedit-card public-page-card">
       <div class="job-prefs-shortcut-title">Public verification page</div>
-      <p class="cert-hint">Get a link that proves you're verified, to use in your email signature or send to someone who wants to check you out. It shows only your first name and last initial, your identity and phone checkmarks, and your verified certifications. It's hidden from search engines, but anyone with the link can see it, and it shows you're on PreCheckd. It's off unless you turn it on.</p>
+      <p class="cert-hint">Get a link that proves you're verified, to use in your email signature or send to someone who wants to check you out. It always shows your first name and last initial and your identity and phone checkmarks. You choose whether it also shows verified certifications, degrees and job titles. It's hidden from search engines, but anyone with the link can see it, and it shows you're on PreCheckd. It's off unless you turn it on.</p>
       <% const canPublish = candidate.isPhoneVerified && candidate.isIdentityVerified; %>
       <label class="public-page-toggle">
         <input type="checkbox" id="public-page-toggle" <%= candidate.publicVerifyPage ? 'checked' : '' %> <%= canPublish ? '' : 'disabled' %>>
@@ -700,6 +702,13 @@
       <% if (!canPublish) { %>
         <p class="cert-hint" style="margin-top: 0.5rem;">Finish phone and identity verification to turn this on.</p>
       <% } %>
+      <% const sec = candidate.publicSections || {}; %>
+      <div class="public-page-sections" id="public-page-sections" <%= candidate.publicVerifyPage ? '' : 'hidden' %>>
+        <p class="cert-hint" style="margin-bottom: 0.4rem;">Choose what your page shows. Only verified entries appear, and never employer or school names.</p>
+        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="certifications" <%= sec.certifications !== false ? 'checked' : '' %>><span>Verified certifications</span></label>
+        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="degrees" <%= sec.degrees === true ? 'checked' : '' %>><span>Verified degrees (degree name only)</span></label>
+        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="jobTitles" <%= sec.jobTitles === true ? 'checked' : '' %>><span>Verified job titles with years (no employers)</span></label>
+      </div>
       <p class="cert-hint public-page-link" id="public-page-link" <%= candidate.publicVerifyPage ? '' : 'hidden' %>>
         Your page: <a href="/verify/<%= candidate.slug %>" id="public-page-url" target="_blank" rel="noopener" style="color: #4ADE80;">/verify/<%= candidate.slug %></a>
       </p>
@@ -854,25 +863,47 @@
   if (!box) return;
   var err = document.getElementById('public-page-error');
   var link = document.getElementById('public-page-link');
-  box.addEventListener('change', function () {
-    var wanted = box.checked;
+  var sectionsBox = document.getElementById('public-page-sections');
+  var sectionBoxes = sectionsBox ? sectionsBox.querySelectorAll('input[data-section]') : [];
+
+  function save(payload, onFail) {
     err.hidden = true;
-    box.disabled = true;
     fetch('/candidate/<%= candidate.slug %>/public-page', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled: wanted })
+      body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, data: data }; });
     }).then(function (r) {
       if (!r.ok) throw new Error(r.data.error || 'Something went wrong. Please try again.');
       box.checked = r.data.enabled;
       link.hidden = !r.data.enabled;
+      if (sectionsBox) sectionsBox.hidden = !r.data.enabled;
+      sectionBoxes.forEach(function (cb) { cb.checked = !!r.data.sections[cb.getAttribute('data-section')]; });
     }).catch(function (e) {
-      box.checked = !wanted;
+      onFail();
       err.textContent = e.message;
       err.hidden = false;
-    }).then(function () { box.disabled = false; });
+    }).then(function () {
+      box.disabled = false;
+      sectionBoxes.forEach(function (cb) { cb.disabled = false; });
+    });
+  }
+
+  box.addEventListener('change', function () {
+    var wanted = box.checked;
+    box.disabled = true;
+    save({ enabled: wanted }, function () { box.checked = !wanted; });
+  });
+
+  sectionBoxes.forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var wanted = cb.checked;
+      var payload = { sections: {} };
+      payload.sections[cb.getAttribute('data-section')] = wanted;
+      cb.disabled = true;
+      save(payload, function () { cb.checked = !wanted; });
+    });
   });
 })();
 </script>
