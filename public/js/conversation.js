@@ -366,4 +366,13 @@
   updateBadge();
   poll();
   schedulePoll();
+
+  // Arriving from the inbox (?tab=messages): on phones, open straight on the
+  // Messages tab. Harmless on desktop, where both sides are always visible.
+  try {
+    if (new URLSearchParams(window.location.search).get('tab') === 'messages') {
+      const convoTab = document.querySelector('[data-split-tab="convo"]');
+      if (convoTab) convoTab.click();
+    }
+  } catch (e) { /* non-critical */ }
 })();

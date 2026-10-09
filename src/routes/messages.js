@@ -146,6 +146,20 @@ router.get('/sent', (req, res) => {
 // page. The same pane is embedded next to each profile.
 router.get('/thread/:connectionRequestId', async (req, res) => {
   try {
+    // Default to the side-by-side view: the other person's profile with the
+    // conversation next to it (phones open on the Messages tab). Only fall
+    // back to the standalone page when there's no profile to show.
+    const ctx = await loadConversationContext(req.currentUser, req.params.connectionRequestId);
+    if (!ctx) return res.status(403).send('Not authorized.');
+
+    const sideBySideUrl = ctx.type === 'recruiter'
+      ? `/recruiter-dashboard/requests/${ctx.connection._id}/candidate`
+      : (ctx.other.slug ? `/recruiter/${ctx.other.slug}` : null);
+
+    if (sideBySideUrl && req.query.standalone !== '1') {
+      return res.redirect(`${sideBySideUrl}?tab=messages`);
+    }
+
     const pane = await buildPane(req.currentUser, req.params.connectionRequestId, { markRead: true });
     if (!pane) return res.status(403).send('Not authorized.');
 
