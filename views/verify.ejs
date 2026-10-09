@@ -11,7 +11,7 @@
 
   .verify-layout {
     width: 100%;
-    max-width: 960px;
+    max-width: 1140px;
     display: flex;
     gap: 1.5rem;
     align-items: flex-start;
@@ -19,7 +19,7 @@
   }
 
   .verify-side {
-    flex: 0 0 300px;
+    flex: 0 0 270px;
     position: sticky;
     top: 1.5rem;
   }
@@ -151,18 +151,23 @@
     text-decoration: none;
   }
 
-  .verify-cta-alt {
-    margin-top: 0.9rem;
-    font-size: 0.85rem;
-    color: #F2F4F3;
+  .verify-cta-btn-alt {
+    background: transparent;
+    color: #4ADE80;
+    border: 2px solid #4ADE80;
+    padding: 0.5rem 1.1rem;
   }
 
-  .verify-cta-alt a { color: #4ADE80; text-decoration: none; font-weight: 600; }
-
-  @media (max-width: 800px) {
+  /* Below ~1000px: single column, ordered recruiter box, card, job-seeker
+     box, notice. The side columns dissolve so each box can be ordered
+     individually. */
+  @media (max-width: 1000px) {
     .verify-layout { flex-direction: column; align-items: stretch; }
-    .verify-side { flex: none; position: static; width: 100%; }
-    .verify-card { max-width: none; }
+    .verify-side { display: contents; }
+    .verify-recruiter { order: 1; }
+    .verify-card { order: 2; max-width: none; }
+    .verify-jobseeker { order: 3; }
+    .verify-notice { order: 4; }
   }
 
   @media (max-width: 600px) {
@@ -175,27 +180,11 @@
 <div class="verify-wrap">
   <div class="verify-layout">
     <% if (v && v.kind === 'candidate') { %>
-      <aside class="verify-side">
+      <aside class="verify-side verify-left">
         <div class="verify-cta verify-notice">
           <div class="verify-cta-title">About this page</div>
           <p>This page is checked live each time it loads. PreCheckd verifies identity and phone ownership; it does not endorse any job or employer. If something here doesn't match the person you're dealing with, don't continue.</p>
         </div>
-
-        <% if (v.kind === 'candidate') { %>
-          <div class="verify-cta">
-            <% if (typeof viewerIsRecruiter !== 'undefined' && viewerIsRecruiter) { %>
-              <div class="verify-cta-title">Looking for verified candidates?</div>
-              <p>Search verified job seekers and send a request to connect. Full profiles unlock once a candidate accepts.</p>
-              <a class="verify-cta-btn" href="/candidate-search">Search candidates</a>
-            <% } else { %>
-              <div class="verify-cta-title">Are you a recruiter?</div>
-              <p>Join PreCheckd to search verified candidates and request to connect. Candidates accept before you see their full profile, so every conversation is with a real, verified person.</p>
-              <a class="verify-cta-btn" href="/recruiter-landing">Sign up as a recruiter</a>
-              <div class="verify-cta-alt">Job seeker? <a href="/candidate-landing">Get verified too</a></div>
-            <% } %>
-          </div>
-        <% } %>
-
       </aside>
     <% } %>
   <div class="verify-card">
@@ -257,5 +246,28 @@
       <% } %>
     <% } %>
   </div>
+    <% if (v && v.kind === 'candidate') { %>
+      <aside class="verify-side verify-right">
+        <div class="verify-cta verify-recruiter">
+          <% if (viewerIsRecruiter) { %>
+            <div class="verify-cta-title">Looking for verified candidates?</div>
+            <p>Search verified job seekers and send a request to connect. Full profiles unlock once a candidate accepts.</p>
+            <a class="verify-cta-btn" href="/candidate-search">Search candidates</a>
+          <% } else { %>
+            <div class="verify-cta-title">Are you a recruiter?</div>
+            <p>Join PreCheckd to search verified candidates and request to connect. Candidates accept before you see their full profile, so every conversation is with a real, verified person.</p>
+            <a class="verify-cta-btn" href="/recruiter-landing">Sign up as a recruiter</a>
+          <% } %>
+        </div>
+
+        <% if (!viewerIsSignedIn) { %>
+          <div class="verify-cta verify-jobseeker">
+            <div class="verify-cta-title">Looking for a job?</div>
+            <p>Get verified and let verified recruiters come to you.</p>
+            <a class="verify-cta-btn verify-cta-btn-alt" href="/candidate-landing">Get verified</a>
+          </div>
+        <% } %>
+      </aside>
+    <% } %>
   </div>
 </div>

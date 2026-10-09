@@ -82,6 +82,7 @@ router.get('/:slug', async (req, res) => {
       return res.render('verify', {
         pageTitle: 'PreCheckd Verification',
         viewerIsRecruiter: Boolean(req.session.recruiterId),
+        viewerIsSignedIn: Boolean(req.session.recruiterId || req.session.candidateId),
         v: {
           kind: 'candidate',
           displayName: lastInitial ? `${candidate.firstName} ${lastInitial}.` : candidate.firstName,
