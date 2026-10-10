@@ -68,6 +68,7 @@
       </div>
       <label>Certification name<input type="text" class="cert-name" value="${entry?.name || ''}" placeholder="e.g. AWS Certified Cloud Practitioner"></label>
       <label>Credential ID <span class="label-hint">(optional)</span><input type="text" class="cert-credential-id" value="${entry?.credentialId || ''}" placeholder="e.g. AWS-1234ABCD"></label>
+      <label>Expires <span class="label-hint">(optional — we'll remind you before it does)</span><input type="date" class="cert-expires" value="${entry?.expiresAt ? String(entry.expiresAt).slice(0, 10) : ''}"></label>
     `;
     div.querySelector('.remove-entry').addEventListener('click', () => div.remove());
     container.appendChild(div);
@@ -103,6 +104,7 @@
     return Array.from(document.querySelectorAll('#certification-entries .entry-card')).map((card) => ({
       name: card.querySelector('.cert-name').value.trim(),
       credentialId: card.querySelector('.cert-credential-id').value.trim() || null,
+      expiresAt: card.querySelector('.cert-expires').value || null,
     })).filter((entry) => entry.name);
   }
 

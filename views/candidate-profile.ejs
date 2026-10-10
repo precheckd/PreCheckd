@@ -525,8 +525,13 @@
                   <% if (cert.credentialId) { %>
                     <div class="detail-sub">Credential ID: <%= cert.credentialId %></div>
                   <% } %>
+                  <% if (cert.expiresAt) { %>
+                    <div class="detail-sub"><%= certExpiry.isExpired(cert) ? 'Expired' : 'Expires' %> <%= new Date(certExpiry.isoDay(cert.expiresAt) + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }) %></div>
+                  <% } %>
                 </div>
-                <% if (cert.verified) { %>
+                <% if (certExpiry.isExpired(cert)) { %>
+                  <span class="detail-status status-pending" style="color: #FF8A8A;">Expired · hidden from recruiters</span>
+                <% } else if (cert.verified) { %>
                   <span class="detail-status status-verified">✓ Verified</span>
                 <% } else { %>
                   <span class="detail-status status-pending">Pending</span>

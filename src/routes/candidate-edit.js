@@ -6,6 +6,7 @@ const { uploadCandidatePhoto, uploadResume, deleteS3Object } = require('../utils
 const { parseResume } = require('../utils/resumeParser');
 const { syncWithCredly } = require('../utils/credlyVerification');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
+const { parseExpiry } = require('../utils/certExpiry');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -59,6 +60,25 @@ function mergeEntries(newEntries, existingEntries, matchFields, requiredFields) 
         verifiedAt: null
       };
     });
+}
+
+// mergeEntries keeps an existing entry untouched when its name + credential
+// ID are unchanged, which would drop an edited expiry date. This copies the
+// submitted expiry onto the merged entries (matched the same way). A later
+// Credly sync still overrides it for certs that match a Credly badge.
+function applySubmittedExpiry(mergedCerts, submittedCerts) {
+  const keyFor = (c) => `${(c.name || '').toString().trim().toLowerCase()}|${(c.credentialId || '').toString().trim().toLowerCase()}`;
+  const submittedByKey = new Map((submittedCerts || []).map((c) => [keyFor(c), c]));
+
+  mergedCerts.forEach((cert) => {
+    const submitted = submittedByKey.get(keyFor(cert));
+    if (!submitted) return;
+    const next = parseExpiry(submitted.expiresAt);
+    const current = parseExpiry(cert.expiresAt);
+    if ((next && next.getTime()) !== (current && current.getTime())) {
+      cert.expiresAt = next;
+    }
+  });
 }
 
 // GET /candidate/:slug/edit — owner-only edit form
@@ -207,6 +227,7 @@ router.post('/:slug/edit/add-credly-badge', async (req, res) => {
       credentialId: null,
       verified: true,
       verifiedAt: badge.issuedAt ? new Date(badge.issuedAt) : new Date(),
+      expiresAt: parseExpiry(badge.expiresAt),
     });
 
     candidate.credlyUnmatchedBadges = (candidate.credlyUnmatchedBadges || []).filter((b) => b.badgeId !== badgeId);
@@ -291,6 +312,7 @@ router.post('/:slug/edit', upload.fields([
     candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
     candidate.educationHistory = mergeEntries(submittedEducationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
     candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId'], ['name']);
+    applySubmittedExpiry(candidate.certifications, submittedCertifications);
 
     let resumeParseError = null;
     if (resumeFile) {

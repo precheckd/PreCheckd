@@ -3,6 +3,7 @@ const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { getViewCounts } = require('../utils/viewTracker');
+const certExpiry = require('../utils/certExpiry');
 
 function requireCandidateLogin(req, res, next) {
   if (!req.session.candidateId) {
@@ -51,6 +52,7 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
     res.render('candidate-profile', {
       candidate,
       viewCounts,
+      certExpiry,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`,
       missingRequirements: getMissingMatchingRequirements(candidate)
     });

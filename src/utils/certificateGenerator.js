@@ -1,6 +1,7 @@
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const QRCode = require('qrcode');
 const crypto = require('crypto');
+const { activeCerts } = require('./certExpiry');
 
 const NAVY = rgb(0.122, 0.212, 0.235); // #1F363C
 const GREEN = rgb(0.180, 0.800, 0.443); // #2ECC71
@@ -152,7 +153,7 @@ async function generateCertificate(candidate, resumeBuffer, baseUrl) {
 
   cursorY = cursorY - identityRows.length * rowHeight - 20;
 
-  const certLines = getVerifiedLines(candidate.certifications, (c) => c.name);
+  const certLines = getVerifiedLines(activeCerts(candidate.certifications), (c) => c.name);
   const workLines = getVerifiedLines(candidate.workHistory, (j) => `${j.jobTitle} — ${j.employerName}`);
   const eduLines = getVerifiedLines(candidate.educationHistory, (e) => `${e.degree} — ${e.schoolName}`);
 

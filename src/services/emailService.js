@@ -182,6 +182,45 @@ async function sendMessageDigestEmail(toEmail, recipientFirstName, senders) {
   });
 }
 
+// Heads-up that one or more certifications are expiring (or just expired).
+// `certs` is [{ name, daysLeft, expiresOn: "YYYY-MM-DD" }]. Links to Edit
+// Profile, where the "Check for new certifications" button picks up a
+// renewal from Credly.
+async function sendCertExpiryReminderEmail(toEmail, firstName, slug, certs) {
+  const editUrl = `${process.env.APP_BASE_URL}/candidate/${slug}/edit`;
+  const escape = (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const formatDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+  });
+  const when = (c) => {
+    if (c.daysLeft > 1) return `expires in ${c.daysLeft} days (${formatDate(c.expiresOn)})`;
+    if (c.daysLeft === 1) return `expires tomorrow (${formatDate(c.expiresOn)})`;
+    if (c.daysLeft === 0) return `expires today (${formatDate(c.expiresOn)})`;
+    return `expired on ${formatDate(c.expiresOn)}`;
+  };
+
+  const sorted = [...certs].sort((a, b) => a.daysLeft - b.daysLeft);
+  const first = sorted[0];
+  const subject = sorted.length === 1
+    ? `Your ${first.name} certification ${when(first).split(' (')[0]}`
+    : `${sorted.length} of your certifications are expiring soon`;
+
+  const lines = sorted.map((c) => `<li><strong>${escape(c.name)}</strong> ${when(c)}</li>`).join('');
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject,
+    html: `
+      <p>Hi ${escape(firstName)},</p>
+      <p>A heads-up from PreCheckd about your certifications:</p>
+      <ul>${lines}</ul>
+      <p>Keeping them current keeps your verified profile strong. Once a certification expires it no longer shows as verified to recruiters.</p>
+      <p>Already renewed? Open <a href="${editUrl}">Edit Profile</a> and use <em>Check for new certifications</em> (or update the date) and we'll pick it up.</p>
+    `,
+  });
+}
+
 async function sendFraudReportThankYouEmail(toEmail, couponCode) {
   const candidateLandingUrl = `${process.env.APP_BASE_URL}/candidate-landing`;
   const recruiterSearchUrl = `${process.env.APP_BASE_URL}/recruiter-search`;
@@ -337,6 +376,7 @@ module.exports = {
   sendRecruiterConnectionDeclinedEmail,
   sendNewMessageEmail,
   sendMessageDigestEmail,
+  sendCertExpiryReminderEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,

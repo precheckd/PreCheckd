@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { recordView } = require('../utils/viewTracker');
+const { activeCerts } = require('../utils/certExpiry');
 
 // GET /verify/:slug — public, live verification page for CANDIDATES. Anyone
 // holding the link (an email signature) can confirm the person is really
@@ -93,7 +94,7 @@ router.get('/:slug', async (req, res) => {
             { label: 'Phone verified', ok: Boolean(candidate.isPhoneVerified) }
           ],
           certs: sections.certifications
-            ? (candidate.certifications || []).filter((c) => c.verified).map((c) => c.name)
+            ? activeCerts(candidate.certifications).filter((c) => c.verified).map((c) => c.name)
             : [],
           degrees: sections.degrees
             ? (candidate.educationHistory || []).filter((e) => e.verified).map((e) => e.degree)

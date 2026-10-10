@@ -23,6 +23,13 @@ const certificationSchema = new mongoose.Schema({
   credentialId: { type: String, default: null },
   verified: { type: Boolean, default: false },
   verifiedAt: { type: Date, default: null },
+  // Last day the cert is valid (UTC midnight of that day), or null if it has
+  // no expiry. Copied from Credly when matched; otherwise entered by hand.
+  expiresAt: { type: Date, default: null },
+  // Expiry reminders already sent, as "<expiry day>:<days>" (e.g.
+  // "2027-03-01:30"). Keyed by expiry day, so a renewal (new date) starts
+  // fresh without needing to clear anything.
+  remindersSent: { type: [String], default: [] },
 }, { _id: false });
 
 // A badge found in a candidate's Credly wallet that doesn't match any

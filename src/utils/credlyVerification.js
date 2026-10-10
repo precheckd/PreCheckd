@@ -4,6 +4,8 @@
 // returns the user's full public badge wallet as structured JSON, even when
 // fetched fully anonymously.
 
+const { parseExpiry } = require('./certExpiry');
+
 const CREDLY_BASE = 'https://www.credly.com/users';
 
 // Normalizes a certification name for loose comparison — same spirit as
@@ -46,18 +48,29 @@ function getBadgeId(badge) {
 
 // Given a candidate's typed certification name, tries to find a matching
 // badge in a fetched Credly wallet. Returns the matching badge or null.
+// When several badges match (a renewed cert can show up as a new badge next
+// to the old one), the one that stays valid longest wins; a badge with no
+// expiry date counts as lasting forever.
 function findMatchingBadge(certName, badges) {
   const normalizedTarget = normalizeCertName(certName);
   if (!normalizedTarget) return null;
 
-  return badges.find((badge) => {
+  const matches = badges.filter((badge) => {
     const badgeName = getBadgeName(badge);
     if (!badgeName) return false;
     const normalizedBadge = normalizeCertName(badgeName);
     return normalizedBadge === normalizedTarget
       || normalizedBadge.includes(normalizedTarget)
       || normalizedTarget.includes(normalizedBadge);
-  }) || null;
+  });
+
+  if (matches.length === 0) return null;
+
+  const lastsUntil = (badge) => {
+    const expiry = parseExpiry(badge?.expires_at_date);
+    return expiry ? expiry.getTime() : Infinity;
+  };
+  return matches.reduce((best, badge) => (lastsUntil(badge) > lastsUntil(best) ? badge : best));
 }
 
 // Splits a fetched badge wallet into badges that match something already
@@ -103,21 +116,32 @@ async function tryCredlyAutoGuess(firstName, lastName) {
 }
 
 // Runs a candidate's certifications against a fetched Credly badge wallet,
-// marking any matches as verified with the badge's real issue date. Never
-// un-verifies a cert that was already verified by some other means — only
-// adds verification, never removes it.
+// marking any matches as verified with the badge's real issue date and
+// copying over the badge's expiry date (also for certs that were already
+// verified, so a renewal updates the stored date). Never un-verifies a cert
+// that was already verified by some other means — only adds verification,
+// never removes it. A matching badge with no expiry date leaves any existing
+// expiry untouched.
 function applyCredlyMatches(certifications, badges) {
   return certifications.map((cert) => {
-    if (cert.verified) return cert;
-
     const match = findMatchingBadge(cert.name, badges);
     if (!match) return cert;
 
-    return {
-      ...cert,
-      verified: true,
-      verifiedAt: match.issued_at_date ? new Date(match.issued_at_date) : new Date(),
-    };
+    const credlyExpiry = parseExpiry(match.expires_at_date);
+    const existingExpiry = parseExpiry(cert.expiresAt);
+    const expiryChanged = Boolean(credlyExpiry)
+      && (!existingExpiry || credlyExpiry.getTime() !== existingExpiry.getTime());
+
+    if (cert.verified && !expiryChanged) return cert;
+
+    const base = typeof cert.toObject === 'function' ? cert.toObject() : { ...cert };
+    const updated = { ...base };
+    if (credlyExpiry) updated.expiresAt = credlyExpiry;
+    if (!cert.verified) {
+      updated.verified = true;
+      updated.verifiedAt = match.issued_at_date ? new Date(match.issued_at_date) : new Date();
+    }
+    return updated;
   });
 }
 

@@ -9,6 +9,8 @@
 // blocked), certifications (these alone don't identify anyone), and
 // yes/no verification badges. Bio is free-text and easy to identify someone
 // from, so it's hidden entirely until a connection exists.
+const { activeCerts } = require('../utils/certExpiry');
+
 function getAnonymizedCandidateView(candidate) {
   return {
     anonId: candidate.anonId,
@@ -28,7 +30,7 @@ function getAnonymizedCandidateView(candidate) {
       graduationDate: edu.graduationDate,
       verified: edu.verified
     })),
-    certifications: (candidate.certifications || []).map((cert) => ({
+    certifications: activeCerts(candidate.certifications).map((cert) => ({
       name: cert.name,
       verified: cert.verified
     })),
@@ -60,7 +62,7 @@ function getFullCandidateView(candidate, sharedContact) {
     bio: candidate.bio,
     workHistory: candidate.workHistory || [],
     educationHistory: candidate.educationHistory || [],
-    certifications: candidate.certifications || [],
+    certifications: activeCerts(candidate.certifications),
     verification: {
       emailVerified: Boolean(candidate.emailVerifiedAt),
       phoneVerified: Boolean(candidate.isPhoneVerified),

@@ -5,6 +5,7 @@ const ConnectionRequest = require('../models/ConnectionRequest');
 const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization');
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { recordView } = require('../utils/viewTracker');
+const { activeCerts } = require('../utils/certExpiry');
 const { DAY_CODES, DAY_OPTIONS, candidateAvailabilityGroup } = require('../utils/availabilityMatching');
 
 const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
@@ -130,7 +131,7 @@ router.get('/', async (req, res) => {
           const searchable = [
             c.anonId,
             ...(c.workHistory || []).map((j) => j.jobTitle),
-            ...(c.certifications || []).map((cert) => cert.name)
+            ...activeCerts(c.certifications).map((cert) => cert.name)
           ].filter(Boolean).join(' ').toLowerCase();
           return keywordTerms.every((term) => searchable.includes(term));
         });
