@@ -9,8 +9,81 @@
   }
 
   .cedit-container {
-    max-width: 700px;
+    max-width: 1280px;
     width: 100%;
+  }
+
+  /* Three columns, like the public verification page: shortcuts on the left,
+     the profile form in the middle, Save/Cancel (sticky) on the right. */
+  .cedit-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .cedit-side {
+    flex: 0 0 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .cedit-side-right {
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .cedit-main {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Side-column cards are narrow: stack their contents and button. */
+  .cedit-side .job-prefs-shortcut {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 0;
+  }
+
+  .cedit-side .cedit-card {
+    padding: 1.5rem;
+  }
+
+  .cedit-side .btn-cancel,
+  .cedit-side button[type="submit"] {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .cedit-actions .cert-hint {
+    margin: 0.9rem 0 0;
+  }
+
+  .cedit-actions-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Below ~1000px: one column. The side columns dissolve so each box can be
+     ordered on its own: job preferences, the form, video, work areas, then
+     Save/Cancel last. */
+  @media (max-width: 1000px) {
+    .cedit-layout { flex-direction: column; align-items: stretch; }
+    .cedit-side { display: contents; }
+    .cedit-side-right { position: static; }
+    .cedit-main { max-width: none; }
+    .cedit-prefs { order: 1; }
+    .cedit-main { order: 2; }
+    .cedit-video { order: 3; }
+    .cedit-areas { order: 4; }
+    .cedit-actions { order: 5; }
+    .cedit-layout { gap: 1.5rem; }
   }
 
   .cedit-header {
@@ -681,7 +754,9 @@
       </div>
     <% } %>
 
-    <div class="cedit-card job-prefs-shortcut">
+    <div class="cedit-layout">
+    <div class="cedit-side cedit-side-left">
+    <div class="cedit-card job-prefs-shortcut cedit-prefs">
       <div>
         <div class="job-prefs-shortcut-title">Job Preferences</div>
         <p class="cert-hint" style="margin-bottom: 0;">Salary, work arrangement, availability, security clearance, and notice period — everything that controls whether and how you show up in recruiter search.</p>
@@ -690,6 +765,25 @@
         Edit Job Preferences
       </a>
     </div>
+
+      <div class="cedit-card cedit-video">
+        <div class="job-prefs-shortcut-title">Video Introduction</div>
+        <p class="cert-hint">Record a short intro video and answers to 5 interview questions for recruiters to watch alongside your profile.</p>
+        <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-flex;">
+          <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>
+        </a>
+      </div>
+
+      <div class="cedit-card cedit-areas">
+        <div class="job-prefs-shortcut-title">Where You're Willing to Work</div>
+        <p class="cert-hint">Draw the area(s) you're willing to work on a map, instead of a single commute radius. Only candidates whose shape includes a recruiter's job location will show up for it.</p>
+        <a href="/candidate/<%= candidate.slug %>/work-areas" class="btn-cancel" style="display: inline-flex;">
+          <%= (candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length) ? 'Edit Work Areas' : 'Draw Work Areas' %>
+        </a>
+      </div>
+    </div>
+
+    <div class="cedit-main">
 
     <div class="cedit-card public-page-card">
       <div class="job-prefs-shortcut-title">Public verification page</div>
@@ -837,23 +931,20 @@
           </div>
         </details>
 
-        <div class="form-actions">
-          <button type="submit" id="save-button">Save Changes</button>
-          <a href="/candidate/<%= candidate.slug %>" class="btn-cancel">Cancel</a>
-        </div>
       </form>
 
-      <div class="section-label">Video Introduction</div>
-      <p class="cert-hint">Record a short intro video and answers to 5 interview questions for recruiters to watch alongside your profile.</p>
-      <a href="/candidate/<%= candidate.slug %>/videos" class="btn-cancel" style="display: inline-block;">
-        <%= candidate.introVideoUrl ? 'Edit Video Introduction' : 'Add Video Introduction' %>
-      </a>
+    </div>
+    </div>
 
-      <div class="section-label" style="margin-top: 1.5rem;">Where You're Willing to Work</div>
-      <p class="cert-hint">Draw the area(s) you're willing to work on a map, instead of a single commute radius. Only candidates whose shape includes a recruiter's job location will show up for it.</p>
-      <a href="/candidate/<%= candidate.slug %>/work-areas" class="btn-cancel" style="display: inline-block;">
-        <%= (candidate.workAreas && candidate.workAreas.coordinates && candidate.workAreas.coordinates.length) ? 'Edit Work Areas' : 'Draw Work Areas' %>
-      </a>
+    <div class="cedit-side cedit-side-right">
+      <div class="cedit-card cedit-actions">
+        <div class="cedit-actions-buttons">
+          <button type="submit" id="save-button" form="edit-form">Save Changes</button>
+          <a href="/candidate/<%= candidate.slug %>" class="btn-cancel">Cancel</a>
+        </div>
+        <p class="cert-hint">Photo, resume, bio, work history, education and certifications are only saved when you press Save Changes.</p>
+      </div>
+    </div>
     </div>
   </div>
 </div>
