@@ -21,7 +21,7 @@ function startCertExpiryJob() {
   const tick = () => {
     runCertExpiryReminders()
       .then((result) => {
-        if (result.sent > 0) console.log(`[jobs] cert expiry reminders: sent ${result.sent}`);
+        console.log(`[jobs] cert expiry check: sent=${result.sent} skipped=${result.skipped} held=${result.held || 0}${result.outsideWindow ? ' (outside send window)' : ''}`);
       })
       .catch((err) => console.error('[jobs] cert expiry reminders failed:', err));
   };

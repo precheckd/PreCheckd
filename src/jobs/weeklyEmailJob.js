@@ -18,9 +18,8 @@ function startWeeklyEmailJob() {
   const tick = async () => {
     try {
       const recap = await runWeeklyRecap();
-      if (recap.sent > 0) console.log(`[jobs] weekly recap: sent ${recap.sent}`);
       const unread = await runUnreadMessagesEmail();
-      if (unread.sent > 0) console.log(`[jobs] unread messages email: sent ${unread.sent}`);
+      console.log(`[jobs] weekly emails check: recap sent=${recap.sent || 0}, unread email sent=${unread.sent || 0}`);
     } catch (err) {
       console.error('[jobs] weekly emails failed:', err);
     }
