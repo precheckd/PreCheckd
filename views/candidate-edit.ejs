@@ -34,7 +34,23 @@
   .cedit-side-right {
     position: sticky;
     top: calc(var(--cedit-header-h, 6rem) + 1.5rem);
+    /* Photo and Resume sit below Save. If the column is taller than the
+       window it scrolls on its own so nothing is cut off. */
+    max-height: calc(100vh - var(--cedit-header-h, 6rem) - 3rem);
+    overflow-y: auto;
   }
+
+  .cedit-side input[type="file"] {
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.8rem;
+    margin-top: 0.6rem;
+  }
+
+  .cedit-side .current-photo-preview { margin: 0.6rem 0 0; gap: 0.75rem; }
+  .cedit-side .cedit-card .cert-hint { margin: 0.5rem 0 0; }
+  .cedit-side .resume-current-note { margin: 0.4rem 0 0; }
+  .cedit-side .cedit-card .btn-cancel { margin-top: 0.9rem; }
 
   .cedit-main {
     flex: 1 1 0;
@@ -81,11 +97,14 @@
     .cedit-side { display: contents; }
     .cedit-side-right { position: static; }
     .cedit-main { max-width: none; }
+    .cedit-side-right { max-height: none; overflow: visible; }
     .cedit-prefs { order: 1; }
-    .cedit-main { order: 2; }
-    .cedit-video { order: 3; }
-    .cedit-areas { order: 4; }
-    .cedit-actions { order: 5; }
+    .cedit-photo { order: 2; }
+    .cedit-resume { order: 3; }
+    .cedit-main { order: 4; }
+    .cedit-video { order: 5; }
+    .cedit-areas { order: 6; }
+    .cedit-actions { order: 7; }
     .cedit-layout { gap: 1.5rem; }
   }
 
@@ -909,31 +928,6 @@
       <% } %>
 
       <form id="edit-form" action="/candidate/<%= candidate.slug %>/edit" method="POST" enctype="multipart/form-data">
-        <label>
-          Profile photo
-          <% if (candidate.profilePhotoUrl) { %>
-            <div class="current-photo-preview">
-              <img src="<%= candidate.profilePhotoUrl %>" alt="Current profile photo">
-              <span>Current photo — upload a new one to replace it</span>
-            </div>
-          <% } %>
-          <input type="file" name="profilePhoto" accept="image/jpeg,image/png,image/webp">
-          <span class="label-hint">JPEG, PNG, or WebP. Max 5MB.</span>
-        </label>
-
-        <label>
-          Resume
-          <div class="resume-upload-box">
-            <% if (candidate.resumeUrl) { %>
-              <p class="resume-current-note">✓ Resume on file. Upload a new one to replace it and re-parse your details.</p>
-            <% } else { %>
-              <p>Didn't upload a resume when you signed up? Add one now and we'll pull in your work history, education, and certifications automatically — it'll only fill in fields you haven't already added yourself.</p>
-            <% } %>
-            <input type="file" name="resume" accept=".pdf">
-            <span class="label-hint">PDF only, max 5MB. This may take a few seconds to process after you save.</span>
-          </div>
-        </label>
-
         <label>Bio <span class="label-hint">(optional)</span>
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>
@@ -1006,6 +1000,29 @@
           <a href="/candidate/<%= candidate.slug %>" class="btn-cancel">Cancel</a>
         </div>
         <p class="cert-hint">Photo, resume, bio, work history, education and certifications are only saved when you press Save Changes.</p>
+      </div>
+
+      <div class="cedit-card cedit-photo">
+        <div class="job-prefs-shortcut-title">Profile Photo</div>
+        <% if (candidate.profilePhotoUrl) { %>
+          <div class="current-photo-preview">
+            <img src="<%= candidate.profilePhotoUrl %>" alt="Current profile photo">
+            <span>Current photo. Upload a new one to replace it.</span>
+          </div>
+        <% } %>
+        <input type="file" name="profilePhoto" form="edit-form" accept="image/jpeg,image/png,image/webp" aria-label="Profile photo">
+        <p class="cert-hint">JPEG, PNG, or WebP. Max 5MB.</p>
+      </div>
+
+      <div class="cedit-card cedit-resume">
+        <div class="job-prefs-shortcut-title">Resume</div>
+        <% if (candidate.resumeUrl) { %>
+          <p class="resume-current-note">✓ Resume on file. Upload a new one to replace it and re-parse your details.</p>
+        <% } else { %>
+          <p class="cert-hint">Didn't upload a resume at signup? Add one now and we'll pull in your work history, education, and certifications. It only fills in fields you haven't already added.</p>
+        <% } %>
+        <input type="file" name="resume" form="edit-form" accept=".pdf" aria-label="Resume (PDF)">
+        <p class="cert-hint">PDF only, max 5MB. Takes a few seconds to process after you save.</p>
       </div>
     </div>
     </div>
