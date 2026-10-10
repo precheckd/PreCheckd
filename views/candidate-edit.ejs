@@ -715,6 +715,16 @@
       <p class="form-error" id="public-page-error" hidden></p>
     </div>
 
+    <div class="cedit-card public-page-card">
+      <div class="job-prefs-shortcut-title">Email</div>
+      <p class="cert-hint">A Monday recap with your unread messages, requests and anything that needs attention, plus a Thursday email if new messages arrive. Reminders about expiring certifications are separate and always on.</p>
+      <label class="public-page-toggle">
+        <input type="checkbox" id="weekly-email-toggle" <%= candidate.weeklyEmailOptOut ? '' : 'checked' %>>
+        <span>Send me the weekly PreCheckd emails</span>
+      </label>
+      <p class="form-error" id="weekly-email-error" hidden></p>
+    </div>
+
     <div class="cedit-card">
       <% if (typeof error !== 'undefined' && error) { %>
         <p class="form-error"><%= error %></p>
@@ -857,6 +867,27 @@
   window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
 <script src="/js/candidate-edit.js"></script>
+<script>
+(function () {
+  var box = document.getElementById('weekly-email-toggle');
+  if (!box) return;
+  var err = document.getElementById('weekly-email-error');
+  box.addEventListener('change', function () {
+    var wanted = box.checked;
+    err.hidden = true;
+    fetch('/candidate/<%= candidate.slug %>/email-prefs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weeklyEmails: wanted })
+    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.d.error || 'Could not save.');
+        box.checked = res.d.weeklyEmails;
+      })
+      .catch(function (e) { box.checked = !wanted; err.textContent = e.message; err.hidden = false; });
+  });
+})();
+</script>
 <script>
 (function () {
   var box = document.getElementById('public-page-toggle');

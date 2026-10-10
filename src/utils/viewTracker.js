@@ -60,4 +60,18 @@ async function getViewCounts(ownerType, ownerId, { now = new Date() } = {}) {
   }
 }
 
-module.exports = { recordView, getViewCounts, periodFor };
+// New unique viewers in the last `days` days (by first view that month).
+async function getRecentViewCount(ownerType, ownerId, { now = new Date(), days = 7 } = {}) {
+  try {
+    return await PageView.countDocuments({
+      ownerType,
+      ownerId,
+      firstViewedAt: { $gte: new Date(now.getTime() - days * 24 * 60 * 60 * 1000), $lte: now }
+    });
+  } catch (error) {
+    console.error('Error loading recent profile view count:', error);
+    return 0;
+  }
+}
+
+module.exports = { recordView, getViewCounts, getRecentViewCount, periodFor };

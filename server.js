@@ -3,6 +3,7 @@ const app = require('./src/app');
 const { connectDatabase } = require('./src/config/database');
 const { startMessageDigestJob } = require('./src/jobs/messageDigestJob');
 const { startCertExpiryJob } = require('./src/jobs/certExpiryJob');
+const { startWeeklyEmailJob } = require('./src/jobs/weeklyEmailJob');
 
 const PORT = process.env.PORT || 3000;
 
@@ -13,6 +14,7 @@ async function start() {
   });
   startMessageDigestJob();
   startCertExpiryJob();
+  startWeeklyEmailJob();
 }
 
 start().catch((err) => {

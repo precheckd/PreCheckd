@@ -1,5 +1,5 @@
-// Once-a-day "you have unread messages" email, instead of an email per
-// message. Names who the messages are from and how many — never the
+// Once-a-day "you have unread messages" email for RECRUITERS (candidates
+// get the weekly emails), instead of an email per message. Names who the messages are from and how many — never the
 // content — as a nudge back to the site.
 //
 // Rules:
@@ -50,7 +50,9 @@ async function runMessageDigest({ now = new Date() } = {}) {
 
   const unread = await Message.find({
     readAt: null,
-    recipientType: { $in: ['candidate', 'recruiter'] },
+    // Candidates get the weekly emails instead (services/weeklyEmails.js);
+    // a daily email to someone away for two weeks would look like spam.
+    recipientType: 'recruiter',
     recipientId: { $ne: null },
     sentAt: { $lte: new Date(now.getTime() - MIN_UNREAD_AGE_MS) }
   });
@@ -112,4 +114,4 @@ async function runMessageDigest({ now = new Date() } = {}) {
   return { sent, skipped };
 }
 
-module.exports = { runMessageDigest, inSendWindow };
+module.exports = { runMessageDigest, inSendWindow, senderNames };

@@ -407,6 +407,28 @@ const candidateSchema = new mongoose.Schema({
   lastMessageDigestAt: {
     type: Date,
     default: null
+  },
+
+  // Weekly emails (services/weeklyEmails.js). Candidates get a Monday recap
+  // and a Thursday "new unread messages" email instead of the daily digest.
+  // weeklyEmailOptOut turns off both (cert expiry reminders are separate
+  // service notices and are not affected). The timestamps stop double sends
+  // and mark which messages the Thursday email still needs to cover.
+  weeklyEmailOptOut: {
+    type: Boolean,
+    default: false
+  },
+  lastWeeklyEmailAt: {
+    type: Date,
+    default: null
+  },
+  lastUnreadEmailAt: {
+    type: Date,
+    default: null
+  },
+  unreadCoveredThrough: {
+    type: Date,
+    default: null
   }
 });
 

@@ -1,0 +1,26 @@
+<style>
+  .unsub-wrap { flex: 1; min-height: 60vh; background: #1F363C; padding: 3rem 1.5rem; display: flex; justify-content: center; align-items: flex-start; }
+  .unsub-card { width: 100%; max-width: 460px; background: #2A4750; border: 1px solid #3B5860; border-radius: 12px; padding: 2rem; color: #C7D1CF; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
+  .unsub-card h1 { font-size: 1.4rem; color: #F2F4F3; margin-bottom: 0.6rem; }
+  .unsub-card p { margin-bottom: 1rem; line-height: 1.5; }
+  .unsub-btn { display: inline-block; padding: 0.65rem 1.25rem; background: #4ADE80; color: #12262B; font-weight: 700; font-size: 0.95rem; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; }
+  .unsub-card a.unsub-link { color: #4ADE80; font-weight: 600; }
+</style>
+<div class="unsub-wrap">
+  <div class="unsub-card">
+    <% if (state === 'confirm') { %>
+      <h1>Stop the weekly emails?</h1>
+      <p>You'll no longer get the Monday "Your week on PreCheckd" email or the Thursday new-messages email. Reminders about expiring certifications are separate and will keep coming.</p>
+      <form method="POST">
+        <button type="submit" class="unsub-btn">Unsubscribe</button>
+      </form>
+    <% } else if (state === 'done') { %>
+      <h1>You're unsubscribed</h1>
+      <p>We won't send the weekly emails any more. You can turn them back on any time in <a class="unsub-link" href="/login">Edit Profile</a> after you sign in.</p>
+    <% } else { %>
+      <h1>This link isn't valid</h1>
+      <p>It may have been copied incorrectly. You can change your email settings any time in Edit Profile after you sign in.</p>
+      <a class="unsub-btn" href="/login">Sign in</a>
+    <% } %>
+  </div>
+</div>

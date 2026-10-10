@@ -221,6 +221,144 @@ async function sendCertExpiryReminderEmail(toEmail, firstName, slug, certs) {
   });
 }
 
+// --- Weekly candidate emails ---------------------------------------------
+// Monday recap and Thursday unread-messages email (services/weeklyEmails.js).
+// Names who messages are from and how many, never what they said. Each email
+// carries a signed unsubscribe link plus List-Unsubscribe headers.
+const { unsubscribeUrl } = require('../utils/emailUnsubscribe');
+
+function weeklyEscape(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function weeklyButton(href, label) {
+  return `<p style="margin: 14px 0 0;"><a href="${href}" style="display:inline-block;background:#2ECC71;color:#12262B;font-weight:700;text-decoration:none;padding:10px 18px;border-radius:8px;">${weeklyEscape(label)}</a></p>`;
+}
+
+function weeklyShell(firstName, intro, sectionsHtml, unsubUrl, settingsUrl) {
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1F2A2E;max-width:560px;margin:0 auto;line-height:1.55;">
+      <div style="background:#1F363C;color:#fff;padding:14px 20px;border-radius:10px 10px 0 0;font-weight:700;font-size:18px;">PreCheckd</div>
+      <div style="padding:20px;border:1px solid #DDE5E7;border-top:none;border-radius:0 0 10px 10px;">
+        <p style="margin:0 0 14px;">Hi ${weeklyEscape(firstName)},</p>
+        ${intro ? `<p style="margin:0 0 6px;">${intro}</p>` : ''}
+        ${sectionsHtml}
+      </div>
+      <p style="font-size:12px;color:#6B7B80;margin:14px 4px;">
+        You get this email because you have a PreCheckd candidate account.
+        <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these weekly emails, or manage it in <a href="${settingsUrl}" style="color:#6B7B80;">Edit Profile</a>.
+      </p>
+    </div>`;
+}
+
+function weeklySection(title, bodyHtml) {
+  return `<div style="margin-top:22px;padding-top:16px;border-top:1px solid #E6ECEE;"><div style="font-weight:700;font-size:15px;margin-bottom:6px;">${weeklyEscape(title)}</div>${bodyHtml}</div>`;
+}
+
+function senderList(senders) {
+  return `<ul style="margin:6px 0 0;padding-left:20px;">${senders
+    .map((s) => `<li><strong>${weeklyEscape(s.name)}</strong> — ${s.count} unread message${s.count === 1 ? '' : 's'}</li>`)
+    .join('')}</ul>`;
+}
+
+function formatWeeklyDate(iso) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+function plural(n, one, many) {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+async function sendWeeklyRecapEmail(candidate, recap) {
+  const base = process.env.APP_BASE_URL;
+  const unsubUrl = unsubscribeUrl(candidate._id.toString());
+  const settingsUrl = `${base}/candidate/${candidate.slug}/edit`;
+  const sections = [];
+
+  if (recap.unread.total > 0) {
+    sections.push(`<div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
+      <div style="font-weight:700;font-size:17px;">You have ${plural(recap.unread.total, 'unread message', 'unread messages')}</div>
+      ${senderList(recap.unread.senders)}
+      ${weeklyButton(`${base}/messages`, 'Open your inbox')}
+    </div>`);
+  }
+
+  const waiting = [];
+  if (recap.pendingRequests > 0) waiting.push(`<li>${plural(recap.pendingRequests, 'connection request is', 'connection requests are')} waiting for your answer</li>`);
+  if (recap.fullAccessRequests > 0) waiting.push(`<li>${plural(recap.fullAccessRequests, 'recruiter has', 'recruiters have')} asked for access to your video and resume</li>`);
+  if (waiting.length > 0) {
+    sections.push(weeklySection('Waiting on you', `<ul style="margin:0;padding-left:20px;">${waiting.join('')}</ul>${weeklyButton(`${base}/candidate-dashboard/requests`, 'Review requests')}`));
+  }
+
+  const activity = [];
+  if (recap.newConnections > 0) activity.push(`<li>${plural(recap.newConnections, 'new connection', 'new connections')} this week</li>`);
+  if (recap.views > 0) activity.push(`<li>${plural(recap.views, 'person', 'people')} viewed your profile this week</li>`);
+  if (activity.length > 0) {
+    sections.push(weeklySection('Your week', `<ul style="margin:0;padding-left:20px;">${activity.join('')}</ul>`));
+  }
+
+  if (recap.expiringCerts.length > 0) {
+    const lines = recap.expiringCerts.map((c) => {
+      const when = c.daysLeft === 0 ? 'expires today' : c.daysLeft === 1 ? 'expires tomorrow' : `expires in ${c.daysLeft} days`;
+      return `<li><strong>${weeklyEscape(c.name)}</strong> ${when} (${formatWeeklyDate(c.expiresOn)})</li>`;
+    }).join('');
+    sections.push(weeklySection('Certifications expiring soon', `<ul style="margin:0;padding-left:20px;">${lines}</ul><p style="margin:8px 0 0;font-size:14px;">Once a certification expires it stops showing as verified to recruiters.</p>`));
+  }
+
+  if (recap.todo.length > 0) {
+    const lines = recap.todo.map((t) => `<li>${weeklyEscape(t.text)} <a href="${base}${t.path}" style="color:#1B7F4B;">Go</a></li>`).join('');
+    sections.push(weeklySection('Worth doing', `<ul style="margin:0;padding-left:20px;">${lines}</ul>`));
+  }
+
+  if (recap.whatsNew.length > 0) {
+    sections.push(weeklySection('What\'s new on PreCheckd', `<ul style="margin:0;padding-left:20px;">${recap.whatsNew.map((t) => `<li>${weeklyEscape(t)}</li>`).join('')}</ul>`));
+  }
+
+  if (recap.tip) {
+    sections.push(weeklySection('Stay safe out there', `<p style="margin:0;">${weeklyEscape(recap.tip)}</p>`));
+  }
+
+  const subject = recap.unread.total > 0
+    ? `You have ${plural(recap.unread.total, 'unread message', 'unread messages')} on PreCheckd`
+    : 'Your week on PreCheckd';
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidate.email,
+    subject,
+    headers: {
+      'List-Unsubscribe': `<${unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+    },
+    html: weeklyShell(candidate.firstName, '', sections.join(''), unsubUrl, settingsUrl),
+  });
+}
+
+async function sendUnreadMessagesEmail(candidate, { fresh, totalUnread }) {
+  const base = process.env.APP_BASE_URL;
+  const unsubUrl = unsubscribeUrl(candidate._id.toString());
+  const settingsUrl = `${base}/candidate/${candidate.slug}/edit`;
+
+  const body = `<div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
+      <div style="font-weight:700;font-size:17px;">${plural(fresh.total, 'new message', 'new messages')} since Monday</div>
+      ${senderList(fresh.senders)}
+      ${totalUnread > fresh.total ? `<p style="margin:10px 0 0;font-size:14px;">That's ${totalUnread} unread in total.</p>` : ''}
+      ${weeklyButton(`${base}/messages`, 'Open your inbox')}
+    </div>
+    <p style="margin:14px 0 0;font-size:14px;">Conversations stay on PreCheckd, where your verified identity protects you.</p>`;
+
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidate.email,
+    subject: fresh.total === 1 ? 'You have a new message on PreCheckd' : `You have ${fresh.total} new messages on PreCheckd`,
+    headers: {
+      'List-Unsubscribe': `<${unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+    },
+    html: weeklyShell(candidate.firstName, '', body, unsubUrl, settingsUrl),
+  });
+}
+
 async function sendFraudReportThankYouEmail(toEmail, couponCode) {
   const candidateLandingUrl = `${process.env.APP_BASE_URL}/candidate-landing`;
   const recruiterSearchUrl = `${process.env.APP_BASE_URL}/recruiter-search`;
@@ -377,6 +515,8 @@ module.exports = {
   sendNewMessageEmail,
   sendMessageDigestEmail,
   sendCertExpiryReminderEmail,
+  sendWeeklyRecapEmail,
+  sendUnreadMessagesEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,

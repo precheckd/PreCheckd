@@ -201,6 +201,35 @@ router.post('/:slug/public-page', async (req, res) => {
   }
 });
 
+// POST /candidate/:slug/email-prefs — owner turns the weekly emails (Monday
+// recap + Thursday unread messages) on or off. Cert expiry reminders are
+// service notices and aren't affected.
+router.post('/:slug/email-prefs', async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found.' });
+    }
+
+    if (candidate._id.toString() !== req.session.candidateId) {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    if (typeof req.body.weeklyEmails !== 'boolean') {
+      return res.status(400).json({ error: 'Invalid setting.' });
+    }
+
+    candidate.weeklyEmailOptOut = !req.body.weeklyEmails;
+    await candidate.save();
+
+    res.json({ success: true, weeklyEmails: !candidate.weeklyEmailOptOut });
+  } catch (error) {
+    console.error('Error updating email preferences:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
 // POST /candidate/:slug/edit/add-credly-badge — candidate opts to add one
 // of the unmatched badges found during a sync as a real certification entry.
 router.post('/:slug/edit/add-credly-badge', async (req, res) => {

@@ -1,0 +1,33 @@
+// Runs the weekly candidate emails on a timer inside the web process. Checks
+// hourly; each run only acts during its own window (Monday or Thursday,
+// 7:00-10:59 ET) and the claim logic prevents repeats, so running it often is
+// harmless. Only fires while the server is running: on a host that sleeps idle
+// services, run `npm run weekly-emails` from a scheduled job (every hour) instead.
+// DISABLE_JOBS=true turns the in-process timer off.
+const { runWeeklyRecap, runUnreadMessagesEmail } = require('../services/weeklyEmails');
+
+const CHECK_INTERVAL_MS = 60 * 60 * 1000;
+
+function startWeeklyEmailJob() {
+  if (process.env.DISABLE_JOBS === 'true') {
+    console.log('[jobs] DISABLE_JOBS=true — weekly email timer not started');
+    return null;
+  }
+
+  const tick = async () => {
+    try {
+      const recap = await runWeeklyRecap();
+      if (recap.sent > 0) console.log(`[jobs] weekly recap: sent ${recap.sent}`);
+      const unread = await runUnreadMessagesEmail();
+      if (unread.sent > 0) console.log(`[jobs] unread messages email: sent ${unread.sent}`);
+    } catch (err) {
+      console.error('[jobs] weekly emails failed:', err);
+    }
+  };
+
+  const timer = setInterval(tick, CHECK_INTERVAL_MS);
+  timer.unref();
+  return timer;
+}
+
+module.exports = { startWeeklyEmailJob };
