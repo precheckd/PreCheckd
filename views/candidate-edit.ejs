@@ -28,9 +28,12 @@
     gap: 1.5rem;
   }
 
+  /* The site header is sticky too, so start the Save box below it. The
+     header's real height (it can wrap) is measured by a script at the
+     bottom of the page; 7.5rem is the fallback. */
   .cedit-side-right {
     position: sticky;
-    top: 1.5rem;
+    top: calc(var(--cedit-header-h, 6rem) + 1.5rem);
   }
 
   .cedit-main {
@@ -540,6 +543,7 @@
 
   .public-page-toggle {
     display: flex;
+    flex-direction: row; /* the page-wide label rule stacks labels vertically */
     align-items: center;
     gap: 0.6rem;
     margin-top: 0.75rem;
@@ -550,6 +554,51 @@
   .public-page-toggle input { width: auto; margin: 0; }
   .public-page-section { font-weight: 500; margin-top: 0.4rem; }
   .public-page-sections { margin-top: 1rem; }
+  .public-page-link { margin-top: 0.9rem; }
+
+  /* Three side-by-side boxes, each with its own "show" checkbox. */
+  .public-page-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 0.6rem;
+  }
+
+  .public-page-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.85rem;
+    background: #24404A;
+    border: 1px solid #4A6F7B;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 400;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .public-page-box:hover { border-color: #6B8F9B; }
+  .public-page-box:has(input:checked) { border-color: #2ECC71; background: #1F4A42; }
+
+  .public-page-box-title { color: #F2F4F3; font-weight: 700; font-size: 0.95rem; }
+  .public-page-box-note { color: #B9C7CA; font-size: 0.8rem; line-height: 1.4; flex: 1; }
+
+  .public-page-box-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    color: #F2F4F3;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .public-page-box-check input { width: auto; margin: 0; flex-shrink: 0; }
+
+  @media (max-width: 600px) {
+    .public-page-boxes { grid-template-columns: 1fr; }
+  }
 
   .credly-recheck {
     display: flex;
@@ -798,10 +847,24 @@
       <% } %>
       <% const sec = candidate.publicSections || {}; %>
       <div class="public-page-sections" id="public-page-sections" <%= candidate.publicVerifyPage ? '' : 'hidden' %>>
-        <p class="cert-hint" style="margin-bottom: 0.4rem;">Choose what your page shows. Only verified entries appear, and never employer or school names.</p>
-        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="certifications" <%= sec.certifications !== false ? 'checked' : '' %>><span>Verified certifications</span></label>
-        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="degrees" <%= sec.degrees === true ? 'checked' : '' %>><span>Verified degrees (degree name only)</span></label>
-        <label class="public-page-toggle public-page-section"><input type="checkbox" data-section="jobTitles" <%= sec.jobTitles === true ? 'checked' : '' %>><span>Verified job titles with years (no employers)</span></label>
+        <p class="cert-hint" style="margin-bottom: 0.4rem;">Choose what your page shows. Only verified entries appear.</p>
+        <div class="public-page-boxes">
+          <label class="public-page-box">
+            <span class="public-page-box-title">Certifications</span>
+            <span class="public-page-box-note">Verified certifications, by name.</span>
+            <span class="public-page-box-check"><input type="checkbox" data-section="certifications" <%= sec.certifications !== false ? 'checked' : '' %>>Show on my page</span>
+          </label>
+          <label class="public-page-box">
+            <span class="public-page-box-title">Degrees</span>
+            <span class="public-page-box-note">Verified degrees. Degree name only, never the school.</span>
+            <span class="public-page-box-check"><input type="checkbox" data-section="degrees" <%= sec.degrees === true ? 'checked' : '' %>>Show on my page</span>
+          </label>
+          <label class="public-page-box">
+            <span class="public-page-box-title">Job titles</span>
+            <span class="public-page-box-note">Verified titles with years. Never employers.</span>
+            <span class="public-page-box-check"><input type="checkbox" data-section="jobTitles" <%= sec.jobTitles === true ? 'checked' : '' %>>Show on my page</span>
+          </label>
+        </div>
       </div>
       <p class="cert-hint public-page-link" id="public-page-link" <%= candidate.publicVerifyPage ? '' : 'hidden' %>>
         Your page: <a href="/verify/<%= candidate.slug %>" id="public-page-url" target="_blank" rel="noopener" style="color: #4ADE80;">/verify/<%= candidate.slug %></a>
@@ -958,6 +1021,20 @@
   window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
 <script src="/js/candidate-edit.js"></script>
+<script>
+(function () {
+  // Keep the sticky Save box clear of the (sticky) site header, however tall it is.
+  var header = document.querySelector('header');
+  function setOffset() {
+    if (!header) return;
+    document.documentElement.style.setProperty('--cedit-header-h', header.offsetHeight + 'px');
+  }
+  setOffset();
+  window.addEventListener('resize', setOffset);
+  window.addEventListener('load', setOffset);
+})();
+</script>
+
 <script>
 (function () {
   var box = document.getElementById('weekly-email-toggle');
