@@ -10,6 +10,7 @@
 const { runCertExpiryReminders } = require('../services/certExpiryReminders');
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
+const STARTUP_DELAY_MS = 90 * 1000;
 
 function startCertExpiryJob() {
   if (process.env.DISABLE_JOBS === 'true') {
@@ -25,6 +26,10 @@ function startCertExpiryJob() {
       .catch((err) => console.error('[jobs] cert expiry reminders failed:', err));
   };
 
+  // Also check shortly after boot: a restart or wake-up resets the hourly
+  // clock, so on a host that restarts/sleeps the first hourly tick may never
+  // come. Safe to repeat; reminders are claimed before sending.
+  setTimeout(tick, STARTUP_DELAY_MS).unref();
   const timer = setInterval(tick, CHECK_INTERVAL_MS);
   timer.unref();
   return timer;
