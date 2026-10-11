@@ -1,6 +1,7 @@
 const express = require('express');
 const paymentController = require('../controllers/paymentController');
 const verificationController = require('../controllers/verificationController');
+const inboundEmail = require('../services/inboundEmail');
 
 const router = express.Router();
 
@@ -15,6 +16,13 @@ router.post(
   '/sumsub',
   express.raw({ type: 'application/json' }),
   verificationController.handleWebhook
+);
+
+// Inbound email from Resend (svix-signed; raw body required)
+router.post(
+  '/resend-inbound',
+  express.raw({ type: 'application/json' }),
+  inboundEmail.handleWebhook
 );
 
 module.exports = router;
