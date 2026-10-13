@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const crypto = require('crypto');
+const { brandShell, emailButton, escapeHtml } = require('../utils/emailLayout');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -205,19 +206,48 @@ async function sendCertExpiryReminderEmail(toEmail, firstName, slug, certs) {
     ? `Your ${first.name} certification ${when(first).split(' (')[0]}`
     : `${sorted.length} of your certifications are expiring soon`;
 
-  const lines = sorted.map((c) => `<li><strong>${escape(c.name)}</strong> ${when(c)}</li>`).join('');
+  const badge = (c) => {
+    const label = c.daysLeft < 0 ? 'Expired'
+      : c.daysLeft === 0 ? 'Today'
+      : c.daysLeft === 1 ? '1 day left'
+      : `${c.daysLeft} days left`;
+    const [bg, fg] = c.daysLeft < 0 ? ['#FDECEA', '#B3261E'] : c.daysLeft <= 7 ? ['#FFF3DC', '#9A5B00'] : ['#E8F6EE', '#1B7F4B'];
+    return `<span style="display:inline-block;background:${bg};color:${fg};font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;">${label}</span>`;
+  };
+
+  const cards = sorted.map((c) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;border:1px solid #DDE5E7;border-left:4px solid ${c.daysLeft < 0 ? '#B3261E' : c.daysLeft <= 7 ? '#E59A1A' : '#2ECC71'};border-radius:8px;"><tr>
+      <td style="padding:12px 14px;">
+        <div style="font-weight:700;font-size:16px;color:#1F2A2E;">${escape(c.name)}</div>
+        <div style="font-size:13px;color:#6B7B80;margin-top:2px;">${c.daysLeft < 0 ? 'Expired' : 'Expires'} ${formatDate(c.expiresOn)}</div>
+      </td>
+      <td align="right" style="padding:12px 14px;white-space:nowrap;vertical-align:middle;">${badge(c)}</td>
+    </tr></table>`).join('');
+
+  const headline = sorted.length === 1
+    ? (first.daysLeft < 0 ? 'Your certification has expired' : 'Your certification is expiring soon')
+    : 'Your certifications are expiring soon';
+
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Certification reminder</p>
+    <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${headline}</h1>
+    <p style="margin:0 0 16px;">Hi ${escape(firstName)}, a quick heads-up about your profile:</p>
+    ${cards}
+    <p style="margin:16px 0 0;">Keeping your certifications current keeps your verified profile strong. Once a certification expires, it no longer shows as verified to recruiters.</p>
+    ${emailButton(editUrl, 'Update my certifications')}
+    <p style="margin:14px 0 0;font-size:14px;color:#4A5A5F;">Already renewed? Open Edit Profile and use <em>Check for new certifications</em> (or update the date) and we&rsquo;ll pick it up.</p>`;
 
   return sendEmail({
     from: 'PreCheckd <noreply@precheckd.com>',
     to: toEmail,
     subject,
-    html: `
-      <p>Hi ${escape(firstName)},</p>
-      <p>A heads-up from PreCheckd about your certifications:</p>
-      <ul>${lines}</ul>
-      <p>Keeping them current keeps your verified profile strong. Once a certification expires it no longer shows as verified to recruiters.</p>
-      <p>Already renewed? Open <a href="${editUrl}">Edit Profile</a> and use <em>Check for new certifications</em> (or update the date) and we'll pick it up.</p>
-    `,
+    html: brandShell({
+      bodyHtml,
+      preheader: sorted.length === 1
+        ? `${first.name} ${when(first).split(' (')[0]}. Keep your verified profile current.`
+        : `${sorted.length} certifications need attention to stay verified.`,
+      footerHtml: 'You are receiving this because a certification on your PreCheckd profile is expiring.',
+    }),
   });
 }
 
@@ -236,19 +266,13 @@ function weeklyButton(href, label) {
 }
 
 function weeklyShell(firstName, intro, sectionsHtml, unsubUrl, settingsUrl) {
-  return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1F2A2E;max-width:560px;margin:0 auto;line-height:1.55;">
-      <div style="background:#1F363C;color:#fff;padding:14px 20px;border-radius:10px 10px 0 0;font-weight:700;font-size:18px;">PreCheckd</div>
-      <div style="padding:20px;border:1px solid #DDE5E7;border-top:none;border-radius:0 0 10px 10px;">
-        <p style="margin:0 0 14px;">Hi ${weeklyEscape(firstName)},</p>
+  return brandShell({
+    bodyHtml: `<p style="margin:0 0 14px;">Hi ${weeklyEscape(firstName)},</p>
         ${intro ? `<p style="margin:0 0 6px;">${intro}</p>` : ''}
-        ${sectionsHtml}
-      </div>
-      <p style="font-size:12px;color:#6B7B80;margin:14px 4px;">
-        You get this email because you have a PreCheckd candidate account.
-        <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these weekly emails, or manage it in <a href="${settingsUrl}" style="color:#6B7B80;">Edit Profile</a>.
-      </p>
-    </div>`;
+        ${sectionsHtml}`,
+    footerHtml: `You get this email because you have a PreCheckd candidate account.<br>
+        <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these weekly emails, or manage it in <a href="${settingsUrl}" style="color:#6B7B80;">Edit Profile</a>.`,
+  });
 }
 
 function weeklySection(title, bodyHtml) {
