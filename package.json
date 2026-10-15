@@ -9,7 +9,8 @@
     "migrate:passwords": "node scripts/send-password-migration-emails.js",
     "digest": "node scripts/send-message-digests.js",
     "cert-reminders": "node scripts/send-cert-reminders.js",
-    "weekly-emails": "node scripts/send-weekly-emails.js"
+    "weekly-emails": "node scripts/send-weekly-emails.js",
+    "assign-mail-aliases": "node scripts/assign-mail-aliases.js"
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1131.0",

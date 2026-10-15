@@ -7,6 +7,7 @@ const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const ConnectionRequest = require('../models/ConnectionRequest');
+const { ensureMailAlias } = require('../utils/mailAlias');
 const {
   sendCandidateVerificationLink,
   generateVerificationToken,
@@ -268,6 +269,13 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
     });
 
     await candidate.save();
+
+    // Reserve their PreCheckd mail address (alias@in.precheckd.com). A failure
+    // here must never block signup; the backfill script and the inbound code
+    // both create a missing alias on demand.
+    ensureMailAlias('candidate', candidate).catch((aliasError) => {
+      console.error('Failed to assign candidate mail alias:', aliasError);
+    });
 
     delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
