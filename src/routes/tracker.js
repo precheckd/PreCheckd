@@ -104,7 +104,7 @@ function suggestionCard(mail) {
 
 async function pendingSuggestions(candidateId) {
   const mails = await MailMessage.find({
-    namespace: 'candidate', ownerId: candidateId, direction: 'in', deletedAt: null, 'suggestion.state': 'pending'
+    namespace: 'candidate', ownerId: candidateId, direction: 'in', deletedAt: null, 'suggestion.action': { $exists: true }, 'suggestion.state': 'pending'
   }).sort({ receivedAt: -1 }).limit(50);
   return mails.map(suggestionCard);
 }
@@ -187,7 +187,7 @@ router.post('/suggestions/:mailId/accept', async (req, res) => {
     const mail = await MailMessage.findOne({
       _id: req.params.mailId, namespace: 'candidate', ownerId: req.session.candidateId, direction: 'in', deletedAt: null
     });
-    if (!mail || !mail.suggestion || mail.suggestion.state !== 'pending') return res.redirect('/tracker');
+    if (!mail || !mail.suggestion || !mail.suggestion.action || mail.suggestion.state !== 'pending') return res.redirect('/tracker');
 
     const result = await acceptSuggestion({
       ownerId: req.session.candidateId,

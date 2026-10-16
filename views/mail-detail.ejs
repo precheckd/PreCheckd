@@ -269,7 +269,7 @@
     <% } %>
 
     <% const sug = message.suggestion; %>
-    <% if (sug && sug.state === 'pending') { %>
+    <% if (sug && sug.action && sug.state === 'pending') { %>
       <div class="tracker-suggest">
         <h2><%= sug.action === 'status_change' ? 'Update your tracker?' : 'Add to your tracker?' %></h2>
         <p class="ts-hint"><%= sug.action === 'status_change' ? 'This looks like an update on ' + sug.company + '. Nothing changes until you confirm.' : 'This looks like a job application. Check the details, then confirm. Nothing is added until you do.' %></p>
@@ -297,7 +297,7 @@
           <button type="submit" class="btn">Not a job update</button>
         </form>
       </div>
-    <% } else if (sug && sug.state === 'accepted' && sug.applicationId) { %>
+    <% } else if (sug && sug.action && sug.state === 'accepted' && sug.applicationId) { %>
       <div class="notice ok">Added to your tracker. <a href="/tracker/<%= sug.applicationId %>" style="color:inherit;text-decoration:underline">View entry</a></div>
     <% } %>
 

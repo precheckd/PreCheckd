@@ -161,7 +161,7 @@ app.use(async (req, res, next) => {
         ]);
         res.locals.commandCenterMailUnreadCount = mailUnreadCount;
         res.locals.commandCenterTrackerCount = await MailMessage.countDocuments({
-          namespace: 'candidate', ownerId: req.session.candidateId, direction: 'in', deletedAt: null, 'suggestion.state': 'pending'
+          namespace: 'candidate', ownerId: req.session.candidateId, direction: 'in', deletedAt: null, 'suggestion.action': { $exists: true }, 'suggestion.state': 'pending'
         });
         res.locals.commandCenterFraudReportCount = fraudReportCount;
         res.locals.commandCenterUnreadCount = unreadCount;

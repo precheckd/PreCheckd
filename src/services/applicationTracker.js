@@ -56,7 +56,7 @@ function pushHistory(app, status, by, mailId, note) {
 // Returns { application } or { error }.
 async function acceptSuggestion({ ownerId, mail, overrides = {} }) {
   const sug = mail.suggestion;
-  if (!sug || sug.state !== 'pending') return { error: 'no_suggestion' };
+  if (!sug || !sug.action || sug.state !== 'pending') return { error: 'no_suggestion' };
 
   const status = Application.STATUSES.includes(overrides.status) ? overrides.status : sug.status;
   let app;

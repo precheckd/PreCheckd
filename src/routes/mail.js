@@ -56,7 +56,7 @@ function mailRow(m) {
     kind: 'mail',
     recruiterName: m.recruiterName,
     attachmentCount: (m.attachments || []).length,
-    trackerPending: Boolean(m.suggestion && m.suggestion.state === 'pending')
+    trackerPending: Boolean(m.suggestion && m.suggestion.action && m.suggestion.state === 'pending')
   };
 }
 

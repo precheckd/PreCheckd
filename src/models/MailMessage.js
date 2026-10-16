@@ -52,7 +52,9 @@ const mailMessageSchema = new mongoose.Schema({
     role: { type: String, default: null },
     status: { type: String },
     applicationId: { type: mongoose.Schema.Types.ObjectId, default: null },
-    state: { type: String, enum: ['pending', 'accepted', 'dismissed'], default: 'pending' },
+    // No default: a message with no suggestion must have no suggestion.state
+    // (a default here made every message look like it had a pending one).
+    state: { type: String, enum: ['pending', 'accepted', 'dismissed'] },
     _id: false
   },
 
