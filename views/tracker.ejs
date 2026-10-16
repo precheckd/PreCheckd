@@ -24,32 +24,64 @@
   .sug-actions form { display: inline; margin: 0; }
   .sug-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-  .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0 0.9rem; }
-  .filter { padding: 0.35rem 0.85rem; border-radius: 999px; border: 1px solid #4A6F7B; color: #C7D1CF; font-size: 0.85rem; text-decoration: none; }
+  .stat-strip { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0.6rem; margin-bottom: 1rem; }
+  .stat { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.6rem 0.8rem; min-width: 0; }
+  .stat .n { display: block; font-size: 1.4rem; font-weight: 800; color: #F2F4F3; line-height: 1.1; }
+  .stat .l { display: block; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: #8FA6AC; margin-top: 0.2rem; }
+  .stat.good .n { color: #4ADE80; }
+  .stat.warn .n { color: #E3B341; }
+
+  .quick-add { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; }
+  .quick-row { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1.2fr) 150px minmax(0,1fr) auto; gap: 0.5rem; align-items: end; }
+  .quick-row label, .form-grid label { display: block; color: #C7D1CF; font-size: 0.75rem; margin-bottom: 0.2rem; }
+  .quick-add input, .quick-add select, .quick-add textarea, .toolbar input, .toolbar select, .status-select {
+    width: 100%; box-sizing: border-box; padding: 0.5rem 0.6rem; border: 1px solid #4A6F7B; border-radius: 6px;
+    background: #24404A; color: #F2F4F3; font-size: 0.9rem; font-family: inherit;
+  }
+  .more-details { margin-top: 0.7rem; }
+  .more-details summary { cursor: pointer; font-size: 0.8rem; color: #8FA6AC; }
+  .more-details summary:hover { color: #F2F4F3; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.7rem; }
+  .toolbar form { display: flex; gap: 0.5rem; flex: 1 1 260px; min-width: 0; }
+  .toolbar form input[type=search] { flex: 1; min-width: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.9rem; }
+  .filter { padding: 0.3rem 0.8rem; border-radius: 999px; border: 1px solid #4A6F7B; color: #C7D1CF; font-size: 0.82rem; text-decoration: none; }
   .filter.on { background: #2ECC71; border-color: #2ECC71; color: #1F363C; font-weight: 700; }
 
-  .app-list { display: flex; flex-direction: column; gap: 0.5rem; }
-  .app-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.25rem 1rem; padding: 0.8rem 1rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; text-decoration: none; color: #E8EBEA; min-width: 0; }
-  .app-row:hover { border-color: #2ECC71; }
-  .app-company { font-weight: 700; color: #F2F4F3; overflow-wrap: anywhere; }
-  .app-role { color: #C7D1CF; font-size: 0.88rem; overflow-wrap: anywhere; }
-  .app-meta { color: #8FA6AC; font-size: 0.8rem; grid-column: 1 / -1; }
-  .pill { align-self: start; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1px solid #4A6F7B; color: #C7D1CF; white-space: nowrap; }
-  .pill.interviewing, .pill.offer { border-color: #2ECC71; color: #4ADE80; }
-  .pill.rejected, .pill.withdrawn { color: #8FA6AC; }
+  .app-table { border: 1px solid #3B5860; border-radius: 8px; overflow: hidden; background: #2A4750; }
+  .app-head, .app-row { display: grid; grid-template-columns: 104px minmax(0,1fr) 150px 150px; gap: 0.75rem; align-items: center; padding: 0.6rem 1rem; min-width: 0; }
+  .app-head { background: #24404A; color: #8FA6AC; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .app-row { border-top: 1px solid #3B5860; color: #E8EBEA; }
+  .app-row:hover { background: #2F5059; }
+  .app-date, .app-last { color: #8FA6AC; font-size: 0.82rem; }
+  .app-company { font-weight: 700; color: #F2F4F3; text-decoration: none; overflow-wrap: anywhere; }
+  .app-company:hover { color: #4ADE80; }
+  .app-role { color: #C7D1CF; font-size: 0.85rem; overflow-wrap: anywhere; }
+  .app-extra { font-size: 0.78rem; color: #8FA6AC; margin-top: 0.1rem; }
+  .status-select { padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+  .status-select.interviewing, .status-select.offer { border-color: #2ECC71; color: #4ADE80; }
+  .status-select.rejected, .status-select.withdrawn { color: #8FA6AC; }
+  .status-form { margin: 0; }
+  .status-form noscript button { margin-top: 0.3rem; }
   .quiet { color: #E3B341; }
   .empty { padding: 1.25rem; border: 1px dashed #4A6F7B; border-radius: 8px; color: #8FA6AC; font-size: 0.9rem; line-height: 1.5; }
 
-  .add-box { margin-top: 1.75rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.9rem 1.1rem; }
-  .add-box summary { cursor: pointer; font-weight: 700; color: #F2F4F3; }
-  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.75rem; margin-top: 0.9rem; }
-  .form-grid label { display: block; color: #C7D1CF; font-size: 0.8rem; margin-bottom: 0.2rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.75rem; margin-top: 0.7rem; }
   .form-grid .wide { grid-column: 1 / -1; }
   .form-grid textarea { min-height: 90px; resize: vertical; }
 
   @media (max-width: 768px) {
     .tracker-content { padding: 1rem; }
     .sug-fields, .form-grid { grid-template-columns: 1fr; }
+    .stat-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .quick-row { grid-template-columns: 1fr; }
+    .app-head { display: none; }
+    .app-row { grid-template-columns: minmax(0,1fr) 140px; grid-template-areas: 'name status' 'date last'; row-gap: 0.4rem; }
+    .app-row .app-main { grid-area: name; }
+    .app-row .app-statuscell { grid-area: status; }
+    .app-row .app-date { grid-area: date; }
+    .app-row .app-last { grid-area: last; text-align: right; }
   }
 </style>
 
@@ -94,52 +126,78 @@
       </div>
     <% }); %>
 
+    <div class="stat-strip">
+      <div class="stat"><span class="n"><%= stats.thisWeek %></span><span class="l">Applied this week</span></div>
+      <div class="stat"><span class="n"><%= stats.total %></span><span class="l">Total</span></div>
+      <div class="stat <%= stats.interviewsOffers > 0 ? 'good' : '' %>"><span class="n"><%= stats.interviewsOffers %></span><span class="l">Interviews / offers</span></div>
+      <div class="stat <%= stats.noReply > 0 ? 'warn' : '' %>"><span class="n"><%= stats.noReply %></span><span class="l">No word in 14+ days</span></div>
+    </div>
+
+    <form class="quick-add" method="post" action="/tracker/new">
+      <div class="quick-row">
+        <div><label for="n-company">Company</label><input id="n-company" type="text" name="company" maxlength="120" required value="<%= f.company || '' %>"></div>
+        <div><label for="n-role">Role</label><input id="n-role" type="text" name="roleTitle" maxlength="160" value="<%= f.roleTitle || '' %>"></div>
+        <div><label for="n-applied">Date applied</label><input id="n-applied" type="date" name="appliedAt" value="<%= f.appliedAt || today %>"></div>
+        <div><label for="n-url">Link to the posting</label><input id="n-url" type="url" name="jobUrl" maxlength="500" placeholder="https://" value="<%= f.jobUrl || '' %>"></div>
+        <button type="submit" class="btn primary">Add</button>
+      </div>
+      <details class="more-details" <%= (f.reqId || f.resumeUsed || f.jobDescription || (f.status && f.status !== 'applied')) ? 'open' : '' %>>
+        <summary>More details (status, job number, resume used, job description)</summary>
+        <div class="form-grid">
+          <div><label for="n-status">Status</label>
+            <select id="n-status" name="status"><% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= f.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %></select></div>
+          <div><label for="n-req">Job or requisition number</label><input id="n-req" type="text" name="reqId" maxlength="80" value="<%= f.reqId || '' %>"></div>
+          <div class="wide"><label for="n-resume">Resume you used</label><input id="n-resume" type="text" name="resumeUsed" maxlength="160" value="<%= f.resumeUsed || '' %>"></div>
+          <div class="wide"><label for="n-jd">Job description (paste it so you still have it when they call back; with a link we also try to save a copy)</label><textarea id="n-jd" name="jobDescription" maxlength="20000"><%= f.jobDescription || '' %></textarea></div>
+        </div>
+      </details>
+    </form>
+
+    <div class="toolbar">
+      <form method="get" action="/tracker">
+        <input type="hidden" name="filter" value="<%= filter %>">
+        <input type="search" name="q" value="<%= q %>" maxlength="100" placeholder="Search company, role, notes" aria-label="Search applications">
+        <button type="submit" class="btn">Search</button>
+        <% if (q) { %><a class="btn" href="/tracker?filter=<%= filter %>">Clear</a><% } %>
+      </form>
+      <a class="btn" href="/tracker/export.csv">Export CSV</a>
+    </div>
+
     <div class="filters">
       <% filters.forEach(function(x) { %>
-        <a class="filter <%= filter === x[0] ? 'on' : '' %>" href="/tracker?filter=<%= x[0] %>"><%= x[1] %> (<%= counts[x[0]] %>)</a>
+        <a class="filter <%= filter === x[0] ? 'on' : '' %>" href="/tracker?filter=<%= x[0] %><%= q ? '&q=' + encodeURIComponent(q) : '' %>"><%= x[1] %> (<%= counts[x[0]] %>)</a>
       <% }); %>
     </div>
 
     <% if (rows.length === 0) { %>
       <div class="empty">
-        <%= counts.all === 0 ? 'No applications yet. Use your PreCheckd address on job applications and the confirmations will show up here as suggestions, or add one by hand below.' : 'Nothing in this view.' %>
+        <%= q ? 'No applications match that search.' : (counts.all === 0 ? 'No applications yet. Add one above, or use your PreCheckd address on job applications and the confirmations will show up here as suggestions.' : 'Nothing in this view.') %>
       </div>
     <% } else { %>
-      <div class="app-list">
+      <div class="app-table">
+        <div class="app-head"><div>Applied</div><div>Company / role</div><div>Status</div><div>Last activity</div></div>
         <% rows.forEach(function(r) { %>
-          <a class="app-row" href="/tracker/<%= r.id %>">
-            <div>
-              <div class="app-company"><%= r.company %></div>
+          <div class="app-row">
+            <div class="app-date"><%= r.appliedAt ? fmtDay(r.appliedAt) : '' %></div>
+            <div class="app-main">
+              <a class="app-company" href="/tracker/<%= r.id %>"><%= r.company %></a>
               <% if (r.roleTitle) { %><div class="app-role"><%= r.roleTitle %></div><% } %>
+              <% if (r.interviewAt) { %><div class="app-extra">Interview <%= fmtDay(r.interviewAt) %></div><% } %>
             </div>
-            <span class="pill <%= r.status %>"><%= r.statusLabel %></span>
-            <div class="app-meta">
-              <% if (r.appliedAt) { %>Applied <%= fmtDay(r.appliedAt) %> &middot; <% } %>
-              <% if (r.interviewAt) { %>Interview <%= fmtDay(r.interviewAt) %> &middot; <% } %>
-              Last activity <%= fmtAct(r.lastActivityAt) %>
-              <% if (r.noReply) { %> &middot; <span class="quiet">No reply in <%= r.daysQuiet %> days</span><% } %>
+            <div class="app-statuscell">
+              <form class="status-form" method="post" action="/tracker/<%= r.id %>/status">
+                <input type="hidden" name="filter" value="<%= filter %>">
+                <input type="hidden" name="q" value="<%= q %>">
+                <select class="status-select <%= r.status %>" name="status" aria-label="Status for <%= r.company %>" onchange="this.form.submit()">
+                  <% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= r.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %>
+                </select>
+                <noscript><button type="submit" class="btn">Save</button></noscript>
+              </form>
             </div>
-          </a>
+            <div class="app-last"><%= fmtAct(r.lastActivityAt) %><% if (r.noReply) { %><br><span class="quiet">No reply in <%= r.daysQuiet %> days</span><% } %></div>
+          </div>
         <% }); %>
       </div>
     <% } %>
-
-    <details class="add-box" <%= error ? 'open' : '' %>>
-      <summary>Add an application by hand</summary>
-      <form method="post" action="/tracker/new">
-        <div class="form-grid">
-          <div><label for="n-company">Company</label><input id="n-company" type="text" name="company" maxlength="120" required value="<%= f.company || '' %>"></div>
-          <div><label for="n-role">Role</label><input id="n-role" type="text" name="roleTitle" maxlength="160" value="<%= f.roleTitle || '' %>"></div>
-          <div><label for="n-status">Status</label>
-            <select id="n-status" name="status"><% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= f.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %></select></div>
-          <div><label for="n-applied">Date applied</label><input id="n-applied" type="date" name="appliedAt" value="<%= f.appliedAt || '' %>"></div>
-          <div class="wide"><label for="n-url">Link to the job posting</label><input id="n-url" type="url" name="jobUrl" maxlength="500" placeholder="https://" value="<%= f.jobUrl || '' %>"></div>
-          <div><label for="n-req">Job or requisition number</label><input id="n-req" type="text" name="reqId" maxlength="80" value="<%= f.reqId || '' %>"></div>
-          <div><label for="n-resume">Resume you used</label><input id="n-resume" type="text" name="resumeUsed" maxlength="160" value="<%= f.resumeUsed || '' %>"></div>
-          <div class="wide"><label for="n-jd">Job description (paste it so you still have it when they call back)</label><textarea id="n-jd" name="jobDescription" maxlength="20000"><%= f.jobDescription || '' %></textarea></div>
-          <div class="wide"><button type="submit" class="btn primary">Add application</button></div>
-        </div>
-      </form>
-    </details>
   </div>
 </div>

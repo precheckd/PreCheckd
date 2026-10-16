@@ -115,35 +115,85 @@ function renderTracker(req, res, extra = {}) {
   return res.render('tracker', { pageTitle: 'Application tracker | PreCheckd', STATUSES, STATUS_LABELS, ...extra });
 }
 
-// GET /tracker?filter=active|all|rejected|withdrawn
+const FILTERS = ['active', 'all', 'rejected', 'withdrawn'];
+
+// Everything the list page shows: counters over ALL entries, then the entries
+// narrowed by the status filter and the search text.
+async function listData(candidateId, { filter, q }) {
+  const [apps, suggestions] = await Promise.all([
+    Application.find({ candidateId }).sort({ lastActivityAt: -1 }).limit(1000),
+    pendingSuggestions(candidateId)
+  ]);
+  const weekAgo = Date.now() - 7 * DAY_MS;
+  const decorated = apps.map(decorate);
+  const stats = {
+    thisWeek: apps.filter((a) => new Date(a.appliedAt || a.createdAt || a.lastActivityAt).getTime() >= weekAgo).length,
+    total: apps.length,
+    interviewsOffers: apps.filter((a) => a.status === 'interviewing' || a.status === 'offer').length,
+    noReply: decorated.filter((d) => d.noReply).length
+  };
+  const counts = {
+    active: apps.filter((a) => ACTIVE.includes(a.status)).length,
+    all: apps.length,
+    rejected: apps.filter((a) => a.status === 'rejected').length,
+    withdrawn: apps.filter((a) => a.status === 'withdrawn').length
+  };
+  const needle = String(q || '').trim().toLowerCase();
+  const rows = apps
+    .filter((a) => (filter === 'all' ? true : filter === 'active' ? ACTIVE.includes(a.status) : a.status === filter))
+    .filter((a) => !needle || [a.company, a.roleTitle, a.notes, a.reqId].some((f) => String(f || '').toLowerCase().includes(needle)))
+    .map(decorate);
+  return { rows, suggestions, counts, stats, filter, q: needle };
+}
+
+// "2026-10-16" for a date input's default.
+const todayValue = () => new Date().toISOString().slice(0, 10);
+
+// GET /tracker?filter=active|all|rejected|withdrawn&q=text
 router.get('/', async (req, res) => {
   try {
-    const candidateId = req.session.candidateId;
-    const filter = ['active', 'all', 'rejected', 'withdrawn'].includes(req.query.filter) ? req.query.filter : 'active';
-    const [apps, suggestions] = await Promise.all([
-      Application.find({ candidateId }).sort({ lastActivityAt: -1 }).limit(1000),
-      pendingSuggestions(candidateId)
-    ]);
-
-    const counts = {
-      active: apps.filter((a) => ACTIVE.includes(a.status)).length,
-      all: apps.length,
-      rejected: apps.filter((a) => a.status === 'rejected').length,
-      withdrawn: apps.filter((a) => a.status === 'withdrawn').length
-    };
-    const shown = apps.filter((a) => (filter === 'all' ? true : filter === 'active' ? ACTIVE.includes(a.status) : a.status === filter));
-
-    return renderTracker(req, res, {
-      rows: shown.map(decorate),
-      suggestions,
-      filter,
-      counts,
-      error: null,
-      form: {},
-      added: req.query.added === '1'
-    });
+    const filter = FILTERS.includes(req.query.filter) ? req.query.filter : 'active';
+    const q = String(req.query.q || '').slice(0, 100);
+    const data = await listData(req.session.candidateId, { filter, q });
+    return renderTracker(req, res, { ...data, error: null, form: {}, today: todayValue(), added: req.query.added === '1' });
   } catch (error) {
     console.error('Error loading tracker:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+// --- CSV export -------------------------------------------------------------
+
+// A cell that starts with = + - @ (or a tab/CR) would run as a formula when the
+// file is opened in a spreadsheet, so it gets a leading apostrophe.
+function csvCell(value) {
+  let v = String(value === undefined || value === null ? '' : value).replace(/\r\n/g, '\n');
+  if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`;
+  return `"${v.replace(/"/g, '""')}"`;
+}
+const dayOnly = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '');
+
+// GET /tracker/export.csv — every entry (not just the filtered view)
+router.get('/export.csv', async (req, res) => {
+  try {
+    const apps = await Application.find({ candidateId: req.session.candidateId }).sort({ appliedAt: -1, lastActivityAt: -1 }).limit(5000);
+    const header = ['Company', 'Role', 'Status', 'Date applied', 'Interview date', 'Job link', 'Job or req number', 'Resume used', 'Last activity', 'Notes'];
+    const lines = [header.map(csvCell).join(',')];
+    apps.forEach((a) => {
+      lines.push([
+        a.company, a.roleTitle, STATUS_LABELS[a.status] || a.status, dayOnly(a.appliedAt), dayOnly(a.interviewAt),
+        a.jobUrl, a.reqId, a.resumeUsed, dayOnly(a.lastActivityAt), a.notes
+      ].map(csvCell).join(','));
+    });
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="precheckd-applications-${todayValue()}.csv"`,
+      'Cache-Control': 'private, no-store'
+    });
+    // The BOM makes Excel read the file as UTF-8.
+    return res.send(`﻿${lines.join('\r\n')}\r\n`);
+  } catch (error) {
+    console.error('Error exporting applications:', error);
     return res.status(500).send('Server error');
   }
 });
@@ -153,19 +203,8 @@ router.post('/new', async (req, res) => {
   try {
     const parsed = readForm(req.body);
     if (parsed.error) {
-      const candidateId = req.session.candidateId;
-      const [apps, suggestions] = await Promise.all([
-        Application.find({ candidateId }).sort({ lastActivityAt: -1 }).limit(1000),
-        pendingSuggestions(candidateId)
-      ]);
-      return renderTracker(req, res.status(400), {
-        rows: apps.filter((a) => ACTIVE.includes(a.status)).map(decorate), suggestions, filter: 'active',
-        counts: {
-          active: apps.filter((a) => ACTIVE.includes(a.status)).length, all: apps.length,
-          rejected: apps.filter((a) => a.status === 'rejected').length, withdrawn: apps.filter((a) => a.status === 'withdrawn').length
-        },
-        error: parsed.error, form: req.body || {}, added: false
-      });
+      const data = await listData(req.session.candidateId, { filter: 'active', q: '' });
+      return renderTracker(req, res.status(400), { ...data, error: parsed.error, form: req.body || {}, today: todayValue(), added: false });
     }
     const v = parsed.values;
     // A link and no pasted description: try to keep a copy of the posting.
@@ -303,6 +342,27 @@ router.post('/:id', async (req, res) => {
     return res.redirect(`/tracker/${app._id}?saved=1`);
   } catch (error) {
     console.error('Error saving application:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+// POST /tracker/:id/status — change just the status from the list (the member's own choice)
+router.post('/:id/status', async (req, res) => {
+  try {
+    const app = await loadEntry(req);
+    if (!app) return res.status(404).send('Application not found.');
+    const status = req.body && req.body.status;
+    if (STATUSES.includes(status) && status !== app.status) {
+      app.status = status;
+      app.history.push({ at: new Date(), status, by: 'you' });
+      app.lastActivityAt = new Date();
+      await app.save();
+    }
+    const filter = FILTERS.includes(req.body && req.body.filter) ? req.body.filter : 'active';
+    const q = String((req.body && req.body.q) || '').slice(0, 100);
+    return res.redirect(`/tracker?filter=${filter}${q ? `&q=${encodeURIComponent(q)}` : ''}`);
+  } catch (error) {
+    console.error('Error changing status:', error);
     return res.status(500).send('Server error');
   }
 });
