@@ -31,6 +31,7 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const Recruiter = require('./models/Recruiter');
 const Candidate = require('./models/Candidate');
 const Message = require('./models/Message');
+const MailMessage = require('./models/MailMessage');
 const ConnectionRequest = require('./models/ConnectionRequest');
 const FraudReport = require('./models/FraudReport');
 
@@ -84,6 +85,9 @@ app.use(async (req, res, next) => {
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
   res.locals.commandCenterUnreadCount = 0;
+  // Unread mail from verified senders only (the Mail page's left column), so a
+  // flood of junk can't make the badge look urgent.
+  res.locals.commandCenterMailUnreadCount = 0;
   res.locals.commandCenterPendingRequestCount = 0;
   res.locals.commandCenterFraudReportCount = 0;
   res.locals.commandCenterIsClaimAccount = false;
@@ -128,7 +132,7 @@ app.use(async (req, res, next) => {
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
 
-        const [fraudReportCount, unreadCount, pendingConnectionCount, pendingFullAccessCount] = await Promise.all([
+        const [fraudReportCount, unreadCount, pendingConnectionCount, pendingFullAccessCount, mailUnreadCount] = await Promise.all([
           FraudReport.countDocuments({ reporterCandidateId: candidate._id }),
           Message.countDocuments({ recipientType: 'candidate', recipientId: req.session.candidateId, readAt: null }),
           // Only requests waiting on THIS candidate to act — see the
@@ -142,8 +146,17 @@ app.use(async (req, res, next) => {
             status: 'accepted',
             fullAccessStatus: 'requested',
             $or: [{ fullAccessExpiresAt: null }, { fullAccessExpiresAt: { $gt: new Date() } }]
+          }),
+          MailMessage.countDocuments({
+            namespace: 'candidate',
+            ownerId: req.session.candidateId,
+            direction: 'in',
+            senderCheck: 'verified_recruiter',
+            flagged: false,
+            readAt: null
           })
         ]);
+        res.locals.commandCenterMailUnreadCount = mailUnreadCount;
         res.locals.commandCenterFraudReportCount = fraudReportCount;
         res.locals.commandCenterUnreadCount = unreadCount;
         res.locals.commandCenterPendingRequestCount = pendingConnectionCount + pendingFullAccessCount;
@@ -208,6 +221,7 @@ app.use('/candidate-dashboard', candidateDashboardRoutes);
 app.use('/candidate-search', candidateSearchRoutes);
 app.use('/connections', connectionsRoutes);
 app.use('/messages', messagesRoutes);
+app.use('/mail', require('./routes/mail'));
 app.use('/', authRoutes);
 app.use('/', routes);
 app.use(notFoundHandler);

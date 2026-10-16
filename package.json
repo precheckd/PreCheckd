@@ -11,7 +11,8 @@
     "cert-reminders": "node scripts/send-cert-reminders.js",
     "weekly-emails": "node scripts/send-weekly-emails.js",
     "assign-mail-aliases": "node scripts/assign-mail-aliases.js",
-    "mail-alias": "node scripts/mail-alias.js"
+    "mail-alias": "node scripts/mail-alias.js",
+    "seed-demo-mail": "node scripts/seed-demo-mail.js"
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1131.0",

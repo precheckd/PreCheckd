@@ -7,7 +7,9 @@
 //   1. claim the (email, alias) pair in InboundEmail, so a retried webhook
 //      never forwards twice;
 //   2. drop suppressed senders and hold viruses / floods;
-//   3. relay the message to the owner's real inbox as a branded PreCheckd
+//   3. keep a plain-text copy in the owner's PreCheckd Mail (MailMessage, shown
+//      on the /mail page);
+//   4. relay the message to the owner's real inbox as a branded PreCheckd
 //      email: sender, a verified/unverified badge, the message as plain text,
 //      and the untouched original attached as .eml.
 // Mail to unknown or disabled addresses is dropped silently (no bounce), so
@@ -20,6 +22,7 @@
 const { Resend } = require('resend');
 const MailAlias = require('../models/MailAlias');
 const InboundEmail = require('../models/InboundEmail');
+const MailMessage = require('../models/MailMessage');
 const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
@@ -32,6 +35,8 @@ const MOCK_EMAIL = process.env.MOCK_EMAIL === 'true';
 const DAILY_CAP = Number(process.env.INBOUND_DAILY_CAP) || 50;
 const STALE_PROCESSING_MS = 10 * 60 * 1000;
 const MAX_TEXT_CHARS = 8000;
+// Longest message body kept in PreCheckd's own copy (plain text).
+const STORED_TEXT_CHARS = 20000;
 
 // --- Small pure helpers (exported for tests) ----------------------------
 
@@ -173,6 +178,51 @@ async function settle(row, status, extra = {}) {
   return status;
 }
 
+// --- Saving a copy in PreCheckd -----------------------------------------------
+
+function attachmentSummary(full) {
+  return (full.attachments || []).slice(0, 20).map((a) => ({
+    filename: String(a.filename || a.name || 'attachment').slice(0, 200),
+    contentType: String(a.content_type || a.contentType || '').slice(0, 100),
+    size: Number(a.size) || 0
+  }));
+}
+
+// Stores the plain-text message for the owner's PreCheckd mail page. Never
+// throws: the relay to the real inbox must not depend on this.
+async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody }) {
+  try {
+    const spam = spamSuspected(full.headers);
+    const body = String(textBody || '');
+    await MailMessage.updateOne(
+      { emailId, aliasId: aliasRow._id },
+      {
+        $setOnInsert: {
+          namespace: aliasRow.namespace,
+          ownerId: aliasRow.ownerId,
+          aliasId: aliasRow._id,
+          direction: 'in',
+          emailId,
+          fromAddress: sender.address,
+          fromName: sender.name || null,
+          subject: String(full.subject || '').slice(0, 300),
+          textBody: body.slice(0, STORED_TEXT_CHARS),
+          bodyTruncated: body.length > STORED_TEXT_CHARS,
+          attachments: attachmentSummary(full),
+          senderCheck,
+          recruiterName,
+          flagged: spam,
+          flagReason: spam ? 'spam_verdict' : null,
+          receivedAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+  } catch (err) {
+    console.error('[inbound] could not store message copy:', err.message);
+  }
+}
+
 // --- Per-recipient processing --------------------------------------------
 
 async function processRecipient({ emailId, full, aliasRow, sender }) {
@@ -207,6 +257,12 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
 
   const aliasAddress = addressFor(aliasRow.namespace, aliasRow.alias);
   const textBody = (full.text && full.text.trim()) || htmlToText(full.html);
+
+  // Keep a copy in the owner's PreCheckd mail (roadmap #5). Best effort: if
+  // saving fails the relay below still goes out, and the webhook retry (or a
+  // later message) is unaffected.
+  await storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody });
+
   const { html, text } = buildForwardEmail({
     sender,
     subject: full.subject || '(no subject)',

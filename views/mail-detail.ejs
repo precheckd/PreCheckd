@@ -1,0 +1,176 @@
+<style>
+  .mail-detail-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    background: #1F363C;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .mail-detail-container {
+    max-width: 760px;
+    width: 100%;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    text-decoration: none;
+    margin-bottom: 1rem;
+  }
+
+  .back-link:hover { color: #F2F4F3; }
+
+  .mail-card {
+    background: #2A4750;
+    border: 1px solid #3B5860;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .mail-card h1 {
+    font-size: 1.3rem;
+    color: #F2F4F3;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .mail-from {
+    color: #E8EBEA;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .mail-from strong { color: #F2F4F3; }
+
+  .mail-when {
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .sender-badge {
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .sender-badge.verified {
+    background: #1E4A33;
+    border: 1px solid #2ECC71;
+    color: #BDF2D2;
+    font-weight: 600;
+  }
+
+  .sender-badge.unverified {
+    background: #3A3320;
+    border: 1px solid #B8860B;
+    color: #F2E6C0;
+  }
+
+  .sender-badge.flagged {
+    background: #3F2423;
+    border: 1px solid #C0504D;
+    color: #F5C6C3;
+  }
+
+  .mail-body {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #3B5860;
+    color: #E8EBEA;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .safety-warning {
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    background: #3A3320;
+    border: 1px solid #B8860B;
+    border-radius: 6px;
+    color: #F2E6C0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  .mail-attachments {
+    margin-top: 1.25rem;
+    color: #C7D1CF;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .mail-attachments ul { margin: 0.35rem 0 0 1.1rem; }
+
+  .mail-footnote {
+    margin-top: 1.25rem;
+    color: #8FA6AC;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 768px) {
+    .mail-detail-content { padding: 1rem; }
+    .mail-card { padding: 1.25rem; }
+  }
+</style>
+
+<%
+  const fmtFull = (d) => new Date(d).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? Math.round(n / 1024) + ' KB' : (n || 0) + ' B';
+%>
+
+<div class="mail-detail-content">
+  <div class="mail-detail-container">
+    <a href="/mail" class="back-link">&larr; Back to Mail</a>
+
+    <div class="mail-card">
+      <h1><%= message.subject || '(no subject)' %></h1>
+      <div class="mail-from">
+        From <strong><%= message.fromName || message.fromAddress %></strong>
+        <% if (message.fromName && message.fromAddress) { %>&lt;<%= message.fromAddress %>&gt;<% } %>
+      </div>
+      <div class="mail-when"><%= fmtFull(message.receivedAt) %></div>
+
+      <% if (message.senderCheck === 'verified_recruiter') { %>
+        <div class="sender-badge verified">&#10003; Verified PreCheckd recruiter<%= message.recruiterName ? ': ' + message.recruiterName : '' %></div>
+      <% } else { %>
+        <div class="sender-badge unverified"><strong>Not a verified PreCheckd recruiter.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
+      <% } %>
+
+      <% if (message.flagged) { %>
+        <div class="sender-badge flagged">Our mail checks flagged this message as likely spam.</div>
+      <% } %>
+
+      <% warnings.forEach(function(w) { %>
+        <div class="safety-warning"><%= w %></div>
+      <% }); %>
+
+      <div class="mail-body"><%= message.textBody || '(no text)' %></div>
+      <% if (message.bodyTruncated) { %><div class="mail-footnote">This message was long, so only the first part is shown here.</div><% } %>
+
+      <% if (message.attachments && message.attachments.length > 0) { %>
+        <div class="mail-attachments">
+          Attachments (not stored here; the original email forwarded to your real inbox has them):
+          <ul>
+            <% message.attachments.forEach(function(a) { %>
+              <li><%= a.filename %><% if (a.size) { %> (<%= fmtSize(a.size) %>)<% } %></li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <div class="mail-footnote">Shown as plain text for your safety. Replying from PreCheckd is coming; for now, replies from your real email show your real address.</div>
+    </div>
+  </div>
+</div>
