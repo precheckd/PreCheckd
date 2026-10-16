@@ -287,7 +287,7 @@
 
       <% if (message.attachments && message.attachments.length > 0) { %>
         <div class="mail-attachments">
-          Attachments (not stored here; the original email forwarded to your real inbox has them):
+          Attachments (names only: PreCheckd does not store attachment files yet):
           <ul>
             <% message.attachments.forEach(function(a) { %>
               <li><%= a.filename %><% if (a.size) { %> (<%= fmtSize(a.size) %>)<% } %></li>

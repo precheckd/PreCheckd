@@ -303,7 +303,7 @@ async function sendWeeklyRecapEmail(candidate, recap) {
     sections.push(`<div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
       <div style="font-weight:700;font-size:17px;">You have ${plural(recap.unread.total, 'unread message', 'unread messages')}</div>
       ${senderList(recap.unread.senders)}
-      ${weeklyButton(`${base}/messages`, 'Open your inbox')}
+      ${weeklyButton(`${base}/mail`, 'Open your Mail')}
     </div>`);
   }
 
@@ -367,7 +367,7 @@ async function sendUnreadMessagesEmail(candidate, { fresh, totalUnread }) {
       <div style="font-weight:700;font-size:17px;">${plural(fresh.total, 'new message', 'new messages')} since Monday</div>
       ${senderList(fresh.senders)}
       ${totalUnread > fresh.total ? `<p style="margin:10px 0 0;font-size:14px;">That's ${totalUnread} unread in total.</p>` : ''}
-      ${weeklyButton(`${base}/messages`, 'Open your inbox')}
+      ${weeklyButton(`${base}/mail`, 'Open your Mail')}
     </div>
     <p style="margin:14px 0 0;font-size:14px;">Conversations stay on PreCheckd, where your verified identity protects you.</p>`;
 

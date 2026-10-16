@@ -1,24 +1,21 @@
-// Inbound email (email foundation, roadmap #4).
+// Inbound email (email foundation + candidate Mail, roadmap #4/#5).
 //
 // Resend posts an `email.received` webhook when mail arrives at an address on
 // in.precheckd.com (candidates) or recruiters.precheckd.com (recruiters). The
 // webhook carries metadata only. For each recipient that is a real, active
 // PreCheckd alias we:
 //   1. claim the (email, alias) pair in InboundEmail, so a retried webhook
-//      never forwards twice;
-//   2. drop suppressed senders and hold viruses / floods;
-//   3. keep a plain-text copy in the owner's PreCheckd Mail (MailMessage, shown
-//      on the /mail page);
-//   4. relay the message to the owner's real inbox as a branded PreCheckd
-//      email: sender, a verified/unverified badge, the message as plain text,
-//      and the untouched original attached as .eml.
+//      never delivers twice;
+//   2. drop suppressed or owner-reported senders and hold viruses / floods;
+//   3. save the message as plain text in the owner's PreCheckd Mail
+//      (MailMessage, shown on the /mail page). That IS the delivery: nothing
+//      is forwarded to the owner's real inbox. Unread mail is surfaced by the
+//      nav badge and the Monday and Thursday emails (services/weeklyEmails.js).
 // Mail to unknown or disabled addresses is dropped silently (no bounce), so
 // nobody can probe who is on PreCheckd.
 //
 // Known limits for now: attachments are not scanned beyond the mail
-// provider's virus verdict; a reply goes straight to the sender (Reply-To),
-// which shows the owner's real address (the relay-reply thread is part of
-// roadmap #5/#6).
+// provider's virus verdict, and are not stored (name and size only).
 const { Resend } = require('resend');
 const MailAlias = require('../models/MailAlias');
 const InboundEmail = require('../models/InboundEmail');
@@ -27,15 +24,14 @@ const MailReport = require('../models/MailReport');
 const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
-const { parseAddress, addressFor } = require('../utils/mailAlias');
-const { brandShell, escapeHtml } = require('../utils/emailLayout');
+const { parseAddress } = require('../utils/mailAlias');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const MOCK_EMAIL = process.env.MOCK_EMAIL === 'true';
-// Most messages relayed to one address per rolling 24 hours; the rest are held.
-const DAILY_CAP = Number(process.env.INBOUND_DAILY_CAP) || 50;
+// Most messages delivered to one address per rolling 24 hours; the rest are
+// held. Generous on purpose: someone applying to many jobs gets bursts of
+// confirmations, and held mail is invisible to them.
+const DAILY_CAP = Number(process.env.INBOUND_DAILY_CAP) || 200;
 const STALE_PROCESSING_MS = 10 * 60 * 1000;
-const MAX_TEXT_CHARS = 8000;
 // Longest message body kept in PreCheckd's own copy (plain text).
 const STORED_TEXT_CHARS = 20000;
 
@@ -89,41 +85,6 @@ function htmlToText(html) {
 function safeDisplayName(name, fallback) {
   const cleaned = String(name || '').replace(/[\r\n"<>@]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
   return cleaned || fallback;
-}
-
-function buildForwardEmail({ sender, subject, textBody, senderCheck, recruiterName, aliasAddress, spam, attachmentCount, namespace }) {
-  let badge;
-  if (namespace === 'candidate') {
-    badge = senderCheck === 'verified_recruiter'
-      ? `<div style="background:#E8F6EE;border:1px solid #BFE8CF;border-radius:8px;padding:10px 12px;color:#1B7F4B;font-weight:700;">&#10003; Verified PreCheckd recruiter${recruiterName ? `: ${escapeHtml(recruiterName)}` : ''}</div>`
-      : `<div style="background:#FFF3DC;border:1px solid #F3D9A4;border-radius:8px;padding:10px 12px;color:#7A4A00;"><strong>Not a verified PreCheckd recruiter.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>`;
-  } else {
-    badge = '';
-  }
-  const spamNote = spam
-    ? `<div style="margin-top:10px;background:#FDECEA;border:1px solid #F3B8B3;border-radius:8px;padding:10px 12px;color:#B3261E;">Our mail checks flagged this message as likely spam.</div>`
-    : '';
-  const truncated = textBody.length > MAX_TEXT_CHARS;
-  const shown = truncated ? `${textBody.slice(0, MAX_TEXT_CHARS)}\n\n[Message shortened. The full original is attached.]` : textBody;
-
-  const bodyHtml = `
-    <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Forwarded by PreCheckd</p>
-    <h1 style="margin:0 0 14px;font-size:20px;line-height:1.3;color:#1F2A2E;">${escapeHtml(subject)}</h1>
-    <p style="margin:0 0 12px;font-size:14px;color:#4A5A5F;">From <strong style="color:#1F2A2E;">${escapeHtml(sender.name || sender.address)}</strong> &lt;${escapeHtml(sender.address)}&gt;<br>Sent to your PreCheckd address ${escapeHtml(aliasAddress)}</p>
-    ${badge}${spamNote}
-    <div style="margin:16px 0 0;padding:14px 16px;background:#F5F8F9;border:1px solid #DDE5E7;border-radius:8px;font-size:14px;white-space:pre-wrap;word-wrap:break-word;">${escapeHtml(shown) || '(no text)'}</div>
-    <p style="margin:14px 0 0;font-size:13px;color:#6B7B80;">The message is shown as plain text for your safety. The original is attached as <em>forwarded_message.eml</em>${attachmentCount ? ` along with its ${attachmentCount} attachment${attachmentCount === 1 ? '' : 's'}` : ''}; only open attachments from people you trust.</p>`;
-
-  const text = `Forwarded by PreCheckd\n\nFrom: ${sender.name ? `${sender.name} ` : ''}<${sender.address}>\nSent to: ${aliasAddress}\n${namespace === 'candidate' ? (senderCheck === 'verified_recruiter' ? 'Verified PreCheckd recruiter.' : 'NOT a verified PreCheckd recruiter. Be careful with links, attachments and requests for personal information.') : ''}\n\n${shown}\n\nThe original message is attached as forwarded_message.eml.`;
-
-  return {
-    html: brandShell({
-      bodyHtml,
-      preheader: `${sender.name || sender.address}: ${subject}`,
-      footerHtml: 'You are receiving this because mail was sent to your PreCheckd address.'
-    }),
-    text
-  };
 }
 
 // --- Lookups ------------------------------------------------------------
@@ -202,42 +163,38 @@ function messageIdOf(full) {
   return id ? String(id).trim().slice(0, 500) : null;
 }
 
-// Stores the plain-text message for the owner's PreCheckd mail page. Never
-// throws: the relay to the real inbox must not depend on this.
+// Stores the plain-text message in the owner's PreCheckd Mail. This is the
+// delivery, so a failure throws (the webhook answers 500 and Resend retries).
 async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody }) {
-  try {
-    const spam = spamSuspected(full.headers);
-    const body = String(textBody || '');
-    await MailMessage.updateOne(
-      { emailId, aliasId: aliasRow._id },
-      {
-        $setOnInsert: {
-          namespace: aliasRow.namespace,
-          ownerId: aliasRow.ownerId,
-          aliasId: aliasRow._id,
-          direction: 'in',
-          emailId,
-          fromAddress: sender.address,
-          fromName: sender.name || null,
-          subject: String(full.subject || '').slice(0, 300),
-          textBody: body.slice(0, STORED_TEXT_CHARS),
-          bodyTruncated: body.length > STORED_TEXT_CHARS,
-          attachments: attachmentSummary(full),
-          replyTo: replyAddress(full),
-          messageIdHeader: messageIdOf(full),
-          referencesHeader: String(headerValue(full.headers, 'references') || '').slice(0, 1000) || null,
-          senderCheck,
-          recruiterName,
-          flagged: spam,
-          flagReason: spam ? 'spam_verdict' : null,
-          receivedAt: new Date()
-        }
-      },
-      { upsert: true }
-    );
-  } catch (err) {
-    console.error('[inbound] could not store message copy:', err.message);
-  }
+  const spam = spamSuspected(full.headers);
+  const body = String(textBody || '');
+  await MailMessage.updateOne(
+    { emailId, aliasId: aliasRow._id },
+    {
+      $setOnInsert: {
+        namespace: aliasRow.namespace,
+        ownerId: aliasRow.ownerId,
+        aliasId: aliasRow._id,
+        direction: 'in',
+        emailId,
+        fromAddress: sender.address,
+        fromName: sender.name || null,
+        subject: String(full.subject || '').slice(0, 300),
+        textBody: body.slice(0, STORED_TEXT_CHARS),
+        bodyTruncated: body.length > STORED_TEXT_CHARS,
+        attachments: attachmentSummary(full),
+        replyTo: replyAddress(full),
+        messageIdHeader: messageIdOf(full),
+        referencesHeader: String(headerValue(full.headers, 'references') || '').slice(0, 1000) || null,
+        senderCheck,
+        recruiterName,
+        flagged: spam,
+        flagReason: spam ? 'spam_verdict' : null,
+        receivedAt: new Date()
+      }
+    },
+    { upsert: true }
+  );
 }
 
 // --- Per-recipient processing --------------------------------------------
@@ -260,7 +217,7 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
   if (virusFound(full.headers)) return settle(row, 'held', { reason: 'virus_verdict' });
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const recent = await InboundEmail.countDocuments({ aliasId: aliasRow._id, status: 'forwarded', receivedAt: { $gte: since } });
+  const recent = await InboundEmail.countDocuments({ aliasId: aliasRow._id, status: { $in: ['delivered', 'forwarded'] }, receivedAt: { $gte: since } });
   if (recent >= DAILY_CAP) return settle(row, 'held', { reason: 'daily_cap' });
 
   const owner = await loadOwner(aliasRow.namespace, aliasRow.ownerId);
@@ -276,45 +233,14 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
     }
   }
 
-  const aliasAddress = addressFor(aliasRow.namespace, aliasRow.alias);
   const textBody = (full.text && full.text.trim()) || htmlToText(full.html);
-
-  // Keep a copy in the owner's PreCheckd mail (roadmap #5). Best effort: if
-  // saving fails the relay below still goes out, and the webhook retry (or a
-  // later message) is unaffected.
-  await storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody });
-
-  const { html, text } = buildForwardEmail({
-    sender,
-    subject: full.subject || '(no subject)',
-    textBody,
-    senderCheck,
-    recruiterName,
-    aliasAddress,
-    spam: spamSuspected(full.headers),
-    attachmentCount,
-    namespace: aliasRow.namespace
-  });
-
-  if (MOCK_EMAIL) {
-    console.log(`[MOCK EMAIL] inbound relay to owner of ${aliasAddress}`);
-    return settle(row, 'forwarded', { senderCheck, forwardedEmailId: 'mock' });
+  try {
+    await storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody });
+  } catch (err) {
+    await settle(row, 'failed', { reason: String(err.message || 'store_error').slice(0, 200) });
+    throw new Error(`Could not store message: ${err.message}`);
   }
-
-  const from = `${safeDisplayName(sender.name, sender.address.split('@')[0])} via PreCheckd <${aliasAddress}>`;
-  const { data, error } = await resend.emails.receiving.forward({
-    emailId,
-    to: owner.email,
-    from,
-    passthrough: false,
-    html,
-    text
-  });
-  if (error) {
-    await settle(row, 'failed', { reason: String(error.message || error.name || 'send_error').slice(0, 200) });
-    throw new Error(`Forward failed: ${error.message || error.name}`);
-  }
-  return settle(row, 'forwarded', { senderCheck, forwardedEmailId: data && data.id });
+  return settle(row, 'delivered', { senderCheck });
 }
 
 // --- Webhook entry points -------------------------------------------------
@@ -333,7 +259,7 @@ async function handleReceived(data) {
     if (row) aliasRows.push(row);
   }
 
-  const results = { forwarded: 0, held: 0, dropped: 0, duplicate: 0, unknown: targets.size - aliasRows.length };
+  const results = { delivered: 0, held: 0, dropped: 0, duplicate: 0, unknown: targets.size - aliasRows.length };
   if (aliasRows.length > 0) {
     // One fetch gets the body and the authentication headers.
     const { data: full, error } = await resend.emails.receiving.get(data.email_id);
@@ -347,7 +273,7 @@ async function handleReceived(data) {
   }
 
   // Metadata only: never log subjects, bodies or addresses.
-  console.log(`[inbound] email.received id=${data.email_id} forwarded=${results.forwarded} held=${results.held} dropped=${results.dropped} duplicate=${results.duplicate} unknown_recipient=${results.unknown}`);
+  console.log(`[inbound] email.received id=${data.email_id} delivered=${results.delivered} held=${results.held} dropped=${results.dropped} duplicate=${results.duplicate} unknown_recipient=${results.unknown}`);
   return results;
 }
 
@@ -417,6 +343,6 @@ async function handleWebhook(req, res) {
 
 module.exports = {
   handleWebhook, handleReceived, handleDeliveryEvent, processRecipient,
-  parseSender, senderAuthenticated, virusFound, spamSuspected, htmlToText, safeDisplayName, buildForwardEmail,
+  parseSender, senderAuthenticated, virusFound, spamSuspected, htmlToText, safeDisplayName,
   replyAddress, messageIdOf
 };

@@ -9,7 +9,8 @@
 // - Empty sections are left out. If a candidate has nothing personal and
 //   there's no current "what's new" item, the Monday email isn't sent at all.
 //   (A safety tip alone never triggers a send.)
-// - Never includes message content, only who it's from and how many.
+// - Never includes message content, only who it's from and how many. Unread
+//   PreCheckd Mail counts too (there is no per-message email any more).
 // - weeklyEmailOptOut turns off both emails. Every email carries a signed
 //   unsubscribe link.
 // - Runs hourly; each run only acts during its own window (Monday or Thursday,
@@ -18,6 +19,7 @@
 //   repeat runs never double-send.
 const Candidate = require('../models/Candidate');
 const Message = require('../models/Message');
+const MailMessage = require('../models/MailMessage');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { getRecentViewCount } = require('../utils/viewTracker');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
@@ -45,21 +47,37 @@ function inWindow(now, weekday) {
 }
 
 // Unread messages for a candidate grouped by sender: [{ name, count }].
+// Covers in-site conversations AND unread PreCheckd Mail. Mail from a verified
+// recruiter is listed under their name; all other mail is one combined line, so
+// nothing an outside sender controls (display names, subjects) is ever shown in
+// our email. Mail our checks flagged as spam is left out.
 async function unreadBySender(candidateId, { since = null } = {}) {
   const query = { recipientType: 'candidate', recipientId: candidateId, readAt: null };
   if (since) query.sentAt = { $gt: since };
-  const messages = await Message.find(query);
-  if (messages.length === 0) return { total: 0, senders: [] };
+  const mailQuery = { namespace: 'candidate', ownerId: candidateId, direction: 'in', readAt: null, deletedAt: null, flagged: false };
+  if (since) mailQuery.receivedAt = { $gt: since };
 
-  const names = await senderNames(messages);
+  const [messages, mail] = await Promise.all([Message.find(query), MailMessage.find(mailQuery)]);
+  if (messages.length === 0 && mail.length === 0) return { total: 0, senders: [] };
+
   const senders = new Map();
-  messages.forEach((m) => {
-    const key = m.senderType === 'system' ? 'system' : `${m.senderType}:${m.senderId}`;
-    const name = m.senderType === 'system' ? 'PreCheckd Trust & Safety' : names.get(key) || 'Someone';
+  if (messages.length > 0) {
+    const names = await senderNames(messages);
+    messages.forEach((m) => {
+      const key = m.senderType === 'system' ? 'system' : `${m.senderType}:${m.senderId}`;
+      const name = m.senderType === 'system' ? 'PreCheckd Trust & Safety' : names.get(key) || 'Someone';
+      if (!senders.has(key)) senders.set(key, { name, count: 0 });
+      senders.get(key).count += 1;
+    });
+  }
+  mail.forEach((m) => {
+    const verified = m.senderCheck === 'verified_recruiter' && m.recruiterName;
+    const key = verified ? `mail:${m.recruiterName}` : 'mail:other';
+    const name = verified ? m.recruiterName : 'Other senders (not verified)';
     if (!senders.has(key)) senders.set(key, { name, count: 0 });
     senders.get(key).count += 1;
   });
-  return { total: messages.length, senders: [...senders.values()] };
+  return { total: messages.length + mail.length, senders: [...senders.values()] };
 }
 
 // Everything the Monday email might say about one candidate.

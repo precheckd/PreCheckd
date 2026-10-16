@@ -14,21 +14,22 @@ const inboundEmailSchema = new mongoose.Schema({
   fromName: { type: String, default: null },
   subject: { type: String, default: null },
   attachmentCount: { type: Number, default: 0 },
-  // forwarded: relayed to the owner's real inbox
+  // delivered: saved in the owner's PreCheckd Mail
+  // forwarded: (legacy) relayed to the owner's real inbox, before Mail existed
   // held: not delivered (virus verdict, daily cap); staff-visible only
   // dropped: suppressed sender
   // failed: delivery attempt errored; the webhook retry tries again
   // processing: claimed, send in progress
   status: {
     type: String,
-    enum: ['processing', 'forwarded', 'held', 'dropped', 'failed'],
+    enum: ['processing', 'delivered', 'forwarded', 'held', 'dropped', 'failed'],
     default: 'processing'
   },
   reason: { type: String, default: null },
   // verified_recruiter: sender address belongs to a verified PreCheckd
   // recruiter AND the message passed sender authentication.
   senderCheck: { type: String, enum: ['verified_recruiter', 'unverified'], default: 'unverified' },
-  forwardedEmailId: { type: String, default: null },
+  forwardedEmailId: { type: String, default: null }, // legacy (relay)
   receivedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
