@@ -205,6 +205,47 @@ function extractRoleAndCompany(subject, body, fromName, fromAddress) {
   return { role: role || null, company: company || null };
 }
 
+// --- Interview date ----------------------------------------------------------
+
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+const MONTH_RE = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+const DATE_PATTERNS = [
+  new RegExp(`\\b${MONTH_RE}\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(20\\d{2}))?\\b`, 'gi'),   // October 22, 2026 / Oct 22
+  new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MONTH_RE}\\.?(?:,?\\s+(20\\d{2}))?\\b`, 'gi'),      // 22 October 2026
+  /\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/g                                                          // 10/22/2026 (US order)
+];
+
+// Returns 'YYYY-MM-DD' when the text names exactly ONE calendar date, else
+// null (several proposed dates or none: asking the member beats guessing).
+// A date with no year takes the year of `received`, or the next year when that
+// would put it well in the past.
+function parseInterviewDate(text, received) {
+  const base = received ? new Date(received) : new Date();
+  const found = new Set();
+  const add = (y, mo, d) => {
+    if (mo < 0 || mo > 11 || d < 1 || d > 31) return;
+    let year = y;
+    if (!year) {
+      year = base.getUTCFullYear();
+      if (Date.UTC(year, mo, d, 12) < base.getTime() - 30 * 86400000) year += 1;
+    }
+    const dt = new Date(Date.UTC(year, mo, d, 12));
+    if (dt.getUTCMonth() !== mo) return;            // e.g. Feb 31
+    if (!y && dt.getTime() > base.getTime() + 200 * 86400000) return;   // a yearless date far ahead is more likely a past one
+    if (dt.getTime() < base.getTime() - 2 * 86400000) return;   // an old date is not an appointment
+    found.add(dt.toISOString().slice(0, 10));
+  };
+  const s = String(text || '').slice(0, 6000);
+  let m;
+  DATE_PATTERNS[0].lastIndex = 0;
+  while ((m = DATE_PATTERNS[0].exec(s))) add(m[3] ? Number(m[3]) : 0, MONTHS[m[1].toLowerCase().slice(0, 4) === 'sept' ? 'sept' : m[1].toLowerCase().slice(0, 3)], Number(m[2]));
+  DATE_PATTERNS[1].lastIndex = 0;
+  while ((m = DATE_PATTERNS[1].exec(s))) add(m[3] ? Number(m[3]) : 0, MONTHS[m[2].toLowerCase().slice(0, 4) === 'sept' ? 'sept' : m[2].toLowerCase().slice(0, 3)], Number(m[1]));
+  DATE_PATTERNS[2].lastIndex = 0;
+  while ((m = DATE_PATTERNS[2].exec(s))) add(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+  return found.size === 1 ? [...found][0] : null;
+}
+
 // --- Public: parse one message --------------------------------------------
 
 function parseMail({ fromAddress, fromName, subject, textBody }) {
@@ -263,6 +304,7 @@ function matchApplication(mail, applications) {
 }
 
 module.exports = {
+  parseInterviewDate,
   parseMail, matchApplication, employerDomain, isAtsDomain, norm,
   STATUS_FOR_KIND, ATS_DOMAINS
 };

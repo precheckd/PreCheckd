@@ -4,6 +4,7 @@ const router = express.Router();
 const Application = require('../models/Application');
 const MailMessage = require('../models/MailMessage');
 const { acceptSuggestion } = require('../services/applicationTracker');
+const { fetchPosting } = require('../utils/postingFetch');
 
 // The candidate application tracker (roadmap #5). Entries are added by hand or
 // from a mail suggestion the member confirms; every status change is the
@@ -97,6 +98,7 @@ function suggestionCard(mail) {
     company: s.company || '',
     role: s.role || '',
     status: s.status,
+    interviewDay: s.interviewDay || '',
     statusLabel: STATUS_LABELS[s.status],
     applicationId: s.applicationId ? s.applicationId.toString() : null
   };
@@ -166,9 +168,16 @@ router.post('/new', async (req, res) => {
       });
     }
     const v = parsed.values;
+    // A link and no pasted description: try to keep a copy of the posting.
+    let postingFetchedAt = null;
+    if (v.jobUrl && !v.jobDescription) {
+      const copy = await fetchPosting(v.jobUrl);
+      if (copy) { v.jobDescription = copy; postingFetchedAt = new Date(); }
+    }
     const app = await Application.create({
       candidateId: req.session.candidateId,
       ...v,
+      postingFetchedAt,
       source: 'manual',
       history: [{ at: new Date(), status: v.status, by: 'created' }],
       lastActivityAt: new Date()
@@ -195,7 +204,9 @@ router.post('/suggestions/:mailId/accept', async (req, res) => {
       overrides: {
         company: text(req.body.company, 120) || undefined,
         role: req.body.role === undefined ? undefined : text(req.body.role, 160),
-        status: req.body.status
+        status: req.body.status,
+        // Present only when the form had the date box: blank clears it, bad text is ignored.
+        interviewAt: req.body.interviewAt === undefined ? undefined : (parseDay(req.body.interviewAt) === undefined ? undefined : parseDay(req.body.interviewAt))
       }
     });
     if (result.error) return res.redirect(req.body.returnTo === 'mail' ? `/mail/${mail._id}` : '/tracker');
@@ -250,7 +261,8 @@ async function renderEntry(req, res, app, { error = null, status = 200 } = {}) {
     history,
     mails: mails.map((m) => ({ id: m._id.toString(), subject: m.subject || '(no subject)', from: m.fromName || m.fromAddress, at: m.receivedAt })),
     error,
-    saved: req.query.saved === '1'
+    saved: req.query.saved === '1',
+    posting: ['ok', 'failed', 'kept', 'nolink'].includes(req.query.posting) ? req.query.posting : null
   });
 }
 
@@ -277,13 +289,41 @@ router.post('/:id', async (req, res) => {
     const v = parsed.values;
 
     const statusChanged = v.status !== app.status;
+    const urlChanged = v.jobUrl !== app.jobUrl;
+    // The member edited the description by hand: it is theirs now, not a fetched copy.
+    if (v.jobDescription !== app.jobDescription) app.postingFetchedAt = null;
     Object.assign(app, v);
+    if (v.jobUrl && !v.jobDescription && (urlChanged || !app.postingFetchedAt)) {
+      const copy = await fetchPosting(v.jobUrl);
+      if (copy) { app.jobDescription = copy; app.postingFetchedAt = new Date(); }
+    }
     if (statusChanged) app.history.push({ at: new Date(), status: v.status, by: 'you' });
     app.lastActivityAt = new Date();
     await app.save();
     return res.redirect(`/tracker/${app._id}?saved=1`);
   } catch (error) {
     console.error('Error saving application:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+// POST /tracker/:id/fetch-posting — save (or refresh) a copy of the posting at the job link.
+// A description the member pasted or typed is never overwritten.
+router.post('/:id/fetch-posting', async (req, res) => {
+  try {
+    const app = await loadEntry(req);
+    if (!app) return res.status(404).send('Application not found.');
+    if (!app.jobUrl) return res.redirect(`/tracker/${app._id}?posting=nolink`);
+    if (app.jobDescription && !app.postingFetchedAt) return res.redirect(`/tracker/${app._id}?posting=kept`);
+    const copy = await fetchPosting(app.jobUrl);
+    if (!copy) return res.redirect(`/tracker/${app._id}?posting=failed`);
+    app.jobDescription = copy;
+    app.postingFetchedAt = new Date();
+    app.lastActivityAt = new Date();
+    await app.save();
+    return res.redirect(`/tracker/${app._id}?posting=ok`);
+  } catch (error) {
+    console.error('Error fetching posting:', error);
     return res.status(500).send('Server error');
   }
 });

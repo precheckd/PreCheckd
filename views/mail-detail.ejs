@@ -288,6 +288,7 @@
               <% }); %>
             </select>
           </div>
+          <% if (sug.interviewDay || sug.kind === 'interview_request') { %><div style="margin-bottom:0.6rem"><label style="color:#C7D1CF;font-size:0.8rem">Interview date<% if (sug.interviewDay) { %> (read from the email, check it)<% } %><input type="date" name="interviewAt" value="<%= sug.interviewDay || '' %>" style="max-width:220px;display:block;margin-top:0.2rem"></label></div><% } %>
           <div class="ts-actions">
             <button type="submit" class="btn primary">Confirm</button>
           </div>
@@ -320,6 +321,7 @@
         <% if (message.fromName && message.fromAddress) { %>&lt;<%= message.fromAddress %>&gt;<% } %>
       </div>
       <div class="mail-when"><%= fmtFull(message.receivedAt) %></div>
+      <% if (message.originalFromAddress) { %><div class="mail-when">Forwarded by you. The tracker read it as a message from <strong><%= message.originalFromName || message.originalFromAddress %></strong> &lt;<%= message.originalFromAddress %>&gt;.</div><% } %>
 
       <% if (message.senderCheck === 'verified_recruiter') { %>
         <div class="sender-badge verified">&#10003; Verified PreCheckd recruiter<%= message.recruiterName ? ': ' + message.recruiterName : '' %></div>

@@ -6,7 +6,7 @@
 // the suggestion stored on the mail; acceptSuggestion() runs when the member
 // clicks Confirm.
 const Application = require('../models/Application');
-const { parseMail, matchApplication, employerDomain, norm } = require('../utils/applicationParser');
+const { parseMail, matchApplication, employerDomain, norm, parseInterviewDate } = require('../utils/applicationParser');
 
 const RANK = { applied: 0, screening: 1, interviewing: 2, offer: 3 };
 
@@ -16,6 +16,8 @@ async function suggestFor({ ownerId, mail }) {
   try {
     const parsed = parseMail(mail);
     if (!parsed || !parsed.company) return null;
+    const interviewDay = parsed.kind === 'interview_request' ? parseInterviewDate(mail.textBody, mail.receivedAt) : null;
+    const withDay = (s) => (interviewDay ? { ...s, interviewDay } : s);
 
     const apps = await Application.find({ candidateId: ownerId })
       .select('company roleTitle status senderDomain messageIds');
@@ -34,13 +36,13 @@ async function suggestFor({ ownerId, mail }) {
       // Don't suggest a step backwards (an "assessment" mail after they are already interviewing).
       const live = match.status in RANK;
       if (live && parsed.status in RANK && RANK[parsed.status] <= RANK[match.status]) return null;
-      return {
+      return withDay({
         action: 'status_change', kind: parsed.kind, company: match.company, role: match.roleTitle || parsed.role,
         status: parsed.status, applicationId: match._id, state: 'pending'
-      };
+      });
     }
     // Interview/rejection/offer mail about a job that was never tracked: offer to add it.
-    return { action: 'new_application', kind: parsed.kind, company: parsed.company, role: parsed.role, status: parsed.status, state: 'pending' };
+    return withDay({ action: 'new_application', kind: parsed.kind, company: parsed.company, role: parsed.role, status: parsed.status, state: 'pending' });
   } catch (err) {
     console.error('[tracker] could not build a suggestion:', err.message);
     return null;
@@ -80,7 +82,13 @@ async function acceptSuggestion({ ownerId, mail, overrides = {} }) {
     pushHistory(app, status, 'created', mail._id, 'Added from an email');
   }
 
-  const domain = employerDomain(mail.fromAddress);
+  // The interview date the email named, unless the member changed or cleared it.
+  const day = overrides.interviewAt !== undefined
+    ? overrides.interviewAt
+    : (sug.interviewDay ? new Date(`${sug.interviewDay}T12:00:00Z`) : undefined);
+  if (day !== undefined) app.interviewAt = day;
+
+  const domain = employerDomain(mail.originalFromAddress || mail.fromAddress);
   if (domain && !app.senderDomain) app.senderDomain = domain;
   if (mail.messageIdHeader && !app.messageIds.includes(mail.messageIdHeader)) app.messageIds.push(mail.messageIdHeader);
   if (!app.mailIds.some((id) => String(id) === String(mail._id))) app.mailIds.push(mail._id);

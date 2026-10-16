@@ -83,6 +83,7 @@
               <% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= s.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %>
             </select>
           </div>
+          <% if (s.interviewDay || s.kind === 'interview_request') { %><div class="sug-fields" style="grid-template-columns:1fr;margin-bottom:0.4rem"><label style="color:#C7D1CF;font-size:0.8rem">Interview date<% if (s.interviewDay) { %> (read from the email, check it)<% } %><input type="date" name="interviewAt" value="<%= s.interviewDay %>" style="max-width:220px;display:block;margin-top:0.2rem"></label></div><% } %>
           <div class="sug-actions">
             <button type="submit" class="btn primary">Confirm</button>
           </div>

@@ -26,6 +26,7 @@ const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const { parseAddress } = require('../utils/mailAlias');
+const { unwrapForwarded } = require('../utils/forwardedMail');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Most messages delivered to one address per rolling 24 hours; the rest are
@@ -166,7 +167,7 @@ function messageIdOf(full) {
 
 // Stores the plain-text message in the owner's PreCheckd Mail. This is the
 // delivery, so a failure throws (the webhook answers 500 and Resend retries).
-async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody }) {
+async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody, owner, authenticated }) {
   const spam = spamSuspected(full.headers);
   const body = String(textBody || '');
   const subject = String(full.subject || '').slice(0, 300);
@@ -175,14 +176,19 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
 
   // Candidate mail is read for the application tracker. The result is only a
   // pending suggestion the member must confirm; flagged mail gets none.
+  // A message the member forwarded from their OWN registered address (and that
+  // passed sender authentication, so nobody else can pose as them) is read as
+  // the original message found inside the forward.
+  let original = null;
+  if (aliasRow.namespace === 'candidate' && authenticated && owner && owner.email
+    && String(sender.address || '').toLowerCase() === String(owner.email).trim().toLowerCase()) {
+    original = unwrapForwarded(body);
+  }
+  const readAs = original
+    ? { fromAddress: original.fromAddress, fromName: original.fromName, subject: original.subject, textBody: original.textBody }
+    : { fromAddress: sender.address, fromName: sender.name || '', subject, textBody: body };
   const suggestion = aliasRow.namespace === 'candidate' && !spam
-    ? await suggestFor({
-      ownerId: aliasRow.ownerId,
-      mail: {
-        fromAddress: sender.address, fromName: sender.name || '', subject, textBody: body,
-        referencesHeader: references, inReplyToHeader: inReplyTo
-      }
-    })
+    ? await suggestFor({ ownerId: aliasRow.ownerId, mail: { ...readAs, referencesHeader: references, inReplyToHeader: inReplyTo } })
     : null;
 
   await MailMessage.updateOne(
@@ -204,6 +210,8 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
         messageIdHeader: messageIdOf(full),
         referencesHeader: references,
         inReplyToHeader: inReplyTo,
+        originalFromAddress: original ? original.fromAddress : null,
+        originalFromName: original ? (original.fromName || null) : null,
         ...(suggestion ? { suggestion } : {}),
         senderCheck,
         recruiterName,
@@ -254,7 +262,7 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
 
   const textBody = (full.text && full.text.trim()) || htmlToText(full.html);
   try {
-    await storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody });
+    await storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody, owner, authenticated: senderAuthenticated(full.headers) });
   } catch (err) {
     await settle(row, 'failed', { reason: String(err.message || 'store_error').slice(0, 200) });
     throw new Error(`Could not store message: ${err.message}`);

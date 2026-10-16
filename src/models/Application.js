@@ -26,6 +26,9 @@ const applicationSchema = new mongoose.Schema({
   reqId: { type: String, default: '', trim: true, maxlength: 80 },
   resumeUsed: { type: String, default: '', trim: true, maxlength: 160 },
   jobDescription: { type: String, default: '', maxlength: 20000 },
+  // Set when jobDescription is an automatic copy of the posting at jobUrl (a
+  // pasted description leaves this null and is never overwritten by a fetch).
+  postingFetchedAt: { type: Date, default: null },
   notes: { type: String, default: '', maxlength: 5000 },
   interviewAt: { type: Date, default: null },
 

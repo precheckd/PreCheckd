@@ -40,6 +40,12 @@ const mailMessageSchema = new mongoose.Schema({
 
   inReplyToHeader: { type: String, default: null },
 
+  // Set when the member forwarded a message from their own registered address:
+  // the original sender found inside the forward (the tracker reads that
+  // message, and Mail shows "Forwarded by you").
+  originalFromAddress: { type: String, default: null },
+  originalFromName: { type: String, default: null },
+
   // A tracker suggestion read from this message by the rules in
   // utils/applicationParser.js. Only a suggestion: nothing changes until the
   // member confirms it.
@@ -51,6 +57,7 @@ const mailMessageSchema = new mongoose.Schema({
     company: { type: String, default: null },
     role: { type: String, default: null },
     status: { type: String },
+    interviewDay: { type: String, default: null },   // 'YYYY-MM-DD' read from an interview request
     applicationId: { type: mongoose.Schema.Types.ObjectId, default: null },
     // No default: a message with no suggestion must have no suggestion.state
     // (a default here made every message look like it had a pending one).

@@ -45,6 +45,10 @@
 
     <% if (saved) { %><div class="notice ok">Saved.</div><% } %>
     <% if (error) { %><div class="notice err"><%= error %></div><% } %>
+    <% if (posting === 'ok') { %><div class="notice ok">Saved a copy of the posting.</div><% } %>
+    <% if (posting === 'failed') { %><div class="notice err">We could not save a copy of that page (many sites block this). Paste the job description below instead.</div><% } %>
+    <% if (posting === 'kept') { %><div class="notice err">You already have a description you entered, so we left it alone.</div><% } %>
+    <% if (posting === 'nolink') { %><div class="notice err">Add a link to the job posting first.</div><% } %>
 
     <div class="te-card">
       <h1><%= app.company %></h1>
@@ -65,12 +69,20 @@
           <div class="wide"><label for="e-url">Link to the job posting</label><input id="e-url" type="url" name="jobUrl" maxlength="500" placeholder="https://" value="<%= app.jobUrl %>"></div>
           <% if (app.jobUrl) { %><div class="wide"><a href="<%= app.jobUrl %>" target="_blank" rel="noopener noreferrer" style="color:#4ADE80;font-size:0.85rem;overflow-wrap:anywhere">Open the posting</a></div><% } %>
           <div class="wide"><label for="e-resume">Resume you used</label><input id="e-resume" type="text" name="resumeUsed" maxlength="160" value="<%= app.resumeUsed %>"></div>
-          <div class="wide"><label for="e-jd">Job description</label><textarea id="e-jd" name="jobDescription" maxlength="20000"><%= app.jobDescription %></textarea></div>
+          <div class="wide"><label for="e-jd">Job description<% if (app.postingFetchedAt) { %> (copy saved from the posting on <%= fmtFull(app.postingFetchedAt) %>)<% } %></label><textarea id="e-jd" name="jobDescription" maxlength="20000"><%= app.jobDescription %></textarea></div>
           <div class="wide"><label for="e-notes">Your notes</label><textarea id="e-notes" name="notes" maxlength="5000"><%= app.notes %></textarea></div>
           <div class="wide"><button type="submit" class="btn primary">Save</button></div>
         </div>
       </form>
     </div>
+
+    <% if (app.jobUrl && (!app.jobDescription || app.postingFetchedAt)) { %>
+      <div class="te-card">
+        <h2>Job posting</h2>
+        <p class="te-sub" style="margin-bottom:0.7rem">Postings get taken down. Save a copy now so you still have the description when they call back.</p>
+        <form method="post" action="/tracker/<%= app._id %>/fetch-posting"><button type="submit" class="btn"><%= app.postingFetchedAt ? 'Refresh the saved copy' : 'Save a copy of the posting' %></button></form>
+      </div>
+    <% } %>
 
     <div class="te-card">
       <h2>History</h2>
