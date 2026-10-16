@@ -63,6 +63,9 @@ function previewFor(m, meType, meId) {
 // has messages), plus any Trust & Safety dispute messages, newest first.
 router.get('/', async (req, res) => {
   try {
+    // Candidates now have one merged page; every old "Inbox" link lands there.
+    if (req.currentUser.type === 'candidate') return res.redirect('/mail');
+
     const { type, id } = req.currentUser;
     const isRecruiter = type === 'recruiter';
 

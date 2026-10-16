@@ -297,9 +297,11 @@
               const navHomeHref = navLoggedInCandidate ? `/candidate/${loggedInCandidateSlug}` : `/recruiter/${loggedInRecruiterSlug}`;
               const navLogoutHref = navLoggedInCandidate ? '/api/candidate/logout' : '/logout';
             %>
-            <a href="/messages" class="nav-btn-outline">Inbox<%- navBadge(navUnreadCount) %></a>
             <% if (navLoggedInCandidate) { %>
-              <a href="/mail" class="nav-btn-outline">Mail<%- navBadge(typeof commandCenterMailUnreadCount !== 'undefined' ? commandCenterMailUnreadCount : 0) %></a>
+              <%# Candidates have one merged page (conversations + mail). The badge counts unread conversations plus unread mail from verified senders. %>
+              <a href="/mail" class="nav-btn-outline">Mail<%- navBadge(navUnreadCount + (typeof commandCenterMailUnreadCount !== 'undefined' ? commandCenterMailUnreadCount : 0)) %></a>
+            <% } else { %>
+              <a href="/messages" class="nav-btn-outline">Inbox<%- navBadge(navUnreadCount) %></a>
             <% } %>
             <a href="<%= navRequestsHref %>" class="nav-btn-outline">Requests<%- navBadge(navPendingRequestCount) %></a>
             <a href="/connections" class="nav-btn-outline">Connections</a>
