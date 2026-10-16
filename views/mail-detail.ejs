@@ -229,6 +229,26 @@
     line-height: 1.45;
   }
 
+  .tracker-suggest {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    background: #1E3F4A;
+    border: 1px solid #2ECC71;
+    border-radius: 8px;
+    color: #E8EBEA;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+  .tracker-suggest h2 { font-size: 0.95rem; color: #F2F4F3; margin-bottom: 0.25rem; }
+  .tracker-suggest .ts-hint { color: #8FA6AC; font-size: 0.8rem; margin-bottom: 0.6rem; }
+  .tracker-suggest .ts-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 150px; gap: 0.5rem; margin-bottom: 0.6rem; }
+  .tracker-suggest input, .tracker-suggest select {
+    width: 100%; box-sizing: border-box; padding: 0.45rem 0.55rem; border: 1px solid #4A6F7B;
+    border-radius: 6px; background: #24404A; color: #F2F4F3; font-size: 0.9rem; font-family: inherit;
+  }
+  .tracker-suggest .ts-actions form { display: inline; margin: 0; }
+  @media (max-width: 768px) { .tracker-suggest .ts-fields { grid-template-columns: 1fr; } }
+
   @media (max-width: 768px) {
     .mail-detail-content { padding: 1rem; }
     .mail-card { padding: 1.25rem; }
@@ -246,6 +266,39 @@
 
     <% if (replySent) { %>
       <div class="notice ok"><%= replyDemo ? 'This is a sample message, so nothing was actually sent.' : 'Your reply was sent from your PreCheckd address.' %></div>
+    <% } %>
+
+    <% const sug = message.suggestion; %>
+    <% if (sug && sug.state === 'pending') { %>
+      <div class="tracker-suggest">
+        <h2><%= sug.action === 'status_change' ? 'Update your tracker?' : 'Add to your tracker?' %></h2>
+        <p class="ts-hint"><%= sug.action === 'status_change' ? 'This looks like an update on ' + sug.company + '. Nothing changes until you confirm.' : 'This looks like a job application. Check the details, then confirm. Nothing is added until you do.' %></p>
+        <form method="post" action="/tracker/suggestions/<%= message._id %>/accept">
+          <input type="hidden" name="returnTo" value="mail">
+          <div class="ts-fields">
+            <% if (sug.action === 'status_change') { %>
+              <div><strong><%= sug.company %></strong><br><%= sug.role || '' %></div><div></div>
+            <% } else { %>
+              <input type="text" name="company" value="<%= sug.company || '' %>" maxlength="120" placeholder="Company" aria-label="Company" required>
+              <input type="text" name="role" value="<%= sug.role || '' %>" maxlength="160" placeholder="Role" aria-label="Role">
+            <% } %>
+            <select name="status" aria-label="Status">
+              <% ['applied','screening','interviewing','offer','rejected','withdrawn'].forEach(function(st) { %>
+                <option value="<%= st %>" <%= sug.status === st ? 'selected' : '' %>><%= st.charAt(0).toUpperCase() + st.slice(1) %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="ts-actions">
+            <button type="submit" class="btn primary">Confirm</button>
+          </div>
+        </form>
+        <form method="post" action="/tracker/suggestions/<%= message._id %>/dismiss" style="margin-top:0.5rem">
+          <input type="hidden" name="returnTo" value="mail">
+          <button type="submit" class="btn">Not a job update</button>
+        </form>
+      </div>
+    <% } else if (sug && sug.state === 'accepted' && sug.applicationId) { %>
+      <div class="notice ok">Added to your tracker. <a href="/tracker/<%= sug.applicationId %>" style="color:inherit;text-decoration:underline">View entry</a></div>
     <% } %>
 
     <div class="action-bar">

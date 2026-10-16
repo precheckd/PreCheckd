@@ -38,6 +38,24 @@ const mailMessageSchema = new mongoose.Schema({
   messageIdHeader: { type: String, default: null },
   referencesHeader: { type: String, default: null },
 
+  inReplyToHeader: { type: String, default: null },
+
+  // A tracker suggestion read from this message by the rules in
+  // utils/applicationParser.js. Only a suggestion: nothing changes until the
+  // member confirms it.
+  //   new_application: add an entry (company, role, status)
+  //   status_change:   move the matched entry (applicationId) to `status`
+  suggestion: {
+    action: { type: String, enum: ['new_application', 'status_change'] },
+    kind: { type: String },
+    company: { type: String, default: null },
+    role: { type: String, default: null },
+    status: { type: String },
+    applicationId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    state: { type: String, enum: ['pending', 'accepted', 'dismissed'], default: 'pending' },
+    _id: false
+  },
+
   // direction 'out' (a reply sent from the site): who it went to and which
   // received message it answers. receivedAt doubles as the sent time.
   toAddress: { type: String, default: null },

@@ -279,6 +279,7 @@
               </div>
               <% if (row.subject) { %><div class="mail-row-subject"><%= row.subject %></div><% } %>
               <div class="mail-row-preview"><%= row.preview %></div>
+              <% if (row.trackerPending) { %><span class="row-tag verified">Tracker update waiting</span><% } %>
               <% if (row.kind === 'mail') { %>
                 <span class="row-tag verified">&#10003; Verified recruiter<%= row.recruiterName ? ': ' + row.recruiterName : '' %></span>
               <% } else { %>
@@ -306,6 +307,7 @@
               </div>
               <div class="mail-row-subject"><%= row.subject %></div>
               <div class="mail-row-preview"><%= row.preview %></div>
+              <% if (row.trackerPending) { %><span class="row-tag verified">Tracker update waiting</span><% } %>
               <% if (row.attachmentCount > 0) { %><span class="row-tag"><%= row.attachmentCount %> attachment<%= row.attachmentCount === 1 ? '' : 's' %></span><% } %>
             </a>
           <% }); %>

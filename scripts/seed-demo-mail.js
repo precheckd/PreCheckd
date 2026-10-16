@@ -7,6 +7,8 @@ require('dotenv').config();
 const { connectDatabase } = require('../src/config/database');
 const Candidate = require('../src/models/Candidate');
 const MailMessage = require('../src/models/MailMessage');
+const Application = require('../src/models/Application');
+const { suggestFor } = require('../src/services/applicationTracker');
 
 const args = process.argv.slice(2);
 const remove = args[0] === '--remove';
@@ -46,7 +48,15 @@ async function main() {
   const gone = await MailMessage.deleteMany({ namespace: 'candidate', ownerId: candidate._id, isDemo: true });
   if (remove) { console.log(`Removed ${gone.deletedCount} sample message(s).`); return; }
 
-  const docs = await MailMessage.insertMany(SAMPLES(candidate._id));
+  const samples = SAMPLES(candidate._id);
+  // Same tracker suggestions real mail would get (skips mail from the flagged scam sample).
+  for (const m of samples) {
+    if (!m.flagged) {
+      const suggestion = await suggestFor({ ownerId: candidate._id, mail: m });
+      if (suggestion) m.suggestion = suggestion;
+    }
+  }
+  const docs = await MailMessage.insertMany(samples);
   console.log(`Added ${docs.length} sample messages for ${email}. Open /mail to see them.`);
 }
 

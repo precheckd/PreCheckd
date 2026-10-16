@@ -1,0 +1,144 @@
+<style>
+  .tracker-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .tracker-container { max-width: 960px; width: 100%; }
+  .tracker-container h1 { font-size: 1.6rem; color: #F2F4F3; margin-bottom: 0.35rem; }
+  .tracker-sub { color: #8FA6AC; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.25rem; }
+
+  .notice { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.88rem; line-height: 1.45; }
+  .notice.err { background: #3F2423; border: 1px solid #C0504D; color: #F5C6C3; }
+
+  .btn { display: inline-block; padding: 0.5rem 1.1rem; border-radius: 6px; border: 1px solid #4A6F7B; background: transparent; color: #E8EBEA; font-size: 0.88rem; font-weight: 600; cursor: pointer; text-decoration: none; font-family: inherit; line-height: 1.2; }
+  .btn:hover { border-color: #8FA6AC; }
+  .btn.primary { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
+  .btn.primary:hover { background: #4ADE80; }
+
+  .sug-card { background: #1E3F4A; border: 1px solid #2ECC71; border-radius: 8px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; color: #E8EBEA; font-size: 0.9rem; line-height: 1.45; }
+  .sug-card h2 { font-size: 1.05rem; color: #F2F4F3; margin-bottom: 0.9rem; }
+  .sug-from { color: #8FA6AC; font-size: 0.8rem; margin-bottom: 0.55rem; overflow-wrap: anywhere; }
+  .sug-from a { color: #C7D1CF; }
+  .sug-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 150px; gap: 0.5rem; margin-bottom: 0.6rem; }
+  .sug-card input, .sug-card select, .form-grid input, .form-grid select, .form-grid textarea {
+    width: 100%; box-sizing: border-box; padding: 0.5rem 0.6rem; border: 1px solid #4A6F7B; border-radius: 6px;
+    background: #24404A; color: #F2F4F3; font-size: 0.9rem; font-family: inherit;
+  }
+  .sug-actions form { display: inline; margin: 0; }
+  .sug-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0 0.9rem; }
+  .filter { padding: 0.35rem 0.85rem; border-radius: 999px; border: 1px solid #4A6F7B; color: #C7D1CF; font-size: 0.85rem; text-decoration: none; }
+  .filter.on { background: #2ECC71; border-color: #2ECC71; color: #1F363C; font-weight: 700; }
+
+  .app-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .app-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.25rem 1rem; padding: 0.8rem 1rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; text-decoration: none; color: #E8EBEA; min-width: 0; }
+  .app-row:hover { border-color: #2ECC71; }
+  .app-company { font-weight: 700; color: #F2F4F3; overflow-wrap: anywhere; }
+  .app-role { color: #C7D1CF; font-size: 0.88rem; overflow-wrap: anywhere; }
+  .app-meta { color: #8FA6AC; font-size: 0.8rem; grid-column: 1 / -1; }
+  .pill { align-self: start; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1px solid #4A6F7B; color: #C7D1CF; white-space: nowrap; }
+  .pill.interviewing, .pill.offer { border-color: #2ECC71; color: #4ADE80; }
+  .pill.rejected, .pill.withdrawn { color: #8FA6AC; }
+  .quiet { color: #E3B341; }
+  .empty { padding: 1.25rem; border: 1px dashed #4A6F7B; border-radius: 8px; color: #8FA6AC; font-size: 0.9rem; line-height: 1.5; }
+
+  .add-box { margin-top: 1.75rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.9rem 1.1rem; }
+  .add-box summary { cursor: pointer; font-weight: 700; color: #F2F4F3; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.75rem; margin-top: 0.9rem; }
+  .form-grid label { display: block; color: #C7D1CF; font-size: 0.8rem; margin-bottom: 0.2rem; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .form-grid textarea { min-height: 90px; resize: vertical; }
+
+  @media (max-width: 768px) {
+    .tracker-content { padding: 1rem; }
+    .sug-fields, .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<%
+  const fmtDay = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '';
+  const fmtAct = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const f = form || {};
+  const filters = [['active', 'Active'], ['all', 'All'], ['rejected', 'Rejected'], ['withdrawn', 'Withdrawn']];
+%>
+
+<div class="tracker-content">
+  <div class="tracker-container">
+    <h1>Application tracker</h1>
+    <p class="tracker-sub">Every job you apply for, in one place, with the role and what happened. When mail arrives that looks like a confirmation, interview request or rejection, we suggest an update here. Nothing changes until you confirm it.</p>
+
+    <% if (error) { %><div class="notice err"><%= error %></div><% } %>
+
+    <% suggestions.forEach(function(s) { %>
+      <div class="sug-card">
+        <h2><%= s.action === 'status_change' ? 'Update ' + s.company + '?' : 'Add to your tracker?' %></h2>
+        <div class="sug-from">From <%= s.from %> &middot; <a href="/mail/<%= s.mailId %>"><%= s.subject %></a></div>
+        <form method="post" action="/tracker/suggestions/<%= s.mailId %>/accept">
+          <div class="sug-fields">
+            <% if (s.action === 'status_change') { %>
+              <div><strong><%= s.company %></strong><br><%= s.role %></div><div></div>
+            <% } else { %>
+              <input type="text" name="company" value="<%= s.company %>" maxlength="120" placeholder="Company" aria-label="Company" required>
+              <input type="text" name="role" value="<%= s.role %>" maxlength="160" placeholder="Role" aria-label="Role">
+            <% } %>
+            <select name="status" aria-label="Status">
+              <% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= s.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %>
+            </select>
+          </div>
+          <div class="sug-actions">
+            <button type="submit" class="btn primary">Confirm</button>
+          </div>
+        </form>
+        <form method="post" action="/tracker/suggestions/<%= s.mailId %>/dismiss" style="margin-top:0.5rem">
+          <button type="submit" class="btn">Not a job update</button>
+        </form>
+      </div>
+    <% }); %>
+
+    <div class="filters">
+      <% filters.forEach(function(x) { %>
+        <a class="filter <%= filter === x[0] ? 'on' : '' %>" href="/tracker?filter=<%= x[0] %>"><%= x[1] %> (<%= counts[x[0]] %>)</a>
+      <% }); %>
+    </div>
+
+    <% if (rows.length === 0) { %>
+      <div class="empty">
+        <%= counts.all === 0 ? 'No applications yet. Use your PreCheckd address on job applications and the confirmations will show up here as suggestions, or add one by hand below.' : 'Nothing in this view.' %>
+      </div>
+    <% } else { %>
+      <div class="app-list">
+        <% rows.forEach(function(r) { %>
+          <a class="app-row" href="/tracker/<%= r.id %>">
+            <div>
+              <div class="app-company"><%= r.company %></div>
+              <% if (r.roleTitle) { %><div class="app-role"><%= r.roleTitle %></div><% } %>
+            </div>
+            <span class="pill <%= r.status %>"><%= r.statusLabel %></span>
+            <div class="app-meta">
+              <% if (r.appliedAt) { %>Applied <%= fmtDay(r.appliedAt) %> &middot; <% } %>
+              <% if (r.interviewAt) { %>Interview <%= fmtDay(r.interviewAt) %> &middot; <% } %>
+              Last activity <%= fmtAct(r.lastActivityAt) %>
+              <% if (r.noReply) { %> &middot; <span class="quiet">No reply in <%= r.daysQuiet %> days</span><% } %>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <details class="add-box" <%= error ? 'open' : '' %>>
+      <summary>Add an application by hand</summary>
+      <form method="post" action="/tracker/new">
+        <div class="form-grid">
+          <div><label for="n-company">Company</label><input id="n-company" type="text" name="company" maxlength="120" required value="<%= f.company || '' %>"></div>
+          <div><label for="n-role">Role</label><input id="n-role" type="text" name="roleTitle" maxlength="160" value="<%= f.roleTitle || '' %>"></div>
+          <div><label for="n-status">Status</label>
+            <select id="n-status" name="status"><% STATUSES.forEach(function(st) { %><option value="<%= st %>" <%= f.status === st ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option><% }); %></select></div>
+          <div><label for="n-applied">Date applied</label><input id="n-applied" type="date" name="appliedAt" value="<%= f.appliedAt || '' %>"></div>
+          <div class="wide"><label for="n-url">Link to the job posting</label><input id="n-url" type="url" name="jobUrl" maxlength="500" placeholder="https://" value="<%= f.jobUrl || '' %>"></div>
+          <div><label for="n-req">Job or requisition number</label><input id="n-req" type="text" name="reqId" maxlength="80" value="<%= f.reqId || '' %>"></div>
+          <div><label for="n-resume">Resume you used</label><input id="n-resume" type="text" name="resumeUsed" maxlength="160" value="<%= f.resumeUsed || '' %>"></div>
+          <div class="wide"><label for="n-jd">Job description (paste it so you still have it when they call back)</label><textarea id="n-jd" name="jobDescription" maxlength="20000"><%= f.jobDescription || '' %></textarea></div>
+          <div class="wide"><button type="submit" class="btn primary">Add application</button></div>
+        </div>
+      </form>
+    </details>
+  </div>
+</div>

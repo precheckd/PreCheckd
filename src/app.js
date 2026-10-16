@@ -88,6 +88,8 @@ app.use(async (req, res, next) => {
   // Unread mail from verified senders only (the Mail page's left column), so a
   // flood of junk can't make the badge look urgent.
   res.locals.commandCenterMailUnreadCount = 0;
+  // Mail the tracker has a pending suggestion for (candidates only).
+  res.locals.commandCenterTrackerCount = 0;
   res.locals.commandCenterPendingRequestCount = 0;
   res.locals.commandCenterFraudReportCount = 0;
   res.locals.commandCenterIsClaimAccount = false;
@@ -158,6 +160,9 @@ app.use(async (req, res, next) => {
           })
         ]);
         res.locals.commandCenterMailUnreadCount = mailUnreadCount;
+        res.locals.commandCenterTrackerCount = await MailMessage.countDocuments({
+          namespace: 'candidate', ownerId: req.session.candidateId, direction: 'in', deletedAt: null, 'suggestion.state': 'pending'
+        });
         res.locals.commandCenterFraudReportCount = fraudReportCount;
         res.locals.commandCenterUnreadCount = unreadCount;
         res.locals.commandCenterPendingRequestCount = pendingConnectionCount + pendingFullAccessCount;
@@ -223,6 +228,7 @@ app.use('/candidate-search', candidateSearchRoutes);
 app.use('/connections', connectionsRoutes);
 app.use('/messages', messagesRoutes);
 app.use('/mail', require('./routes/mail'));
+app.use('/tracker', require('./routes/tracker'));
 app.use('/', authRoutes);
 app.use('/', routes);
 app.use(notFoundHandler);

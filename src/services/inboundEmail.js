@@ -21,6 +21,7 @@ const MailAlias = require('../models/MailAlias');
 const InboundEmail = require('../models/InboundEmail');
 const MailMessage = require('../models/MailMessage');
 const MailReport = require('../models/MailReport');
+const { suggestFor } = require('./applicationTracker');
 const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
@@ -168,6 +169,22 @@ function messageIdOf(full) {
 async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody }) {
   const spam = spamSuspected(full.headers);
   const body = String(textBody || '');
+  const subject = String(full.subject || '').slice(0, 300);
+  const references = String(headerValue(full.headers, 'references') || '').slice(0, 1000) || null;
+  const inReplyTo = String(headerValue(full.headers, 'in-reply-to') || '').slice(0, 500) || null;
+
+  // Candidate mail is read for the application tracker. The result is only a
+  // pending suggestion the member must confirm; flagged mail gets none.
+  const suggestion = aliasRow.namespace === 'candidate' && !spam
+    ? await suggestFor({
+      ownerId: aliasRow.ownerId,
+      mail: {
+        fromAddress: sender.address, fromName: sender.name || '', subject, textBody: body,
+        referencesHeader: references, inReplyToHeader: inReplyTo
+      }
+    })
+    : null;
+
   await MailMessage.updateOne(
     { emailId, aliasId: aliasRow._id },
     {
@@ -179,13 +196,15 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
         emailId,
         fromAddress: sender.address,
         fromName: sender.name || null,
-        subject: String(full.subject || '').slice(0, 300),
+        subject,
         textBody: body.slice(0, STORED_TEXT_CHARS),
         bodyTruncated: body.length > STORED_TEXT_CHARS,
         attachments: attachmentSummary(full),
         replyTo: replyAddress(full),
         messageIdHeader: messageIdOf(full),
-        referencesHeader: String(headerValue(full.headers, 'references') || '').slice(0, 1000) || null,
+        referencesHeader: references,
+        inReplyToHeader: inReplyTo,
+        ...(suggestion ? { suggestion } : {}),
         senderCheck,
         recruiterName,
         flagged: spam,
