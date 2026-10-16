@@ -153,6 +153,7 @@ app.use(async (req, res, next) => {
             direction: 'in',
             senderCheck: 'verified_recruiter',
             flagged: false,
+            deletedAt: null,
             readAt: null
           })
         ]);

@@ -31,12 +31,29 @@ const mailMessageSchema = new mongoose.Schema({
   flagged: { type: Boolean, default: false },
   flagReason: { type: String, default: null },
 
+  // Where a reply should go and the headers that keep it in the same thread.
+  // Many application systems send from a no-reply address and set a separate
+  // Reply-To, so the reply target is replyTo, falling back to fromAddress.
+  replyTo: { type: String, default: null },
+  messageIdHeader: { type: String, default: null },
+  referencesHeader: { type: String, default: null },
+
+  // direction 'out' (a reply sent from the site): who it went to and which
+  // received message it answers. receivedAt doubles as the sent time.
+  toAddress: { type: String, default: null },
+  inReplyToMailId: { type: mongoose.Schema.Types.ObjectId, default: null },
+
   readAt: { type: Date, default: null },
+  // Soft delete: hidden at once, and MongoDB removes the row ~30 days later
+  // (TTL index below). A row with deletedAt = null is never expired.
+  deletedAt: { type: Date, default: null },
   receivedAt: { type: Date, default: Date.now },
   // Sample rows from scripts/seed-demo-mail.js, removable in one command.
   isDemo: { type: Boolean, default: false }
 }, { timestamps: true });
 
+mailMessageSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+mailMessageSchema.index({ inReplyToMailId: 1 });
 mailMessageSchema.index({ namespace: 1, ownerId: 1, receivedAt: -1 });
 mailMessageSchema.index({ namespace: 1, ownerId: 1, readAt: 1 });
 // A retried webhook never stores the same message twice. Demo rows have no

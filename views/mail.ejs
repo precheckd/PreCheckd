@@ -41,6 +41,36 @@
     line-height: 1.45;
   }
 
+  .mail-banner {
+    max-width: 1200px;
+    margin: 0 auto 1.25rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .mail-banner.ok { background: #1E4A33; border: 1px solid #2ECC71; color: #BDF2D2; }
+  .mail-banner form { margin: 0; }
+
+  .banner-btn {
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #2ECC71;
+    background: transparent;
+    color: #BDF2D2;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .banner-btn:hover { background: #2ECC71; color: #1F363C; }
+
   .mail-columns {
     max-width: 1200px;
     margin: 0 auto;
@@ -221,6 +251,16 @@
   <div class="mail-preview-note">
     Preview of the new Mail page. Your current Inbox is unchanged, and mail sent to your PreCheckd address is still forwarded to your real email for now.
   </div>
+
+  <% if (undo) { %>
+    <div class="mail-banner ok">
+      <span>Deleted: <strong><%= undo.subject %></strong></span>
+      <form method="post" action="/mail/<%= undo.id %>/restore"><button type="submit" class="banner-btn">Undo</button></form>
+    </div>
+  <% } %>
+  <% if (reported) { %>
+    <div class="mail-banner ok"><span>Reported. That sender is blocked and their messages are hidden. Thank you for helping keep PreCheckd safe.</span></div>
+  <% } %>
 
   <div class="mail-columns">
     <section class="mail-column verified-column">

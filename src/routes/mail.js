@@ -5,8 +5,11 @@ const Message = require('../models/Message');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const MailMessage = require('../models/MailMessage');
 const MailAlias = require('../models/MailAlias');
+const MailReport = require('../models/MailReport');
+const Candidate = require('../models/Candidate');
 const { addressFor } = require('../utils/mailAlias');
 const { warningsFor } = require('../utils/messageSafety');
+const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = require('../services/mailReply');
 
 // The merged Inbox + Mail page (roadmap #5), candidate side first.
 //   LEFT  = verified: conversations with connected PreCheckd members, plus mail
@@ -16,6 +19,17 @@ const { warningsFor } = require('../utils/messageSafety');
 // The existing /messages Inbox stays as it is until this page replaces it.
 
 const LIST_LIMIT = 100;
+
+// Fixed wording for reply problems (never echo anything from the request).
+const REPLY_ERRORS = {
+  empty: 'Write a message before sending.',
+  too_long: `Replies can be up to ${MAX_REPLY_CHARS} characters.`,
+  no_reply: 'This sender does not accept replies (it is a no-reply address).',
+  unsafe: 'Replies cannot include Social Security, card or bank account numbers. Take those out and try again.',
+  blocked: 'We cannot send to this address.',
+  rate: `You have reached today's limit of ${DAILY_REPLY_CAP} replies. Try again tomorrow.`,
+  send_failed: 'Something went wrong sending your reply. Please try again.'
+};
 
 function requireCandidate(req, res, next) {
   if (req.session.candidateId) return next();
@@ -111,7 +125,18 @@ async function conversationRows(candidateId) {
 router.get('/', async (req, res) => {
   try {
     const ownerId = req.session.candidateId;
-    const mailFilter = { namespace: 'candidate', ownerId, direction: 'in' };
+    const mailFilter = { namespace: 'candidate', ownerId, direction: 'in', deletedAt: null };
+
+    // Banner after deleting or reporting. Undo is offered for a message that
+    // belongs to this user and is still in its 30-day window.
+    let undo = null;
+    if (mongoose.isValidObjectId(req.query.deleted)) {
+      const gone = await MailMessage.findOne({
+        _id: req.query.deleted, namespace: 'candidate', ownerId, direction: 'in', deletedAt: { $ne: null }
+      });
+      if (gone) undo = { id: gone._id.toString(), subject: gone.subject || '(no subject)' };
+    }
+    const reported = req.query.reported === '1';
 
     const [conversations, verifiedMail, otherMail, flaggedMail, alias] = await Promise.all([
       conversationRows(ownerId),
@@ -135,7 +160,9 @@ router.get('/', async (req, res) => {
       flagged,
       leftUnread: left.reduce((n, r) => n + (r.kind === 'conversation' ? (r.unreadCount || 0) : (r.unread ? 1 : 0)), 0),
       rightUnread: unreadCount(right),
-      aliasAddress: alias ? addressFor('candidate', alias.alias) : null
+      aliasAddress: alias ? addressFor('candidate', alias.alias) : null,
+      undo,
+      reported
     });
   } catch (error) {
     console.error('Error loading mail page:', error);
@@ -143,29 +170,150 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Loads one of this candidate's received messages (not deleted, not a sent reply).
+function findMine(req, extra = {}) {
+  if (!mongoose.isValidObjectId(req.params.id)) return null;
+  return MailMessage.findOne({
+    _id: req.params.id,
+    namespace: 'candidate',
+    ownerId: req.session.candidateId,
+    direction: 'in',
+    ...extra
+  });
+}
+
+async function renderMessage(req, res, message, { error = null, draft = '', status = 200 } = {}) {
+  const replies = await MailMessage.find({
+    namespace: 'candidate',
+    ownerId: req.session.candidateId,
+    direction: 'out',
+    inReplyToMailId: message._id,
+    deletedAt: null
+  }).sort({ receivedAt: 1 });
+  const target = replyTarget(message);
+  res.status(status).render('mail-detail', {
+    pageTitle: `${message.subject || 'Message'} | PreCheckd`,
+    message,
+    warnings: warningsFor(message.textBody),
+    replies,
+    canReply: Boolean(target) && !isNoReply(target),
+    replyError: error,
+    replySent: req.query.sent === '1',
+    replyDemo: req.query.demo === '1',
+    draft
+  });
+}
+
 // GET /mail/:id — one received message (marks it read)
 router.get('/:id', async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).send('Message not found.');
-    const message = await MailMessage.findOne({
-      _id: req.params.id,
-      namespace: 'candidate',
-      ownerId: req.session.candidateId
-    });
+    const message = await findMine(req, { deletedAt: null });
     if (!message) return res.status(404).send('Message not found.');
 
     if (!message.readAt) {
       message.readAt = new Date();
       await message.save();
     }
-
-    res.render('mail-detail', {
-      pageTitle: `${message.subject || 'Message'} | PreCheckd`,
-      message,
-      warnings: warningsFor(message.textBody)
-    });
+    await renderMessage(req, res, message);
   } catch (error) {
     console.error('Error loading mail message:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /mail/:id/delete — hidden at once; removed for good ~30 days later.
+router.post('/:id/delete', async (req, res) => {
+  try {
+    const message = await findMine(req, { deletedAt: null });
+    if (!message) return res.status(404).send('Message not found.');
+    message.deletedAt = new Date();
+    if (!message.readAt) message.readAt = message.deletedAt;
+    await message.save();
+    res.redirect(`/mail?deleted=${message._id}`);
+  } catch (error) {
+    console.error('Error deleting mail message:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /mail/:id/restore — undo a delete
+router.post('/:id/restore', async (req, res) => {
+  try {
+    const message = await findMine(req, { deletedAt: { $ne: null } });
+    if (!message) return res.status(404).send('Message not found.');
+    message.deletedAt = null;
+    await message.save();
+    res.redirect(`/mail/${message._id}`);
+  } catch (error) {
+    console.error('Error restoring mail message:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /mail/:id/report — report the sender as a scam: this person never gets
+// mail from that address again, earlier mail from it is hidden, and staff get a
+// record to review. It does not block the sender for anyone else.
+router.post('/:id/report', async (req, res) => {
+  try {
+    const message = await findMine(req, { deletedAt: null });
+    if (!message) return res.status(404).send('Message not found.');
+
+    const fromAddress = String(message.fromAddress || '').toLowerCase();
+    if (fromAddress.includes('@')) {
+      await MailReport.updateOne(
+        { namespace: 'candidate', ownerId: message.ownerId, fromAddress },
+        {
+          $setOnInsert: {
+            namespace: 'candidate',
+            ownerId: message.ownerId,
+            fromAddress,
+            fromDomain: fromAddress.split('@')[1],
+            subject: String(message.subject || '').slice(0, 300),
+            senderCheck: message.senderCheck,
+            status: 'new'
+          }
+        },
+        { upsert: true }
+      );
+      await MailMessage.updateMany(
+        { namespace: 'candidate', ownerId: message.ownerId, direction: 'in', fromAddress, deletedAt: null },
+        { $set: { deletedAt: new Date() } }
+      );
+    }
+    res.redirect('/mail?reported=1');
+  } catch (error) {
+    console.error('Error reporting mail message:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /mail/:id/reply { body } — sent from the PreCheckd address to whoever
+// wrote to you. Nothing about the recipient comes from the request.
+router.post('/:id/reply', async (req, res) => {
+  try {
+    const message = await findMine(req, { deletedAt: null });
+    if (!message) return res.status(404).send('Message not found.');
+
+    const body = typeof req.body.body === 'string' ? req.body.body : '';
+    const [owner, alias] = await Promise.all([
+      Candidate.findById(req.session.candidateId),
+      MailAlias.findOne({ namespace: 'candidate', ownerId: req.session.candidateId, status: 'active' })
+    ]);
+    if (!owner || !alias) {
+      return renderMessage(req, res, message, { error: REPLY_ERRORS.send_failed, draft: body, status: 400 });
+    }
+
+    const result = await sendReply({ message, owner, alias, body });
+    if (result.error) {
+      return renderMessage(req, res, message, {
+        error: REPLY_ERRORS[result.error] || REPLY_ERRORS.send_failed,
+        draft: body,
+        status: 400
+      });
+    }
+    res.redirect(`/mail/${message._id}?sent=1${result.demo ? '&demo=1' : ''}`);
+  } catch (error) {
+    console.error('Error replying to mail message:', error);
     res.status(500).send('Server error');
   }
 });

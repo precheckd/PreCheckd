@@ -119,6 +119,116 @@
     line-height: 1.45;
   }
 
+  .action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .action-bar form { display: inline; margin: 0; }
+
+  .btn {
+    display: inline-block;
+    padding: 0.5rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid #4A6F7B;
+    background: transparent;
+    color: #E8EBEA;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    line-height: 1.2;
+  }
+
+  .btn:hover { border-color: #8FA6AC; }
+  .btn.primary { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
+  .btn.primary:hover { background: #4ADE80; }
+  .btn.danger { color: #F5C6C3; border-color: #7A3B39; }
+  .btn.danger:hover { border-color: #C0504D; }
+  .btn.danger-solid { background: #C0504D; border-color: #C0504D; color: #fff; }
+
+  .report-details { display: inline-block; }
+  .report-details summary { list-style: none; }
+  .report-details summary::-webkit-details-marker { display: none; }
+  .report-details[open] { flex-basis: 100%; }
+
+  .report-box {
+    margin-top: 0.6rem;
+    padding: 0.85rem 1rem;
+    background: #3F2423;
+    border: 1px solid #7A3B39;
+    border-radius: 6px;
+    color: #F5C6C3;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .report-box p { margin-bottom: 0.65rem; }
+  .report-box form { display: inline; }
+
+  .notice {
+    margin-bottom: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .notice.ok { background: #1E4A33; border: 1px solid #2ECC71; color: #BDF2D2; }
+  .notice.err { background: #3F2423; border: 1px solid #C0504D; color: #F5C6C3; }
+
+  .replies { margin-top: 1.5rem; }
+  .replies h2 { font-size: 1rem; color: #F2F4F3; margin-bottom: 0.6rem; }
+
+  .reply-sent {
+    background: #24404A;
+    border: 1px solid #3B5860;
+    border-left: 3px solid #2ECC71;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .reply-sent .reply-meta { color: #8FA6AC; font-size: 0.8rem; margin-bottom: 0.4rem; }
+  .reply-sent .reply-text { color: #E8EBEA; font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  .reply-form { margin-top: 1.25rem; }
+  .reply-form h2 { font-size: 1rem; color: #F2F4F3; margin-bottom: 0.2rem; }
+  .reply-form .reply-hint { color: #8FA6AC; font-size: 0.82rem; line-height: 1.4; margin-bottom: 0.6rem; }
+
+  .reply-form textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 0.75rem;
+    border: 1px solid #4A6F7B;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: #24404A;
+    color: #F2F4F3;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .reply-form textarea:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  }
+
+  .reply-form .reply-actions { margin-top: 0.6rem; }
+
+  .no-reply-note {
+    margin-top: 1.25rem;
+    color: #8FA6AC;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
   @media (max-width: 768px) {
     .mail-detail-content { padding: 1rem; }
     .mail-card { padding: 1.25rem; }
@@ -133,6 +243,22 @@
 <div class="mail-detail-content">
   <div class="mail-detail-container">
     <a href="/mail" class="back-link">&larr; Back to Mail</a>
+
+    <% if (replySent) { %>
+      <div class="notice ok"><%= replyDemo ? 'This is a sample message, so nothing was actually sent.' : 'Your reply was sent from your PreCheckd address.' %></div>
+    <% } %>
+
+    <div class="action-bar">
+      <% if (canReply) { %><a href="#reply" class="btn primary">Reply</a><% } %>
+      <form method="post" action="/mail/<%= message._id %>/delete"><button type="submit" class="btn">Delete</button></form>
+      <details class="report-details">
+        <summary class="btn danger">Report as scam</summary>
+        <div class="report-box">
+          <p>This hides every message from <strong><%= message.fromAddress || 'this sender' %></strong> and blocks them from reaching you again. We also send the report to PreCheckd staff to review.</p>
+          <form method="post" action="/mail/<%= message._id %>/report"><button type="submit" class="btn danger-solid">Yes, report and block</button></form>
+        </div>
+      </details>
+    </div>
 
     <div class="mail-card">
       <h1><%= message.subject || '(no subject)' %></h1>
@@ -170,7 +296,31 @@
         </div>
       <% } %>
 
-      <div class="mail-footnote">Shown as plain text for your safety. Replying from PreCheckd is coming; for now, replies from your real email show your real address.</div>
+      <% if (replies.length > 0) { %>
+        <div class="replies">
+          <h2>Your replies</h2>
+          <% replies.forEach(function(r) { %>
+            <div class="reply-sent">
+              <div class="reply-meta">Sent to <%= r.toAddress %> &middot; <%= fmtFull(r.receivedAt) %></div>
+              <div class="reply-text"><%= r.textBody %></div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <% if (canReply) { %>
+        <form method="post" action="/mail/<%= message._id %>/reply" class="reply-form" id="reply">
+          <h2>Reply</h2>
+          <p class="reply-hint">Sent from your PreCheckd address, so your real email stays private. Please do not include Social Security, card or bank account numbers.</p>
+          <% if (replyError) { %><div class="notice err"><%= replyError %></div><% } %>
+          <textarea name="body" maxlength="5000" required placeholder="Write your reply"><%= draft %></textarea>
+          <div class="reply-actions"><button type="submit" class="btn primary">Send reply</button></div>
+        </form>
+      <% } else { %>
+        <div class="no-reply-note">This sender does not accept replies (it is a no-reply address).</div>
+      <% } %>
+
+      <div class="mail-footnote">Shown as plain text for your safety.</div>
     </div>
   </div>
 </div>

@@ -23,6 +23,7 @@ const { Resend } = require('resend');
 const MailAlias = require('../models/MailAlias');
 const InboundEmail = require('../models/InboundEmail');
 const MailMessage = require('../models/MailMessage');
+const MailReport = require('../models/MailReport');
 const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
@@ -188,6 +189,19 @@ function attachmentSummary(full) {
   }));
 }
 
+// The address a reply should go to: the message's Reply-To when it has one
+// (application systems often send from no-reply and reply to a real mailbox).
+function replyAddress(full) {
+  const raw = Array.isArray(full.reply_to) ? full.reply_to[0] : (full.reply_to || headerValue(full.headers, 'reply-to'));
+  const addr = raw ? parseSender(String(raw)).address : '';
+  return addr && addr.includes('@') ? addr.slice(0, 200) : null;
+}
+
+function messageIdOf(full) {
+  const id = full.message_id || headerValue(full.headers, 'message-id');
+  return id ? String(id).trim().slice(0, 500) : null;
+}
+
 // Stores the plain-text message for the owner's PreCheckd mail page. Never
 // throws: the relay to the real inbox must not depend on this.
 async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recruiterName, textBody }) {
@@ -209,6 +223,9 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
           textBody: body.slice(0, STORED_TEXT_CHARS),
           bodyTruncated: body.length > STORED_TEXT_CHARS,
           attachments: attachmentSummary(full),
+          replyTo: replyAddress(full),
+          messageIdHeader: messageIdOf(full),
+          referencesHeader: String(headerValue(full.headers, 'references') || '').slice(0, 1000) || null,
           senderCheck,
           recruiterName,
           flagged: spam,
@@ -236,6 +253,10 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
   if (!row) return 'duplicate';
 
   if (await isSuppressed(sender.address)) return settle(row, 'dropped', { reason: 'suppressed_sender' });
+  // The owner reported this sender as a scam: they never hear from it again.
+  if (await MailReport.exists({ namespace: aliasRow.namespace, ownerId: aliasRow.ownerId, fromAddress: sender.address })) {
+    return settle(row, 'dropped', { reason: 'reported_by_owner' });
+  }
   if (virusFound(full.headers)) return settle(row, 'held', { reason: 'virus_verdict' });
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -396,5 +417,6 @@ async function handleWebhook(req, res) {
 
 module.exports = {
   handleWebhook, handleReceived, handleDeliveryEvent, processRecipient,
-  parseSender, senderAuthenticated, virusFound, spamSuspected, htmlToText, safeDisplayName, buildForwardEmail
+  parseSender, senderAuthenticated, virusFound, spamSuspected, htmlToText, safeDisplayName, buildForwardEmail,
+  replyAddress, messageIdOf
 };
