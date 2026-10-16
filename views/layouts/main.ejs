@@ -303,6 +303,7 @@
               <a href="/tracker" class="nav-btn-outline">Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } else { %>
               <a href="/messages" class="nav-btn-outline">Inbox<%- navBadge(navUnreadCount) %></a>
+              <% if (typeof outreachEnabled !== 'undefined' && outreachEnabled) { %><a href="/outreach" class="nav-btn-outline">Outreach</a><% } %>
             <% } %>
             <a href="<%= navRequestsHref %>" class="nav-btn-outline">Requests<%- navBadge(navPendingRequestCount) %></a>
             <a href="/connections" class="nav-btn-outline">Connections</a>

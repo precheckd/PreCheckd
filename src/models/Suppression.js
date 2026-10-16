@@ -10,7 +10,7 @@ const suppressionSchema = new mongoose.Schema({
   type: { type: String, enum: ['address', 'domain'], required: true },
   reason: {
     type: String,
-    enum: ['bounce', 'complaint', 'staff', 'scam_report'],
+    enum: ['bounce', 'complaint', 'staff', 'scam_report', 'opt_out'],
     required: true
   },
   note: { type: String, default: null }

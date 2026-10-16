@@ -90,6 +90,8 @@ app.use(async (req, res, next) => {
   res.locals.commandCenterMailUnreadCount = 0;
   // Mail the tracker has a pending suggestion for (candidates only).
   res.locals.commandCenterTrackerCount = 0;
+  // Recruiter outreach is switched on with OUTREACH_ENABLED=true (after recruiters.precheckd.com is verified in Resend).
+  res.locals.outreachEnabled = process.env.OUTREACH_ENABLED === 'true';
   res.locals.commandCenterPendingRequestCount = 0;
   res.locals.commandCenterFraudReportCount = 0;
   res.locals.commandCenterIsClaimAccount = false;
@@ -229,6 +231,7 @@ app.use('/connections', connectionsRoutes);
 app.use('/messages', messagesRoutes);
 app.use('/mail', require('./routes/mail'));
 app.use('/tracker', require('./routes/tracker'));
+app.use('/outreach', require('./routes/outreach'));
 app.use('/', authRoutes);
 app.use('/', routes);
 app.use(notFoundHandler);

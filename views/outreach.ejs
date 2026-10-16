@@ -1,0 +1,70 @@
+<style>
+  .out-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .out-container { max-width: 760px; width: 100%; }
+  .out-container h1 { font-size: 1.6rem; color: #F2F4F3; margin-bottom: 0.35rem; }
+  .out-sub { color: #8FA6AC; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.25rem; }
+  .out-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .out-card h2 { font-size: 1rem; color: #F2F4F3; margin-bottom: 0.7rem; }
+  .notice { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.88rem; line-height: 1.45; }
+  .notice.ok { background: #1E4A33; border: 1px solid #2ECC71; color: #BDF2D2; }
+  .notice.err { background: #3F2423; border: 1px solid #C0504D; color: #F5C6C3; }
+  .notice.info { background: #24404A; border: 1px solid #4A6F7B; color: #C7D1CF; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.75rem; }
+  .form-grid label { display: block; color: #C7D1CF; font-size: 0.8rem; margin-bottom: 0.2rem; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .form-grid input, .form-grid select, .form-grid textarea { width: 100%; box-sizing: border-box; padding: 0.5rem 0.6rem; border: 1px solid #4A6F7B; border-radius: 6px; background: #24404A; color: #F2F4F3; font-size: 0.9rem; font-family: inherit; }
+  .form-grid textarea { min-height: 110px; resize: vertical; }
+  .hint { color: #8FA6AC; font-size: 0.8rem; line-height: 1.4; }
+  .btn { display: inline-block; padding: 0.55rem 1.2rem; border-radius: 6px; border: 1px solid #2ECC71; background: #2ECC71; color: #1F363C; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .sent-row { padding: 0.6rem 0; border-top: 1px solid #3B5860; color: #E8EBEA; font-size: 0.9rem; overflow-wrap: anywhere; }
+  .sent-row:first-of-type { border-top: none; }
+  .sent-row .meta { color: #8FA6AC; font-size: 0.8rem; }
+  .tag { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.5rem; border: 1px solid #7A3B39; color: #F5C6C3; border-radius: 999px; font-size: 0.75rem; }
+  @media (max-width: 768px) { .out-content { padding: 1rem; } .form-grid { grid-template-columns: 1fr; } }
+</style>
+
+<%
+  const f = form || {};
+  const fmt = (d) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+%>
+<div class="out-content">
+  <div class="out-container">
+    <h1>Outreach</h1>
+    <p class="out-sub">Email someone who is not on PreCheckd yet. The email comes from your PreCheckd address, carries a "Verified by PreCheckd" block that links to your live verification page, and replies come back to you here. Use addresses you already have; do not scrape.</p>
+
+    <% if (!enabled) { %>
+      <div class="notice info">Outreach is not switched on yet. It will open soon.</div>
+    <% } else if (!verified) { %>
+      <div class="notice err">Only fully verified recruiters (identity and phone) can send outreach.</div>
+    <% } else { %>
+      <% if (sent) { %><div class="notice ok">Sent.</div><% } %>
+      <% if (error) { %><div class="notice err"><%= error %></div><% } %>
+
+      <div class="out-card">
+        <h2>New email</h2>
+        <form method="post" action="/outreach/send">
+          <div class="form-grid">
+            <div><label for="o-email">Their email address</label><input id="o-email" type="email" name="toEmail" maxlength="254" required value="<%= f.toEmail || '' %>"></div>
+            <div><label for="o-name">Their first name (optional)</label><input id="o-name" type="text" name="toName" maxlength="40" value="<%= f.toName || '' %>"></div>
+            <div><label for="o-tpl">Template</label>
+              <select id="o-tpl" name="templateKey"><% templates.forEach(function(t) { %><option value="<%= t.key %>" <%= f.templateKey === t.key ? 'selected' : '' %>><%= t.label %></option><% }); %></select></div>
+            <div><label for="o-role">Role (for the "specific role" template)</label><input id="o-role" type="text" name="role" maxlength="80" value="<%= f.role || '' %>"></div>
+            <div class="wide"><label for="o-note">Your note (optional, up to <%= maxNote %> characters)</label><textarea id="o-note" name="note" maxlength="<%= maxNote %>"><%= f.note || '' %></textarea>
+              <div class="hint">Plain text. Links show as plain text, not clickable. Do not include Social Security, card or bank numbers.</div></div>
+            <div class="wide"><button type="submit" class="btn">Send</button>
+              <span class="hint" style="margin-left:0.6rem">You can send <%= quota.dailyLeft %> more today and <%= quota.monthlyLeft %> more over the next 30 days. One email per address every 30 days.</span></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="out-card">
+        <h2>Recently sent</h2>
+        <% if (recent.length === 0) { %>
+          <div class="hint">Nothing sent yet.</div>
+        <% } else { recent.forEach(function(m) { %>
+          <div class="sent-row"><%= m.to %><% if (m.note) { %><span class="tag"><%= m.note %></span><% } %><div class="meta"><%= m.subject %> &middot; <%= fmt(m.at) %></div></div>
+        <% }); } %>
+      </div>
+    <% } %>
+  </div>
+</div>
