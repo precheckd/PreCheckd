@@ -232,6 +232,7 @@ app.use('/candidate', candidateVideoRoutes);
 app.use('/candidate', candidateWorkAreasRoutes);
 app.use('/candidate', candidateJobPreferencesRoutes);
 app.use('/fraud', fraudRoutes);
+app.use('/safety', require('./routes/safety'));
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

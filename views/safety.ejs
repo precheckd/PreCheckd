@@ -1,0 +1,38 @@
+<style>
+  .sc-wrap-page { flex: 1; padding: 1.75rem 1.5rem; background: #1F363C; min-height: 100vh; }
+  .sc-wrap-inner { max-width: 1000px; margin: 0 auto; }
+  .sc-wrap-inner > h1 { font-size: 1.6rem; color: #F2F4F3; margin-bottom: 0.3rem; }
+  .sc-wrap-inner > .sc-sub { color: #8FA6AC; font-size: 0.92rem; margin-bottom: 1rem; }
+  .sc-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #3B5860; margin-bottom: 1.25rem; }
+  .sc-tab { padding: 0.65rem 1.1rem; color: #8FA6AC; text-decoration: none; font-weight: 600; font-size: 0.95rem; border-bottom: 3px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 0.45rem; }
+  .sc-tab:hover { color: #F2F4F3; }
+  .sc-tab.is-on { color: #F2F4F3; border-bottom-color: #2ECC71; }
+  .sc-pill { background: #3B5860; color: #E8EBEA; font-size: 0.72rem; font-weight: 700; padding: 0 7px; line-height: 19px; border-radius: 10px; }
+  .sc-filed { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 8px; background: #1E4A33; border: 1px solid #2ECC71; color: #BDF2D2; font-size: 0.92rem; line-height: 1.5; }
+  .sc-filed strong { color: #F2F4F3; }
+  @media (max-width: 768px) { .sc-wrap-page { padding: 1rem; } .sc-tab { padding: 0.6rem 0.7rem; font-size: 0.88rem; } }
+</style>
+
+<div class="sc-wrap-page">
+  <div class="sc-wrap-inner">
+    <h1>Safety Center</h1>
+    <p class="sc-sub">Check a sender, report a scam, and keep a record of what you've reported.</p>
+    <div class="sc-tabs">
+      <a href="/safety?tab=check" class="sc-tab<%= tab === 'check' ? ' is-on' : '' %>">Check a sender</a>
+      <a href="/safety?tab=report" class="sc-tab<%= tab === 'report' ? ' is-on' : '' %>">Report a scam</a>
+      <a href="/safety?tab=reports" class="sc-tab<%= tab === 'reports' ? ' is-on' : '' %>">My reports<% if (reports.length > 0) { %><span class="sc-pill"><%= reports.length %></span><% } %></a>
+    </div>
+
+    <% if (filed) { %>
+      <div class="sc-filed"><strong>Thank you. Your report was filed.</strong> Staff will review it.<% if (filed.couponCode) { %> As a thank-you, here's a 20% discount code: <strong><%= filed.couponCode %></strong> (we also emailed it to you).<% } %></div>
+    <% } %>
+
+    <% if (tab === 'check') { %>
+      <%- include('scam-check') %>
+    <% } else if (tab === 'report') { %>
+      <%- include('safety-report-form') %>
+    <% } else { %>
+      <%- include('candidate-my-reports') %>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+<style>
+  .sf-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; max-width: 760px; }
+  .sf-card p.sf-lead { color: #C7D1CF; font-size: 0.95rem; line-height: 1.5; margin: 0 0 1.1rem; }
+  .sf-field { margin-bottom: 1rem; }
+  .sf-field label { display: block; color: #C7D1CF; font-size: 0.85rem; margin-bottom: 0.3rem; }
+  .sf-field .sf-hint { color: #8FA6AC; font-weight: 400; }
+  .sf-field input, .sf-field select, .sf-field textarea { width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; border: 1px solid #4A6F7B; border-radius: 8px; background: #24404A; color: #F2F4F3; font-size: 0.92rem; font-family: inherit; }
+  .sf-field textarea { min-height: 110px; resize: vertical; }
+  .sf-field input:focus, .sf-field select:focus, .sf-field textarea:focus { outline: none; border-color: #2ECC71; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15); }
+  .sf-btn { padding: 0.65rem 1.4rem; border-radius: 8px; border: 1px solid #2ECC71; background: #2ECC71; color: #1F363C; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; width: auto; }
+  .sf-err { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; background: #3F2423; border: 1px solid #C0504D; color: #F5C6C3; font-size: 0.9rem; }
+</style>
+<div class="sf-card">
+  <p class="sf-lead">Got a message from someone pretending to be a recruiter, asking for money, or asking for your SSN or bank details? Tell us. PreCheckd staff review every report, and the recruiter is contacted if the report names an account we know. Reports are private to you and staff.</p>
+  <% if (error) { %><div class="sf-err"><%= error %></div><% } %>
+  <form action="/fraud/report" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="fromSafety" value="1">
+    <div class="sf-field">
+      <label for="sf-reported">Recruiter's email address</label>
+      <input type="email" id="sf-reported" name="reportedEmail" required placeholder="recruiter@company.com" value="<%= form.reportedEmail || '' %>">
+    </div>
+    <div class="sf-field">
+      <label for="sf-date">Date/time this happened <span class="sf-hint">(optional)</span></label>
+      <input type="datetime-local" id="sf-date" name="incidentDate" value="<%= form.incidentDate || '' %>">
+    </div>
+    <div class="sf-field">
+      <label for="sf-reason">Reason</label>
+      <select id="sf-reason" name="reasonCategory" required>
+        <option value="">Select a reason...</option>
+        <% [['payment-request','Asked for payment or fees'],['sensitive-info-request','Requested SSN or bank info upfront'],['impersonation','Impersonating a real company'],['ghosting','Ghosted after connecting'],['other','Other']].forEach(function (o) { %>
+          <option value="<%= o[0] %>" <%= form.reasonCategory === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="sf-field">
+      <label for="sf-desc">What happened?</label>
+      <textarea id="sf-desc" name="description" required placeholder="Describe what happened in your own words..."><%= form.description || '' %></textarea>
+    </div>
+    <div class="sf-field">
+      <label for="sf-evidence">Paste the email or message content <span class="sf-hint">(optional)</span></label>
+      <textarea id="sf-evidence" name="evidenceText" placeholder="Paste the suspicious email or message here..."><%= form.evidenceText || '' %></textarea>
+    </div>
+    <div class="sf-field">
+      <label for="sf-file">Upload a screenshot or file <span class="sf-hint">(optional, JPEG/PNG/WebP/PDF, max 5MB)</span></label>
+      <input type="file" id="sf-file" name="evidenceScreenshot" accept="image/jpeg,image/png,image/webp,application/pdf">
+    </div>
+    <button type="submit" class="sf-btn">Submit report</button>
+  </form>
+</div>

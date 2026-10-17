@@ -367,10 +367,10 @@
               const navOn = (href) => (navPath === href || navPath.startsWith(href + '/')) ? ' is-active' : '';
               const navMailBadge = navBadge(navUnreadCount + (typeof commandCenterMailUnreadCount !== 'undefined' ? commandCenterMailUnreadCount : 0));
               const navMenuItems = navLoggedInCandidate
-                ? [[navEditHref, 'Edit profile', ''], [`/candidate/${loggedInCandidateSlug}/certificate`, 'Download certificate', ''], ['/candidate-dashboard/scam-check', 'Scam-check', ''], [navReportsHref, 'Reports', navBadge(navFraudReportCount)]]
-                : [[navEditHref, 'Edit profile', ''], [navReportsHref, 'Reports', navBadge(navFraudReportCount)]];
+                ? [[navEditHref, 'Edit profile', ''], [`/candidate/${loggedInCandidateSlug}/certificate`, 'Download certificate', ''], ['/safety', 'Safety Center', '']]
+                : [[navEditHref, 'Edit profile', ''], [navReportsHref, 'Reports about you', navBadge(navFraudReportCount)]];
               const navMenuActive = navMenuItems.some((i) => navOn(i[0]));
-              const navMenuBadge = navFraudReportCount > 0 ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
+              const navMenuBadge = (!navLoggedInCandidate && navFraudReportCount > 0) ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
               const navAvatarPhoto = typeof navPhotoUrl !== 'undefined' ? navPhotoUrl : null;
               const navAvatarInitials = typeof navInitials !== 'undefined' && navInitials ? navInitials : '?';
               const navDisplayName = typeof navName !== 'undefined' ? navName : '';
@@ -421,6 +421,7 @@
         <li><a href="/">Home</a></li>
         <li><a href="/recruiter-landing">For Recruiters</a></li>
         <li><a href="/candidate-landing">For Candidates</a></li>
+        <li><a href="/fraud">Report a scam</a></li>
         <li><a href="mailto:hello@precheckd.com">Contact</a></li>
       </ul>
     </div>

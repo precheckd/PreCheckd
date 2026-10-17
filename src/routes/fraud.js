@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Candidate = require('../models/Candidate');
 const crypto = require('crypto');
 const multer = require('multer');
 const FraudReport = require('../models/FraudReport');
@@ -214,7 +215,7 @@ router.post('/request-code', async (req, res) => {
 });
 
 router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => {
-  const {
+  let {
     reporterEmail,
     reportedEmail,
     incidentDate,
@@ -228,11 +229,28 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
   // so a mistyped code doesn't cost them the report they just wrote out.
   const formValues = { reporterEmail, reportedEmail, incidentDate, reasonCategory, description, evidenceText };
 
+  // Filed from a logged-in candidate's Safety Center: their account email is
+  // already verified, so there's no code step, and the result goes back there.
+  const fromSafety = req.body.fromSafety === '1' && Boolean(req.session.candidateId);
+  let trustedCandidate = null;
+
   function renderError(message, step = 'verify') {
+    if (fromSafety) {
+      req.session.safetyFlash = { error: message, form: { reportedEmail, incidentDate, reasonCategory, description, evidenceText } };
+      return res.redirect('/safety?tab=report');
+    }
     return res.render('fraud', { error: message, success: false, couponCode: null, step, formValues });
   }
 
   try {
+    if (fromSafety) {
+      trustedCandidate = await Candidate.findById(req.session.candidateId);
+      if (!trustedCandidate || !trustedCandidate.emailVerifiedAt) {
+        return renderError('Verify your account email before filing a report.');
+      }
+      reporterEmail = trustedCandidate.email;
+    }
+
     if (!reporterEmail || !EMAIL_REGEX.test(reporterEmail.trim())) {
       return renderError('Please provide a valid email address for yourself.', 'gate');
     }
@@ -250,20 +268,23 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
 
     // Reporter-email verification — proves they actually own this address
     // before anything downstream (claim account, notification email) fires.
-    if (!req.session.fraudCode || req.session.fraudCodeEmail !== normalizedReporterEmail) {
-      return renderError('Please request a new verification code for this email address.', 'gate');
-    }
-    if (Date.now() > req.session.fraudCodeExpires) {
-      return renderError('Your verification code expired. Please request a new one.', 'gate');
-    }
-    if (!code || code.trim() !== req.session.fraudCode) {
-      return renderError('Incorrect verification code. Please try again.');
-    }
+    if (!trustedCandidate) {
+      if (!req.session.fraudCode || req.session.fraudCodeEmail !== normalizedReporterEmail) {
+        return renderError('Please request a new verification code for this email address.', 'gate');
+      }
+      if (Date.now() > req.session.fraudCodeExpires) {
+        return renderError('Your verification code expired. Please request a new one.', 'gate');
+      }
+      if (!code || code.trim() !== req.session.fraudCode) {
+        return renderError('Incorrect verification code. Please try again.');
+      }
 
-    // Single-use — clear it now so this code can't verify a second report.
-    req.session.fraudCode = null;
-    req.session.fraudCodeEmail = null;
-    req.session.fraudCodeExpires = null;
+      // Single-use — clear it now so this code can't verify a second report.
+      req.session.fraudCode = null;
+      req.session.fraudCodeEmail = null;
+      req.session.fraudCodeExpires = null;
+
+    }
 
     const normalizedReportedEmail = reportedEmail.trim().toLowerCase();
     const reportedDomain = normalizedReportedEmail.split('@')[1] || '';
@@ -381,6 +402,10 @@ router.post('/report', upload.single('evidenceScreenshot'), async (req, res) => 
       console.error('Could not send fraud report thank-you email:', emailError);
     }
 
+    if (fromSafety) {
+      req.session.safetyFiled = { couponCode };
+      return res.redirect('/safety?tab=reports&filed=1');
+    }
     res.render('fraud', { error: null, success: true, couponCode, step: 'verify', formValues: {} });
   } catch (error) {
     console.error('Error submitting fraud report:', error);
