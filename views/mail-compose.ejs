@@ -75,7 +75,22 @@
     <% } else if (!verified) { %>
       <div class="notice err">Only fully verified members (identity, phone and email) can send these emails. Finish verifying on your profile to unlock it.</div>
     <% } else { %>
-      <% if (sent) { %><div class="notice ok">Sent. When they reply, it will show up in your <a href="/mail" style="color:#BDF2D2">Mail</a>. Applying for a job? <a href="/tracker" style="color:#BDF2D2">Add it to your tracker</a>.</div><% } %>
+      <% if (sent) { %><div class="notice ok">Sent. When they reply, it will show up in your <a href="/mail" style="color:#BDF2D2">Mail</a>. <% if (!trackerGuess) { %>Applying for a job? <a href="/tracker" style="color:#BDF2D2">Add it to your tracker</a>.<% } %></div>
+      <% if (trackerGuess) { %>
+        <div class="out-card" style="margin-bottom:1rem">
+          <h2>Add this application to your tracker?</h2>
+          <p class="out-sub" style="margin-top:0">Looks like a job application. Check the details and add it, or ignore this.</p>
+          <form method="post" action="/tracker/new">
+            <div class="form-grid">
+              <div><label for="t-co">Company</label><input id="t-co" type="text" name="company" maxlength="120" required value="<%= trackerGuess.company %>"></div>
+              <div><label for="t-role">Role</label><input id="t-role" type="text" name="roleTitle" maxlength="160" value="<%= trackerGuess.roleTitle %>"></div>
+              <input type="hidden" name="status" value="applied">
+              <input type="hidden" name="appliedAt" value="<%= new Date().toISOString().slice(0, 10) %>">
+              <div class="wide"><button type="submit" class="btn">Add to tracker</button></div>
+            </div>
+          </form>
+        </div>
+      <% } %><% } %>
       <% if (error) { %><div class="notice err"><%= error %></div><% } %>
 
       <div class="out-card">

@@ -20,6 +20,31 @@ const { mailChoiceUrl } = require('../utils/outreachToken');
 const { generateCertificate } = require('../utils/certificateGenerator');
 const { brandShell, escapeHtml, FONT } = require('../utils/emailLayout');
 const { safeDisplayName } = require('./inboundEmail');
+const Application = require('../models/Application');
+const { employerDomain, norm } = require('../utils/applicationParser');
+
+// Does a message the member just sent look like a job application? If so, a
+// pre-filled tracker entry to offer (never added on its own). Returns
+// { company, roleTitle } or null; a person's free-mail address gives no company.
+const APPLY_WORDS = /\b(appl(?:y|ying|ied|ication)|position|opening|vacancy|job|role|resume|r\u00e9sum\u00e9|cv)\b/i;
+async function trackerGuess(candidateId, { toEmail, subject, body }) {
+  try {
+    if (!APPLY_WORDS.test(`${subject}\n${String(body).slice(0, 1500)}`)) return null;
+    const domain = employerDomain(toEmail);
+    const label = domain ? domain.split('.')[0] : '';
+    const company = label.length >= 2 ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+    let roleTitle = '';
+    const m = String(subject).match(/\b(?:for|re:?)\s+(?:the\s+|an?\s+)?([A-Za-z][\w&/.,'\- ]{2,80}?)(?:\s+(?:position|role|opening|job|vacancy))?\s*$/i);
+    if (m) roleTitle = m[1].trim();
+    if (company) {
+      const existing = await Application.find({ candidateId }).select('company').lean();
+      if (existing.some((a) => norm(a.company) === norm(company))) return null; // already tracked
+    }
+    return { company, roleTitle };
+  } catch (err) {
+    return null;
+  }
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const MOCK_EMAIL = process.env.MOCK_EMAIL === 'true';
@@ -181,7 +206,7 @@ async function sendNew({ candidate, alias, input, enabled }) {
     }
     if (data && data.id) { doc.emailId = data.id; await doc.save(); }
   }
-  return { ok: true, id: doc._id };
+  return { ok: true, id: doc._id, trackerGuess: await trackerGuess(candidate._id, { toEmail, subject, body }) };
 }
 
 // The recipient's choice. Returns true when applied.
@@ -212,4 +237,5 @@ async function applyChoice(mailId, choice) {
   return true;
 }
 
-module.exports = { sendNew, applyChoice, quotaFor, isFullyVerified, COMPOSE_ERRORS, MAX_BODY_CHARS, MAX_SUBJECT_CHARS, DAILY_CAP };
+module.exports = {
+  trackerGuess, sendNew, applyChoice, quotaFor, isFullyVerified, COMPOSE_ERRORS, MAX_BODY_CHARS, MAX_SUBJECT_CHARS, DAILY_CAP };

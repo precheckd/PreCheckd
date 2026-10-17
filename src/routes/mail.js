@@ -343,7 +343,7 @@ router.get('/', async (req, res) => {
 // template (services/outreach.js holds every safeguard). Once the person
 // replies, the conversation is ordinary Mail.
 
-async function renderCompose(req, res, { error = null, sent = false, form = {}, statusCode = 200 } = {}) {
+async function renderCompose(req, res, { error = null, sent = false, form = {}, statusCode = 200, trackerGuess = null } = {}) {
   if (req.ns === 'candidate') {
     const candidate = await Candidate.findById(req.ownerId);
     if (!candidate) return res.redirect('/login');
@@ -354,7 +354,7 @@ async function renderCompose(req, res, { error = null, sent = false, form = {}, 
       enabled: outreach.enabled(),
       verified: candidateCompose.isFullyVerified(candidate),
       hasResume: Boolean(candidate.resumeUrl),
-      quota, error, sent, form,
+      quota, error, sent, form, trackerGuess,
       maxBody: candidateCompose.MAX_BODY_CHARS
     });
   }
@@ -366,7 +366,7 @@ async function renderCompose(req, res, { error = null, sent = false, form = {}, 
     viewer: 'recruiter',
     enabled: outreach.enabled(),
     verified: outreach.isFullyVerified(recruiter),
-    quota, error, sent, form,
+    quota, error, sent, form, trackerGuess: null,
     templates: Object.entries(outreach.TEMPLATES).map(([key, t]) => ({ key, label: t.label, needsRole: t.needsRole })),
     maxNote: outreach.MAX_NOTE_CHARS
   });
@@ -374,7 +374,9 @@ async function renderCompose(req, res, { error = null, sent = false, form = {}, 
 
 router.get('/new', async (req, res) => {
   try {
-    return await renderCompose(req, res, { sent: req.query.sent === '1' });
+    const guess = req.query.sent === '1' ? req.session.composeTrackerGuess || null : null;
+    delete req.session.composeTrackerGuess;
+    return await renderCompose(req, res, { sent: req.query.sent === '1', trackerGuess: guess });
   } catch (error) {
     console.error('Error loading new message page:', error);
     return res.status(500).send('Server error');
@@ -398,6 +400,7 @@ router.post('/new', async (req, res) => {
       if (result.error) {
         return await renderCompose(req, res, { error: result.message || candidateCompose.COMPOSE_ERRORS[result.error] || 'Something went wrong.', form, statusCode: 400 });
       }
+      req.session.composeTrackerGuess = result.trackerGuess || null;
       return res.redirect('/mail/new?sent=1');
     }
     const recruiter = await Recruiter.findById(req.ownerId);
