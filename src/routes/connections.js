@@ -140,7 +140,7 @@ async function renderCandidateConnections(req, res) {
     isCandidate: true,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsFor('candidate', requestsData, req.query.tab, list.length)
+    ...requestsFor('candidate', requestsData, req.query.tab, list)
   });
 }
 
@@ -199,7 +199,7 @@ async function renderRecruiterConnections(req, res) {
     isCandidate: false,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsFor('recruiter', requestsData, req.query.tab, list.length)
+    ...requestsFor('recruiter', requestsData, req.query.tab, list)
   });
 }
 
