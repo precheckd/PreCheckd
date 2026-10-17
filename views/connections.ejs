@@ -1,33 +1,27 @@
 <style>
-  .net-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; }
-  .net-head { max-width: 1400px; margin: 0 auto 1.25rem; }
-  .net-head h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.35rem; }
-  .net-head p { color: #C7D1CF; font-size: 0.95rem; }
-  .net-grid { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-  .net-col h2 { font-size: 1.1rem; color: #F2F4F3; margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
-  .net-col h2 .net-count { background: #E53E3E; color: #F2F4F3; font-size: 0.75rem; font-weight: 700; padding: 0 7px; line-height: 20px; border-radius: 10px; }
-  .net-col .net-sub { color: #8FA6AC; font-size: 0.85rem; margin: 0 0 1rem; }
-  @media (max-width: 960px) {
-    .net-content { padding: 1rem; }
-    .net-grid { grid-template-columns: 1fr; }
-  }
+  .net-content { flex: 1; padding: 1.75rem 1.5rem; background: #1F363C; min-height: 100vh; }
+  .net-wrap { max-width: 1200px; margin: 0 auto; }
+  .net-wrap h1 { font-size: 1.6rem; color: #F2F4F3; margin-bottom: 1rem; }
+  .net-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #3B5860; margin-bottom: 1.25rem; }
+  .net-tab { padding: 0.65rem 1.1rem; color: #8FA6AC; text-decoration: none; font-weight: 600; font-size: 0.95rem; border-bottom: 3px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 0.45rem; }
+  .net-tab:hover { color: #F2F4F3; }
+  .net-tab.is-on { color: #F2F4F3; border-bottom-color: #2ECC71; }
+  .net-pill { background: #3B5860; color: #E8EBEA; font-size: 0.72rem; font-weight: 700; padding: 0 7px; line-height: 19px; border-radius: 10px; }
+  .net-pill.alert { background: #E53E3E; }
+  @media (max-width: 768px) { .net-content { padding: 1rem; } }
 </style>
 
 <div class="net-content">
-  <div class="net-head">
+  <div class="net-wrap">
     <h1>Connections</h1>
-    <p>Requests waiting on you on the left, your address book on the right.</p>
-  </div>
-  <div class="net-grid">
-    <section class="net-col">
-      <h2>Requests<% if (pendingCount > 0) { %><span class="net-count"><%= pendingCount %> new</span><% } %></h2>
-      <p class="net-sub"><%= isCandidate ? "Recruiters who've reached out to you, and the status of requests you've sent." : 'Candidates who want to connect with you, and the status of requests you\'ve sent.' %></p>
+    <div class="net-tabs">
+      <a href="/connections?tab=requests" class="net-tab<%= tab === 'requests' ? ' is-on' : '' %>">Requests<% if (waitingCount > 0) { %><span class="net-pill<%= pendingCount > 0 ? ' alert' : '' %>"><%= waitingCount %></span><% } %></a>
+      <a href="/connections?tab=connections" class="net-tab<%= tab === 'connections' ? ' is-on' : '' %>">Connections<% if (connectionCount > 0) { %><span class="net-pill"><%= connectionCount %></span><% } %></a>
+    </div>
+    <% if (tab === 'requests') { %>
       <%- include(isCandidate ? 'candidate-requests' : 'recruiter-requests') %>
-    </section>
-    <section class="net-col">
-      <h2>Your connections</h2>
-      <p class="net-sub"><%= isCandidate ? 'Recruiters you\'re connected with or have saved, each with a private note only you can see.' : 'Candidates you\'re connected with, each with a private note only you can see.' %></p>
+    <% } else { %>
       <%- include('connections-list') %>
-    </section>
+    <% } %>
   </div>
 </div>

@@ -34,6 +34,23 @@ function realCompany(company) {
   return company && company !== 'Not provided' ? company : null;
 }
 
+// Only requests still in play show on the Requests tab: what is waiting on
+// this member, and what they are waiting on. Accepted and declined ones drop
+// off (accepted ones become cards on the Connections tab).
+function requestsFor(viewer, data, tabParam, connectionCount) {
+  let waitingOnYou, waitingOnThem;
+  if (viewer === 'candidate') {
+    waitingOnYou = data.receivedRequests.filter((r) => r.status === 'pending' || (r.status === 'accepted' && r.fullAccessStatus === 'requested'));
+    waitingOnThem = data.sentRequests.filter((r) => r.status === 'pending');
+  } else {
+    waitingOnYou = data.requests.filter((r) => r.status === 'pending' && r.initiatedBy !== 'recruiter');
+    waitingOnThem = data.requests.filter((r) => (r.status === 'pending' && r.initiatedBy === 'recruiter') || (r.status === 'accepted' && r.fullAccessStatus === 'requested'));
+  }
+  const waitingCount = waitingOnYou.length + waitingOnThem.length;
+  const tab = ['requests', 'connections'].includes(tabParam) ? tabParam : (waitingOnYou.length > 0 ? 'requests' : 'connections');
+  return { waitingOnYou, waitingOnThem, pendingCount: waitingOnYou.length, waitingCount, connectionCount, tab };
+}
+
 // GET /connections
 router.get('/', async (req, res) => {
   try {
@@ -115,8 +132,7 @@ async function renderCandidateConnections(req, res) {
     isCandidate: true,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsData,
-    pendingCount: requestsData.receivedRequests.filter((r) => r.status === 'pending').length
+    ...requestsFor('candidate', requestsData, req.query.tab, list.length)
   });
 }
 
@@ -175,8 +191,7 @@ async function renderRecruiterConnections(req, res) {
     isCandidate: false,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsData,
-    pendingCount: requestsData.requests.filter((r) => r.status === 'pending' && r.initiatedBy !== 'recruiter').length
+    ...requestsFor('recruiter', requestsData, req.query.tab, list.length)
   });
 }
 

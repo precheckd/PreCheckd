@@ -1,400 +1,76 @@
 <style>
-  .requests-content { min-width: 0; }
-
-  .requests-header { display: none; }
-
-  .requests-header h1 {
-    font-size: 1.75rem;
-    color: #F2F4F3;
-    margin-bottom: 0.35rem;
-  }
-
-  .requests-header p {
-    color: #C7D1CF;
-    font-size: 0.95rem;
-  }
-
-  .requests-list {
-    max-width: 900px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .request-card {
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
-    scroll-margin-top: 1.5rem;
-  }
-
-  .request-card:target {
-    animation: request-card-highlight 2s ease-out;
-  }
-
-  @keyframes request-card-highlight {
-    0% { border-color: #2ECC71; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.4); }
-    100% { border-color: #3B5860; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
-  }
-
-  .request-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .request-name-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .request-photo {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .request-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .request-avatar-placeholder {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #2ECC71;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #1F363C;
-    font-size: 0.85rem;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  .request-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #F2F4F3;
-  }
-
-  .request-name a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .request-name a:hover {
-    color: #4ADE80;
-  }
-
-  .request-company {
-    font-size: 0.85rem;
-    color: #8FA6AC;
-    margin-top: 0.1rem;
-  }
-
-  .request-date {
-    font-size: 0.8rem;
-    color: #8FA6AC;
-    margin-top: 0.15rem;
-  }
-
-  .request-note {
-    background: #24404A;
-    border-left: 3px solid #4A6F7B;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    color: #C7D1CF;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-top: 0.75rem;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.35rem 0.85rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .status-pending {
-    background: #3B5F6A;
-    color: #B9C7CA;
-  }
-
-  .status-accepted {
-    background: #1E3A2E;
-    color: #4ADE80;
-  }
-
-  .status-declined {
-    background: #3A2020;
-    color: #FF8A8A;
-  }
-
-  .contact-info {
-    color: #4ADE80;
-    font-size: 0.9rem;
-    margin-top: 0.75rem;
-    font-weight: 600;
-  }
-
-  .accepted-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
-
-  .btn-message {
-    display: inline-block;
-    background: #2ECC71;
-    color: #1F363C;
-    padding: 0.5rem 1.1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .btn-message:hover {
-    background: #4ADE80;
-  }
-
-  .empty-state {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    color: #8FA6AC;
-    padding: 3rem 1.5rem;
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-  }
-
-  .empty-state a {
-    color: #4ADE80;
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  .requests-section-title {
-    max-width: 900px;
-    margin: 0 auto 1rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #F2F4F3;
-  }
-
-  .requests-section + .requests-section-title {
-    margin-top: 2.5rem;
-  }
-
-  .request-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .request-actions form {
-    display: inline;
-  }
-
-  .btn-accept {
-    background: #2ECC71;
-    color: #1F363C;
-    border: none;
-    padding: 0.6rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .btn-accept:hover { background: #4ADE80; }
-
-  .btn-decline {
-    background: transparent;
-    color: #C7D1CF;
-    border: 1px solid #4A6F7B;
-    padding: 0.6rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .btn-decline:hover { background: #24404A; color: #F2F4F3; }
-
-  .full-access-note {
-    background: #24404A;
-    border-left: 3px solid #4A6F7B;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    color: #C7D1CF;
-    font-size: 0.88rem;
-    margin-top: 1rem;
-  }
-
-  .status-requested { background: #3B5F6A; color: #B9C7CA; }
-
-  @media (max-width: 768px) {
-    .request-actions {
-      flex-direction: column;
-    }
-  }
+  .rq-group { margin-bottom: 1.5rem; }
+  .rq-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #8FA6AC; margin-bottom: 0.5rem; }
+  .rq-row { display: flex; align-items: center; gap: 0.75rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 0.45rem; }
+  .rq-av { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; overflow: hidden; background: #2ECC71; color: #1F363C; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+  .rq-av img { width: 100%; height: 100%; object-fit: cover; }
+  .rq-main { flex: 1; min-width: 0; }
+  .rq-name { color: #F2F4F3; font-weight: 600; font-size: 0.95rem; }
+  .rq-name a { color: inherit; text-decoration: none; }
+  .rq-name a:hover { color: #4ADE80; }
+  .rq-meta { color: #8FA6AC; font-size: 0.8rem; font-weight: 400; margin-left: 0.4rem; }
+  .rq-note { color: #C7D1CF; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rq-actions { display: flex; gap: 0.4rem; flex-shrink: 0; align-items: center; }
+  .rq-actions form { margin: 0; }
+  .rq-btn { border: 1px solid #4A6F7B; background: transparent; color: #C7D1CF; font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.85rem; border-radius: 6px; cursor: pointer; font-family: inherit; width: auto; }
+  .rq-btn.go { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
+  .rq-tag { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; background: #3B5F6A; color: #B9C7CA; white-space: nowrap; }
+  .rq-empty { color: #8FA6AC; padding: 2rem 0; }
+  .rq-empty a { color: #4ADE80; font-weight: 600; text-decoration: none; }
+  @media (max-width: 768px) { .rq-row { flex-wrap: wrap; } .rq-actions { width: 100%; } }
 </style>
 
-<div class="requests-content">
-  <div class="requests-header">
-    <h1>Connection Requests</h1>
-    <p>Recruiters who've reached out to you, and the status of requests you've sent.</p>
-  </div>
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const row = (request, actionsHtml) => {
+    const r = request.recruiter;
+    const av = r.photoUrl ? `<div class="rq-av"><img src="${r.photoUrl}" alt=""></div>` : `<div class="rq-av">${r.name.charAt(0)}</div>`;
+    return { r, av };
+  };
+%>
+<% if (waitingOnYou.length === 0 && waitingOnThem.length === 0) { %>
+  <div class="rq-empty">Nothing waiting. <a href="/recruiter-search">Browse recruiters</a> to send a request, or see who you're connected with on the Connections tab.</div>
+<% } %>
 
-  <div class="requests-section">
-  <div class="requests-section-title">Received from Recruiters</div>
-  <% if (receivedRequests.length === 0) { %>
-    <div class="empty-state">
-      <p>No recruiters have reached out yet.</p>
-    </div>
-  <% } else { %>
-    <div class="requests-list">
-      <% receivedRequests.forEach(function(request) { %>
-        <% const recruiter = request.recruiter; %>
-        <div class="request-card" id="request-<%= request._id %>">
-          <div class="request-top">
-            <div class="request-name-group">
-              <% if (recruiter.photoUrl) { %>
-                <div class="request-photo"><img src="<%= recruiter.photoUrl %>" alt=""></div>
-              <% } else { %>
-                <div class="request-avatar-placeholder"><%= recruiter.name.charAt(0) %></div>
-              <% } %>
-              <div>
-                <div class="request-name"><a href="/recruiter/<%= recruiter.slug %>"><%= recruiter.name %></a></div>
-                <% if (recruiter.company) { %>
-                  <div class="request-company"><%= recruiter.company %></div>
-                <% } %>
-                <div class="request-date">Received <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
-              </div>
-            </div>
-            <% if (request.status === 'pending') { %>
-              <span class="status-badge status-pending">Pending</span>
-            <% } else if (request.status === 'accepted') { %>
-              <span class="status-badge status-accepted">Accepted</span>
-            <% } else if (request.status === 'declined') { %>
-              <span class="status-badge status-declined">Declined</span>
-            <% } %>
-          </div>
-
-          <% if (request.note) { %>
-            <div class="request-note"><%= request.note %></div>
-          <% } %>
-
-          <% if (request.status === 'pending') { %>
-            <div class="request-actions">
-              <form action="/candidate-dashboard/requests/<%= request._id %>/accept" method="POST">
-                <button type="submit" class="btn-accept">Accept</button>
-              </form>
-              <form action="/candidate-dashboard/requests/<%= request._id %>/decline" method="POST">
-                <button type="submit" class="btn-decline">Decline</button>
-              </form>
-            </div>
-          <% } %>
-
+<% if (waitingOnYou.length > 0) { %>
+  <div class="rq-group">
+    <div class="rq-title">Waiting on you</div>
+    <% waitingOnYou.forEach(function (request) { const r = request.recruiter; %>
+      <div class="rq-row" id="request-<%= request._id %>">
+        <% if (r.photoUrl) { %><div class="rq-av"><img src="<%= r.photoUrl %>" alt=""></div><% } else { %><div class="rq-av"><%= r.name.charAt(0) %></div><% } %>
+        <div class="rq-main">
+          <div class="rq-name"><a href="/recruiter/<%= r.slug %>"><%= r.name %></a><span class="rq-meta"><%= r.company ? r.company + ' · ' : '' %><%= fmt(request.createdAt) %></span></div>
           <% if (request.status === 'accepted') { %>
-            <% if (recruiter.contact) { %>
-              <div class="contact-info">✓ Shared contact: <%= [recruiter.contact.email, recruiter.contact.phone].filter(Boolean).join(' · ') %></div>
-            <% } %>
-            <div class="accepted-actions">
-              <a href="/messages/compose?connectionRequestId=<%= request._id %>" class="btn-message">Send Message</a>
-            </div>
-          <% } %>
-
-          <% if (request.status === 'accepted' && request.fullAccessStatus === 'requested') { %>
-            <div class="full-access-note">
-              <%= recruiter.name %> is requesting full access to your video introduction, interview answers, and resume.
-            </div>
-            <div class="request-actions">
-              <form action="/candidate-dashboard/requests/<%= request._id %>/grant-full-access" method="POST">
-                <button type="submit" class="btn-accept">Grant Full Access</button>
-              </form>
-              <form action="/candidate-dashboard/requests/<%= request._id %>/deny-full-access" method="POST">
-                <button type="submit" class="btn-decline">Deny</button>
-              </form>
-            </div>
-          <% } else if (request.status === 'accepted' && request.fullAccessStatus === 'granted') { %>
-            <div class="full-access-note">You've granted <%= recruiter.name %> full access to your video and resume.</div>
-          <% } else if (request.status === 'accepted' && request.fullAccessStatus === 'denied') { %>
-            <div class="full-access-note">You denied <%= recruiter.name %>'s request for full access.</div>
+            <div class="rq-note">Wants full access to your video introduction, interview answers and resume.</div>
+          <% } else if (request.note) { %>
+            <div class="rq-note" title="<%= request.note %>"><%= request.note %></div>
           <% } %>
         </div>
-      <% }); %>
-    </div>
-  <% } %>
-  </div>
-
-  <div class="requests-section-title">Sent by You</div>
-  <% if (sentRequests.length === 0) { %>
-    <div class="empty-state">
-      <p>You haven't sent any connection requests yet. <a href="/recruiter-search">Browse recruiters</a> to get started.</p>
-    </div>
-  <% } else { %>
-    <div class="requests-list">
-      <% sentRequests.forEach(function(request) { %>
-        <% const recruiter = request.recruiter; %>
-        <div class="request-card" id="request-<%= request._id %>">
-          <div class="request-top">
-            <div class="request-name-group">
-              <% if (recruiter.photoUrl) { %>
-                <div class="request-photo"><img src="<%= recruiter.photoUrl %>" alt=""></div>
-              <% } else { %>
-                <div class="request-avatar-placeholder"><%= recruiter.name.charAt(0) %></div>
-              <% } %>
-              <div>
-                <div class="request-name"><a href="/recruiter/<%= recruiter.slug %>"><%= recruiter.name %></a></div>
-                <% if (recruiter.company) { %>
-                  <div class="request-company"><%= recruiter.company %></div>
-                <% } %>
-                <div class="request-date">Sent <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
-              </div>
-            </div>
-            <% if (request.status === 'pending') { %>
-              <span class="status-badge status-pending">Pending</span>
-            <% } else if (request.status === 'accepted') { %>
-              <span class="status-badge status-accepted">Accepted</span>
-            <% } else if (request.status === 'declined') { %>
-              <span class="status-badge status-declined">Declined</span>
-            <% } %>
-          </div>
-
-          <% if (request.note) { %>
-            <div class="request-note"><%= request.note %></div>
-          <% } %>
-
+        <div class="rq-actions">
           <% if (request.status === 'accepted') { %>
-            <% if (recruiter.contact) { %>
-              <div class="contact-info">✓ Shared contact: <%= [recruiter.contact.email, recruiter.contact.phone].filter(Boolean).join(' · ') %></div>
-            <% } %>
-            <div class="accepted-actions">
-              <a href="/messages/compose?connectionRequestId=<%= request._id %>" class="btn-message">Send Message</a>
-            </div>
+            <form action="/candidate-dashboard/requests/<%= request._id %>/grant-full-access" method="POST"><button class="rq-btn go" type="submit">Grant access</button></form>
+            <form action="/candidate-dashboard/requests/<%= request._id %>/deny-full-access" method="POST"><button class="rq-btn" type="submit">Deny</button></form>
+          <% } else { %>
+            <form action="/candidate-dashboard/requests/<%= request._id %>/accept" method="POST"><button class="rq-btn go" type="submit">Accept</button></form>
+            <form action="/candidate-dashboard/requests/<%= request._id %>/decline" method="POST"><button class="rq-btn" type="submit">Decline</button></form>
           <% } %>
         </div>
-      <% }); %>
-    </div>
-  <% } %>
-</div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<% if (waitingOnThem.length > 0) { %>
+  <div class="rq-group">
+    <div class="rq-title">Sent by you, waiting for a reply</div>
+    <% waitingOnThem.forEach(function (request) { const r = request.recruiter; %>
+      <div class="rq-row" id="request-<%= request._id %>">
+        <% if (r.photoUrl) { %><div class="rq-av"><img src="<%= r.photoUrl %>" alt=""></div><% } else { %><div class="rq-av"><%= r.name.charAt(0) %></div><% } %>
+        <div class="rq-main">
+          <div class="rq-name"><a href="/recruiter/<%= r.slug %>"><%= r.name %></a><span class="rq-meta"><%= r.company ? r.company + ' · ' : '' %>Sent <%= fmt(request.createdAt) %></span></div>
+        </div>
+        <div class="rq-actions"><span class="rq-tag">Pending</span></div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>

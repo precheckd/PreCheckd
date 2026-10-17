@@ -1,308 +1,63 @@
 <style>
-  .requests-content { min-width: 0; }
-
-  .requests-header { display: none; }
-
-  .requests-header h1 {
-    font-size: 1.75rem;
-    color: #F2F4F3;
-    margin-bottom: 0.35rem;
-  }
-
-  .requests-header p {
-    color: #C7D1CF;
-    font-size: 0.95rem;
-  }
-
-  .requests-list {
-    max-width: 900px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .request-card {
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
-    scroll-margin-top: 1.5rem;
-  }
-
-  .request-card:target {
-    animation: request-card-highlight 2s ease-out;
-  }
-
-  @keyframes request-card-highlight {
-    0% { border-color: #2ECC71; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.4); }
-    100% { border-color: #3B5860; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
-  }
-
-  .request-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .request-name-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .request-photo {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .request-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .request-avatar-placeholder {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #4A6F7B;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #C7D1CF;
-    font-size: 0.75rem;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
-  .request-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #F2F4F3;
-  }
-
-  .request-date {
-    font-size: 0.8rem;
-    color: #8FA6AC;
-    margin-top: 0.15rem;
-  }
-
-  .anonymized-note {
-    font-size: 0.78rem;
-    color: #8FA6AC;
-    font-style: italic;
-    margin-bottom: 0.75rem;
-  }
-
-  .request-note {
-    background: #24404A;
-    border-left: 3px solid #4A6F7B;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    color: #C7D1CF;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-  }
-
-  .request-history-preview {
-    margin-bottom: 1rem;
-  }
-
-  .history-line {
-    color: #C7D1CF;
-    font-size: 0.88rem;
-    padding: 0.25rem 0;
-  }
-
-  .employer-hidden {
-    color: #8FA6AC;
-    font-style: italic;
-  }
-
-  .request-actions {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .request-actions form {
-    display: inline;
-  }
-
-  .btn-accept {
-    background: #2ECC71;
-    color: #1F363C;
-    border: none;
-    padding: 0.6rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .btn-accept:hover {
-    background: #4ADE80;
-  }
-
-  .btn-decline {
-    background: transparent;
-    color: #C7D1CF;
-    border: 1px solid #4A6F7B;
-    padding: 0.6rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-  }
-
-  .btn-decline:hover {
-    background: #24404A;
-    color: #F2F4F3;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.35rem 0.85rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .status-accepted {
-    background: #1E3A2E;
-    color: #4ADE80;
-  }
-
-  .status-declined {
-    background: #3A2020;
-    color: #FF8A8A;
-  }
-
-  .contact-info {
-    color: #8FA6AC;
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-  }
-
-  .empty-state {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    color: #8FA6AC;
-    padding: 3rem 1.5rem;
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-  }
-
-  @media (max-width: 768px) {
-    .request-actions {
-      flex-direction: column;
-    }
-  }
+  .rq-group { margin-bottom: 1.5rem; }
+  .rq-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #8FA6AC; margin-bottom: 0.5rem; }
+  .rq-row { display: flex; align-items: center; gap: 0.75rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 0.45rem; }
+  .rq-av { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; overflow: hidden; background: #2ECC71; color: #1F363C; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+  .rq-av img { width: 100%; height: 100%; object-fit: cover; }
+  .rq-main { flex: 1; min-width: 0; }
+  .rq-name { color: #F2F4F3; font-weight: 600; font-size: 0.95rem; }
+  .rq-meta { color: #8FA6AC; font-size: 0.8rem; font-weight: 400; margin-left: 0.4rem; }
+  .rq-note { color: #C7D1CF; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rq-hint { color: #8FA6AC; font-size: 0.78rem; }
+  .rq-actions { display: flex; gap: 0.4rem; flex-shrink: 0; align-items: center; }
+  .rq-actions form { margin: 0; }
+  .rq-btn { border: 1px solid #4A6F7B; background: transparent; color: #C7D1CF; font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.85rem; border-radius: 6px; cursor: pointer; font-family: inherit; width: auto; }
+  .rq-btn.go { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
+  .rq-tag { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; background: #3B5F6A; color: #B9C7CA; white-space: nowrap; }
+  .rq-empty { color: #8FA6AC; padding: 2rem 0; }
+  .rq-empty a { color: #4ADE80; font-weight: 600; text-decoration: none; }
+  @media (max-width: 768px) { .rq-row { flex-wrap: wrap; } .rq-actions { width: 100%; } }
 </style>
 
-<div class="requests-content">
-  <div class="requests-header">
-    <h1>Connection Requests</h1>
-    <p>Candidates who want to connect with you on PreCheckd.</p>
-  </div>
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const jobsLine = (c) => (c.workHistory || []).slice(0, 2).map((j) => j.jobTitle).filter(Boolean).join(' · ');
+%>
+<% if (waitingOnYou.length === 0 && waitingOnThem.length === 0) { %>
+  <div class="rq-empty">Nothing waiting. <a href="/candidate-search">Find candidates</a> to send a request, or see who you're connected with on the Connections tab.</div>
+<% } %>
 
-  <% if (requests.length === 0) { %>
-    <div class="empty-state">
-      <p>No connection requests yet.</p>
-    </div>
-  <% } else { %>
-    <div class="requests-list">
-      <% requests.forEach(function(request) { %>
-        <% const candidate = request.candidate; %>
-        <div class="request-card" id="request-<%= request._id %>">
-          <div class="request-top">
-            <div class="request-name-group">
-              <% if (candidate.photoUrl) { %>
-                <div class="request-photo"><img src="<%= candidate.photoUrl %>" alt=""></div>
-              <% } else { %>
-                <div class="request-avatar-placeholder"><%= request.status === 'pending' ? '?' : candidate.displayName.charAt(0) %></div>
-              <% } %>
-              <div>
-                <div class="request-name"><%= candidate.displayName %></div>
-                <div class="request-date">Requested <%= request.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></div>
-              </div>
-            </div>
-            <% if (request.status === 'accepted') { %>
-              <span class="status-badge status-accepted">Accepted</span>
-            <% } else if (request.status === 'declined') { %>
-              <span class="status-badge status-declined">Declined</span>
-            <% } %>
-          </div>
-
-          <% if (request.status === 'pending') { %>
-            <p class="anonymized-note">Identity and employer names are hidden until you respond to this request.</p>
-          <% } %>
-
-          <% if (candidate.workHistory && candidate.workHistory.length > 0) { %>
-            <div class="request-history-preview">
-              <% candidate.workHistory.forEach(function(job) { %>
-                <div class="history-line">
-                  <%= job.jobTitle %> at
-                  <% if (job.employerName) { %>
-                    <%= job.employerName %>
-                  <% } else { %>
-                    <span class="employer-hidden">[employer hidden]</span>
-                  <% } %>
-                  (<%= job.startDate %> — <%= job.endDate || 'Present' %>)
-                </div>
-              <% }); %>
-            </div>
-          <% } %>
-
-          <% if (request.note) { %>
-            <div class="request-note"><%= request.note %></div>
-          <% } %>
-
-          <% if (request.status !== 'pending' && (candidate.email || candidate.phone)) { %>
-            <div class="contact-info">
-              Shared contact: <% if (candidate.email) { %><%= candidate.email %><% } %>
-              <% if (candidate.email && candidate.phone) { %> · <% } %>
-              <% if (candidate.phone) { %><%= candidate.phone %><% } %>
-            </div>
-          <% } %>
-
-          <% if (request.status === 'pending') { %>
-            <div class="request-actions">
-              <form action="/recruiter-dashboard/requests/<%= request._id %>/accept" method="POST">
-                <button type="submit" class="btn-accept">Accept</button>
-              </form>
-              <form action="/recruiter-dashboard/requests/<%= request._id %>/decline" method="POST">
-                <button type="submit" class="btn-decline">Decline</button>
-              </form>
-            </div>
-          <% } %>
-
-          <% if (request.status === 'accepted') { %>
-            <div class="request-actions">
-              <a href="/recruiter-dashboard/requests/<%= request._id %>/candidate" class="btn-accept" style="text-decoration: none; display: inline-block;">View Full Profile</a>
-              <% if (request.fullAccessStatus === 'requested') { %>
-                <span class="status-badge" style="background: #3B5F6A; color: #B9C7CA;">Full Access Requested</span>
-              <% } else if (request.fullAccessStatus === 'granted') { %>
-                <span class="status-badge status-accepted">Full Access Granted</span>
-              <% } else if (request.fullAccessStatus === 'denied') { %>
-                <span class="status-badge status-declined">Full Access Denied</span>
-              <% } %>
-            </div>
-          <% } %>
+<% if (waitingOnYou.length > 0) { %>
+  <div class="rq-group">
+    <div class="rq-title">Waiting on you</div>
+    <% waitingOnYou.forEach(function (request) { const c = request.candidate; %>
+      <div class="rq-row" id="request-<%= request._id %>">
+        <% if (c.photoUrl) { %><div class="rq-av"><img src="<%= c.photoUrl %>" alt=""></div><% } else { %><div class="rq-av">?</div><% } %>
+        <div class="rq-main">
+          <div class="rq-name"><%= c.displayName %><span class="rq-meta"><%= jobsLine(c) ? jobsLine(c) + ' · ' : '' %><%= fmt(request.createdAt) %></span></div>
+          <% if (request.note) { %><div class="rq-note" title="<%= request.note %>"><%= request.note %></div><% } %>
+          <div class="rq-hint">Identity and employer names are hidden until you respond.</div>
         </div>
-      <% }); %>
-    </div>
-  <% } %>
-</div>
+        <div class="rq-actions">
+          <form action="/recruiter-dashboard/requests/<%= request._id %>/accept" method="POST"><button class="rq-btn go" type="submit">Accept</button></form>
+          <form action="/recruiter-dashboard/requests/<%= request._id %>/decline" method="POST"><button class="rq-btn" type="submit">Decline</button></form>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<% if (waitingOnThem.length > 0) { %>
+  <div class="rq-group">
+    <div class="rq-title">Waiting for a reply</div>
+    <% waitingOnThem.forEach(function (request) { const c = request.candidate; %>
+      <div class="rq-row" id="request-<%= request._id %>">
+        <% if (c.photoUrl) { %><div class="rq-av"><img src="<%= c.photoUrl %>" alt=""></div><% } else { %><div class="rq-av"><%= request.status === 'pending' ? '?' : c.displayName.charAt(0) %></div><% } %>
+        <div class="rq-main">
+          <div class="rq-name"><%= c.displayName %><span class="rq-meta"><%= request.status === 'accepted' ? 'Full access requested' : 'Sent ' + fmt(request.createdAt) %></span></div>
+        </div>
+        <div class="rq-actions"><span class="rq-tag">Pending</span></div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
