@@ -289,8 +289,10 @@
 <div class="conn-content">
   <% if (entries.length === 0) { %>
     <div class="conn-empty">
-      <% if (isCandidate) { %>
-        No connections or saved recruiters yet. <a href="/recruiter-search">Browse recruiters</a> to get started.
+      <% if (tab === 'saved') { %>
+        Nothing saved yet. Tap Save on a recruiter's profile to keep them here without sending a request. <a href="/recruiter-search">Browse recruiters</a>
+      <% } else if (isCandidate) { %>
+        No connections yet. <a href="/recruiter-search">Browse recruiters</a> to get started.
       <% } else { %>
         No connections yet. <a href="/candidate-search">Find candidates</a> to get started.
       <% } %>
@@ -366,6 +368,9 @@
                     <button type="submit" class="conn-btn">Request Full Access</button>
                   </form>
                 <% } %>
+              <% } %>
+              <% if (isCandidate && !entry.connected) { %>
+                <a class="conn-btn" href="/recruiter/<%= entry.slug %>">View &amp; connect</a>
               <% } %>
               <% if (isCandidate && entry.saved) { %>
                 <button type="button" class="conn-btn conn-btn-danger" data-unsave="<%= entry.slug %>" data-still-connected="<%= entry.connected ? 'true' : 'false' %>">Remove from saved</button>

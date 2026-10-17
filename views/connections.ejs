@@ -15,8 +15,9 @@
   <div class="net-wrap">
     <h1>Connections</h1>
     <div class="net-tabs">
-      <a href="/connections?tab=requests" class="net-tab<%= tab === 'requests' ? ' is-on' : '' %>">Requests<% if (waitingCount > 0) { %><span class="net-pill<%= pendingCount > 0 ? ' alert' : '' %>"><%= waitingCount %></span><% } %></a>
       <a href="/connections?tab=connections" class="net-tab<%= tab === 'connections' ? ' is-on' : '' %>">Connections<% if (connectionCount > 0) { %><span class="net-pill"><%= connectionCount %></span><% } %></a>
+      <% if (isCandidate) { %><a href="/connections?tab=saved" class="net-tab<%= tab === 'saved' ? ' is-on' : '' %>">Saved<% if (savedCount > 0) { %><span class="net-pill"><%= savedCount %></span><% } %></a><% } %>
+      <a href="/connections?tab=requests" class="net-tab<%= tab === 'requests' ? ' is-on' : '' %>">Requests<% if (waitingCount > 0) { %><span class="net-pill<%= pendingCount > 0 ? ' alert' : '' %>"><%= waitingCount %></span><% } %></a>
     </div>
     <% if (tab === 'requests') { %>
       <%- include(isCandidate ? 'candidate-requests' : 'recruiter-requests') %>

@@ -37,7 +37,7 @@ function realCompany(company) {
 // Only requests still in play show on the Requests tab: what is waiting on
 // this member, and what they are waiting on. Accepted and declined ones drop
 // off (accepted ones become cards on the Connections tab).
-function requestsFor(viewer, data, tabParam, connectionCount) {
+function requestsFor(viewer, data, tabParam, list) {
   let waitingOnYou, waitingOnThem;
   if (viewer === 'candidate') {
     waitingOnYou = data.receivedRequests.filter((r) => r.status === 'pending' || (r.status === 'accepted' && r.fullAccessStatus === 'requested'));
@@ -47,8 +47,16 @@ function requestsFor(viewer, data, tabParam, connectionCount) {
     waitingOnThem = data.requests.filter((r) => (r.status === 'pending' && r.initiatedBy === 'recruiter') || (r.status === 'accepted' && r.fullAccessStatus === 'requested'));
   }
   const waitingCount = waitingOnYou.length + waitingOnThem.length;
-  const tab = ['requests', 'connections'].includes(tabParam) ? tabParam : (waitingOnYou.length > 0 ? 'requests' : 'connections');
-  return { waitingOnYou, waitingOnThem, pendingCount: waitingOnYou.length, waitingCount, connectionCount, tab };
+  // Tabs: Connections (accepted), Saved (bookmarked, not connected; candidates only), Requests.
+  const connectedList = list.filter((e) => e.connected);
+  const savedList = list.filter((e) => e.saved && !e.connected);
+  const tabs = viewer === 'candidate' ? ['connections', 'saved', 'requests'] : ['connections', 'requests'];
+  const tab = tabs.includes(tabParam) ? tabParam : (waitingOnYou.length > 0 ? 'requests' : 'connections');
+  return {
+    waitingOnYou, waitingOnThem, pendingCount: waitingOnYou.length, waitingCount, tab,
+    connectionCount: connectedList.length, savedCount: savedList.length,
+    entries: tab === 'saved' ? savedList : connectedList
+  };
 }
 
 // GET /connections
