@@ -131,6 +131,21 @@
       color: #1F363C;
     }
 
+    .hdr-search { flex: 1 1 280px; max-width: 420px; margin: 0 1.25rem; position: relative; }
+    .hdr-search input {
+      width: 100%;
+      padding: 0.6rem 0.9rem 0.6rem 2.3rem;
+      border: 1px solid #3B5860;
+      border-radius: 8px;
+      background: #2A4750;
+      color: #F2F4F3;
+      font-size: 0.92rem;
+      font-family: inherit;
+    }
+    .hdr-search input::placeholder { color: #8FA6AC; }
+    .hdr-search input:focus { outline: none; border-color: #2ECC71; background: #24404A; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15); }
+    .hdr-search svg { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8FA6AC; pointer-events: none; }
+
     .nav-more { position: relative; }
     .nav-more summary { list-style: none; }
     .nav-more summary::-webkit-details-marker { display: none; }
@@ -269,6 +284,8 @@
         gap: 0.75rem;
       }
 
+      .hdr-search { order: 3; flex: 1 1 100%; max-width: none; margin: 0; }
+
       .logo-icon {
         width: 32px;
         height: 32px;
@@ -305,6 +322,13 @@
         <div class="logo-tagline">Fixing hiring one verification at a time</div>
       </div>
     </a>
+    <% if ((typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug && !(typeof commandCenterIsClaimAccount !== 'undefined' && commandCenterIsClaimAccount)) || (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug)) { %>
+      <% const hdrIsCandidate = typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug; %>
+      <form class="hdr-search" action="<%= hdrIsCandidate ? '/recruiter-search' : '/candidate-search' %>" method="get" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" name="q" maxlength="100" placeholder="<%= hdrIsCandidate ? 'Search verified recruiters by name or company' : 'Search candidates by skill or title' %>" aria-label="<%= hdrIsCandidate ? 'Search recruiters' : 'Search candidates' %>">
+      </form>
+    <% } %>
     <nav class="header-nav">
       <%
         const navLoggedInRecruiter = typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug;
@@ -346,7 +370,6 @@
               <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Application Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } %>
             <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
-            <a href="<%= navSearchHref %>" class="nav-btn-outline<%= navOn(navSearchHref) %>">Search</a>
             <details class="nav-more">
               <summary class="nav-btn-outline<%= navMoreActive ? ' is-active' : '' %>">More &#9662;<%- navMoreBadge %></summary>
               <div class="nav-more-menu">
