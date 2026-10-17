@@ -237,6 +237,7 @@
 
 <%
   const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const isRecruiter = viewer === 'recruiter';
 %>
 
 <div class="mail-content">
@@ -244,12 +245,12 @@
     <h1>Mail</h1>
     <p>
       Everything sent to you on PreCheckd, in one place.
-      <% if (aliasAddress) { %>Use <span class="mail-address"><%= aliasAddress %></span> on job applications instead of your real email.<% } %>
+      <% if (aliasAddress && isRecruiter) { %>Replies to your outreach arrive here. Your PreCheckd address is <span class="mail-address"><%= aliasAddress %></span>.<% } else if (aliasAddress) { %>Use <span class="mail-address"><%= aliasAddress %></span> on job applications instead of your real email.<% } %>
     </p>
   </div>
 
   <div class="mail-preview-note">
-    Mail sent to your PreCheckd address is no longer forwarded to your real email. It stays here, and your Monday and Thursday emails tell you when something is waiting.
+    <% if (isRecruiter) { %>Mail sent to your PreCheckd address is not forwarded to your real email. It stays here, and your daily email tells you when replies are waiting.<% } else { %>Mail sent to your PreCheckd address is no longer forwarded to your real email. It stays here, and your Monday and Thursday emails tell you when something is waiting.<% } %>
   </div>
 
   <% if (undo) { %>
@@ -264,11 +265,11 @@
 
   <div class="mail-columns">
     <section class="mail-column verified-column">
-      <h2>Verified <% if (leftUnread > 0) { %><span class="column-count"><%= leftUnread > 9 ? '9+' : leftUnread %></span><% } %></h2>
-      <p class="column-note">Your PreCheckd connections and recruiters we have verified.</p>
+      <h2><%= isRecruiter ? 'PreCheckd members' : 'Verified' %> <% if (leftUnread > 0) { %><span class="column-count"><%= leftUnread > 9 ? '9+' : leftUnread %></span><% } %></h2>
+      <p class="column-note"><%= isRecruiter ? 'Candidates you are connected with on PreCheckd.' : 'Your PreCheckd connections and recruiters we have verified.' %></p>
 
       <% if (left.length === 0) { %>
-        <div class="mail-empty">Nothing here yet. Conversations with your connections and mail from verified recruiters will show up in this column.</div>
+        <div class="mail-empty"><%= isRecruiter ? 'Nothing here yet. Conversations with candidates you connect with will show up in this column.' : 'Nothing here yet. Conversations with your connections and mail from verified recruiters will show up in this column.' %></div>
       <% } else { %>
         <div class="mail-list">
           <% left.forEach(function(row) { %>
@@ -292,11 +293,11 @@
     </section>
 
     <section class="mail-column">
-      <h2>Not verified <% if (rightUnread > 0) { %><span class="column-count quiet"><%= rightUnread > 9 ? '9+' : rightUnread %></span><% } %></h2>
-      <p class="column-note">We could not confirm who sent these. Be careful with links, attachments and requests for personal information.</p>
+      <h2><%= isRecruiter ? 'Outside replies' : 'Not verified' %> <% if (rightUnread > 0) { %><span class="column-count quiet"><%= rightUnread > 9 ? '9+' : rightUnread %></span><% } %></h2>
+      <p class="column-note"><%= isRecruiter ? 'Replies to your outreach and other mail from people who are not on PreCheckd. Be careful with links and attachments.' : 'We could not confirm who sent these. Be careful with links, attachments and requests for personal information.' %></p>
 
       <% if (right.length === 0) { %>
-        <div class="mail-empty">No outside mail yet. Job application confirmations and other mail sent to your PreCheckd address will show up here.</div>
+        <div class="mail-empty"><%= isRecruiter ? 'No replies yet. Answers to your outreach emails will show up here.' : 'No outside mail yet. Job application confirmations and other mail sent to your PreCheckd address will show up here.' %></div>
       <% } else { %>
         <div class="mail-list">
           <% right.forEach(function(row) { %>
@@ -308,6 +309,7 @@
               <div class="mail-row-subject"><%= row.subject %></div>
               <div class="mail-row-preview"><%= row.preview %></div>
               <% if (row.trackerPending) { %><span class="row-tag verified">Tracker update waiting</span><% } %>
+              <% if (row.outreachReply) { %><span class="row-tag verified">Reply to your outreach</span><% } %>
               <% if (row.attachmentCount > 0) { %><span class="row-tag"><%= row.attachmentCount %> attachment<%= row.attachmentCount === 1 ? '' : 's' %></span><% } %>
             </a>
           <% }); %>

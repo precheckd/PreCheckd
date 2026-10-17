@@ -127,6 +127,11 @@ app.use(async (req, res, next) => {
           ]);
           res.locals.commandCenterUnreadCount = unreadCount;
           res.locals.commandCenterPendingRequestCount = pendingRequestCount;
+          // Unread replies to their outreach (outside junk never counts).
+          res.locals.commandCenterMailUnreadCount = await MailMessage.countDocuments({
+            namespace: 'recruiter', ownerId: req.session.recruiterId, direction: 'in',
+            outreachReply: true, flagged: false, deletedAt: null, readAt: null
+          });
         }
       }
     }

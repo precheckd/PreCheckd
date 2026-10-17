@@ -27,6 +27,7 @@ const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const { parseAddress } = require('../utils/mailAlias');
 const { unwrapForwarded } = require('../utils/forwardedMail');
+const OutreachMessage = require('../models/OutreachMessage');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Most messages delivered to one address per rolling 24 hours; the rest are
@@ -191,6 +192,13 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
     ? await suggestFor({ ownerId: aliasRow.ownerId, mail: { ...readAs, referencesHeader: references, inReplyToHeader: inReplyTo } })
     : null;
 
+  // A recruiter's mail from someone they emailed through outreach is a reply.
+  // A lookup failure must never stop delivery, so it just means "not marked".
+  let outreachReply = false;
+  if (aliasRow.namespace === 'recruiter' && sender.address) {
+    outreachReply = Boolean(await OutreachMessage.exists({ recruiterId: aliasRow.ownerId, toEmail: sender.address, status: 'sent' }).catch(() => false));
+  }
+
   await MailMessage.updateOne(
     { emailId, aliasId: aliasRow._id },
     {
@@ -210,6 +218,7 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
         messageIdHeader: messageIdOf(full),
         referencesHeader: references,
         inReplyToHeader: inReplyTo,
+        outreachReply,
         originalFromAddress: original ? original.fromAddress : null,
         originalFromName: original ? (original.fromName || null) : null,
         ...(suggestion ? { suggestion } : {}),

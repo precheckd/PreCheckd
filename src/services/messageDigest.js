@@ -10,6 +10,7 @@
 // - The claim on lastMessageDigestAt is atomic, so if more than one server
 //   instance runs this at once, only one of them sends.
 const Message = require('../models/Message');
+const MailMessage = require('../models/MailMessage');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const { sendMessageDigestEmail } = require('./emailService');
@@ -57,7 +58,16 @@ async function runMessageDigest({ now = new Date() } = {}) {
     sentAt: { $lte: new Date(now.getTime() - MIN_UNREAD_AGE_MS) }
   });
 
-  if (unread.length === 0) return { sent: 0, skipped: 0 };
+  // Replies to a recruiter's outreach emails waiting in their Mail. Counted
+  // per recruiter and never named: the sender and subject are written by an
+  // outsider, so they stay out of the email.
+  const replies = await MailMessage.find({
+    namespace: 'recruiter', direction: 'in', outreachReply: true, flagged: false,
+    deletedAt: null, readAt: null,
+    receivedAt: { $lte: new Date(now.getTime() - MIN_UNREAD_AGE_MS) }
+  });
+
+  if (unread.length === 0 && replies.length === 0) return { sent: 0, skipped: 0 };
 
   const names = await senderNames(unread);
 
@@ -75,6 +85,14 @@ async function runMessageDigest({ now = new Date() } = {}) {
     const senders = byRecipient.get(key).senders;
     if (!senders.has(senderKey)) senders.set(senderKey, { name: senderName, count: 0 });
     senders.get(senderKey).count += 1;
+  });
+
+  replies.forEach((m) => {
+    const key = `recruiter:${m.ownerId}`;
+    if (!byRecipient.has(key)) byRecipient.set(key, { type: 'recruiter', id: m.ownerId, senders: new Map() });
+    const senders = byRecipient.get(key).senders;
+    if (!senders.has('outreach-replies')) senders.set('outreach-replies', { name: 'Replies to your outreach', count: 0 });
+    senders.get('outreach-replies').count += 1;
   });
 
   let sent = 0;

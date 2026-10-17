@@ -7,16 +7,19 @@ const MailMessage = require('../models/MailMessage');
 const MailAlias = require('../models/MailAlias');
 const MailReport = require('../models/MailReport');
 const Candidate = require('../models/Candidate');
+const Recruiter = require('../models/Recruiter');
 const { addressFor } = require('../utils/mailAlias');
 const { warningsFor } = require('../utils/messageSafety');
 const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = require('../services/mailReply');
 
-// The merged Inbox + Mail page (roadmap #5), candidate side first.
+// The merged Inbox + Mail page (roadmap #5 for candidates, #4 for recruiters).
 //   LEFT  = verified: conversations with connected PreCheckd members, plus mail
 //           from verified recruiters.
 //   RIGHT = not verified: all other outside mail; mail our checks flagged sits
 //           in a collapsed group at the bottom.
-// The existing /messages Inbox stays as it is until this page replaces it.
+// Recruiters get the same page: LEFT = PreCheckd conversations, RIGHT = outside
+// mail, led by replies to their outreach emails. Everything below works on
+// req.ns ('candidate' or 'recruiter') so one page serves both.
 
 const LIST_LIMIT = 100;
 
@@ -31,13 +34,32 @@ const REPLY_ERRORS = {
   send_failed: 'Something went wrong sending your reply. Please try again.'
 };
 
-function requireCandidate(req, res, next) {
-  if (req.session.candidateId) return next();
-  if (req.session.recruiterId) return res.redirect('/messages');
-  return res.redirect('/login');
+// Candidates and fully set-up recruiters share this page. req.ns / req.ownerId
+// say whose mail it is; every query below is scoped to them.
+async function requireMember(req, res, next) {
+  try {
+    if (req.session.candidateId) {
+      req.ns = 'candidate';
+      req.ownerId = req.session.candidateId;
+      return next();
+    }
+    if (req.session.recruiterId) {
+      const recruiter = await Recruiter.findById(req.session.recruiterId);
+      if (!recruiter) return res.redirect('/login');
+      // A claim account has no PreCheckd address or conversations yet.
+      if (recruiter.accountTier === 'unverified_claim') return res.redirect('/recruiter-dashboard/claim');
+      req.ns = 'recruiter';
+      req.ownerId = req.session.recruiterId;
+      return next();
+    }
+    return res.redirect('/login');
+  } catch (error) {
+    console.error('Error checking mail access:', error);
+    return res.status(500).send('Server error');
+  }
 }
 
-router.use(requireCandidate);
+router.use(requireMember);
 
 function oneLine(text, max) {
   const s = String(text || '').replace(/\s+/g, ' ').trim();
@@ -55,30 +77,36 @@ function mailRow(m) {
     unread: !m.readAt,
     kind: 'mail',
     recruiterName: m.recruiterName,
+    outreachReply: Boolean(m.outreachReply),
     attachmentCount: (m.attachments || []).length,
     trackerPending: Boolean(m.suggestion && m.suggestion.action && m.suggestion.state === 'pending')
   };
 }
 
 // One row per accepted connection that has messages, plus Trust & Safety
-// dispute messages: the same rows the existing Inbox shows.
-async function conversationRows(candidateId) {
-  const id = candidateId.toString();
-  const connections = await ConnectionRequest.find({ candidateId: id, status: 'accepted' }).populate('recruiterId');
+// dispute messages: the same rows the existing Inbox shows. `type` is who is
+// looking ('candidate' or 'recruiter'); the other side of each connection is
+// the opposite kind.
+async function conversationRows(type, ownerId) {
+  const id = ownerId.toString();
+  const isRecruiter = type === 'recruiter';
+  const connections = await ConnectionRequest.find(
+    isRecruiter ? { recruiterId: id, status: 'accepted' } : { candidateId: id, status: 'accepted' }
+  ).populate(isRecruiter ? 'candidateId' : 'recruiterId');
   const connById = new Map(connections.map((c) => [c._id.toString(), c]));
 
   const [convoMessages, disputeMessages] = await Promise.all([
     connections.length > 0
       ? Message.find({ connectionRequestId: { $in: connections.map((c) => c._id) } }).sort({ _id: -1 })
       : [],
-    Message.find({ recipientType: 'candidate', recipientId: id, fraudReportId: { $ne: null } }).sort({ sentAt: -1 })
+    Message.find({ recipientType: type, recipientId: id, fraudReportId: { $ne: null } }).sort({ sentAt: -1 })
   ]);
 
   const byConn = new Map();
   convoMessages.forEach((m) => {
     const key = m.connectionRequestId.toString();
     if (!byConn.has(key)) byConn.set(key, { last: m, unreadCount: 0 });
-    if (!m.readAt && m.recipientType === 'candidate' && m.recipientId && m.recipientId.toString() === id) {
+    if (!m.readAt && m.recipientType === type && m.recipientId && m.recipientId.toString() === id) {
       byConn.get(key).unreadCount += 1;
     }
   });
@@ -86,9 +114,9 @@ async function conversationRows(candidateId) {
   const rows = [];
   byConn.forEach(({ last, unreadCount }, key) => {
     const conn = connById.get(key);
-    const other = conn && conn.recruiterId;
+    const other = conn && (isRecruiter ? conn.candidateId : conn.recruiterId);
     if (!other) return;
-    const mine = last.senderType === 'candidate';
+    const mine = last.senderType === type;
     let preview = last.body;
     if (last.kind === 'contact_request') preview = mine ? 'You asked for contact info' : 'Asked for your contact info';
     else if (last.kind === 'contact_shared') preview = mine ? 'You shared your contact info' : 'Shared their contact info';
@@ -125,31 +153,35 @@ async function conversationRows(candidateId) {
 // GET /mail
 router.get('/', async (req, res) => {
   try {
-    const ownerId = req.session.candidateId;
-    const mailFilter = { namespace: 'candidate', ownerId, direction: 'in', deletedAt: null };
+    const { ns, ownerId } = req;
+    const isRecruiter = ns === 'recruiter';
+    const mailFilter = { namespace: ns, ownerId, direction: 'in', deletedAt: null };
 
     // Banner after deleting or reporting. Undo is offered for a message that
     // belongs to this user and is still in its 30-day window.
     let undo = null;
     if (mongoose.isValidObjectId(req.query.deleted)) {
       const gone = await MailMessage.findOne({
-        _id: req.query.deleted, namespace: 'candidate', ownerId, direction: 'in', deletedAt: { $ne: null }
+        _id: req.query.deleted, namespace: ns, ownerId, direction: 'in', deletedAt: { $ne: null }
       });
       if (gone) undo = { id: gone._id.toString(), subject: gone.subject || '(no subject)' };
     }
     const reported = req.query.reported === '1';
 
     const [conversations, verifiedMail, otherMail, flaggedMail, alias] = await Promise.all([
-      conversationRows(ownerId),
+      conversationRows(ns, ownerId),
       MailMessage.find({ ...mailFilter, senderCheck: 'verified_recruiter', flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
       MailMessage.find({ ...mailFilter, senderCheck: { $ne: 'verified_recruiter' }, flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
       MailMessage.find({ ...mailFilter, flagged: true }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
-      MailAlias.findOne({ namespace: 'candidate', ownerId })
+      MailAlias.findOne({ namespace: ns, ownerId })
     ]);
 
+    // Recruiters have no "verified sender" mail: the left column is PreCheckd
+    // conversations only, and replies to their outreach lead the right column.
     const left = [...conversations, ...verifiedMail.map(mailRow)]
       .sort((a, b) => new Date(b.at) - new Date(a.at));
     const right = otherMail.map(mailRow);
+    if (isRecruiter) right.sort((a, b) => (Number(b.outreachReply) - Number(a.outreachReply)) || (new Date(b.at) - new Date(a.at)));
     const flagged = flaggedMail.map(mailRow);
 
     const unreadCount = (rows) => rows.filter((r) => r.unread).length;
@@ -161,7 +193,8 @@ router.get('/', async (req, res) => {
       flagged,
       leftUnread: left.reduce((n, r) => n + (r.kind === 'conversation' ? (r.unreadCount || 0) : (r.unread ? 1 : 0)), 0),
       rightUnread: unreadCount(right),
-      aliasAddress: alias ? addressFor('candidate', alias.alias) : null,
+      viewer: ns,
+      aliasAddress: alias ? addressFor(ns, alias.alias) : null,
       undo,
       reported
     });
@@ -171,13 +204,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Loads one of this candidate's received messages (not deleted, not a sent reply).
+// Loads one of this member's received messages (not deleted, not a sent reply).
 function findMine(req, extra = {}) {
   if (!mongoose.isValidObjectId(req.params.id)) return null;
   return MailMessage.findOne({
     _id: req.params.id,
-    namespace: 'candidate',
-    ownerId: req.session.candidateId,
+    namespace: req.ns,
+    ownerId: req.ownerId,
     direction: 'in',
     ...extra
   });
@@ -185,8 +218,8 @@ function findMine(req, extra = {}) {
 
 async function renderMessage(req, res, message, { error = null, draft = '', status = 200 } = {}) {
   const replies = await MailMessage.find({
-    namespace: 'candidate',
-    ownerId: req.session.candidateId,
+    namespace: req.ns,
+    ownerId: req.ownerId,
     direction: 'out',
     inReplyToMailId: message._id,
     deletedAt: null
@@ -194,6 +227,7 @@ async function renderMessage(req, res, message, { error = null, draft = '', stat
   const target = replyTarget(message);
   res.status(status).render('mail-detail', {
     pageTitle: `${message.subject || 'Message'} | PreCheckd`,
+    viewer: req.ns,
     message,
     warnings: warningsFor(message.textBody),
     replies,
@@ -262,10 +296,10 @@ router.post('/:id/report', async (req, res) => {
     const fromAddress = String(message.fromAddress || '').toLowerCase();
     if (fromAddress.includes('@')) {
       await MailReport.updateOne(
-        { namespace: 'candidate', ownerId: message.ownerId, fromAddress },
+        { namespace: req.ns, ownerId: message.ownerId, fromAddress },
         {
           $setOnInsert: {
-            namespace: 'candidate',
+            namespace: req.ns,
             ownerId: message.ownerId,
             fromAddress,
             fromDomain: fromAddress.split('@')[1],
@@ -277,7 +311,7 @@ router.post('/:id/report', async (req, res) => {
         { upsert: true }
       );
       await MailMessage.updateMany(
-        { namespace: 'candidate', ownerId: message.ownerId, direction: 'in', fromAddress, deletedAt: null },
+        { namespace: req.ns, ownerId: message.ownerId, direction: 'in', fromAddress, deletedAt: null },
         { $set: { deletedAt: new Date() } }
       );
     }
@@ -289,7 +323,7 @@ router.post('/:id/report', async (req, res) => {
 });
 
 // POST /mail/:id/reply { body } — sent from the PreCheckd address to whoever
-// wrote to you. Nothing about the recipient comes from the request.
+// wrote to you (for a recruiter, usually someone answering their outreach). Nothing about the recipient comes from the request.
 router.post('/:id/reply', async (req, res) => {
   try {
     const message = await findMine(req, { deletedAt: null });
@@ -297,8 +331,8 @@ router.post('/:id/reply', async (req, res) => {
 
     const body = typeof req.body.body === 'string' ? req.body.body : '';
     const [owner, alias] = await Promise.all([
-      Candidate.findById(req.session.candidateId),
-      MailAlias.findOne({ namespace: 'candidate', ownerId: req.session.candidateId, status: 'active' })
+      (req.ns === 'recruiter' ? Recruiter : Candidate).findById(req.ownerId),
+      MailAlias.findOne({ namespace: req.ns, ownerId: req.ownerId, status: 'active' })
     ]);
     if (!owner || !alias) {
       return renderMessage(req, res, message, { error: REPLY_ERRORS.send_failed, draft: body, status: 400 });

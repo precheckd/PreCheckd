@@ -40,6 +40,10 @@ const mailMessageSchema = new mongoose.Schema({
 
   inReplyToHeader: { type: String, default: null },
 
+  // Recruiter mail only: the sender is someone this recruiter sent an outreach
+  // email to (roadmap #4), so this is most likely their reply.
+  outreachReply: { type: Boolean, default: false },
+
   // Set when the member forwarded a message from their own registered address:
   // the original sender found inside the forward (the tracker reads that
   // message, and Mail shows "Forwarded by you").

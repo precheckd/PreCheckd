@@ -323,7 +323,13 @@
       <div class="mail-when"><%= fmtFull(message.receivedAt) %></div>
       <% if (message.originalFromAddress) { %><div class="mail-when">Forwarded by you. The tracker read it as a message from <strong><%= message.originalFromName || message.originalFromAddress %></strong> &lt;<%= message.originalFromAddress %>&gt;.</div><% } %>
 
-      <% if (message.senderCheck === 'verified_recruiter') { %>
+      <% if (viewer === 'recruiter') { %>
+        <% if (message.outreachReply) { %>
+          <div class="sender-badge verified">A reply to your outreach email. This person is not a PreCheckd member yet.</div>
+        <% } else { %>
+          <div class="sender-badge unverified"><strong>Not a reply to your outreach.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
+        <% } %>
+      <% } else if (message.senderCheck === 'verified_recruiter') { %>
         <div class="sender-badge verified">&#10003; Verified PreCheckd recruiter<%= message.recruiterName ? ': ' + message.recruiterName : '' %></div>
       <% } else { %>
         <div class="sender-badge unverified"><strong>Not a verified PreCheckd recruiter.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
