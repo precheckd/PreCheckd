@@ -69,16 +69,42 @@ function oneLine(text, max) {
   return s.length > max ? `${s.slice(0, max)}...` : s;
 }
 
+// The new words only: cut a reply at the quoted original ("On ... wrote:",
+// "-----Original Message-----", an Outlook From/Sent block, or ">" lines) so a
+// list preview never shows the quoted header. Falls back to the whole text.
+function stripQuoted(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  let cut = lines.length;
+  for (let i = 0; i < lines.length; i += 1) {
+    const l = lines[i].trim();
+    const next = (lines[i + 1] || '').trim();
+    if (/^>/.test(l)
+      || /^On\s.{3,300}wrote:?$/i.test(l)
+      || (/^On\s/i.test(l) && /^.{0,200}wrote:?$/i.test(next))
+      || /^-{2,}\s*(Original Message|Forwarded message)/i.test(l)
+      || /^_{5,}$/.test(l)
+      || (/^From:\s/i.test(l) && /^(Sent|Date):\s/i.test(next))) { cut = i; break; }
+  }
+  const head = lines.slice(0, cut).join(' ').trim();
+  return head || String(text || '');
+}
+
+const SENDER_BADGES = {
+  verified_recruiter: { text: '\u2713 Verified recruiter', cls: 'verified' },
+  verified_candidate: { text: '\u2713 Verified candidate', cls: 'verified' },
+  member_candidate: { text: 'PreCheckd member', cls: 'member' }
+};
+
 function mailRow(m) {
   return {
     href: `/mail/${m._id}`,
     id: m._id.toString(),
     deletable: true,
-    verified: m.senderCheck === 'verified_recruiter',
+    badge: SENDER_BADGES[m.senderCheck] || null,
     name: m.fromName || m.fromAddress || 'Unknown sender',
     address: m.fromAddress,
     subject: m.subject || '(no subject)',
-    preview: oneLine(m.textBody, 110),
+    preview: oneLine(stripQuoted(m.textBody), 110),
     at: m.receivedAt,
     unread: !m.readAt,
     kind: 'mail',
@@ -217,15 +243,27 @@ router.get('/', async (req, res) => {
       tab === 'sent' ? sentRows(ns, ownerId) : []
     ]);
 
-    // Newest first, like any mail app. Verified senders get a badge, not a
+    // Newest first by default; the header arrows sort by sender, subject or date.
+    const sortKey = ['from', 'subject', 'date'].includes(req.query.sort) ? req.query.sort : 'date';
+    const dir = req.query.dir === 'asc' ? 'asc' : 'desc';
+    const keyOf = (r) => (sortKey === 'from' ? String(r.name || '').toLowerCase()
+      : sortKey === 'subject' ? String(r.subject || r.preview || '').toLowerCase() : new Date(r.at).getTime());
+    const sortRows = (rows) => rows.sort((a, b) => {
+      const x = keyOf(a), y = keyOf(b);
+      const c = x < y ? -1 : x > y ? 1 : 0;
+      return (dir === 'asc' ? c : -c) || (new Date(b.at) - new Date(a.at));
+    });
+
+    // Verified senders get a badge, not a higher spot in the list. Verified senders get a badge, not a
     // higher spot in the list.
-    const inbox = inboxMail.map(mailRow);
-    const conv = conversations.sort((a, b) => new Date(b.at) - new Date(a.at));
+    const inbox = sortRows(inboxMail.map(mailRow));
+    const conv = sortRows(conversations);
+    sortRows(sent);
     const flagged = flaggedMail.map(mailRow);
 
     res.render('mail', {
       pageTitle: 'Mail | PreCheckd',
-      tab,
+      tab, sortKey, dir,
       rowsByTab: { inbox, conversations: conv, sent },
       flagged,
       counts: {

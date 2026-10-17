@@ -23,18 +23,28 @@
 
   /* Gmail-style list */
   .gm-list { background: #2A4750; border: 1px solid #3B5860; border-top: none; border-radius: 0 0 8px 8px; }
+  .gm-head + .gm-list { border-top: none; }
   .gm-row { position: relative; display: block; border-bottom: 1px solid #3B5860; background: #24404A; }
   .gm-row:last-child { border-bottom: none; }
   .gm-row.unread { background: #2D4F59; }
   .gm-row:hover { box-shadow: inset 3px 0 0 #2ECC71; z-index: 1; }
-  .gm-link { display: grid; grid-template-columns: 210px minmax(0, 1fr) auto; gap: 1rem; align-items: baseline; padding: 0.65rem 1rem; text-decoration: none; color: inherit; }
+  .gm-link { display: grid; grid-template-columns: 210px minmax(0, 1fr) 10.5rem; gap: 1rem; align-items: baseline; padding: 0.65rem 1rem; text-decoration: none; color: inherit; }
   .gm-from { color: #C7D1CF; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gm-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; color: #8FA6AC; }
   .gm-subject { color: #E8EBEA; }
-  .gm-date { color: #8FA6AC; font-size: 0.8rem; white-space: nowrap; min-width: 6.5rem; text-align: right; }
+  .gm-date { color: #8FA6AC; font-size: 0.8rem; white-space: nowrap; text-align: right; }
+  .gm-head { display: grid; grid-template-columns: 210px minmax(0, 1fr) 10.5rem; gap: 1rem; padding: 0.5rem 1rem; background: #2A4750; border: 1px solid #3B5860; border-top: none; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .gm-head a { color: #8FA6AC; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .gm-head a:hover, .gm-head a.on { color: #F2F4F3; }
+  .gm-head .date { justify-self: end; }
+  .sort-arrows { display: inline-flex; flex-direction: column; line-height: 0.7; font-size: 0.55rem; }
+  .sort-arrows .act { color: #4ADE80; }
+  .gm-sortpick { display: none; margin: 0.6rem 0; }
+  .gm-sortpick select { width: 100%; padding: 0.45rem 0.6rem; border: 1px solid #4A6F7B; border-radius: 6px; background: #24404A; color: #F2F4F3; font-size: 0.88rem; font-family: inherit; }
   .gm-row.unread .gm-from, .gm-row.unread .gm-subject { font-weight: 700; color: #F2F4F3; }
   .gm-row.unread .gm-date { color: #F2F4F3; font-weight: 700; }
   .gm-chip { display: inline-block; margin-right: 0.45rem; padding: 0 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; line-height: 1.35rem; border: 1px solid #4A6F7B; color: #C7D1CF; vertical-align: 1px; }
+  .gm-chip.member { border-color: #4A6F7B; color: #C7D1CF; }
   .gm-chip.verified { background: #1E4A33; border-color: #2ECC71; color: #BDF2D2; }
   .gm-chip.reply { border-color: #2ECC71; color: #4ADE80; }
   .gm-chip.note { border-color: #7A3B39; color: #F5C6C3; }
@@ -55,20 +65,23 @@
     .mail-tab { padding: 0.7rem 0.8rem; font-size: 0.88rem; }
     .gm-link { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.1rem; padding: 0.7rem 0.9rem; }
     .gm-from { grid-column: 1; }
-    .gm-date { grid-column: 2; grid-row: 1; min-width: 0; }
+    .gm-date { grid-column: 2; grid-row: 1; }
+    .gm-head { display: none; }
+    .gm-sortpick { display: block; }
     .gm-text { grid-column: 1 / -1; }
   }
 </style>
 
 <%
   const isRecruiter = viewer === 'recruiter';
-  const now = new Date();
-  const fmtDate = (d) => {
-    const x = new Date(d);
-    if (x.toDateString() === now.toDateString()) return x.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    if (x.getFullYear() === now.getFullYear()) return x.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // Shown in New York time here; the script at the bottom redraws every time in the viewer's own time zone.
+  const fmtDate = (d) => new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const sortHref = (key) => {
+    const activeNow = sortKey === key;
+    const nextDir = activeNow ? (dir === 'desc' ? 'asc' : 'desc') : (key === 'date' ? 'desc' : 'asc');
+    return `/mail?tab=${tab}&sort=${key}&dir=${nextDir}`;
   };
+  const arrows = (key) => `<span class="sort-arrows"><span class="${sortKey === key && dir === 'asc' ? 'act' : ''}">&#9650;</span><span class="${sortKey === key && dir === 'desc' ? 'act' : ''}">&#9660;</span></span>`;
   const trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
   const tabs = [
     { key: 'inbox', label: 'Inbox', count: counts.inbox },
@@ -112,6 +125,18 @@
     </nav>
 
     <% const rows = rowsByTab[tab]; %>
+    <div class="gm-head">
+      <a href="<%= sortHref('from') %>" class="<%= sortKey === 'from' ? 'on' : '' %>">From <%- arrows('from') %></a>
+      <a href="<%= sortHref('subject') %>" class="<%= sortKey === 'subject' ? 'on' : '' %>">Subject <%- arrows('subject') %></a>
+      <a href="<%= sortHref('date') %>" class="date <%= sortKey === 'date' ? 'on' : '' %>">Date <%- arrows('date') %></a>
+    </div>
+    <div class="gm-sortpick">
+      <select aria-label="Sort by" onchange="location.href=this.value">
+        <% [['date','desc','Date, newest first'],['date','asc','Date, oldest first'],['from','asc','From, A to Z'],['from','desc','From, Z to A'],['subject','asc','Subject, A to Z'],['subject','desc','Subject, Z to A']].forEach(function(o) { %>
+          <option value="/mail?tab=<%= tab %>&sort=<%= o[0] %>&dir=<%= o[1] %>" <%= sortKey === o[0] && dir === o[1] ? 'selected' : '' %>><%= o[2] %></option>
+        <% }); %>
+      </select>
+    </div>
     <div class="gm-list">
       <% if (rows.length === 0) { %>
         <div class="gm-empty"><%= empty[tab] %></div>
@@ -120,14 +145,14 @@
           <% if (row.href) { %><a href="<%= row.href %>" class="gm-link"><% } else { %><div class="gm-link"><% } %>
             <div class="gm-from"><%= row.name %><% if (row.unreadCount > 1) { %> (<%= row.unreadCount %>)<% } %></div>
             <div class="gm-text">
-              <% if (row.verified) { %><span class="gm-chip verified">&#10003; Verified recruiter</span><% } %>
+              <% if (row.badge) { %><span class="gm-chip <%= row.badge.cls %>"><%= row.badge.text %></span><% } %>
               <% if (row.outreachReply) { %><span class="gm-chip reply">Reply to your outreach</span><% } %>
               <% if (row.trackerPending) { %><span class="gm-chip tracker">Tracker update</span><% } %>
               <% if (row.chip) { %><span class="gm-chip <%= row.chipClass || '' %>"><%= row.chip %></span><% } %>
               <% if (row.subject) { %><span class="gm-subject"><%= row.subject %></span><% if (row.preview) { %> &ndash; <% } %><% } %><%= row.preview %>
               <% if (row.attachmentCount > 0) { %> &middot; <%= row.attachmentCount %> attachment<%= row.attachmentCount === 1 ? '' : 's' %><% } %>
             </div>
-            <div class="gm-date"><%= fmtDate(row.at) %></div>
+            <div class="gm-date"><time class="lt" datetime="<%= new Date(row.at).toISOString() %>"><%= fmtDate(row.at) %></time></div>
           <% if (row.href) { %></a><% } else { %></div><% } %>
           <% if (row.deletable) { %>
             <form method="post" action="/mail/<%= row.id %>/delete" class="gm-del"><button type="submit" title="Delete" aria-label="Delete"><%- trash %></button></form>
@@ -145,13 +170,26 @@
               <a href="<%= row.href %>" class="gm-link">
                 <div class="gm-from"><%= row.name %></div>
                 <div class="gm-text"><span class="gm-subject"><%= row.subject %></span> &ndash; <%= row.preview %></div>
-                <div class="gm-date"><%= fmtDate(row.at) %></div>
+                <div class="gm-date"><time class="lt" datetime="<%= new Date(row.at).toISOString() %>"><%= fmtDate(row.at) %></time></div>
               </a>
             </div>
           <% }); %>
         </div>
       </details>
     <% } %>
-    <% if (tab === 'inbox') { %><p class="gm-note">We could not confirm who sent mail without a green &ldquo;Verified recruiter&rdquo; badge. Be careful with links, attachments and requests for personal information.</p><% } %>
+    <% if (tab === 'inbox') { %><p class="gm-note"><%= isRecruiter ? 'A badge means the sender used an email address registered on PreCheckd. We could not confirm anyone without one, so be careful with links, attachments and requests for personal information.' : 'A green \u201cVerified recruiter\u201d badge means a fully verified PreCheckd recruiter sent it. We could not confirm anyone without one, so be careful with links, attachments and requests for personal information.' %></p><% } %>
   </div>
 </div>
+
+<script>
+  (function () {
+    var thisYear = new Date().getFullYear();
+    document.querySelectorAll('time.lt').forEach(function (t) {
+      var d = new Date(t.getAttribute('datetime'));
+      if (isNaN(d)) return;
+      var o = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+      if (d.getFullYear() !== thisYear) o.year = 'numeric';
+      t.textContent = d.toLocaleString('en-US', o);
+    });
+  })();
+</script>

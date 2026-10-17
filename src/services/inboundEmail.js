@@ -117,6 +117,14 @@ async function verifiedRecruiterFor(address) {
   });
 }
 
+// A registered candidate account for this sender address ('verified' when identity,
+// phone and email are all verified). Only called for authenticated mail.
+async function candidateFor(address) {
+  const cand = await Candidate.findOne({ email: address });
+  if (!cand) return null;
+  return { fully: Boolean(cand.isIdentityVerified && cand.isPhoneVerified && cand.emailVerifiedAt) };
+}
+
 // Claims (emailId, alias). Returns the row to work on, or null when this
 // message is already handled or being handled.
 async function claim(emailId, aliasRow, fields) {
@@ -267,6 +275,12 @@ async function processRecipient({ emailId, full, aliasRow, sender }) {
       senderCheck = 'verified_recruiter';
       recruiterName = [rec.firstName, rec.lastName].filter(Boolean).join(' ') + (rec.company && rec.company !== 'Not provided' ? ` (${rec.company})` : '');
     }
+  }
+
+  // A recruiter's mail from a registered candidate address (never a name or profile link: candidates stay anonymous until they connect).
+  if (aliasRow.namespace === 'recruiter' && senderAuthenticated(full.headers)) {
+    const cand = await candidateFor(sender.address).catch(() => null);
+    if (cand) senderCheck = cand.fully ? 'verified_candidate' : 'member_candidate';
   }
 
   const textBody = (full.text && full.text.trim()) || htmlToText(full.html);

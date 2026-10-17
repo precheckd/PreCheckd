@@ -256,7 +256,7 @@
 </style>
 
 <%
-  const fmtFull = (d) => new Date(d).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const fmtFull = (d) => new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
   const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? Math.round(n / 1024) + ' KB' : (n || 0) + ' B';
 %>
 
@@ -320,12 +320,16 @@
         From <strong><%= message.fromName || message.fromAddress %></strong>
         <% if (message.fromName && message.fromAddress) { %>&lt;<%= message.fromAddress %>&gt;<% } %>
       </div>
-      <div class="mail-when"><%= fmtFull(message.receivedAt) %></div>
+      <div class="mail-when"><time class="lt" datetime="<%= new Date(message.receivedAt).toISOString() %>"><%= fmtFull(message.receivedAt) %></time></div>
       <% if (message.originalFromAddress) { %><div class="mail-when">Forwarded by you. The tracker read it as a message from <strong><%= message.originalFromName || message.originalFromAddress %></strong> &lt;<%= message.originalFromAddress %>&gt;.</div><% } %>
 
       <% if (viewer === 'recruiter') { %>
-        <% if (message.outreachReply) { %>
-          <div class="sender-badge verified">A reply to your outreach email. This person is not a PreCheckd member yet.</div>
+        <% if (message.senderCheck === 'verified_candidate') { %>
+          <div class="sender-badge verified">&#10003; Verified PreCheckd candidate. This email address belongs to a fully verified candidate account.<%= message.outreachReply ? ' A reply to your outreach email.' : '' %></div>
+        <% } else if (message.senderCheck === 'member_candidate') { %>
+          <div class="sender-badge verified">PreCheckd member. This email address is registered on PreCheckd, but the account is not fully verified.<%= message.outreachReply ? ' A reply to your outreach email.' : '' %></div>
+        <% } else if (message.outreachReply) { %>
+          <div class="sender-badge verified">A reply to your outreach email. This person is not on PreCheckd.</div>
         <% } else { %>
           <div class="sender-badge unverified"><strong>Not a reply to your outreach.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
         <% } %>
@@ -344,7 +348,7 @@
       <% }); %>
 
       <% if (typeof outreachSent !== 'undefined' && outreachSent) { %>
-        <div class="mail-footnote" style="margin-bottom:0.8rem">In reply to your email &ldquo;<%= outreachSent.subject %>&rdquo; sent <%= fmtFull(outreachSent.at) %><% if (outreachSent.note) { %>. Your note: &ldquo;<%= outreachSent.note %>&rdquo;<% } %></div>
+        <div class="mail-footnote" style="margin-bottom:0.8rem">In reply to your email &ldquo;<%= outreachSent.subject %>&rdquo; sent <time class="lt" datetime="<%= new Date(outreachSent.at).toISOString() %>"><%= fmtFull(outreachSent.at) %></time><% if (outreachSent.note) { %>. Your note: &ldquo;<%= outreachSent.note %>&rdquo;<% } %></div>
       <% } %>
       <div class="mail-body"><%= message.textBody || '(no text)' %></div>
       <% if (message.bodyTruncated) { %><div class="mail-footnote">This message was long, so only the first part is shown here.</div><% } %>
@@ -365,7 +369,7 @@
           <h2>Your replies</h2>
           <% replies.forEach(function(r) { %>
             <div class="reply-sent">
-              <div class="reply-meta">Sent to <%= r.toAddress %> &middot; <%= fmtFull(r.receivedAt) %></div>
+              <div class="reply-meta">Sent to <%= r.toAddress %> &middot; <time class="lt" datetime="<%= new Date(r.receivedAt).toISOString() %>"><%= fmtFull(r.receivedAt) %></time></div>
               <div class="reply-text"><%= r.textBody %></div>
             </div>
           <% }); %>
@@ -388,3 +392,13 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    document.querySelectorAll('time.lt').forEach(function (t) {
+      var d = new Date(t.getAttribute('datetime'));
+      if (isNaN(d)) return;
+      t.textContent = d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    });
+  })();
+</script>

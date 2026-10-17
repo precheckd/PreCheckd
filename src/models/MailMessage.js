@@ -23,8 +23,11 @@ const mailMessageSchema = new mongoose.Schema({
   attachments: [{ _id: false, filename: String, contentType: String, size: Number }],
 
   // verified_recruiter: sender is a fully verified PreCheckd recruiter AND the
-  // mail passed sender authentication. Anything else is unverified.
-  senderCheck: { type: String, enum: ['verified_recruiter', 'unverified'], default: 'unverified' },
+  // mail passed sender authentication (candidates' mail). For recruiters' mail:
+  // verified_candidate = a fully verified candidate account, member_candidate =
+  // a registered candidate account that is not fully verified, both only when the
+  // mail passed authentication. Anything else is unverified.
+  senderCheck: { type: String, enum: ['verified_recruiter', 'verified_candidate', 'member_candidate', 'unverified'], default: 'unverified' },
   recruiterName: { type: String, default: null },
   // Flagged mail (the mail provider's spam verdict) is kept out of the main
   // list and shown in a collapsed group.
