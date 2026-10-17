@@ -6,6 +6,7 @@ const multer = require('multer');
 const { PinpointSMSVoiceV2Client, SendNotifyTextMessageCommand } = require('@aws-sdk/client-pinpoint-sms-voice-v2');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
+const { notify } = require('../services/notifications');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const {
@@ -712,6 +713,7 @@ router.post('/connect', async (req, res) => {
       recruiterId: recruiter._id,
       note: trimmedNote
     });
+    notify('recruiter', recruiter._id, 'connect_request', 'A candidate wants to connect', '/connections?tab=requests');
 
     delete req.session.candidateRecruiterSlug;
 

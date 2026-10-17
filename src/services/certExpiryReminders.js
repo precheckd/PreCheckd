@@ -20,6 +20,7 @@ const { syncWithCredly } = require('../utils/credlyVerification');
 const { daysUntilExpiry, isoDay } = require('../utils/certExpiry');
 const { sendCertExpiryReminderEmail } = require('./emailService');
 const { inSendWindow } = require('./messageDigest');
+const { notify } = require('./notifications');
 
 const THRESHOLDS = [0, 30, 90]; // days before expiry; ascending
 const EXPIRED_GRACE_DAYS = 7;
@@ -97,6 +98,7 @@ async function runCertExpiryReminders({ now = new Date() } = {}) {
           expiresOn: isoDay(d.cert.expiresAt)
         })));
         sent += 1;
+        notify('candidate', candidate._id, 'cert_expiring', due.length > 1 ? `${due.length} certifications are about to expire` : `Your ${due[0].cert.name} certification is about to expire`, '/candidate-dashboard');
       } catch (err) {
         console.error('Failed to send cert expiry reminder:', err);
         due.forEach(({ cert, key }) => {

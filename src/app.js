@@ -184,6 +184,10 @@ app.use(async (req, res, next) => {
         res.locals.commandCenterPendingRequestCount = pendingConnectionCount + pendingFullAccessCount;
       }
     }
+    const bellOwner = req.session.candidateId && res.locals.loggedInCandidateSlug
+      ? ['candidate', req.session.candidateId]
+      : (req.session.recruiterId && res.locals.loggedInRecruiterSlug && !res.locals.commandCenterIsClaimAccount ? ['recruiter', req.session.recruiterId] : null);
+    if (bellOwner) res.locals.navNotifications = await require('./services/notifications').latestFor(bellOwner[0], bellOwner[1]);
   } catch (error) {
     console.error('Error resolving logged-in nav data:', error);
   }
@@ -233,6 +237,7 @@ app.use('/candidate', candidateWorkAreasRoutes);
 app.use('/candidate', candidateJobPreferencesRoutes);
 app.use('/fraud', fraudRoutes);
 app.use('/safety', require('./routes/safety'));
+app.use('/notifications', require('./routes/notifications'));
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

@@ -25,6 +25,7 @@ const { suggestFor } = require('./applicationTracker');
 const Suppression = require('../models/Suppression');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
+const { notify } = require('./notifications');
 const { parseAddress } = require('../utils/mailAlias');
 const { unwrapForwarded } = require('../utils/forwardedMail');
 const OutreachMessage = require('../models/OutreachMessage');
@@ -207,7 +208,7 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
     outreachReply = Boolean(await OutreachMessage.exists({ recruiterId: aliasRow.ownerId, toEmail: sender.address, status: 'sent' }).catch(() => false));
   }
 
-  await MailMessage.updateOne(
+  const stored = await MailMessage.updateOne(
     { emailId, aliasId: aliasRow._id },
     {
       $setOnInsert: {
@@ -239,6 +240,19 @@ async function storeMessage({ emailId, full, aliasRow, sender, senderCheck, recr
     },
     { upsert: true }
   );
+
+  // Bell items for brand-new, unflagged mail only (a re-delivery is a no-op).
+  if (stored && stored.upsertedCount && !spam) {
+    if (aliasRow.namespace === 'candidate' && senderCheck === 'verified_recruiter') {
+      notify('candidate', aliasRow.ownerId, 'recruiter_mail', `${recruiterName || 'A verified recruiter'} emailed you`, '/mail');
+    }
+    if (aliasRow.namespace === 'candidate' && suggestion) {
+      notify('candidate', aliasRow.ownerId, 'tracker_suggestion', 'New suggestion for your Application Tracker', '/tracker');
+    }
+    if (aliasRow.namespace === 'recruiter' && outreachReply) {
+      notify('recruiter', aliasRow.ownerId, 'outreach_reply', 'Someone replied to your outreach', '/mail');
+    }
+  }
 }
 
 // --- Per-recipient processing --------------------------------------------

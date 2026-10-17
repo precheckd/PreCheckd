@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
+const Recruiter = require('../models/Recruiter');
+const { notify } = require('../services/notifications');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization');
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
@@ -262,6 +264,10 @@ router.post('/:anonId/connect', async (req, res) => {
       note: trimmedNote,
       initiatedBy: 'recruiter'
     });
+    {
+      const rec = await Recruiter.findById(req.session.recruiterId).catch(() => null);
+      notify('candidate', candidate._id, 'connect_request', `${rec ? rec.firstName + ' ' + rec.lastName : 'A recruiter'} wants to connect`, '/connections?tab=requests');
+    }
 
     res.json({ success: true, alreadySent: false });
   } catch (error) {

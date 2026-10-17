@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
+const { notify } = require('../services/notifications');
 const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
 const { sharedContactFor } = require('../utils/contactSharing');
@@ -117,6 +118,7 @@ router.post('/requests/:id/accept', async (req, res) => {
     await request.save();
 
     const candidate = await Candidate.findById(req.session.candidateId);
+    notify('recruiter', request.recruiterId._id, 'request_accepted', `${candidate.firstName} ${candidate.lastName} accepted your connection request`, '/connections');
 
     sendRecruiterConnectionAcceptedEmail(
       request.recruiterId.email,
@@ -147,6 +149,7 @@ router.post('/requests/:id/decline', async (req, res) => {
     await request.save();
 
     const candidate = await Candidate.findById(req.session.candidateId);
+    notify('recruiter', request.recruiterId._id, 'request_declined', `${candidate.firstName} ${candidate.lastName} declined your connection request`, '/connections');
 
     sendRecruiterConnectionDeclinedEmail(
       request.recruiterId.email,
@@ -180,6 +183,7 @@ router.post('/requests/:id/grant-full-access', async (req, res) => {
     request.fullAccessStatus = 'granted';
     request.fullAccessRespondedAt = new Date();
     await request.save();
+    notify('recruiter', request.recruiterId, 'full_access_granted', 'A candidate granted your full access request', `/recruiter-dashboard/requests/${request._id}/candidate`);
 
     res.redirect('/connections');
   } catch (error) {
@@ -206,6 +210,7 @@ router.post('/requests/:id/deny-full-access', async (req, res) => {
     request.fullAccessStatus = 'denied';
     request.fullAccessRespondedAt = new Date();
     await request.save();
+    notify('recruiter', request.recruiterId, 'full_access_denied', 'A candidate declined your full access request', '/connections');
 
     res.redirect('/connections');
   } catch (error) {

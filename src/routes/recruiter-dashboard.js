@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
+const { notify } = require('../services/notifications');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const FraudReport = require('../models/FraudReport');
@@ -262,6 +263,8 @@ router.post('/requests/:id/request-full-access', async (req, res) => {
       request.fullAccessRequestedAt = new Date();
       request.fullAccessExpiresAt = new Date(Date.now() + FULL_ACCESS_WINDOW_MS);
       await request.save();
+      const fullRec = await Recruiter.findById(req.session.recruiterId).catch(() => null);
+      notify('candidate', request.candidateId._id, 'full_access_requested', `${fullRec ? fullRec.firstName + ' ' + fullRec.lastName : 'A recruiter'} requested full access to your video and resume`, '/connections?tab=requests');
     }
 
     res.redirect(`/recruiter-dashboard/requests/${request._id}/candidate`);
@@ -285,6 +288,7 @@ router.post('/requests/:id/accept', async (req, res) => {
     await request.save();
 
     const recruiter = await Recruiter.findById(req.session.recruiterId);
+    notify('candidate', request.candidateId._id, 'request_accepted', `${recruiter.firstName} ${recruiter.lastName} accepted your connection request`, '/connections');
 
     sendConnectionAcceptedEmail(
       request.candidateId.email,
@@ -315,6 +319,7 @@ router.post('/requests/:id/decline', async (req, res) => {
     await request.save();
 
     const recruiter = await Recruiter.findById(req.session.recruiterId);
+    notify('candidate', request.candidateId._id, 'request_declined', `${recruiter.firstName} ${recruiter.lastName} declined your connection request`, '/connections');
 
     sendConnectionDeclinedEmail(
       request.candidateId.email,

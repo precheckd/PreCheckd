@@ -146,6 +146,22 @@
     .hdr-search input:focus { outline: none; border-color: #2ECC71; background: #24404A; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15); }
     .hdr-search svg { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8FA6AC; pointer-events: none; }
 
+    .nav-bell { position: relative; }
+    .nav-bell summary { list-style: none; cursor: pointer; }
+    .nav-bell summary::-webkit-details-marker { display: none; }
+    .nav-bell-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #C9D8DB; border: 1px solid #3B5860; }
+    .nav-bell-btn:hover { background: #2A4750; }
+    .nav-bell-btn svg { width: 20px; height: 20px; }
+    .nav-bell-btn .nav-btn-badge { position: absolute; top: -4px; right: -4px; margin: 0; background: #E5484D; color: #fff; }
+    .nav-bell-panel { position: absolute; right: 0; top: calc(100% + 8px); width: 340px; max-width: 92vw; background: #1F363C; border: 1px solid #3B5860; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.35); z-index: 60; overflow: hidden; }
+    .nav-bell-head { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0.9rem; border-bottom: 1px solid #3B5860; color: #fff; font-weight: 600; font-size: 0.9rem; }
+    .nav-bell-head form { margin: 0; }
+    .nav-bell-head button { background: none; border: 0; color: #4ADE80; cursor: pointer; font-size: 0.8rem; padding: 0; }
+    .nav-bell-item { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 0.9rem; color: #C9D8DB; text-decoration: none; font-size: 0.88rem; border-bottom: 1px solid #2A4750; }
+    .nav-bell-item:hover { background: #2A4750; }
+    .nav-bell-item small { color: #8FA6AC; white-space: nowrap; }
+    .nav-bell-item.is-unread { color: #fff; font-weight: 700; }
+    .nav-bell-empty { padding: 1.2rem 0.9rem; color: #8FA6AC; font-size: 0.88rem; text-align: center; }
     .nav-menu { position: relative; }
     .nav-menu summary { list-style: none; cursor: pointer; }
     .nav-menu summary::-webkit-details-marker { display: none; }
@@ -377,10 +393,27 @@
             %>
             <a href="<%= navHomeHref %>" class="nav-btn-outline<%= navPath === navHomeHref ? ' is-active' : '' %>">Home</a>
             <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Inbox<%- navMailBadge %></a>
+            <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
             <% if (navLoggedInCandidate) { %>
               <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Application Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } %>
-            <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
+            <% const navN = (typeof navNotifications !== 'undefined' && navNotifications) ? navNotifications : { unread: 0, items: [] }; %>
+            <details class="nav-bell">
+              <summary class="nav-bell-btn" aria-label="Notifications<%= navN.unread ? ' (' + navN.unread + ' unread)' : '' %>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <% if (navN.unread > 0) { %><span class="nav-btn-badge"><%= navN.unread > 9 ? '9+' : navN.unread %></span><% } %>
+              </summary>
+              <div class="nav-bell-panel">
+                <div class="nav-bell-head"><span>Notifications</span>
+                  <% if (navN.unread > 0) { %><form method="post" action="/notifications/read-all"><button type="submit">Mark all read</button></form><% } %>
+                </div>
+                <% if (navN.items.length === 0) { %>
+                  <div class="nav-bell-empty">You're all caught up.</div>
+                <% } else { navN.items.forEach(function (n) { %>
+                  <a href="/notifications/open/<%= n.id %>" class="nav-bell-item<%= n.unread ? ' is-unread' : '' %>"><span><%= n.title %></span><small><%= n.ago %></small></a>
+                <% }); } %>
+              </div>
+            </details>
             <details class="nav-menu">
               <summary class="nav-avatar<%= navMenuActive ? ' is-active' : '' %>" aria-label="Account menu">
                 <% if (navAvatarPhoto) { %><img src="<%= navAvatarPhoto %>" alt=""><% } else { %><span><%= navAvatarInitials %></span><% } %>
@@ -439,12 +472,12 @@
 </footer>
 
 <script>
-  // Close the account menu when clicking elsewhere or pressing Escape.
+  // Close the account / notification menus when clicking elsewhere or pressing Escape.
   (function () {
-    var menu = document.querySelector('.nav-menu');
-    if (!menu) return;
-    document.addEventListener('click', function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') menu.open = false; });
+    var menus = [].slice.call(document.querySelectorAll('.nav-menu, .nav-bell'));
+    if (!menus.length) return;
+    document.addEventListener('click', function (e) { menus.forEach(function (m) { if (m.open && !m.contains(e.target)) m.open = false; }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') menus.forEach(function (m) { m.open = false; }); });
   })();
 </script>
 </body>
