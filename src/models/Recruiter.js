@@ -84,6 +84,10 @@ const recruiterSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  termsAcceptedAt: {
+    type: Date,
+    default: null
+  },
   emailVerifiedAt: {
     type: Date,
     default: null

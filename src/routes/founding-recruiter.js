@@ -84,7 +84,11 @@ async function sendVerificationCode(phone, code) {
 // Step 1: Signup and send real SMS code via AWS Notify
 router.post('/signup', async (req, res) => {
   try {
-    const { firstName, lastName, nickname, email, phone, company, password } = req.body;
+    const { firstName, lastName, nickname, email, phone, company, password, acceptTerms } = req.body;
+
+    if (acceptTerms !== 'yes' && acceptTerms !== true) {
+      return res.status(400).json({ error: 'Please agree to the Terms of Service and Privacy Policy to continue.' });
+    }
 
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -152,6 +156,7 @@ router.post('/signup', async (req, res) => {
       isPhoneVerified: false,
       isIdentityVerified: false,
       isActive: false,
+      termsAcceptedAt: new Date(),
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 hours

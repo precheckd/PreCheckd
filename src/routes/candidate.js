@@ -218,7 +218,11 @@ router.post('/login', async (req, res) => {
 // Step 1: New candidate signup — details + optional resume upload
 router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password } = req.body;
+    const { firstName, lastName, email, phone, password, acceptTerms } = req.body;
+
+    if (acceptTerms !== 'yes' && acceptTerms !== true) {
+      return res.status(400).json({ error: 'Please agree to the Terms of Service and Privacy Policy to continue.' });
+    }
 
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -264,6 +268,7 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       email,
       phone: normalizedPhone,
       passwordHash,
+      termsAcceptedAt: new Date(),
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000,

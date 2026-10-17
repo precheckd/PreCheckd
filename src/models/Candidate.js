@@ -161,6 +161,11 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
+  // When they ticked the Terms / Privacy box at signup (null on older accounts).
+  termsAcceptedAt: {
+    type: Date,
+    default: null
+  },
   emailVerifiedAt: {
     type: Date,
     default: null
