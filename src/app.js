@@ -238,6 +238,8 @@ app.use('/candidate', candidateJobPreferencesRoutes);
 app.use('/fraud', fraudRoutes);
 app.use('/safety', require('./routes/safety'));
 app.use('/notifications', require('./routes/notifications'));
+app.use('/signature', require('./routes/signature'));
+app.use('/badge', require('./routes/signature').badgeRouter);
 
 const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);

@@ -456,6 +456,7 @@
           <span><strong style="color: #F2F4F3;"><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'view' : 'views' %> this month</span>
           <span style="opacity: 0.5;">·</span>
           <span><strong style="color: #F2F4F3;"><%= viewCounts.allTime.toLocaleString('en-US') %></strong> all time</span>
+          <% if (viewCounts.signatureAllTime > 0) { %><span style="opacity: 0.5;">·</span><span><strong style="color: #F2F4F3;"><%= viewCounts.signatureAllTime.toLocaleString('en-US') %></strong> from your email signature</span><% } %>
         </div>
       <% } %>
       <% if (isOwner) { %>

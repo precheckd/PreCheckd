@@ -119,8 +119,8 @@ async function gatherRecap(candidate, now) {
   }
   if (candidate.isPhoneVerified && candidate.isIdentityVerified && !candidate.publicVerifyPage) {
     todo.push({
-      text: 'Your public verification page is off. Turn it on to get a link you can add to your email signature.',
-      path: `/candidate/${candidate.slug}/edit`
+      text: 'Your public verification page is off. Turn it on to get a verified email signature you can copy into Gmail or Outlook.',
+      path: '/signature'
     });
   }
 

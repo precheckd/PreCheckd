@@ -69,7 +69,8 @@ router.get('/:slug', async (req, res) => {
       res.set('X-Robots-Tag', 'noindex, nofollow');
 
       await recordView(req, 'candidate', candidate._id, {
-        viewerIsOwner: Boolean(req.session.candidateId && req.session.candidateId === candidate._id.toString())
+        viewerIsOwner: Boolean(req.session.candidateId && req.session.candidateId === candidate._id.toString()),
+        viaSignature: req.query.ref === 'signature'
       });
 
       const saved = candidate.publicSections || {};

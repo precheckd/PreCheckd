@@ -28,12 +28,12 @@ function looksAutomated(req) {
 }
 
 // Records one unique view. Skips the owner's own visits and bots/prefetches.
-async function recordView(req, ownerType, ownerId, { viewerIsOwner = false, now = new Date() } = {}) {
+async function recordView(req, ownerType, ownerId, { viewerIsOwner = false, now = new Date(), viaSignature = false } = {}) {
   try {
     if (viewerIsOwner || looksAutomated(req)) return false;
     await PageView.updateOne(
       { ownerType, ownerId, viewerKey: viewerKeyFor(req), period: periodFor(now) },
-      { $setOnInsert: { firstViewedAt: now } },
+      { $setOnInsert: { firstViewedAt: now }, ...(viaSignature ? { $set: { viaSignature: true } } : {}) },
       { upsert: true }
     );
     return true;
@@ -49,11 +49,12 @@ async function recordView(req, ownerType, ownerId, { viewerIsOwner = false, now 
 // { thisMonth, allTime } — allTime is the sum of each month's unique viewers.
 async function getViewCounts(ownerType, ownerId, { now = new Date() } = {}) {
   try {
-    const [thisMonth, allTime] = await Promise.all([
+    const [thisMonth, allTime, signatureAllTime] = await Promise.all([
       PageView.countDocuments({ ownerType, ownerId, period: periodFor(now) }),
-      PageView.countDocuments({ ownerType, ownerId })
+      PageView.countDocuments({ ownerType, ownerId }),
+      PageView.countDocuments({ ownerType, ownerId, viaSignature: true })
     ]);
-    return { thisMonth, allTime };
+    return { thisMonth, allTime, signatureAllTime };
   } catch (error) {
     console.error('Error loading profile view counts:', error);
     return { thisMonth: 0, allTime: 0 };

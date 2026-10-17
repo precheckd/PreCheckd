@@ -10,7 +10,9 @@ const pageViewSchema = new mongoose.Schema({
   ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
   viewerKey: { type: String, required: true },
   period: { type: String, required: true }, // 'YYYY-MM' (UTC)
-  firstViewedAt: { type: Date, default: Date.now }
+  firstViewedAt: { type: Date, default: Date.now },
+  // True once this visitor arrived through a link in the owner's email signature.
+  viaSignature: { type: Boolean, default: false }
 });
 
 pageViewSchema.index({ ownerType: 1, ownerId: 1, viewerKey: 1, period: 1 }, { unique: true });

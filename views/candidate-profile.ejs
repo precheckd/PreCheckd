@@ -434,6 +434,7 @@
           <span><strong><%= viewCounts.thisMonth.toLocaleString('en-US') %></strong> <%= viewCounts.thisMonth === 1 ? 'view' : 'views' %> this month</span>
           <span class="view-counts-sep">·</span>
           <span><strong><%= viewCounts.allTime.toLocaleString('en-US') %></strong> all time</span>
+          <% if (viewCounts.signatureAllTime > 0) { %><span class="view-counts-sep">·</span><span><strong><%= viewCounts.signatureAllTime.toLocaleString('en-US') %></strong> from your email signature</span><% } %>
         </div>
       <% } %>
       <p style="margin-top: 0.85rem;">

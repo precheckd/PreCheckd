@@ -58,7 +58,7 @@ router.get('/:slug', async (req, res) => {
     if (isOwner) {
       viewCounts = await getViewCounts('recruiter', recruiter._id);
     } else {
-      await recordView(req, 'recruiter', recruiter._id);
+      await recordView(req, 'recruiter', recruiter._id, { viaSignature: req.query.ref === 'signature' });
     }
 
     // Render profile
