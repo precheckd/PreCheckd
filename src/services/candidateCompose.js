@@ -18,6 +18,7 @@ const { checkOutgoing } = require('../utils/messageSafety');
 const { addressFor } = require('../utils/mailAlias');
 const { mailChoiceUrl } = require('../utils/outreachToken');
 const { generateCertificate } = require('../utils/certificateGenerator');
+const { brandShell, escapeHtml, FONT } = require('../utils/emailLayout');
 const { safeDisplayName } = require('./inboundEmail');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -83,6 +84,21 @@ function footerFor(candidate, name, choiceUrl) {
   lines.push('Reply to this email to answer directly. It goes through PreCheckd, so addresses stay private.');
   lines.push(`Not interested, or want to stop emails like this? ${choiceUrl}`);
   return lines.join('\n');
+}
+
+function htmlFor(candidate, name, body, choiceUrl) {
+  const para = (t) => escapeHtml(t).replace(/\n/g, '<br>');
+  const verifyUrl = candidate.publicVerifyPage ? `${baseUrl()}/verify/${candidate.slug}` : null;
+  const bodyHtml = `
+    <p style="margin:0 0 18px;font-family:${FONT};font-size:15px;">${para(body)}</p>
+    <p style="margin:0 0 18px;font-family:${FONT};font-size:15px;">${escapeHtml(name)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 14px;"><tr><td style="background:#EAF8F0;border:1px solid #2ECC71;border-radius:8px;padding:12px 14px;font-family:${FONT};font-size:14px;color:#14532D;">
+      <strong>&#10003; Verified by PreCheckd.</strong> ${escapeHtml(name)} is a verified PreCheckd member: identity, phone and email have been checked.
+      ${verifyUrl ? `<a href="${verifyUrl}" style="color:#14532D;font-weight:700;">See their live verification page</a> (this badge is a link, not a picture, so it can't be faked).` : ''}
+    </td></tr></table>
+    <p style="margin:0;font-family:${FONT};font-size:13px;color:#5B6B70;">Reply to this email to answer directly. It goes through PreCheckd, so addresses stay private.</p>`;
+  const footerHtml = `You are receiving this one email because a verified PreCheckd member wrote to you. <a href="${choiceUrl}" style="color:#5B6B70;">Not interested, stop emails like this, or report this as a scam</a>.`;
+  return brandShell({ bodyHtml, preheader: `${name} is a verified PreCheckd member`, footerHtml });
 }
 
 // candidate: Candidate doc; alias: their MailAlias row;
@@ -154,6 +170,7 @@ async function sendNew({ candidate, alias, input, enabled }) {
       replyTo: fromAddress,
       subject,
       text,
+      html: htmlFor(candidate, name, body, choiceUrl),
       attachments: attachments.length ? attachments : undefined,
       headers: { 'List-Unsubscribe': `<${choiceUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
     });
