@@ -92,7 +92,7 @@
   const empty = {
     inbox: isRecruiter ? 'No mail yet. Replies to your emails will show up here.' : 'No mail yet. Job application confirmations and other mail sent to your PreCheckd address will show up here.',
     conversations: isRecruiter ? 'Nothing here yet. Conversations with candidates you connect with will show up here.' : 'Nothing here yet. Conversations with the recruiters you connect with will show up here.',
-    sent: isRecruiter ? 'Nothing sent yet. Emails you send and replies you write will show up here.' : 'Nothing sent yet. Replies you write from your PreCheckd address will show up here.'
+    sent: isRecruiter ? 'Nothing sent yet. Emails you send and replies you write will show up here.' : 'Nothing sent yet. Emails and replies you write from your PreCheckd address will show up here.'
   };
 %>
 
@@ -106,7 +106,7 @@
           <%= isRecruiter ? 'Mail sent here is not forwarded to your real email; your daily email tells you when replies are waiting.' : 'Use it on job applications instead of your real email. Mail stays here; your Monday and Thursday emails tell you when something is waiting.' %>
         </p>
       </div>
-      <% if (isRecruiter && typeof outreachEnabled !== 'undefined' && outreachEnabled) { %><a href="/mail/new" class="mail-action">New message</a><% } %>
+      <% if (typeof outreachEnabled !== 'undefined' && outreachEnabled) { %><a href="/mail/new" class="mail-action">New message</a><% } %>
     </div>
 
     <% if (undo) { %>

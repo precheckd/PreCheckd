@@ -3,7 +3,10 @@ const router = express.Router();
 const Recruiter = require('../models/Recruiter');
 const OutreachMessage = require('../models/OutreachMessage');
 const { applyChoice } = require('../services/outreach');
-const { readOutreachToken } = require('../utils/outreachToken');
+const MailMessage = require('../models/MailMessage');
+const Candidate = require('../models/Candidate');
+const candidateCompose = require('../services/candidateCompose');
+const { readOutreachToken, readMailToken } = require('../utils/outreachToken');
 
 // Verified recruiter outreach (roadmap #4). Two halves:
 //   /outreach/choice/:token  PUBLIC  the recipient's page (Not interested /
@@ -50,6 +53,41 @@ router.post('/choice/:token', async (req, res) => {
     return renderChoice(res, null, 'done', { message: CHOICE_DONE[choice] });
   } catch (error) {
     console.error('Error saving outreach choice:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+// The same page for an email a verified member (candidate) wrote themselves.
+const MEMBER_DONE = {
+  not_interested: 'Done. This member will not email you again.',
+  stop_all: 'Done. We will not pass any more member email to this address.',
+  scam_report: 'Reported. This member is blocked from emailing you again, and PreCheckd staff will review it. Thank you.'
+};
+
+router.get('/m/:token', async (req, res) => {
+  try {
+    const id = readMailToken(req.params.token);
+    const msg = id ? await MailMessage.findById(id) : null;
+    if (!msg || !msg.composed) return renderChoice(res, null, 'invalid');
+    const cand = await Candidate.findById(msg.ownerId);
+    const who = cand ? [cand.firstName, cand.lastName].filter(Boolean).join(' ') : 'A member';
+    return renderChoice(res, null, 'choose', { who, kind: 'member' });
+  } catch (error) {
+    console.error('Error loading member choice:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+router.post('/m/:token', async (req, res) => {
+  try {
+    const id = readMailToken(req.params.token);
+    if (!id) return renderChoice(res, null, 'invalid');
+    const choice = ['not_interested', 'stop_all', 'scam_report'].includes(req.body && req.body.choice) ? req.body.choice : 'stop_all';
+    const ok = await candidateCompose.applyChoice(id, choice);
+    if (!ok) return renderChoice(res, null, 'invalid');
+    return renderChoice(res, null, 'done', { message: MEMBER_DONE[choice], kind: 'member' });
+  } catch (error) {
+    console.error('Error saving member choice:', error);
     return res.status(500).send('Server error');
   }
 });

@@ -13,6 +13,7 @@ const { warningsFor } = require('../utils/messageSafety');
 const OutreachMessage = require('../models/OutreachMessage');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const outreach = require('../services/outreach');
+const candidateCompose = require('../services/candidateCompose');
 const { buildThreads, threadOf } = require('../utils/mailThreads');
 const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = require('../services/mailReply');
 
@@ -233,11 +234,29 @@ async function sentRows(ns, ownerId) {
   answered.forEach((r) => { if (!replyBy.has(r.fromAddress)) replyBy.set(r.fromAddress, r); });
 
   const rows = [];
-  replies.forEach((m) => rows.push({
-    href: m.inReplyToMailId ? `/mail/${m.inReplyToMailId}#reply` : null,
-    name: `To: ${m.toAddress || ''}`, subject: m.subject || '(no subject)', preview: oneLine(m.textBody, 110),
-    at: m.receivedAt, unread: false, chip: 'Reply', chipClass: ''
-  }));
+  const composedTo = replies.filter((m) => m.composed).map((m) => m.toAddress);
+  const composedAnswers = composedTo.length
+    ? await MailMessage.find({ namespace: ns, ownerId, direction: 'in', deletedAt: null, fromAddress: { $in: composedTo } }).sort({ receivedAt: -1 })
+    : [];
+  const answerBy = new Map();
+  composedAnswers.forEach((r) => { if (!answerBy.has(r.fromAddress)) answerBy.set(r.fromAddress, r); });
+  replies.forEach((m) => {
+    if (m.composed) {
+      const answer = answerBy.get(String(m.toAddress || '').toLowerCase());
+      const choice = m.recipientAction ? outreach.STATUS_NOTE[m.recipientAction] : '';
+      return rows.push({
+        href: answer ? `/mail/${answer._id}` : null,
+        name: `To: ${m.toAddress || ''}`, subject: m.subject || '(no subject)', preview: oneLine(m.textBody, 110),
+        at: m.receivedAt, unread: false,
+        chip: choice || (answer ? 'Replied' : 'Sent'), chipClass: choice ? 'note' : (answer ? 'reply' : '')
+      });
+    }
+    return rows.push({
+      href: m.inReplyToMailId ? `/mail/${m.inReplyToMailId}#reply` : null,
+      name: `To: ${m.toAddress || ''}`, subject: m.subject || '(no subject)', preview: oneLine(m.textBody, 110),
+      at: m.receivedAt, unread: false, chip: 'Reply', chipClass: ''
+    });
+  });
   outreachSent.forEach((m) => {
     const reply = replyBy.get(m.toEmail);
     const choice = m.recipientAction ? outreach.STATUS_NOTE[m.recipientAction] : '';
@@ -324,17 +343,27 @@ router.get('/', async (req, res) => {
 // template (services/outreach.js holds every safeguard). Once the person
 // replies, the conversation is ordinary Mail.
 
-function recruitersOnly(req, res, next) {
-  if (req.ns !== 'recruiter') return res.status(404).send('Not found.');
-  next();
-}
-
 async function renderCompose(req, res, { error = null, sent = false, form = {}, statusCode = 200 } = {}) {
+  if (req.ns === 'candidate') {
+    const candidate = await Candidate.findById(req.ownerId);
+    if (!candidate) return res.redirect('/login');
+    const quota = await candidateCompose.quotaFor(candidate._id);
+    return res.status(statusCode).render('mail-compose', {
+      pageTitle: 'New message | PreCheckd',
+      viewer: 'candidate',
+      enabled: outreach.enabled(),
+      verified: candidateCompose.isFullyVerified(candidate),
+      hasResume: Boolean(candidate.resumeUrl),
+      quota, error, sent, form,
+      maxBody: candidateCompose.MAX_BODY_CHARS
+    });
+  }
   const recruiter = await Recruiter.findById(req.ownerId);
   if (!recruiter) return res.redirect('/login');
   const quota = await outreach.quotaFor(recruiter._id);
   return res.status(statusCode).render('mail-compose', {
     pageTitle: 'New message | PreCheckd',
+    viewer: 'recruiter',
     enabled: outreach.enabled(),
     verified: outreach.isFullyVerified(recruiter),
     quota, error, sent, form,
@@ -343,7 +372,7 @@ async function renderCompose(req, res, { error = null, sent = false, form = {}, 
   });
 }
 
-router.get('/new', recruitersOnly, async (req, res) => {
+router.get('/new', async (req, res) => {
   try {
     return await renderCompose(req, res, { sent: req.query.sent === '1' });
   } catch (error) {
@@ -352,11 +381,27 @@ router.get('/new', recruitersOnly, async (req, res) => {
   }
 });
 
-router.post('/new', recruitersOnly, async (req, res) => {
+router.post('/new', async (req, res) => {
   try {
+    const body = req.body || {};
+    if (req.ns === 'candidate') {
+      const candidate = await Candidate.findById(req.ownerId);
+      if (!candidate) return res.redirect('/login');
+      const form = {
+        toEmail: String(body.toEmail || '').slice(0, 254), subject: String(body.subject || '').slice(0, 300),
+        body: String(body.body || '').slice(0, 20000),
+        attachResume: body.attachResume === 'on', attachCertificate: body.attachCertificate === 'on'
+      };
+      let alias = null;
+      try { alias = await ensureMailAlias('candidate', candidate); } catch (e) { alias = null; }
+      const result = await candidateCompose.sendNew({ candidate, alias, input: form, enabled: outreach.enabled() });
+      if (result.error) {
+        return await renderCompose(req, res, { error: result.message || candidateCompose.COMPOSE_ERRORS[result.error] || 'Something went wrong.', form, statusCode: 400 });
+      }
+      return res.redirect('/mail/new?sent=1');
+    }
     const recruiter = await Recruiter.findById(req.ownerId);
     if (!recruiter) return res.redirect('/login');
-    const body = req.body || {};
     const form = {
       toEmail: String(body.toEmail || '').slice(0, 254), toName: String(body.toName || '').slice(0, 40),
       templateKey: String(body.templateKey || ''), role: String(body.role || '').slice(0, 80), note: String(body.note || '').slice(0, 5000)

@@ -11,12 +11,13 @@
 </style>
 <div class="oc-wrap">
   <div class="oc-card">
+    <% const member = typeof kind !== 'undefined' && kind === 'member'; %>
     <% if (state === 'choose') { %>
       <h1>Email from <%= who %></h1>
-      <p><%= who %> sent you a message through PreCheckd. Pick what you want. Nothing happens until you press a button.</p>
-      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="not_interested"><p><strong>Not interested.</strong> This recruiter will not email you again.</p><button class="oc-btn" type="submit">Not interested</button></form>
-      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="stop_all"><p><strong>Stop all recruiter email.</strong> No recruiter can reach this address through PreCheckd.</p><button class="oc-btn" type="submit">Stop all</button></form>
-      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="scam_report"><p><strong>Report as a scam.</strong> Blocks this recruiter and sends the report to PreCheckd staff.</p><button class="oc-btn danger" type="submit">Report as scam</button></form>
+      <p><%= who %> sent you a message through PreCheckd<%= member ? ', where members are identity-verified' : '' %>. Pick what you want. Nothing happens until you press a button.</p>
+      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="not_interested"><p><strong>Not interested.</strong> This <%= member ? 'member' : 'recruiter' %> will not email you again.</p><button class="oc-btn" type="submit">Not interested</button></form>
+      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="stop_all"><p><strong>Stop all <%= member ? 'PreCheckd member' : 'recruiter' %> email.</strong> <%= member ? 'No one' : 'No recruiter' %> can reach this address through PreCheckd.</p><button class="oc-btn" type="submit">Stop all</button></form>
+      <form method="POST" class="oc-opt"><input type="hidden" name="choice" value="scam_report"><p><strong>Report as a scam.</strong> Blocks this <%= member ? 'member' : 'recruiter' %> and sends the report to PreCheckd staff.</p><button class="oc-btn danger" type="submit">Report as scam</button></form>
     <% } else if (state === 'done') { %>
       <h1>All set</h1>
       <p><%= message %></p>

@@ -22,4 +22,21 @@ function outreachChoiceUrl(id) {
   return `${process.env.APP_BASE_URL || 'https://precheckd.com'}/outreach/choice/${makeOutreachToken(id)}`;
 }
 
-module.exports = { makeOutreachToken, readOutreachToken, outreachChoiceUrl };
+// Same idea for a member's own email (candidate compose). A different prefix
+// keeps the two kinds of token from being swapped for each other.
+function signMail(id) { return crypto.createHmac('sha256', secret()).update(`mail-choice:${id}`).digest('hex').slice(0, 32); }
+
+function readMailToken(token) {
+  const [id, signature] = String(token || '').split('.');
+  if (!id || !signature || !/^[a-f0-9]{24}$/i.test(id)) return null;
+  const expected = Buffer.from(signMail(id));
+  const given = Buffer.from(signature);
+  if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) return null;
+  return id;
+}
+
+function mailChoiceUrl(id) {
+  return `${process.env.APP_BASE_URL || 'https://precheckd.com'}/outreach/m/${id}.${signMail(String(id))}`;
+}
+
+module.exports = { makeOutreachToken, readOutreachToken, outreachChoiceUrl, readMailToken, mailChoiceUrl };

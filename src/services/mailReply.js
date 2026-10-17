@@ -54,7 +54,7 @@ async function sendReply({ message, owner, alias, body }) {
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const sentToday = await MailMessage.countDocuments({
-    namespace: message.namespace, ownerId: message.ownerId, direction: 'out', receivedAt: { $gte: since }
+    namespace: message.namespace, ownerId: message.ownerId, direction: 'out', composed: { $ne: true }, receivedAt: { $gte: since }
   });
   if (sentToday >= DAILY_REPLY_CAP) return { error: 'rate' };
 

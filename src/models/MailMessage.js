@@ -47,6 +47,14 @@ const mailMessageSchema = new mongoose.Schema({
   // email to (roadmap #4), so this is most likely their reply.
   outreachReply: { type: Boolean, default: false },
 
+  // Candidate mail only: a first message the candidate wrote to someone outside
+  // PreCheckd (not a reply). The recipient's choices from the email's link are
+  // kept here so a member cannot keep writing to someone who said no.
+  composed: { type: Boolean, default: false },
+  recipientAction: { type: String, enum: ['not_interested', 'stop_all', 'scam_report', null], default: null },
+  recipientActionAt: { type: Date, default: null },
+  reportReviewed: { type: Boolean, default: false },
+
   // Set when the member forwarded a message from their own registered address:
   // the original sender found inside the forward (the tracker reads that
   // message, and Mail shows "Forwarded by you").

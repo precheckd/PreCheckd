@@ -15,6 +15,8 @@ const Suppression = require('../src/models/Suppression');
 const MailReport = require('../src/models/MailReport');
 const OutreachMessage = require('../src/models/OutreachMessage');
 const Recruiter = require('../src/models/Recruiter');
+const Candidate = require('../src/models/Candidate');
+const MailMessage = require('../src/models/MailMessage');
 const { addressFor } = require('../src/utils/mailAlias');
 
 const [cmd, a, b, ...rest] = process.argv.slice(2);
@@ -69,6 +71,12 @@ async function main() {
     if (!rec) { console.log('Usage: outreach-reviewed <recruiter-email>'); return; }
     const res = await OutreachMessage.updateMany({ recruiterId: rec._id, recipientAction: 'scam_report' }, { reportReviewed: true });
     console.log(`Marked ${res.modifiedCount} report(s) reviewed.`);
+  } else if (cmd === 'compose-reviewed') {
+    // Mark a member's compose scam reports reviewed (lifts the automatic pause): compose-reviewed <candidate-email>
+    const cand = await Candidate.findOne({ email: String(a || '').toLowerCase() });
+    if (!cand) { console.log('Usage: compose-reviewed <candidate-email>'); return; }
+    const res = await MailMessage.updateMany({ namespace: 'candidate', ownerId: cand._id, composed: true, recipientAction: 'scam_report' }, { reportReviewed: true });
+    console.log(`Marked ${res.modifiedCount} report(s) reviewed.`);
   } else if (cmd === 'unreport') {
     // Lift one member's own block of a sender: unreport <candidate|recruiter> <alias> <sender-address>
     const row = await MailAlias.findOne({ namespace: a, alias: String(b || '').toLowerCase() });
@@ -80,7 +88,7 @@ async function main() {
     const res = await Suppression.deleteOne({ value: String(a || '').toLowerCase() });
     console.log(res.deletedCount ? 'Unblocked.' : 'Was not on the list.');
   } else {
-    console.log('Commands: show|disable|enable <candidate|recruiter> <alias> [reason]; block|unblock <address-or-domain> [note]; reports; outreach-reports; outreach-reviewed <recruiter-email>; unreport <candidate|recruiter> <alias> <sender-address>');
+    console.log('Commands: show|disable|enable <candidate|recruiter> <alias> [reason]; block|unblock <address-or-domain> [note]; reports; outreach-reports; outreach-reviewed <recruiter-email>; compose-reviewed <candidate-email>; unreport <candidate|recruiter> <alias> <sender-address>');
   }
 }
 

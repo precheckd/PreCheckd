@@ -29,6 +29,7 @@
   const f = form || {};
   const fmt = (d) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 %>
+<% if (viewer === 'recruiter') { %>
 <div class="out-content">
   <div class="out-container">
     <a href="/mail" class="out-back">&larr; Back to Mail</a>
@@ -62,3 +63,41 @@
     <% } %>
   </div>
 </div>
+<% } else { %>
+<div class="out-content">
+  <div class="out-container">
+    <a href="/mail" class="out-back">&larr; Back to Mail</a>
+    <h1>New message</h1>
+    <p class="out-sub">Write to someone outside PreCheckd, like a recruiter you met on LinkedIn or a contact who asked for your resume. It comes from your PreCheckd address, so your real email stays private, and their reply lands in your Mail. One person per message.</p>
+
+    <% if (!enabled) { %>
+      <div class="notice info">Sending to people outside PreCheckd is not switched on yet. It will open soon.</div>
+    <% } else if (!verified) { %>
+      <div class="notice err">Only fully verified members (identity, phone and email) can send these emails. Finish verifying on your profile to unlock it.</div>
+    <% } else { %>
+      <% if (sent) { %><div class="notice ok">Sent. When they reply, it will show up in your <a href="/mail" style="color:#BDF2D2">Mail</a>. Applying for a job? <a href="/tracker" style="color:#BDF2D2">Add it to your tracker</a>.</div><% } %>
+      <% if (error) { %><div class="notice err"><%= error %></div><% } %>
+
+      <div class="out-card">
+        <h2>Email</h2>
+        <form method="post" action="/mail/new">
+          <div class="form-grid">
+            <div class="wide"><label for="c-to">To (one email address)</label><input id="c-to" type="email" name="toEmail" maxlength="254" required value="<%= f.toEmail || '' %>"></div>
+            <div class="wide"><label for="c-sub">Subject</label><input id="c-sub" type="text" name="subject" maxlength="150" required value="<%= f.subject || '' %>"></div>
+            <div class="wide"><label for="c-body">Message</label><textarea id="c-body" name="body" maxlength="<%= maxBody %>" style="min-height:200px" required><%= f.body || '' %></textarea>
+              <div class="hint">Plain text. Do not include Social Security, card or bank numbers.</div></div>
+            <div class="wide">
+              <label style="display:block;margin-bottom:0.3rem">Attach (optional)</label>
+              <label style="display:block;color:#E8EBEA;font-size:0.9rem"><input type="checkbox" name="attachResume" <%= f.attachResume ? 'checked' : '' %> <%= hasResume ? '' : 'disabled' %> style="width:auto"> Verified resume (your resume with your PreCheckd verification pages)<%= hasResume ? '' : ' — no resume on file' %></label>
+              <label style="display:block;color:#E8EBEA;font-size:0.9rem"><input type="checkbox" name="attachCertificate" <%= f.attachCertificate ? 'checked' : '' %> style="width:auto"> Certificate of Verification</label>
+              <div class="hint">Only these two files can be attached.</div>
+            </div>
+            <div class="wide"><button type="submit" class="btn">Send</button>
+              <span class="hint" style="margin-left:0.6rem">You can send <%= quota.left %> more today. A short line telling them a verified PreCheckd member wrote to them, with a link to opt out, is added to the end.</span></div>
+          </div>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</div>
+<% } %>
