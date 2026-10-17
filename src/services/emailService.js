@@ -11,7 +11,23 @@ const MOCK_EMAIL = process.env.MOCK_EMAIL === 'true';
 // goes out, it just logs to the console. Use this during testing so you
 // can use made-up/fake "reported" addresses without emailing real people,
 // the same way MOCK_SMS/MOCK_IDENTITY already work for phone/identity.
-async function sendEmail(params) {
+// Every email gets the PreCheckd look. Bodies written as plain fragments
+// (<p>...</p>) are wrapped in the branded layout here, so a new email can never
+// go out unbranded; bodies that already are full branded documents pass through.
+function brandedHtml(html, subject) {
+  if (/^\s*<!doctype/i.test(html || '')) return html;
+  const body = String(html || '')
+    .replace(/<a href=/g, '<a style="color:#1B8A4B;font-weight:600;" href=')
+    .replace(/<p>/g, '<p style="margin:0 0 14px;">');
+  return brandShell({
+    bodyHtml: body,
+    preheader: subject || '',
+    footerHtml: 'This is an automated message from PreCheckd.'
+  });
+}
+
+async function sendEmail(rawParams) {
+  const params = { ...rawParams, html: brandedHtml(rawParams.html, rawParams.subject) };
   if (MOCK_EMAIL) {
     console.log(`[MOCK EMAIL] To: ${params.to} | Subject: ${params.subject}`);
     console.log(params.html);
@@ -525,6 +541,7 @@ async function sendAdminLoginAlertEmail(ip, attemptCount) {
 }
 
 module.exports = {
+  brandedHtml,
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
   sendFraudReportNoticeEmail,
