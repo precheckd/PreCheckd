@@ -341,9 +341,9 @@
               const navMoreBadge = navFraudReportCount > 0 ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
             %>
             <a href="<%= navHomeHref %>" class="nav-btn-outline<%= navPath === navHomeHref ? ' is-active' : '' %>">Home</a>
-            <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Mail<%- navMailBadge %></a>
+            <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Inbox<%- navMailBadge %></a>
             <% if (navLoggedInCandidate) { %>
-              <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
+              <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Application Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } %>
             <a href="<%= navRequestsHref %>" class="nav-btn-outline<%= navOn(navRequestsHref) %>">Requests<%- navBadge(navPendingRequestCount) %></a>
             <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections</a>
