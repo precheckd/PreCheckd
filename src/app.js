@@ -84,6 +84,9 @@ app.use(async (req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
+  res.locals.navPhotoUrl = null;
+  res.locals.navInitials = '';
+  res.locals.navName = '';
   res.locals.commandCenterUnreadCount = 0;
   // Unread mail from verified senders only (the Mail page's left column), so a
   // flood of junk can't make the badge look urgent.
@@ -111,6 +114,9 @@ app.use(async (req, res, next) => {
         destroySuspendedSession = true;
       } else if (recruiter) {
         res.locals.loggedInRecruiterSlug = recruiter.slug;
+        res.locals.navPhotoUrl = recruiter.profilePhotoUrl || null;
+        res.locals.navInitials = `${(recruiter.firstName || '?').charAt(0)}${(recruiter.lastName || '').charAt(0)}`.toUpperCase();
+        res.locals.navName = [recruiter.firstName, recruiter.lastName].filter(Boolean).join(' ');
         res.locals.commandCenterIsClaimAccount = recruiter.accountTier === 'unverified_claim';
 
         res.locals.commandCenterFraudReportCount = await FraudReport.countDocuments({ matchedRecruiterId: recruiter._id });
@@ -140,6 +146,9 @@ app.use(async (req, res, next) => {
       const candidate = await Candidate.findById(req.session.candidateId);
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
+        res.locals.navPhotoUrl = candidate.profilePhotoUrl || null;
+        res.locals.navInitials = `${(candidate.firstName || '?').charAt(0)}${(candidate.lastName || '').charAt(0)}`.toUpperCase();
+        res.locals.navName = [candidate.firstName, candidate.lastName].filter(Boolean).join(' ');
 
         const [fraudReportCount, unreadCount, pendingConnectionCount, pendingFullAccessCount, mailUnreadCount] = await Promise.all([
           FraudReport.countDocuments({ reporterCandidateId: candidate._id }),

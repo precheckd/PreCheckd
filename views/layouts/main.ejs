@@ -146,6 +146,14 @@
     .hdr-search input:focus { outline: none; border-color: #2ECC71; background: #24404A; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15); }
     .hdr-search svg { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8FA6AC; pointer-events: none; }
 
+    .nav-menu { position: relative; }
+    .nav-menu summary { list-style: none; cursor: pointer; }
+    .nav-menu summary::-webkit-details-marker { display: none; }
+    .nav-avatar { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #2ECC71; background: #2A4750; color: #4ADE80; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; overflow: visible; }
+    .nav-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+    .nav-avatar.is-active { background: #2ECC71; color: #1F363C; }
+    .nav-menu-name { padding: 0.5rem 0.8rem 0.4rem; color: #8FA6AC; font-size: 0.8rem; border-bottom: 1px solid #3B5860; margin-bottom: 0.3rem; }
+    .nav-menu-sep { height: 1px; background: #3B5860; margin: 0.3rem 0; }
     .nav-more { position: relative; }
     .nav-more summary { list-style: none; }
     .nav-more summary::-webkit-details-marker { display: none; }
@@ -358,11 +366,14 @@
               const navPath = typeof currentPath !== 'undefined' ? String(currentPath) : '';
               const navOn = (href) => (navPath === href || navPath.startsWith(href + '/')) ? ' is-active' : '';
               const navMailBadge = navBadge(navUnreadCount + (typeof commandCenterMailUnreadCount !== 'undefined' ? commandCenterMailUnreadCount : 0));
-              const navMoreItems = navLoggedInCandidate
-                ? [['/candidate-dashboard/scam-check', 'Scam-check', ''], [navReportsHref, 'Reports', navBadge(navFraudReportCount)], [navEditHref, 'Edit profile', '']]
-                : [[navReportsHref, 'Reports', navBadge(navFraudReportCount)], [navEditHref, 'Edit profile', '']];
-              const navMoreActive = navMoreItems.some((i) => navOn(i[0]));
-              const navMoreBadge = navFraudReportCount > 0 ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
+              const navMenuItems = navLoggedInCandidate
+                ? [[navEditHref, 'Edit profile', ''], [`/candidate/${loggedInCandidateSlug}/certificate`, 'Download certificate', ''], ['/candidate-dashboard/scam-check', 'Scam-check', ''], [navReportsHref, 'Reports', navBadge(navFraudReportCount)]]
+                : [[navEditHref, 'Edit profile', ''], [navReportsHref, 'Reports', navBadge(navFraudReportCount)]];
+              const navMenuActive = navMenuItems.some((i) => navOn(i[0]));
+              const navMenuBadge = navFraudReportCount > 0 ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
+              const navAvatarPhoto = typeof navPhotoUrl !== 'undefined' ? navPhotoUrl : null;
+              const navAvatarInitials = typeof navInitials !== 'undefined' && navInitials ? navInitials : '?';
+              const navDisplayName = typeof navName !== 'undefined' ? navName : '';
             %>
             <a href="<%= navHomeHref %>" class="nav-btn-outline<%= navPath === navHomeHref ? ' is-active' : '' %>">Home</a>
             <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Inbox<%- navMailBadge %></a>
@@ -370,13 +381,18 @@
               <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Application Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } %>
             <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
-            <details class="nav-more">
-              <summary class="nav-btn-outline<%= navMoreActive ? ' is-active' : '' %>">More &#9662;<%- navMoreBadge %></summary>
+            <details class="nav-menu">
+              <summary class="nav-avatar<%= navMenuActive ? ' is-active' : '' %>" aria-label="Account menu">
+                <% if (navAvatarPhoto) { %><img src="<%= navAvatarPhoto %>" alt=""><% } else { %><span><%= navAvatarInitials %></span><% } %>
+                <%- navMenuBadge %>
+              </summary>
               <div class="nav-more-menu">
-                <% navMoreItems.forEach(function (i) { %><a href="<%= i[0] %>" class="<%= navOn(i[0]).trim() %>"><%= i[1] %><%- i[2] %></a><% }); %>
+                <% if (navDisplayName) { %><div class="nav-menu-name"><%= navDisplayName %></div><% } %>
+                <% navMenuItems.forEach(function (i) { %><a href="<%= i[0] %>" class="<%= navOn(i[0]).trim() %>"><%= i[1] %><%- i[2] %></a><% }); %>
+                <div class="nav-menu-sep"></div>
+                <a href="<%= navLogoutHref %>">Log out</a>
               </div>
             </details>
-            <a href="<%= navLogoutHref %>" class="nav-btn-outline">Log Out</a>
           <% } %>
         </div>
       <% } else { %>
@@ -421,5 +437,14 @@
   </div>
 </footer>
 
+<script>
+  // Close the account menu when clicking elsewhere or pressing Escape.
+  (function () {
+    var menu = document.querySelector('.nav-menu');
+    if (!menu) return;
+    document.addEventListener('click', function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') menu.open = false; });
+  })();
+</script>
 </body>
 </html>
