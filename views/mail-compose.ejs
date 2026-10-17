@@ -14,6 +14,8 @@
   .form-grid .wide { grid-column: 1 / -1; }
   .form-grid input, .form-grid select, .form-grid textarea { width: 100%; box-sizing: border-box; padding: 0.5rem 0.6rem; border: 1px solid #4A6F7B; border-radius: 6px; background: #24404A; color: #F2F4F3; font-size: 0.9rem; font-family: inherit; }
   .form-grid textarea { min-height: 110px; resize: vertical; }
+  .out-back { display: inline-block; color: #8FA6AC; font-size: 0.85rem; text-decoration: none; margin-bottom: 0.8rem; }
+  .out-back:hover { color: #F2F4F3; }
   .hint { color: #8FA6AC; font-size: 0.8rem; line-height: 1.4; }
   .btn { display: inline-block; padding: 0.55rem 1.2rem; border-radius: 6px; border: 1px solid #2ECC71; background: #2ECC71; color: #1F363C; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; }
   .sent-row { padding: 0.6rem 0; border-top: 1px solid #3B5860; color: #E8EBEA; font-size: 0.9rem; overflow-wrap: anywhere; }
@@ -29,20 +31,21 @@
 %>
 <div class="out-content">
   <div class="out-container">
-    <h1>Outreach</h1>
-    <p class="out-sub">Email someone who is not on PreCheckd yet. The email comes from your PreCheckd address, carries a "Verified by PreCheckd" block that links to your live verification page, and replies come back to you here. Use addresses you already have; do not scrape.</p>
+    <a href="/mail" class="out-back">&larr; Back to Mail</a>
+    <h1>New message</h1>
+    <p class="out-sub">Write to someone who is not on PreCheckd yet. The email comes from your PreCheckd address, carries a "Verified by PreCheckd" block that links to your live verification page, and their reply comes back to your Mail. Use addresses you already have; do not scrape.</p>
 
     <% if (!enabled) { %>
-      <div class="notice info">Outreach is not switched on yet. It will open soon.</div>
+      <div class="notice info">Sending to people outside PreCheckd is not switched on yet. It will open soon.</div>
     <% } else if (!verified) { %>
-      <div class="notice err">Only fully verified recruiters (identity and phone) can send outreach.</div>
+      <div class="notice err">Only fully verified recruiters (identity and phone) can send these emails.</div>
     <% } else { %>
-      <% if (sent) { %><div class="notice ok">Sent.</div><% } %>
+      <% if (sent) { %><div class="notice ok">Sent. When they reply, it will show up in your <a href="/mail" style="color:#BDF2D2">Mail</a>.</div><% } %>
       <% if (error) { %><div class="notice err"><%= error %></div><% } %>
 
       <div class="out-card">
-        <h2>New email</h2>
-        <form method="post" action="/outreach/send">
+        <h2>Email</h2>
+        <form method="post" action="/mail/new">
           <div class="form-grid">
             <div><label for="o-email">Their email address</label><input id="o-email" type="email" name="toEmail" maxlength="254" required value="<%= f.toEmail || '' %>"></div>
             <div><label for="o-name">Their first name (optional)</label><input id="o-name" type="text" name="toName" maxlength="40" value="<%= f.toName || '' %>"></div>
@@ -55,15 +58,6 @@
               <span class="hint" style="margin-left:0.6rem">You can send <%= quota.dailyLeft %> more today and <%= quota.monthlyLeft %> more over the next 30 days. One email per address every 30 days.</span></div>
           </div>
         </form>
-      </div>
-
-      <div class="out-card">
-        <h2>Recently sent</h2>
-        <% if (recent.length === 0) { %>
-          <div class="hint">Nothing sent yet.</div>
-        <% } else { recent.forEach(function(m) { %>
-          <div class="sent-row"><%= m.to %><% if (m.note) { %><span class="tag"><%= m.note %></span><% } %><div class="meta"><%= m.subject %> &middot; <%= fmt(m.at) %></div></div>
-        <% }); } %>
       </div>
     <% } %>
   </div>

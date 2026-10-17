@@ -102,6 +102,26 @@ function buildEmail({ recruiter, template, first, role, note, messageId }) {
   return { text, html: brandShell({ bodyHtml, preheader: `${name} is a verified recruiter`, footerHtml }), choiceUrl };
 }
 
+const OUTREACH_ERRORS = {
+  disabled: 'Outreach is not switched on yet.',
+  not_configured: 'Outreach is not fully set up yet. Please check back soon.',
+  not_verified: 'Only fully verified recruiters can send outreach.',
+  template: 'Pick one of the templates.',
+  bad_email: 'Enter a valid email address for the person you want to reach.',
+  role: 'Enter the role (words only, no links).',
+  note_long: `Keep your note under ${MAX_NOTE_CHARS} characters.`,
+  note_links: 'Your note can include at most two links. Links are shown as plain text, not clickable.',
+  unsafe: 'Messages cannot include Social Security, card or bank account numbers. Take those out and try again.',
+  paused: 'Your outreach is paused while PreCheckd staff review reports from recipients. Please contact support.',
+  blocked: 'We cannot email this address. The person may have asked not to be contacted.',
+  duplicate: 'You already emailed this address in the last 30 days.',
+  daily_cap: "You've reached today's outreach limit. Try again tomorrow.",
+  monthly_cap: "You've reached this month's outreach limit.",
+  send_failed: 'The email could not be sent. Please try again in a few minutes.'
+};
+
+const STATUS_NOTE = { not_interested: 'Not interested', stop_all: 'Asked not to be emailed', scam_report: 'Reported' };
+
 // --- Sending ------------------------------------------------------------------
 
 // recruiter: Recruiter doc; alias: their MailAlias row; input: { toEmail,
@@ -213,4 +233,4 @@ async function applyChoice(messageId, choice) {
   return true;
 }
 
-module.exports = { sendOutreach, applyChoice, quotaFor, buildEmail, isFullyVerified, enabled, TEMPLATES, MAX_NOTE_CHARS };
+module.exports = { OUTREACH_ERRORS, STATUS_NOTE, sendOutreach, applyChoice, quotaFor, buildEmail, isFullyVerified, enabled, TEMPLATES, MAX_NOTE_CHARS };

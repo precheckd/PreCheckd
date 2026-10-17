@@ -10,6 +10,9 @@ const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const { addressFor } = require('../utils/mailAlias');
 const { warningsFor } = require('../utils/messageSafety');
+const OutreachMessage = require('../models/OutreachMessage');
+const { ensureMailAlias } = require('../utils/mailAlias');
+const outreach = require('../services/outreach');
 const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = require('../services/mailReply');
 
 // The merged Inbox + Mail page (roadmap #5 for candidates, #4 for recruiters).
@@ -204,6 +207,90 @@ router.get('/', async (req, res) => {
   }
 });
 
+// --- New message + Sent (recruiters) -----------------------------------------
+// A recruiter's first email to someone not on PreCheckd is written here, from a
+// template (services/outreach.js holds every safeguard). Once the person
+// replies, the conversation is ordinary Mail.
+
+function recruitersOnly(req, res, next) {
+  if (req.ns !== 'recruiter') return res.status(404).send('Not found.');
+  next();
+}
+
+async function renderCompose(req, res, { error = null, sent = false, form = {}, statusCode = 200 } = {}) {
+  const recruiter = await Recruiter.findById(req.ownerId);
+  if (!recruiter) return res.redirect('/login');
+  const quota = await outreach.quotaFor(recruiter._id);
+  return res.status(statusCode).render('mail-compose', {
+    pageTitle: 'New message | PreCheckd',
+    enabled: outreach.enabled(),
+    verified: outreach.isFullyVerified(recruiter),
+    quota, error, sent, form,
+    templates: Object.entries(outreach.TEMPLATES).map(([key, t]) => ({ key, label: t.label, needsRole: t.needsRole })),
+    maxNote: outreach.MAX_NOTE_CHARS
+  });
+}
+
+router.get('/new', recruitersOnly, async (req, res) => {
+  try {
+    return await renderCompose(req, res, { sent: req.query.sent === '1' });
+  } catch (error) {
+    console.error('Error loading new message page:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+router.post('/new', recruitersOnly, async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.ownerId);
+    if (!recruiter) return res.redirect('/login');
+    const body = req.body || {};
+    const form = {
+      toEmail: String(body.toEmail || '').slice(0, 254), toName: String(body.toName || '').slice(0, 40),
+      templateKey: String(body.templateKey || ''), role: String(body.role || '').slice(0, 80), note: String(body.note || '').slice(0, 5000)
+    };
+    let alias = null;
+    try { alias = await ensureMailAlias('recruiter', recruiter); } catch (e) { alias = null; }
+    const result = await outreach.sendOutreach({ recruiter, alias, input: form });
+    if (result.error) {
+      return await renderCompose(req, res, { error: result.message || outreach.OUTREACH_ERRORS[result.error] || 'Something went wrong.', form, statusCode: 400 });
+    }
+    return res.redirect('/mail/new?sent=1');
+  } catch (error) {
+    console.error('Error sending new message:', error);
+    return res.status(500).send('Server error');
+  }
+});
+
+router.get('/sent', recruitersOnly, async (req, res) => {
+  try {
+    const sent = await OutreachMessage.find({ recruiterId: req.ownerId, status: 'sent' }).sort({ sentAt: -1 }).limit(100);
+    const replies = sent.length
+      ? await MailMessage.find({
+        namespace: 'recruiter', ownerId: req.ownerId, direction: 'in', outreachReply: true, deletedAt: null,
+        fromAddress: { $in: sent.map((m) => m.toEmail) }
+      }).sort({ receivedAt: -1 })
+      : [];
+    const replyBy = new Map();
+    replies.forEach((r) => { if (!replyBy.has(r.fromAddress)) replyBy.set(r.fromAddress, r); });
+    res.render('mail-sent', {
+      pageTitle: 'Sent | PreCheckd',
+      enabled: outreach.enabled(),
+      rows: sent.map((m) => {
+        const reply = replyBy.get(m.toEmail);
+        return {
+          to: m.toEmail, subject: m.subject, at: m.sentAt,
+          status: m.recipientAction ? outreach.STATUS_NOTE[m.recipientAction] : '',
+          replyId: reply ? reply._id.toString() : null
+        };
+      })
+    });
+  } catch (error) {
+    console.error('Error loading sent mail:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // Loads one of this member's received messages (not deleted, not a sent reply).
 function findMine(req, extra = {}) {
   if (!mongoose.isValidObjectId(req.params.id)) return null;
@@ -224,8 +311,15 @@ async function renderMessage(req, res, message, { error = null, draft = '', stat
     inReplyToMailId: message._id,
     deletedAt: null
   }).sort({ receivedAt: 1 });
+  // For a reply to outreach: what the recruiter originally sent that address.
+  let outreachSent = null;
+  if (req.ns === 'recruiter' && message.outreachReply && message.fromAddress) {
+    const o = await OutreachMessage.findOne({ recruiterId: req.ownerId, toEmail: message.fromAddress, status: 'sent' }).sort({ sentAt: -1 });
+    if (o) outreachSent = { subject: o.subject, at: o.sentAt, note: o.note || '' };
+  }
   const target = replyTarget(message);
   res.status(status).render('mail-detail', {
+    outreachSent,
     pageTitle: `${message.subject || 'Message'} | PreCheckd`,
     viewer: req.ns,
     message,

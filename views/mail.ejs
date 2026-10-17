@@ -23,6 +23,11 @@
     line-height: 1.5;
   }
 
+  .mail-actions { float: right; display: flex; gap: 0.5rem; margin-left: 1rem; }
+  .mail-action { padding: 0.45rem 1rem; border-radius: 6px; border: 1px solid #4A6F7B; color: #E8EBEA; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+  .mail-action:hover { border-color: #8FA6AC; }
+  .mail-action.primary { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
+  @media (max-width: 768px) { .mail-actions { float: none; margin: 0 0 0.8rem 0; } }
   .mail-address {
     color: #4ADE80;
     font-weight: 600;
@@ -242,6 +247,9 @@
 
 <div class="mail-content">
   <div class="mail-header">
+    <% if (isRecruiter && typeof outreachEnabled !== 'undefined' && outreachEnabled) { %>
+      <div class="mail-actions"><a href="/mail/new" class="mail-action primary">New message</a><a href="/mail/sent" class="mail-action">Sent</a></div>
+    <% } %>
     <h1>Mail</h1>
     <p>
       Everything sent to you on PreCheckd, in one place.

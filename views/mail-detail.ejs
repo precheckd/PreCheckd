@@ -343,6 +343,9 @@
         <div class="safety-warning"><%= w %></div>
       <% }); %>
 
+      <% if (typeof outreachSent !== 'undefined' && outreachSent) { %>
+        <div class="mail-footnote" style="margin-bottom:0.8rem">In reply to your email &ldquo;<%= outreachSent.subject %>&rdquo; sent <%= fmtFull(outreachSent.at) %><% if (outreachSent.note) { %>. Your note: &ldquo;<%= outreachSent.note %>&rdquo;<% } %></div>
+      <% } %>
       <div class="mail-body"><%= message.textBody || '(no text)' %></div>
       <% if (message.bodyTruncated) { %><div class="mail-footnote">This message was long, so only the first part is shown here.</div><% } %>
 
