@@ -1,3 +1,4 @@
+const { properName } = require('../utils/properName');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { brandShell, emailButton, escapeHtml } = require('../utils/emailLayout');
@@ -53,7 +54,7 @@ async function sendVerificationEmail(toEmail, firstName, token) {
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
     html: `
-      <p>Hi ${firstName},</p>
+      <p>Hi ${properName(firstName)},</p>
       <p>Click the link below to verify your email address for your PreCheckd profile:</p>
       <p><a href="${verifyUrl}">${verifyUrl}</a></p>
       <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
@@ -79,7 +80,7 @@ async function sendPasswordResetEmail(toEmail, firstName, token, { isFirstTime =
     to: toEmail,
     subject,
     html: `
-      <p>Hi ${firstName},</p>
+      <p>Hi ${properName(firstName)},</p>
       <p>${intro}</p>
       <p><a href="${resetUrl}">${resetUrl}</a></p>
       <p>This link expires in 30 minutes and can only be used once. If you didn't request this, you can safely ignore this email.</p>
@@ -95,7 +96,7 @@ async function sendCandidateVerificationLink(toEmail, firstName, token) {
     to: toEmail,
     subject: 'Verify your email for PreCheckd',
     html: `
-      <p>Hi ${firstName},</p>
+      <p>Hi ${properName(firstName)},</p>
       <p>Click the link below to verify your email address for your PreCheckd profile:</p>
       <p><a href="${verifyUrl}">${verifyUrl}</a></p>
       <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
@@ -109,7 +110,7 @@ async function sendConnectionAcceptedEmail(candidateEmail, candidateFirstName, r
     to: candidateEmail,
     subject: `${recruiterName} accepted your connection request`,
     html: `
-      <p>Hi ${candidateFirstName},</p>
+      <p>Hi ${properName(candidateFirstName)},</p>
       <p><strong>${recruiterName}</strong> accepted your connection request on PreCheckd.</p>
       <p>You can now message them directly through your PreCheckd inbox.</p>
     `,
@@ -122,7 +123,7 @@ async function sendConnectionDeclinedEmail(candidateEmail, candidateFirstName, r
     to: candidateEmail,
     subject: `Update on your connection request`,
     html: `
-      <p>Hi ${candidateFirstName},</p>
+      <p>Hi ${properName(candidateFirstName)},</p>
       <p><strong>${recruiterName}</strong> declined your connection request on PreCheckd.</p>
       <p>Don't be discouraged — keep browsing and connecting with other verified recruiters.</p>
     `,
@@ -140,7 +141,7 @@ async function sendRecruiterConnectionAcceptedEmail(recruiterEmail, recruiterFir
     to: recruiterEmail,
     subject: `${candidateDisplayName} accepted your connection request`,
     html: `
-      <p>Hi ${recruiterFirstName},</p>
+      <p>Hi ${properName(recruiterFirstName)},</p>
       <p><strong>${candidateDisplayName}</strong> accepted your connection request on PreCheckd.</p>
       <p>You can now view their full profile and message them directly through your PreCheckd dashboard.</p>
     `,
@@ -153,7 +154,7 @@ async function sendRecruiterConnectionDeclinedEmail(recruiterEmail, recruiterFir
     to: recruiterEmail,
     subject: `Update on your connection request`,
     html: `
-      <p>Hi ${recruiterFirstName},</p>
+      <p>Hi ${properName(recruiterFirstName)},</p>
       <p><strong>${candidateDisplayName}</strong> declined your connection request on PreCheckd.</p>
     `,
   });
@@ -167,7 +168,7 @@ async function sendNewMessageEmail(toEmail, recipientFirstName, senderName, subj
     to: toEmail,
     subject: subject ? `New message: ${subject}` : `You have a new message on PreCheckd`,
     html: `
-      <p>Hi ${recipientFirstName},</p>
+      <p>Hi ${properName(recipientFirstName)},</p>
       <p><strong>${senderName}</strong> sent you a message on PreCheckd.</p>
       <p><a href="${inboxUrl}">View it in your inbox</a></p>
     `,
@@ -191,7 +192,7 @@ async function sendMessageDigestEmail(toEmail, recipientFirstName, senders) {
     to: toEmail,
     subject: total === 1 ? 'You have an unread message on PreCheckd' : `You have ${total} unread messages on PreCheckd`,
     html: `
-      <p>Hi ${escape(recipientFirstName)},</p>
+      <p>Hi ${escape(properName(recipientFirstName))},</p>
       <p>You have messages waiting on PreCheckd:</p>
       <ul>${lines}</ul>
       <p><a href="${inboxUrl}">Open your inbox</a> to read and reply — conversations stay on PreCheckd, where your verified identity protects you.</p>
@@ -247,7 +248,7 @@ async function sendCertExpiryReminderEmail(toEmail, firstName, slug, certs) {
   const bodyHtml = `
     <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Certification reminder</p>
     <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${headline}</h1>
-    <p style="margin:0 0 16px;">Hi ${escape(firstName)}, a quick heads-up about your profile:</p>
+    <p style="margin:0 0 16px;">Hi ${escape(properName(firstName))}, a quick heads-up about your profile:</p>
     ${cards}
     <p style="margin:16px 0 0;">Keeping your certifications current keeps your verified profile strong. Once a certification expires, it no longer shows as verified to recruiters.</p>
     ${emailButton(editUrl, 'Update my certifications')}
@@ -283,7 +284,7 @@ function weeklyButton(href, label) {
 
 function weeklyShell(firstName, intro, sectionsHtml, unsubUrl, settingsUrl) {
   return brandShell({
-    bodyHtml: `<p style="margin:0 0 14px;">Hi ${weeklyEscape(firstName)},</p>
+    bodyHtml: `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(firstName))},</p>
         ${intro ? `<p style="margin:0 0 6px;">${intro}</p>` : ''}
         ${sectionsHtml}`,
     footerHtml: `You get this email because you have a PreCheckd candidate account.<br>

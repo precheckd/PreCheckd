@@ -1,3 +1,4 @@
+const { properName } = require('../utils/properName');
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
@@ -400,8 +401,8 @@ router.post('/verify-identity-session', async (req, res) => {
       }
 
       const rawDocFirstName = (verificationSession.verified_outputs?.first_name || '').trim();
-      const docFirstName = rawDocFirstName.split(/\s+/)[0] || '';
-      const docLastName = (verificationSession.verified_outputs?.last_name || '').trim();
+      const docFirstName = properName(rawDocFirstName.split(/\s+/)[0] || '');
+      const docLastName = properName((verificationSession.verified_outputs?.last_name || '').trim());
 
       if (docFirstName && docLastName) {
         recruiter.firstName = docFirstName;
