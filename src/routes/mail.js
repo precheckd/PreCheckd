@@ -72,6 +72,9 @@ function oneLine(text, max) {
 function mailRow(m) {
   return {
     href: `/mail/${m._id}`,
+    id: m._id.toString(),
+    deletable: true,
+    verified: m.senderCheck === 'verified_recruiter',
     name: m.fromName || m.fromAddress || 'Unknown sender',
     address: m.fromAddress,
     subject: m.subject || '(no subject)',
@@ -153,11 +156,46 @@ async function conversationRows(type, ownerId) {
   return rows;
 }
 
-// GET /mail
+// GET /mail?tab=inbox|conversations|sent
+const TABS = ['inbox', 'conversations', 'sent'];
+
+async function sentRows(ns, ownerId) {
+  const [replies, outreachSent] = await Promise.all([
+    MailMessage.find({ namespace: ns, ownerId, direction: 'out', deletedAt: null }).sort({ receivedAt: -1 }).limit(100),
+    ns === 'recruiter' ? OutreachMessage.find({ recruiterId: ownerId, status: 'sent' }).sort({ sentAt: -1 }).limit(100) : []
+  ]);
+  const answered = outreachSent.length
+    ? await MailMessage.find({
+      namespace: ns, ownerId, direction: 'in', outreachReply: true, deletedAt: null,
+      fromAddress: { $in: outreachSent.map((m) => m.toEmail) }
+    }).sort({ receivedAt: -1 })
+    : [];
+  const replyBy = new Map();
+  answered.forEach((r) => { if (!replyBy.has(r.fromAddress)) replyBy.set(r.fromAddress, r); });
+
+  const rows = [];
+  replies.forEach((m) => rows.push({
+    href: m.inReplyToMailId ? `/mail/${m.inReplyToMailId}#reply` : null,
+    name: `To: ${m.toAddress || ''}`, subject: m.subject || '(no subject)', preview: oneLine(m.textBody, 110),
+    at: m.receivedAt, unread: false, chip: 'Reply', chipClass: ''
+  }));
+  outreachSent.forEach((m) => {
+    const reply = replyBy.get(m.toEmail);
+    const choice = m.recipientAction ? outreach.STATUS_NOTE[m.recipientAction] : '';
+    rows.push({
+      href: reply ? `/mail/${reply._id}` : null,
+      name: `To: ${m.toEmail}`, subject: m.subject, preview: m.note ? oneLine(m.note, 110) : '',
+      at: m.sentAt, unread: false,
+      chip: choice || (reply ? 'Replied' : 'Outreach'), chipClass: choice ? 'note' : (reply ? 'reply' : '')
+    });
+  });
+  return rows.sort((a, b) => new Date(b.at) - new Date(a.at));
+}
+
 router.get('/', async (req, res) => {
   try {
     const { ns, ownerId } = req;
-    const isRecruiter = ns === 'recruiter';
+    const tab = TABS.includes(req.query.tab) ? req.query.tab : 'inbox';
     const mailFilter = { namespace: ns, ownerId, direction: 'in', deletedAt: null };
 
     // Banner after deleting or reporting. Undo is offered for a message that
@@ -171,31 +209,29 @@ router.get('/', async (req, res) => {
     }
     const reported = req.query.reported === '1';
 
-    const [conversations, verifiedMail, otherMail, flaggedMail, alias] = await Promise.all([
+    const [conversations, inboxMail, flaggedMail, alias, sent] = await Promise.all([
       conversationRows(ns, ownerId),
-      MailMessage.find({ ...mailFilter, senderCheck: 'verified_recruiter', flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
-      MailMessage.find({ ...mailFilter, senderCheck: { $ne: 'verified_recruiter' }, flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
+      MailMessage.find({ ...mailFilter, flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
       MailMessage.find({ ...mailFilter, flagged: true }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
-      MailAlias.findOne({ namespace: ns, ownerId })
+      MailAlias.findOne({ namespace: ns, ownerId }),
+      tab === 'sent' ? sentRows(ns, ownerId) : []
     ]);
 
-    // Recruiters have no "verified sender" mail: the left column is PreCheckd
-    // conversations only, and replies to their outreach lead the right column.
-    const left = [...conversations, ...verifiedMail.map(mailRow)]
-      .sort((a, b) => new Date(b.at) - new Date(a.at));
-    const right = otherMail.map(mailRow);
-    if (isRecruiter) right.sort((a, b) => (Number(b.outreachReply) - Number(a.outreachReply)) || (new Date(b.at) - new Date(a.at)));
+    // Newest first, like any mail app. Verified senders get a badge, not a
+    // higher spot in the list.
+    const inbox = inboxMail.map(mailRow);
+    const conv = conversations.sort((a, b) => new Date(b.at) - new Date(a.at));
     const flagged = flaggedMail.map(mailRow);
-
-    const unreadCount = (rows) => rows.filter((r) => r.unread).length;
 
     res.render('mail', {
       pageTitle: 'Mail | PreCheckd',
-      left,
-      right,
+      tab,
+      rowsByTab: { inbox, conversations: conv, sent },
       flagged,
-      leftUnread: left.reduce((n, r) => n + (r.kind === 'conversation' ? (r.unreadCount || 0) : (r.unread ? 1 : 0)), 0),
-      rightUnread: unreadCount(right),
+      counts: {
+        inbox: inbox.filter((r) => r.unread).length,
+        conversations: conv.reduce((n, r) => n + (r.unreadCount || 0), 0)
+      },
       viewer: ns,
       aliasAddress: alias ? addressFor(ns, alias.alias) : null,
       undo,
@@ -262,34 +298,7 @@ router.post('/new', recruitersOnly, async (req, res) => {
   }
 });
 
-router.get('/sent', recruitersOnly, async (req, res) => {
-  try {
-    const sent = await OutreachMessage.find({ recruiterId: req.ownerId, status: 'sent' }).sort({ sentAt: -1 }).limit(100);
-    const replies = sent.length
-      ? await MailMessage.find({
-        namespace: 'recruiter', ownerId: req.ownerId, direction: 'in', outreachReply: true, deletedAt: null,
-        fromAddress: { $in: sent.map((m) => m.toEmail) }
-      }).sort({ receivedAt: -1 })
-      : [];
-    const replyBy = new Map();
-    replies.forEach((r) => { if (!replyBy.has(r.fromAddress)) replyBy.set(r.fromAddress, r); });
-    res.render('mail-sent', {
-      pageTitle: 'Sent | PreCheckd',
-      enabled: outreach.enabled(),
-      rows: sent.map((m) => {
-        const reply = replyBy.get(m.toEmail);
-        return {
-          to: m.toEmail, subject: m.subject, at: m.sentAt,
-          status: m.recipientAction ? outreach.STATUS_NOTE[m.recipientAction] : '',
-          replyId: reply ? reply._id.toString() : null
-        };
-      })
-    });
-  } catch (error) {
-    console.error('Error loading sent mail:', error);
-    res.status(500).send('Server error');
-  }
-});
+router.get('/sent', (req, res) => res.redirect('/mail?tab=sent'));
 
 // Loads one of this member's received messages (not deleted, not a sent reply).
 function findMine(req, extra = {}) {

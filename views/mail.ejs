@@ -1,346 +1,157 @@
 <style>
-  .mail-content {
-    flex: 1;
-    padding: 2rem 1.5rem;
-    background: #1F363C;
-    min-height: 100vh;
-  }
+  .mail-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; }
+  .mail-wrap { max-width: 1100px; margin: 0 auto; }
+  .mail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+  .mail-header h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.35rem; }
+  .mail-header p { color: #C7D1CF; font-size: 0.92rem; line-height: 1.5; }
+  .mail-address { color: #4ADE80; font-weight: 600; word-break: break-all; }
+  .mail-action { flex-shrink: 0; padding: 0.55rem 1.3rem; border-radius: 999px; border: 1px solid #2ECC71; background: #2ECC71; color: #1F363C; font-size: 0.9rem; font-weight: 700; text-decoration: none; }
+  .mail-action:hover { background: #4ADE80; }
 
-  .mail-header {
-    max-width: 1200px;
-    margin: 0 auto 1.25rem;
-  }
-
-  .mail-header h1 {
-    font-size: 1.75rem;
-    color: #F2F4F3;
-    margin-bottom: 0.35rem;
-  }
-
-  .mail-header p {
-    color: #C7D1CF;
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-
-  .mail-actions { float: right; display: flex; gap: 0.5rem; margin-left: 1rem; }
-  .mail-action { padding: 0.45rem 1rem; border-radius: 6px; border: 1px solid #4A6F7B; color: #E8EBEA; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
-  .mail-action:hover { border-color: #8FA6AC; }
-  .mail-action.primary { background: #2ECC71; border-color: #2ECC71; color: #1F363C; }
-  @media (max-width: 768px) { .mail-actions { float: none; margin: 0 0 0.8rem 0; } }
-  .mail-address {
-    color: #4ADE80;
-    font-weight: 600;
-    word-break: break-all;
-  }
-
-  .mail-preview-note {
-    max-width: 1200px;
-    margin: 0 auto 1.25rem;
-    padding: 0.7rem 0.9rem;
-    background: #24404A;
-    border: 1px dashed #4A6F7B;
-    border-radius: 6px;
-    color: #C7D1CF;
-    font-size: 0.85rem;
-    line-height: 1.45;
-  }
-
-  .mail-banner {
-    max-width: 1200px;
-    margin: 0 auto 1.25rem;
-    padding: 0.7rem 0.9rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    line-height: 1.45;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
+  .mail-banner { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.9rem; line-height: 1.45; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .mail-banner.ok { background: #1E4A33; border: 1px solid #2ECC71; color: #BDF2D2; }
   .mail-banner form { margin: 0; }
-
-  .banner-btn {
-    padding: 0.35rem 0.9rem;
-    border-radius: 6px;
-    border: 1px solid #2ECC71;
-    background: transparent;
-    color: #BDF2D2;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
+  .banner-btn { padding: 0.35rem 0.9rem; border-radius: 6px; border: 1px solid #2ECC71; background: transparent; color: #BDF2D2; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
   .banner-btn:hover { background: #2ECC71; color: #1F363C; }
 
-  .mail-columns {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.5rem;
-    align-items: start;
-  }
+  /* Tabs */
+  .mail-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #3B5860; }
+  .mail-tab { display: flex; align-items: center; gap: 0.45rem; padding: 0.75rem 1.2rem; color: #8FA6AC; font-size: 0.95rem; font-weight: 600; text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .mail-tab:hover { color: #F2F4F3; background: #24404A; }
+  .mail-tab.active { color: #4ADE80; border-bottom-color: #2ECC71; }
+  .tab-count { min-width: 1.2rem; padding: 0 0.4rem; background: #E53E3E; color: #fff; border-radius: 999px; font-size: 0.72rem; line-height: 1.2rem; text-align: center; font-weight: 700; }
 
-  /* Long previews are cut with an ellipsis; without this they widen the page. */
-  .mail-column { min-width: 0; }
+  /* Gmail-style list */
+  .gm-list { background: #2A4750; border: 1px solid #3B5860; border-top: none; border-radius: 0 0 8px 8px; }
+  .gm-row { position: relative; display: block; border-bottom: 1px solid #3B5860; background: #24404A; }
+  .gm-row:last-child { border-bottom: none; }
+  .gm-row.unread { background: #2D4F59; }
+  .gm-row:hover { box-shadow: inset 3px 0 0 #2ECC71; z-index: 1; }
+  .gm-link { display: grid; grid-template-columns: 210px minmax(0, 1fr) auto; gap: 1rem; align-items: baseline; padding: 0.65rem 1rem; text-decoration: none; color: inherit; }
+  .gm-from { color: #C7D1CF; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gm-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; color: #8FA6AC; }
+  .gm-subject { color: #E8EBEA; }
+  .gm-date { color: #8FA6AC; font-size: 0.8rem; white-space: nowrap; min-width: 6.5rem; text-align: right; }
+  .gm-row.unread .gm-from, .gm-row.unread .gm-subject { font-weight: 700; color: #F2F4F3; }
+  .gm-row.unread .gm-date { color: #F2F4F3; font-weight: 700; }
+  .gm-chip { display: inline-block; margin-right: 0.45rem; padding: 0 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; line-height: 1.35rem; border: 1px solid #4A6F7B; color: #C7D1CF; vertical-align: 1px; }
+  .gm-chip.verified { background: #1E4A33; border-color: #2ECC71; color: #BDF2D2; }
+  .gm-chip.reply { border-color: #2ECC71; color: #4ADE80; }
+  .gm-chip.note { border-color: #7A3B39; color: #F5C6C3; }
+  .gm-chip.tracker { border-color: #D9A441; color: #F2D391; }
+  .gm-del { position: absolute; top: 50%; right: 0.7rem; transform: translateY(-50%); margin: 0; display: none; }
+  .gm-del button { background: #24404A; border: 1px solid #4A6F7B; color: #E8EBEA; border-radius: 6px; padding: 0.3rem 0.5rem; cursor: pointer; line-height: 0; }
+  .gm-del button:hover { border-color: #E53E3E; color: #F5C6C3; }
+  @media (hover: hover) { .gm-row:hover .gm-del { display: block; } .gm-row:hover .gm-date { visibility: hidden; } }
+  .gm-empty { padding: 2.5rem 1.25rem; text-align: center; color: #8FA6AC; font-size: 0.92rem; line-height: 1.5; }
+  .gm-note { margin: 0.9rem 0 0; color: #8FA6AC; font-size: 0.82rem; line-height: 1.45; }
 
-  .mail-column h2 {
-    font-size: 1.1rem;
-    color: #F2F4F3;
-    margin-bottom: 0.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .mail-column .column-note {
-    color: #8FA6AC;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    margin-bottom: 0.85rem;
-  }
-
-  .column-count {
-    display: inline-block;
-    min-width: 1.2rem;
-    padding: 0 0.4rem;
-    background: #E53E3E;
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    line-height: 1.2rem;
-    text-align: center;
-    font-weight: 700;
-  }
-
-  .column-count.quiet {
-    background: #4A6F7B;
-  }
-
-  .verified-column h2 { color: #4ADE80; }
-
-  .mail-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .mail-row {
-    min-width: 0;
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-    padding: 0.9rem 1.1rem;
-    display: block;
-    text-decoration: none;
-    transition: border-color 0.15s;
-  }
-
-  .mail-row:hover { border-color: #2ECC71; }
-  .mail-row.unread { border-left: 3px solid #2ECC71; }
-
-  .mail-row-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 0.75rem;
-  }
-
-  .mail-row-name {
-    color: #F2F4F3;
-    font-weight: 600;
-    font-size: 0.95rem;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .mail-row.unread .mail-row-name { color: #4ADE80; }
-
-  .mail-row-date {
-    color: #8FA6AC;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .mail-row-subject {
-    color: #C7D1CF;
-    font-size: 0.9rem;
-    margin-top: 0.15rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .mail-row-preview {
-    color: #8FA6AC;
-    font-size: 0.85rem;
-    margin-top: 0.15rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row-tag {
-    display: inline-block;
-    margin-top: 0.4rem;
-    margin-right: 0.35rem;
-    padding: 0.05rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    border: 1px solid #4A6F7B;
-    color: #C7D1CF;
-  }
-
-  .row-tag.verified { border-color: #2ECC71; color: #4ADE80; }
-  .row-tag.member { border-color: #4A6F7B; color: #C7D1CF; }
-
-  .mail-empty {
-    text-align: center;
-    color: #8FA6AC;
-    padding: 1.75rem 1.25rem;
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .flagged-group {
-    margin-top: 1.1rem;
-    background: #2A4750;
-    border: 1px solid #3B5860;
-    border-radius: 8px;
-  }
-
-  .flagged-group summary {
-    cursor: pointer;
-    padding: 0.8rem 1.1rem;
-    color: #E8B4B0;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  .flagged-group .mail-list { padding: 0 0.75rem 0.75rem; }
-  .flagged-group .mail-row { background: #24404A; }
+  .flagged-group { margin-top: 1rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; }
+  .flagged-group summary { cursor: pointer; padding: 0.75rem 1rem; color: #E8B4B0; font-weight: 600; font-size: 0.9rem; }
 
   @media (max-width: 768px) {
     .mail-content { padding: 1rem; }
-    .mail-columns {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1.75rem;
-    }
+    .mail-header { flex-direction: column; }
+    .mail-tab { padding: 0.7rem 0.8rem; font-size: 0.88rem; }
+    .gm-link { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.1rem; padding: 0.7rem 0.9rem; }
+    .gm-from { grid-column: 1; }
+    .gm-date { grid-column: 2; grid-row: 1; min-width: 0; }
+    .gm-text { grid-column: 1 / -1; }
   }
 </style>
 
 <%
-  const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const isRecruiter = viewer === 'recruiter';
+  const now = new Date();
+  const fmtDate = (d) => {
+    const x = new Date(d);
+    if (x.toDateString() === now.toDateString()) return x.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    if (x.getFullYear() === now.getFullYear()) return x.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  const trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+  const tabs = [
+    { key: 'inbox', label: 'Inbox', count: counts.inbox },
+    { key: 'conversations', label: 'Conversations', count: counts.conversations },
+    { key: 'sent', label: 'Sent', count: 0 }
+  ];
+  const empty = {
+    inbox: isRecruiter ? 'No mail yet. Replies to your emails will show up here.' : 'No mail yet. Job application confirmations and other mail sent to your PreCheckd address will show up here.',
+    conversations: isRecruiter ? 'Nothing here yet. Conversations with candidates you connect with will show up here.' : 'Nothing here yet. Conversations with the recruiters you connect with will show up here.',
+    sent: isRecruiter ? 'Nothing sent yet. Emails you send and replies you write will show up here.' : 'Nothing sent yet. Replies you write from your PreCheckd address will show up here.'
+  };
 %>
 
 <div class="mail-content">
-  <div class="mail-header">
-    <% if (isRecruiter && typeof outreachEnabled !== 'undefined' && outreachEnabled) { %>
-      <div class="mail-actions"><a href="/mail/new" class="mail-action primary">New message</a><a href="/mail/sent" class="mail-action">Sent</a></div>
-    <% } %>
-    <h1>Mail</h1>
-    <p>
-      Everything sent to you on PreCheckd, in one place.
-      <% if (aliasAddress && isRecruiter) { %>Replies to your outreach arrive here. Your PreCheckd address is <span class="mail-address"><%= aliasAddress %></span>.<% } else if (aliasAddress) { %>Use <span class="mail-address"><%= aliasAddress %></span> on job applications instead of your real email.<% } %>
-    </p>
-  </div>
-
-  <div class="mail-preview-note">
-    <% if (isRecruiter) { %>Mail sent to your PreCheckd address is not forwarded to your real email. It stays here, and your daily email tells you when replies are waiting.<% } else { %>Mail sent to your PreCheckd address is no longer forwarded to your real email. It stays here, and your Monday and Thursday emails tell you when something is waiting.<% } %>
-  </div>
-
-  <% if (undo) { %>
-    <div class="mail-banner ok">
-      <span>Deleted: <strong><%= undo.subject %></strong></span>
-      <form method="post" action="/mail/<%= undo.id %>/restore"><button type="submit" class="banner-btn">Undo</button></form>
+  <div class="mail-wrap">
+    <div class="mail-header">
+      <div>
+        <h1>Mail</h1>
+        <p>
+          <% if (aliasAddress) { %>Your PreCheckd address is <span class="mail-address"><%= aliasAddress %></span>. <% } %>
+          <%= isRecruiter ? 'Mail sent here is not forwarded to your real email; your daily email tells you when replies are waiting.' : 'Use it on job applications instead of your real email. Mail stays here; your Monday and Thursday emails tell you when something is waiting.' %>
+        </p>
+      </div>
+      <% if (isRecruiter && typeof outreachEnabled !== 'undefined' && outreachEnabled) { %><a href="/mail/new" class="mail-action">New message</a><% } %>
     </div>
-  <% } %>
-  <% if (reported) { %>
-    <div class="mail-banner ok"><span>Reported. That sender is blocked and their messages are hidden. Thank you for helping keep PreCheckd safe.</span></div>
-  <% } %>
 
-  <div class="mail-columns">
-    <section class="mail-column verified-column">
-      <h2><%= isRecruiter ? 'PreCheckd members' : 'Verified' %> <% if (leftUnread > 0) { %><span class="column-count"><%= leftUnread > 9 ? '9+' : leftUnread %></span><% } %></h2>
-      <p class="column-note"><%= isRecruiter ? 'Candidates you are connected with on PreCheckd.' : 'Your PreCheckd connections and recruiters we have verified.' %></p>
+    <% if (undo) { %>
+      <div class="mail-banner ok">
+        <span>Deleted: <strong><%= undo.subject %></strong></span>
+        <form method="post" action="/mail/<%= undo.id %>/restore"><button type="submit" class="banner-btn">Undo</button></form>
+      </div>
+    <% } %>
+    <% if (reported) { %>
+      <div class="mail-banner ok"><span>Reported. That sender is blocked and their messages are hidden. Thank you for helping keep PreCheckd safe.</span></div>
+    <% } %>
 
-      <% if (left.length === 0) { %>
-        <div class="mail-empty"><%= isRecruiter ? 'Nothing here yet. Conversations with candidates you connect with will show up in this column.' : 'Nothing here yet. Conversations with your connections and mail from verified recruiters will show up in this column.' %></div>
-      <% } else { %>
-        <div class="mail-list">
-          <% left.forEach(function(row) { %>
-            <a href="<%= row.href %>" class="mail-row <%= row.unread ? 'unread' : '' %>">
-              <div class="mail-row-top">
-                <div class="mail-row-name"><%= row.name %><% if (row.kind === 'conversation' && row.unreadCount > 0) { %> <span class="column-count"><%= row.unreadCount %></span><% } %></div>
-                <div class="mail-row-date"><%= fmtDate(row.at) %></div>
-              </div>
-              <% if (row.subject) { %><div class="mail-row-subject"><%= row.subject %></div><% } %>
-              <div class="mail-row-preview"><%= row.preview %></div>
-              <% if (row.trackerPending) { %><span class="row-tag verified">Tracker update waiting</span><% } %>
-              <% if (row.kind === 'mail') { %>
-                <span class="row-tag verified">&#10003; Verified recruiter<%= row.recruiterName ? ': ' + row.recruiterName : '' %></span>
-              <% } else { %>
-                <span class="row-tag member">PreCheckd conversation</span>
-              <% } %>
-            </a>
-          <% }); %>
+    <nav class="mail-tabs" aria-label="Mail">
+      <% tabs.forEach(function(t) { %>
+        <a href="/mail?tab=<%= t.key %>" class="mail-tab <%= tab === t.key ? 'active' : '' %>"><%= t.label %><% if (t.count > 0) { %><span class="tab-count"><%= t.count > 9 ? '9+' : t.count %></span><% } %></a>
+      <% }); %>
+    </nav>
+
+    <% const rows = rowsByTab[tab]; %>
+    <div class="gm-list">
+      <% if (rows.length === 0) { %>
+        <div class="gm-empty"><%= empty[tab] %></div>
+      <% } else { rows.forEach(function(row) { %>
+        <div class="gm-row <%= row.unread ? 'unread' : '' %>">
+          <% if (row.href) { %><a href="<%= row.href %>" class="gm-link"><% } else { %><div class="gm-link"><% } %>
+            <div class="gm-from"><%= row.name %><% if (row.unreadCount > 1) { %> (<%= row.unreadCount %>)<% } %></div>
+            <div class="gm-text">
+              <% if (row.verified) { %><span class="gm-chip verified">&#10003; Verified recruiter</span><% } %>
+              <% if (row.outreachReply) { %><span class="gm-chip reply">Reply to your outreach</span><% } %>
+              <% if (row.trackerPending) { %><span class="gm-chip tracker">Tracker update</span><% } %>
+              <% if (row.chip) { %><span class="gm-chip <%= row.chipClass || '' %>"><%= row.chip %></span><% } %>
+              <% if (row.subject) { %><span class="gm-subject"><%= row.subject %></span><% if (row.preview) { %> &ndash; <% } %><% } %><%= row.preview %>
+              <% if (row.attachmentCount > 0) { %> &middot; <%= row.attachmentCount %> attachment<%= row.attachmentCount === 1 ? '' : 's' %><% } %>
+            </div>
+            <div class="gm-date"><%= fmtDate(row.at) %></div>
+          <% if (row.href) { %></a><% } else { %></div><% } %>
+          <% if (row.deletable) { %>
+            <form method="post" action="/mail/<%= row.id %>/delete" class="gm-del"><button type="submit" title="Delete" aria-label="Delete"><%- trash %></button></form>
+          <% } %>
         </div>
-      <% } %>
-    </section>
+      <% }); } %>
+    </div>
 
-    <section class="mail-column">
-      <h2><%= isRecruiter ? 'Outside replies' : 'Not verified' %> <% if (rightUnread > 0) { %><span class="column-count quiet"><%= rightUnread > 9 ? '9+' : rightUnread %></span><% } %></h2>
-      <p class="column-note"><%= isRecruiter ? 'Replies to your outreach and other mail from people who are not on PreCheckd. Be careful with links and attachments.' : 'We could not confirm who sent these. Be careful with links, attachments and requests for personal information.' %></p>
-
-      <% if (right.length === 0) { %>
-        <div class="mail-empty"><%= isRecruiter ? 'No replies yet. Answers to your outreach emails will show up here.' : 'No outside mail yet. Job application confirmations and other mail sent to your PreCheckd address will show up here.' %></div>
-      <% } else { %>
-        <div class="mail-list">
-          <% right.forEach(function(row) { %>
-            <a href="<%= row.href %>" class="mail-row <%= row.unread ? 'unread' : '' %>">
-              <div class="mail-row-top">
-                <div class="mail-row-name"><%= row.name %></div>
-                <div class="mail-row-date"><%= fmtDate(row.at) %></div>
-              </div>
-              <div class="mail-row-subject"><%= row.subject %></div>
-              <div class="mail-row-preview"><%= row.preview %></div>
-              <% if (row.trackerPending) { %><span class="row-tag verified">Tracker update waiting</span><% } %>
-              <% if (row.outreachReply) { %><span class="row-tag verified">Reply to your outreach</span><% } %>
-              <% if (row.attachmentCount > 0) { %><span class="row-tag"><%= row.attachmentCount %> attachment<%= row.attachmentCount === 1 ? '' : 's' %></span><% } %>
-            </a>
-          <% }); %>
-        </div>
-      <% } %>
-
-      <% if (flagged.length > 0) { %>
-        <details class="flagged-group">
-          <summary>Flagged as suspicious (<%= flagged.length %>)</summary>
-          <div class="mail-list">
-            <% flagged.forEach(function(row) { %>
-              <a href="<%= row.href %>" class="mail-row <%= row.unread ? 'unread' : '' %>">
-                <div class="mail-row-top">
-                  <div class="mail-row-name"><%= row.name %></div>
-                  <div class="mail-row-date"><%= fmtDate(row.at) %></div>
-                </div>
-                <div class="mail-row-subject"><%= row.subject %></div>
-                <div class="mail-row-preview"><%= row.preview %></div>
+    <% if (tab === 'inbox' && flagged.length > 0) { %>
+      <details class="flagged-group">
+        <summary>Flagged as suspicious (<%= flagged.length %>)</summary>
+        <div class="gm-list" style="border:none">
+          <% flagged.forEach(function(row) { %>
+            <div class="gm-row <%= row.unread ? 'unread' : '' %>">
+              <a href="<%= row.href %>" class="gm-link">
+                <div class="gm-from"><%= row.name %></div>
+                <div class="gm-text"><span class="gm-subject"><%= row.subject %></span> &ndash; <%= row.preview %></div>
+                <div class="gm-date"><%= fmtDate(row.at) %></div>
               </a>
-            <% }); %>
-          </div>
-        </details>
-      <% } %>
-    </section>
+            </div>
+          <% }); %>
+        </div>
+      </details>
+    <% } %>
+    <% if (tab === 'inbox') { %><p class="gm-note">We could not confirm who sent mail without a green &ldquo;Verified recruiter&rdquo; badge. Be careful with links, attachments and requests for personal information.</p><% } %>
   </div>
 </div>
