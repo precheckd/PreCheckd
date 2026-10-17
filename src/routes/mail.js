@@ -13,6 +13,7 @@ const { warningsFor } = require('../utils/messageSafety');
 const OutreachMessage = require('../models/OutreachMessage');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const outreach = require('../services/outreach');
+const { buildThreads, threadOf } = require('../utils/mailThreads');
 const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = require('../services/mailReply');
 
 // The merged Inbox + Mail page (roadmap #5 for candidates, #4 for recruiters).
@@ -25,6 +26,7 @@ const { sendReply, replyTarget, isNoReply, DAILY_REPLY_CAP, MAX_REPLY_CHARS } = 
 // req.ns ('candidate' or 'recruiter') so one page serves both.
 
 const LIST_LIMIT = 100;
+const THREAD_LOAD_LIMIT = 300;
 
 // Fixed wording for reply problems (never echo anything from the request).
 const REPLY_ERRORS = {
@@ -113,6 +115,37 @@ function mailRow(m) {
     attachmentCount: (m.attachments || []).length,
     trackerPending: Boolean(m.suggestion && m.suggestion.action && m.suggestion.state === 'pending')
   };
+}
+
+// One Inbox row per conversation (see utils/mailThreads.js): the latest message
+// received sets the subject and preview, the latest message of any kind sets the
+// date, and the row is unread while any received message in it is.
+function threadRow(thread) {
+  const ins = thread.filter((m) => m.direction === 'in');
+  const latestIn = ins[ins.length - 1];
+  const latest = thread[thread.length - 1];
+  const names = [];
+  ins.forEach((m) => { const n = m.fromName || m.fromAddress || 'Unknown sender'; if (!names.includes(n)) names.push(n); });
+  if (thread.some((m) => m.direction === 'out')) names.push('me');
+  const row = mailRow(latestIn);
+  return {
+    ...row,
+    name: names.join(', '),
+    count: thread.length,
+    at: latest.receivedAt,
+    unread: ins.some((m) => !m.readAt),
+    outreachReply: ins.some((m) => m.outreachReply),
+    trackerPending: ins.some((m) => m.suggestion && m.suggestion.action && m.suggestion.state === 'pending')
+  };
+}
+
+// Everything a member has not deleted, for grouping (received and sent).
+async function threadMessages(ns, ownerId) {
+  const [received, sent] = await Promise.all([
+    MailMessage.find({ namespace: ns, ownerId, direction: 'in', deletedAt: null }).sort({ receivedAt: -1 }).limit(THREAD_LOAD_LIMIT),
+    MailMessage.find({ namespace: ns, ownerId, direction: 'out', deletedAt: null }).sort({ receivedAt: -1 }).limit(THREAD_LOAD_LIMIT)
+  ]);
+  return [...received, ...sent];
 }
 
 // One row per accepted connection that has messages, plus Trust & Safety
@@ -235,9 +268,9 @@ router.get('/', async (req, res) => {
     }
     const reported = req.query.reported === '1';
 
-    const [conversations, inboxMail, flaggedMail, alias, sent] = await Promise.all([
+    const [conversations, allMail, flaggedMail, alias, sent] = await Promise.all([
       conversationRows(ns, ownerId),
-      MailMessage.find({ ...mailFilter, flagged: false }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
+      threadMessages(ns, ownerId),
       MailMessage.find({ ...mailFilter, flagged: true }).sort({ receivedAt: -1 }).limit(LIST_LIMIT),
       MailAlias.findOne({ namespace: ns, ownerId }),
       tab === 'sent' ? sentRows(ns, ownerId) : []
@@ -256,7 +289,12 @@ router.get('/', async (req, res) => {
 
     // Verified senders get a badge, not a higher spot in the list. Verified senders get a badge, not a
     // higher spot in the list.
-    const inbox = sortRows(inboxMail.map(mailRow));
+    // Flagged mail stays out of the Inbox (it has its own group below).
+    const notFlagged = allMail.filter((m) => !m.flagged);
+    const inbox = sortRows(buildThreads(notFlagged)
+      .filter((t) => t.some((m) => m.direction === 'in'))
+      .map(threadRow)
+      .slice(0, LIST_LIMIT));
     const conv = sortRows(conversations);
     sortRows(sent);
     const flagged = flaggedMail.map(mailRow);
@@ -350,18 +388,25 @@ function findMine(req, extra = {}) {
   });
 }
 
-async function renderMessage(req, res, message, { error = null, draft = '', status = 200 } = {}) {
-  const replies = await MailMessage.find({
-    namespace: req.ns,
-    ownerId: req.ownerId,
-    direction: 'out',
-    inReplyToMailId: message._id,
-    deletedAt: null
-  }).sort({ receivedAt: 1 });
+// The conversation a message belongs to (oldest first). A message that is not
+// in the loaded set (for example a flagged one) still gets its own conversation.
+async function loadThread(req, message) {
+  const all = await threadMessages(req.ns, req.ownerId);
+  if (!all.some((m) => String(m._id) === String(message._id))) all.push(message);
+  return threadOf(all, message._id) || [message];
+}
+
+async function renderMessage(req, res, clicked, { error = null, draft = '', status = 200 } = {}) {
+  const thread = await loadThread(req, clicked);
+  const received = thread.filter((m) => m.direction === 'in');
+  // The newest message received is the one you reply to, report or add to the tracker.
+  const message = received[received.length - 1] || clicked;
+
   // For a reply to outreach: what the recruiter originally sent that address.
   let outreachSent = null;
-  if (req.ns === 'recruiter' && message.outreachReply && message.fromAddress) {
-    const o = await OutreachMessage.findOne({ recruiterId: req.ownerId, toEmail: message.fromAddress, status: 'sent' }).sort({ sentAt: -1 });
+  const fromOutreach = received.find((m) => m.outreachReply) || null;
+  if (req.ns === 'recruiter' && fromOutreach && fromOutreach.fromAddress) {
+    const o = await OutreachMessage.findOne({ recruiterId: req.ownerId, toEmail: fromOutreach.fromAddress, status: 'sent' }).sort({ sentAt: -1 });
     if (o) outreachSent = { subject: o.subject, at: o.sentAt, note: o.note || '' };
   }
   const target = replyTarget(message);
@@ -370,8 +415,7 @@ async function renderMessage(req, res, message, { error = null, draft = '', stat
     pageTitle: `${message.subject || 'Message'} | PreCheckd`,
     viewer: req.ns,
     message,
-    warnings: warningsFor(message.textBody),
-    replies,
+    items: thread.map((m) => ({ m, warnings: m.direction === 'in' ? warningsFor(m.textBody) : [] })),
     canReply: Boolean(target) && !isNoReply(target),
     replyError: error,
     replySent: req.query.sent === '1',
@@ -386,9 +430,13 @@ router.get('/:id', async (req, res) => {
     const message = await findMine(req, { deletedAt: null });
     if (!message) return res.status(404).send('Message not found.');
 
-    if (!message.readAt) {
-      message.readAt = new Date();
-      await message.save();
+    // Opening a conversation reads everything received in it.
+    const thread = await loadThread(req, message);
+    for (const m of thread) {
+      if (m.direction === 'in' && !m.readAt) {
+        m.readAt = new Date();
+        await m.save();
+      }
     }
     await renderMessage(req, res, message);
   } catch (error) {
@@ -402,9 +450,14 @@ router.post('/:id/delete', async (req, res) => {
   try {
     const message = await findMine(req, { deletedAt: null });
     if (!message) return res.status(404).send('Message not found.');
-    message.deletedAt = new Date();
-    if (!message.readAt) message.readAt = message.deletedAt;
-    await message.save();
+    // Deleting removes the whole conversation (same timestamp, so Undo brings it all back).
+    const thread = await loadThread(req, message);
+    const now = new Date();
+    for (const m of thread) {
+      m.deletedAt = now;
+      if (!m.readAt) m.readAt = now;
+      await m.save();
+    }
     res.redirect(`/mail?deleted=${message._id}`);
   } catch (error) {
     console.error('Error deleting mail message:', error);
@@ -417,8 +470,12 @@ router.post('/:id/restore', async (req, res) => {
   try {
     const message = await findMine(req, { deletedAt: { $ne: null } });
     if (!message) return res.status(404).send('Message not found.');
-    message.deletedAt = null;
-    await message.save();
+    const stamp = message.deletedAt;
+    const together = await MailMessage.find({ namespace: req.ns, ownerId: req.ownerId, deletedAt: stamp });
+    for (const m of (together.length ? together : [message])) {
+      m.deletedAt = null;
+      await m.save();
+    }
     res.redirect(`/mail/${message._id}`);
   } catch (error) {
     console.error('Error restoring mail message:', error);

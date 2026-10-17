@@ -48,6 +48,9 @@
 
   .mail-from strong { color: #F2F4F3; }
 
+  .thread-msg { border-top: 1px solid #3B5860; margin-top: 1.1rem; padding-top: 1rem; }
+  .thread-msg:first-of-type { border-top: none; margin-top: 0.4rem; padding-top: 0; }
+  .thread-msg.out .mail-body { border-left: 3px solid #2ECC71; padding-left: 0.8rem; }
   .mail-when {
     color: #8FA6AC;
     font-size: 0.85rem;
@@ -304,7 +307,7 @@
 
     <div class="action-bar">
       <% if (canReply) { %><a href="#reply" class="btn primary">Reply</a><% } %>
-      <form method="post" action="/mail/<%= message._id %>/delete"><button type="submit" class="btn">Delete</button></form>
+      <form method="post" action="/mail/<%= message._id %>/delete"><button type="submit" class="btn"><%= items.length > 1 ? 'Delete conversation' : 'Delete' %></button></form>
       <details class="report-details">
         <summary class="btn danger">Report as scam</summary>
         <div class="report-box">
@@ -316,65 +319,68 @@
 
     <div class="mail-card">
       <h1><%= message.subject || '(no subject)' %></h1>
-      <div class="mail-from">
-        From <strong><%= message.fromName || message.fromAddress %></strong>
-        <% if (message.fromName && message.fromAddress) { %>&lt;<%= message.fromAddress %>&gt;<% } %>
-      </div>
-      <div class="mail-when"><time class="lt" datetime="<%= new Date(message.receivedAt).toISOString() %>"><%= fmtFull(message.receivedAt) %></time></div>
-      <% if (message.originalFromAddress) { %><div class="mail-when">Forwarded by you. The tracker read it as a message from <strong><%= message.originalFromName || message.originalFromAddress %></strong> &lt;<%= message.originalFromAddress %>&gt;.</div><% } %>
-
-      <% if (viewer === 'recruiter') { %>
-        <% if (message.senderCheck === 'verified_candidate') { %>
-          <div class="sender-badge verified">&#10003; Verified PreCheckd candidate. This email address belongs to a fully verified candidate account.<%= message.outreachReply ? ' A reply to your outreach email.' : '' %></div>
-        <% } else if (message.senderCheck === 'member_candidate') { %>
-          <div class="sender-badge verified">PreCheckd member. This email address is registered on PreCheckd, but the account is not fully verified.<%= message.outreachReply ? ' A reply to your outreach email.' : '' %></div>
-        <% } else if (message.outreachReply) { %>
-          <div class="sender-badge verified">A reply to your outreach email. This person is not on PreCheckd.</div>
-        <% } else { %>
-          <div class="sender-badge unverified"><strong>Not a reply to your outreach.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
-        <% } %>
-      <% } else if (message.senderCheck === 'verified_recruiter') { %>
-        <div class="sender-badge verified">&#10003; Verified PreCheckd recruiter<%= message.recruiterName ? ': ' + message.recruiterName : '' %></div>
-      <% } else { %>
-        <div class="sender-badge unverified"><strong>Not a verified PreCheckd recruiter.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
-      <% } %>
-
-      <% if (message.flagged) { %>
-        <div class="sender-badge flagged">Our mail checks flagged this message as likely spam.</div>
-      <% } %>
-
-      <% warnings.forEach(function(w) { %>
-        <div class="safety-warning"><%= w %></div>
-      <% }); %>
-
       <% if (typeof outreachSent !== 'undefined' && outreachSent) { %>
         <div class="mail-footnote" style="margin-bottom:0.8rem">In reply to your email &ldquo;<%= outreachSent.subject %>&rdquo; sent <time class="lt" datetime="<%= new Date(outreachSent.at).toISOString() %>"><%= fmtFull(outreachSent.at) %></time><% if (outreachSent.note) { %>. Your note: &ldquo;<%= outreachSent.note %>&rdquo;<% } %></div>
       <% } %>
-      <div class="mail-body"><%= message.textBody || '(no text)' %></div>
-      <% if (message.bodyTruncated) { %><div class="mail-footnote">This message was long, so only the first part is shown here.</div><% } %>
 
-      <% if (message.attachments && message.attachments.length > 0) { %>
-        <div class="mail-attachments">
-          Attachments (names only: PreCheckd does not store attachment files yet):
-          <ul>
-            <% message.attachments.forEach(function(a) { %>
-              <li><%= a.filename %><% if (a.size) { %> (<%= fmtSize(a.size) %>)<% } %></li>
-            <% }); %>
-          </ul>
-        </div>
-      <% } %>
-
-      <% if (replies.length > 0) { %>
-        <div class="replies">
-          <h2>Your replies</h2>
-          <% replies.forEach(function(r) { %>
-            <div class="reply-sent">
-              <div class="reply-meta">Sent to <%= r.toAddress %> &middot; <time class="lt" datetime="<%= new Date(r.receivedAt).toISOString() %>"><%= fmtFull(r.receivedAt) %></time></div>
-              <div class="reply-text"><%= r.textBody %></div>
+      <% items.forEach(function(it) { const m = it.m; const isFocus = String(m._id) === String(message._id); %>
+        <% if (m.direction === 'out') { %>
+          <div class="thread-msg out">
+            <div class="mail-from">You to <strong><%= m.toAddress %></strong></div>
+            <div class="mail-when"><time class="lt" datetime="<%= new Date(m.receivedAt).toISOString() %>"><%= fmtFull(m.receivedAt) %></time></div>
+            <div class="mail-body"><%= m.textBody %></div>
+          </div>
+        <% } else { %>
+          <div class="thread-msg">
+            <div class="mail-from">
+              From <strong><%= m.fromName || m.fromAddress %></strong>
+              <% if (m.fromName && m.fromAddress) { %>&lt;<%= m.fromAddress %>&gt;<% } %>
             </div>
-          <% }); %>
-        </div>
-      <% } %>
+            <div class="mail-when"><time class="lt" datetime="<%= new Date(m.receivedAt).toISOString() %>"><%= fmtFull(m.receivedAt) %></time></div>
+            <% if (m.originalFromAddress) { %><div class="mail-when">Forwarded by you. The tracker read it as a message from <strong><%= m.originalFromName || m.originalFromAddress %></strong> &lt;<%= m.originalFromAddress %>&gt;.</div><% } %>
+
+            <% if (isFocus) { %>
+              <% if (viewer === 'recruiter') { %>
+                <% if (m.senderCheck === 'verified_candidate') { %>
+                  <div class="sender-badge verified">&#10003; Verified PreCheckd candidate. This email address belongs to a fully verified candidate account.<%= m.outreachReply ? ' A reply to your outreach email.' : '' %></div>
+                <% } else if (m.senderCheck === 'member_candidate') { %>
+                  <div class="sender-badge verified">PreCheckd member. This email address is registered on PreCheckd, but the account is not fully verified.<%= m.outreachReply ? ' A reply to your outreach email.' : '' %></div>
+                <% } else if (m.outreachReply) { %>
+                  <div class="sender-badge verified">A reply to your outreach email. This person is not on PreCheckd.</div>
+                <% } else { %>
+                  <div class="sender-badge unverified"><strong>Not a reply to your outreach.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
+                <% } %>
+              <% } else if (m.senderCheck === 'verified_recruiter') { %>
+                <div class="sender-badge verified">&#10003; Verified PreCheckd recruiter<%= m.recruiterName ? ': ' + m.recruiterName : '' %></div>
+              <% } else { %>
+                <div class="sender-badge unverified"><strong>Not a verified PreCheckd recruiter.</strong> We could not confirm who sent this. Be careful with links, attachments and requests for personal information.</div>
+              <% } %>
+            <% } %>
+
+            <% if (m.flagged) { %>
+              <div class="sender-badge flagged">Our mail checks flagged this message as likely spam.</div>
+            <% } %>
+
+            <% it.warnings.forEach(function(w) { %>
+              <div class="safety-warning"><%= w %></div>
+            <% }); %>
+
+            <div class="mail-body"><%= m.textBody || '(no text)' %></div>
+            <% if (m.bodyTruncated) { %><div class="mail-footnote">This message was long, so only the first part is shown here.</div><% } %>
+
+            <% if (m.attachments && m.attachments.length > 0) { %>
+              <div class="mail-attachments">
+                Attachments (names only: PreCheckd does not store attachment files yet):
+                <ul>
+                  <% m.attachments.forEach(function(a) { %>
+                    <li><%= a.filename %><% if (a.size) { %> (<%= fmtSize(a.size) %>)<% } %></li>
+                  <% }); %>
+                </ul>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      <% }); %>
 
       <% if (canReply) { %>
         <form method="post" action="/mail/<%= message._id %>/reply" class="reply-form" id="reply">

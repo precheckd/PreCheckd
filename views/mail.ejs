@@ -31,6 +31,7 @@
   .gm-link { display: grid; grid-template-columns: 210px minmax(0, 1fr) 10.5rem; gap: 1rem; align-items: baseline; padding: 0.65rem 1rem; text-decoration: none; color: inherit; }
   .gm-from { color: #C7D1CF; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gm-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; color: #8FA6AC; }
+  .gm-count { color: #8FA6AC; font-size: 0.8rem; font-weight: 400; }
   .gm-subject { color: #E8EBEA; }
   .gm-date { color: #8FA6AC; font-size: 0.8rem; white-space: nowrap; text-align: right; }
   .gm-head { display: grid; grid-template-columns: 210px minmax(0, 1fr) 10.5rem; gap: 1rem; padding: 0.5rem 1rem; background: #2A4750; border: 1px solid #3B5860; border-top: none; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -143,7 +144,7 @@
       <% } else { rows.forEach(function(row) { %>
         <div class="gm-row <%= row.unread ? 'unread' : '' %>">
           <% if (row.href) { %><a href="<%= row.href %>" class="gm-link"><% } else { %><div class="gm-link"><% } %>
-            <div class="gm-from"><%= row.name %><% if (row.unreadCount > 1) { %> (<%= row.unreadCount %>)<% } %></div>
+            <div class="gm-from"><%= row.name %><% if (row.count > 1) { %> <span class="gm-count"><%= row.count %></span><% } %><% if (row.unreadCount > 1) { %> (<%= row.unreadCount %>)<% } %></div>
             <div class="gm-text">
               <% if (row.badge) { %><span class="gm-chip <%= row.badge.cls %>"><%= row.badge.text %></span><% } %>
               <% if (row.outreachReply) { %><span class="gm-chip reply">Reply to your outreach</span><% } %>
