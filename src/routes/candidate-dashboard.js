@@ -77,47 +77,46 @@ router.get('/my-reports', async (req, res) => {
 // this side, so both directions show full recruiter info regardless of
 // status — only the candidate's own identity gets hidden pre-connection,
 // and that's handled on the recruiter's side of the request, not here.
-router.get('/requests', async (req, res) => {
-  try {
-    const requests = await ConnectionRequest.find({ candidateId: req.session.candidateId })
-      .populate('recruiterId')
-      .sort({ createdAt: -1 });
+async function buildRequestsData(candidateId) {
+  const requests = await ConnectionRequest.find({ candidateId })
+    .populate('recruiterId')
+    .sort({ createdAt: -1 });
 
-    for (const r of requests) {
-      await expireStaleFullAccessRequest(r);
-    }
-
-    const toView = (r) => {
-      const recruiter = r.recruiterId;
-      return {
-        _id: r._id,
-        status: r.status,
-        note: r.note,
-        initiatedBy: r.initiatedBy,
-        createdAt: r.createdAt,
-        respondedAt: r.respondedAt,
-        fullAccessStatus: r.fullAccessStatus,
-        recruiter: {
-          name: `${recruiter.firstName} ${recruiter.lastName}`,
-          company: recruiter.company && recruiter.company !== 'Not provided' ? recruiter.company : null,
-          slug: recruiter.slug,
-          photoUrl: recruiter.profilePhotoUrl,
-          // Only what the recruiter chose to share via the contact request
-          // flow in messaging — never their email by default.
-          contact: r.status === 'accepted' ? sharedContactFor(r, 'candidate', recruiter) : null
-        }
-      };
-    };
-
-    const sentRequests = requests.filter((r) => r.initiatedBy !== 'recruiter').map(toView);
-    const receivedRequests = requests.filter((r) => r.initiatedBy === 'recruiter').map(toView);
-
-    res.render('candidate-requests', { sentRequests, receivedRequests });
-  } catch (error) {
-    console.error('Error loading candidate requests:', error);
-    res.status(500).send('Server error');
+  for (const r of requests) {
+    await expireStaleFullAccessRequest(r);
   }
-});
+
+  const toView = (r) => {
+    const recruiter = r.recruiterId;
+    return {
+      _id: r._id,
+      status: r.status,
+      note: r.note,
+      initiatedBy: r.initiatedBy,
+      createdAt: r.createdAt,
+      respondedAt: r.respondedAt,
+      fullAccessStatus: r.fullAccessStatus,
+      recruiter: {
+        name: `${recruiter.firstName} ${recruiter.lastName}`,
+        company: recruiter.company && recruiter.company !== 'Not provided' ? recruiter.company : null,
+        slug: recruiter.slug,
+        photoUrl: recruiter.profilePhotoUrl,
+        // Only what the recruiter chose to share via the contact request
+        // flow in messaging — never their email by default.
+        contact: r.status === 'accepted' ? sharedContactFor(r, 'candidate', recruiter) : null
+      }
+    };
+  };
+
+  return {
+    sentRequests: requests.filter((r) => r.initiatedBy !== 'recruiter').map(toView),
+    receivedRequests: requests.filter((r) => r.initiatedBy === 'recruiter').map(toView)
+  };
+}
+router.buildRequestsData = buildRequestsData;
+
+// The requests list now lives on the merged Connections page.
+router.get('/requests', (req, res) => res.redirect('/connections'));
 
 // POST /candidate-dashboard/requests/:id/accept — candidate accepting a
 // recruiter-initiated request. Mirrors recruiter-dashboard's accept route
@@ -144,7 +143,7 @@ router.post('/requests/:id/accept', async (req, res) => {
       console.error('Failed to send recruiter acceptance email:', err);
     });
 
-    res.redirect('/candidate-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error accepting connection request:', error);
     res.status(500).send('Server error');
@@ -174,7 +173,7 @@ router.post('/requests/:id/decline', async (req, res) => {
       console.error('Failed to send recruiter decline email:', err);
     });
 
-    res.redirect('/candidate-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error declining connection request:', error);
     res.status(500).send('Server error');
@@ -199,7 +198,7 @@ router.post('/requests/:id/grant-full-access', async (req, res) => {
     request.fullAccessRespondedAt = new Date();
     await request.save();
 
-    res.redirect('/candidate-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error granting full access:', error);
     res.status(500).send('Server error');
@@ -225,7 +224,7 @@ router.post('/requests/:id/deny-full-access', async (req, res) => {
     request.fullAccessRespondedAt = new Date();
     await request.save();
 
-    res.redirect('/candidate-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error denying full access:', error);
     res.status(500).send('Server error');

@@ -345,8 +345,7 @@
             <% if (navLoggedInCandidate) { %>
               <a href="/tracker" class="nav-btn-outline<%= navOn('/tracker') %>">Application Tracker<%- navBadge(typeof commandCenterTrackerCount !== 'undefined' ? commandCenterTrackerCount : 0) %></a>
             <% } %>
-            <a href="<%= navRequestsHref %>" class="nav-btn-outline<%= navOn(navRequestsHref) %>">Requests<%- navBadge(navPendingRequestCount) %></a>
-            <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections</a>
+            <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
             <a href="<%= navSearchHref %>" class="nav-btn-outline<%= navOn(navSearchHref) %>">Search</a>
             <details class="nav-more">
               <summary class="nav-btn-outline<%= navMoreActive ? ' is-active' : '' %>">More &#9662;<%- navMoreBadge %></summary>

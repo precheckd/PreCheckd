@@ -327,7 +327,7 @@ async function sendWeeklyRecapEmail(candidate, recap) {
   if (recap.pendingRequests > 0) waiting.push(`<li>${plural(recap.pendingRequests, 'connection request is', 'connection requests are')} waiting for your answer</li>`);
   if (recap.fullAccessRequests > 0) waiting.push(`<li>${plural(recap.fullAccessRequests, 'recruiter has', 'recruiters have')} asked for access to your video and resume</li>`);
   if (waiting.length > 0) {
-    sections.push(weeklySection('Waiting on you', `<ul style="margin:0;padding-left:20px;">${waiting.join('')}</ul>${weeklyButton(`${base}/candidate-dashboard/requests`, 'Review requests')}`));
+    sections.push(weeklySection('Waiting on you', `<ul style="margin:0;padding-left:20px;">${waiting.join('')}</ul>${weeklyButton(`${base}/connections`, 'Review requests')}`));
   }
 
   const activity = [];

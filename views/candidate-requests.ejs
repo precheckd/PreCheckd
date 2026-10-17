@@ -1,15 +1,7 @@
 <style>
-  .requests-content {
-    flex: 1;
-    padding: 2rem 1.5rem;
-    background: #1F363C;
-    min-height: 100vh;
-  }
+  .requests-content { min-width: 0; }
 
-  .requests-header {
-    max-width: 900px;
-    margin: 0 auto 1.5rem;
-  }
+  .requests-header { display: none; }
 
   .requests-header h1 {
     font-size: 1.75rem;
@@ -261,10 +253,6 @@
   .status-requested { background: #3B5F6A; color: #B9C7CA; }
 
   @media (max-width: 768px) {
-    .requests-content {
-      padding: 1rem;
-    }
-
     .request-actions {
       flex-direction: column;
     }

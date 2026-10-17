@@ -110,10 +110,13 @@ async function renderCandidateConnections(req, res) {
 
   const list = Array.from(entries.values()).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
+  const requestsData = await require('./candidate-dashboard').buildRequestsData(candidateId);
   res.render('connections', {
     isCandidate: true,
     entries: list,
-    title: 'Connections | PreCheckd'
+    title: 'Connections | PreCheckd',
+    ...requestsData,
+    pendingCount: requestsData.receivedRequests.filter((r) => r.status === 'pending').length
   });
 }
 
@@ -167,10 +170,13 @@ async function renderRecruiterConnections(req, res) {
 
   const list = Array.from(entries.values()).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
+  const requestsData = await require('./recruiter-dashboard').buildRequestsData(recruiterId);
   res.render('connections', {
     isCandidate: false,
     entries: list,
-    title: 'Connections | PreCheckd'
+    title: 'Connections | PreCheckd',
+    ...requestsData,
+    pendingCount: requestsData.requests.filter((r) => r.status === 'pending' && r.initiatedBy !== 'recruiter').length
   });
 }
 

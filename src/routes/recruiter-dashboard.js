@@ -112,43 +112,41 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// GET /recruiter-dashboard/requests — inbox of all connection requests
-router.get('/requests', async (req, res) => {
-  try {
-    const requests = await ConnectionRequest.find({ recruiterId: req.session.recruiterId })
-      .populate('candidateId')
-      .sort({ createdAt: -1 });
+async function buildRequestsData(recruiterId) {
+  const requests = await ConnectionRequest.find({ recruiterId })
+    .populate('candidateId')
+    .sort({ createdAt: -1 });
 
-    for (const r of requests) {
-      await expireStaleFullAccessRequest(r);
-    }
-
-    // Pending requests go through the same anonymization used on the
-    // candidate-search results — recruiter shouldn't see identifying info
-    // until they've made an accept/decline decision. Accepted/declined
-    // requests show full real info, since the decision's already been made.
-    const requestsForView = requests.map((r) => {
-      const candidate = r.candidateId;
-      const isPending = r.status === 'pending';
-
-      return {
-        _id: r._id,
-        status: r.status,
-        note: r.note,
-        initiatedBy: r.initiatedBy,
-        createdAt: r.createdAt,
-        respondedAt: r.respondedAt,
-        fullAccessStatus: r.fullAccessStatus,
-        candidate: isPending ? getAnonymizedCandidateView(candidate) : getFullCandidateView(candidate, sharedContactFor(r, 'recruiter', candidate))
-      };
-    });
-
-    res.render('recruiter-requests', { requests: requestsForView });
-  } catch (error) {
-    console.error('Error loading recruiter requests:', error);
-    res.status(500).send('Server error');
+  for (const r of requests) {
+    await expireStaleFullAccessRequest(r);
   }
-});
+
+  // Pending requests go through the same anonymization used on the
+  // candidate-search results — recruiter shouldn't see identifying info
+  // until they've made an accept/decline decision. Accepted/declined
+  // requests show full real info, since the decision's already been made.
+  const requestsForView = requests.map((r) => {
+    const candidate = r.candidateId;
+    const isPending = r.status === 'pending';
+
+    return {
+      _id: r._id,
+      status: r.status,
+      note: r.note,
+      initiatedBy: r.initiatedBy,
+      createdAt: r.createdAt,
+      respondedAt: r.respondedAt,
+      fullAccessStatus: r.fullAccessStatus,
+      candidate: isPending ? getAnonymizedCandidateView(candidate) : getFullCandidateView(candidate, sharedContactFor(r, 'recruiter', candidate))
+    };
+  });
+
+  return { requests: requestsForView };
+}
+router.buildRequestsData = buildRequestsData;
+
+// The requests list now lives on the merged Connections page.
+router.get('/requests', (req, res) => res.redirect('/connections'));
 
 // GET /recruiter-dashboard/requests/:id/candidate — full profile view for
 // an accepted connection. Video and resume only render once fullAccessStatus
@@ -296,7 +294,7 @@ router.post('/requests/:id/accept', async (req, res) => {
       console.error('Failed to send acceptance email:', err);
     });
 
-    res.redirect('/recruiter-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error accepting connection request:', error);
     res.status(500).send('Server error');
@@ -326,7 +324,7 @@ router.post('/requests/:id/decline', async (req, res) => {
       console.error('Failed to send decline email:', err);
     });
 
-    res.redirect('/recruiter-dashboard/requests');
+    res.redirect('/connections');
   } catch (error) {
     console.error('Error declining connection request:', error);
     res.status(500).send('Server error');
