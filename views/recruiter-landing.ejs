@@ -40,7 +40,8 @@
 
     .path-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 560px);
+      justify-content: center;
       gap: 3rem;
       margin-top: 3rem;
     }
@@ -175,7 +176,7 @@
 
   <div class="intro-section">
     <h1 class="intro-title">Recruiters</h1>
-    <p class="intro-text">Choose how you want to use PreCheckd to build trust and scale your hiring.</p>
+    <p class="intro-text">Get verified, show candidates you're the real thing, and start connecting with verified candidates.</p>
   </div>
 
   <div class="path-container">
@@ -184,7 +185,7 @@
       <div class="path-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
       </div>
-      <h2 class="path-title">Individual Recruiter</h2>
+      <h2 class="path-title">Get Verified as a Recruiter</h2>
       <p class="path-description">Get verified and access our network of verified candidates. Build your profile and start connecting.</p>
       <div class="path-benefits">
         <div class="benefit-item">
@@ -203,28 +204,4 @@
       <button class="path-cta">Get Verified</button>
     </a>
 
-    <!-- Talent Pipeline Plan -->
-    <div class="path-card coming-soon">
-      <div class="path-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
-      </div>
-      <h2 class="path-title">Talent Pipeline Plan</h2>
-      <p class="path-description">Verify your entire candidate roster and give them access to skill-building resources, making them more competitive and placeable. Scale trust across your team.</p>
-      <div class="path-benefits">
-        <div class="benefit-item">
-          <span class="benefit-icon">✓</span>
-          <span>Verify a set number of candidates monthly</span>
-        </div>
-        <div class="benefit-item">
-          <span class="benefit-icon">✓</span>
-          <span>Candidate skill-building resources</span>
-        </div>
-        <div class="benefit-item">
-          <span class="benefit-icon">✓</span>
-          <span>Monthly subscription pricing</span>
-        </div>
-      </div>
-      <button class="path-cta" disabled style="opacity: 0.5; cursor: not-allowed;">Coming Soon</button>
-      <div class="coming-soon-badge">🔨 In Development</div>
-    </div>
   </div>
