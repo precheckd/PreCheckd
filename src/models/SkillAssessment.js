@@ -14,11 +14,22 @@ const skillSchema = new mongoose.Schema({
   ratingKeys: { type: [String], default: [] }
 }, { _id: false });
 
+// Difficulty per question, keyed by CoderByte's question id (the `id` in each
+// report's mc_details). CoderByte's API does not expose difficulty, so we copy it
+// from their question library (sets are labelled Easy/Medium/Hard) when building
+// an assessment. Skills whose questions are not all mapped fall back to the plain
+// CoderByte percentage and are flagged `weighted: false`.
+const questionSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  difficulty: { type: String, enum: ['easy', 'medium', 'hard'], required: true }
+}, { _id: false });
+
 const skillAssessmentSchema = new mongoose.Schema({
   assessmentId: { type: String, required: true, unique: true }, // CoderByte test_id
   name: { type: String, default: '' },
   publicUrl: { type: String, required: true },                  // CoderByte public_url; the invite API turns this into private links
   skills: { type: [skillSchema], default: [] },
+  questions: { type: [questionSchema], default: [] },
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 

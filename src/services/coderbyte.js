@@ -12,6 +12,7 @@
 const crypto = require('crypto');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
+const { levelFor, weightedSkill } = require('./skillLevels');
 
 const BASE = 'https://coderbyte.com/api/organization';
 const TIMEOUT_MS = 20000;
@@ -47,15 +48,19 @@ async function api(method, path, body) {
 
 // ---- scores -------------------------------------------------------------
 
-// Our skill score = average of whichever of the skill's rating names appear in
-// the report (Linux + Unix report the same questions, so they agree; averaging
-// keeps it honest if a skill ever spans differing tags).
-function computeSkills(assessment, ratings) {
+// Our skill score. Preferred: difficulty-weighted (easy 1, medium 2, hard 3) over this
+// skill's questions, when every one of them has a mapped difficulty. Otherwise the
+// average of the skill's CoderByte rating percentages (Linux + Unix report the same
+// questions so they agree; averaging keeps it honest if a skill spans differing tags).
+function computeSkills(assessment, ratings, answers = []) {
   const byName = new Map(ratings.map((r) => [r.name, r.score]));
+  const difficultyById = new Map((assessment.questions || []).map((q) => [String(q.id), q.difficulty]));
   return (assessment.skills || []).map((s) => {
+    const w = weightedSkill(answers, difficultyById, s.ratingKeys || []);
+    if (w) return { key: s.key, label: s.label, score: w.score, weighted: true, level: w.level, tiers: w.tiers };
     const present = (s.ratingKeys || []).filter((k) => byName.has(k)).map((k) => byName.get(k));
     const score = present.length ? Math.round(present.reduce((a, b) => a + b, 0) / present.length) : null;
-    return { key: s.key, label: s.label, score };
+    return { key: s.key, label: s.label, score, weighted: false, level: levelFor(score), tiers: null };
   });
 }
 
@@ -72,7 +77,11 @@ function applyReport(result, assessment, report) {
     .filter(([, v]) => Number.isFinite(Number(v)))
     .map(([name, v]) => ({ name, score: Number(v) }));
   result.ratings = ratings;
-  result.skills = computeSkills(assessment, ratings);
+  // Outcome only: id, tags, right/wrong. Question text and the answer given are never kept.
+  result.answers = (report.mc_details || []).map((q) => ({
+    id: String(q.id), correct: !!q.correct, tags: (q.meta && q.meta.tags) || []
+  }));
+  result.skills = computeSkills(assessment, ratings, result.answers);
   result.overallScore = Number.isFinite(Number(report.final_score)) && Number(report.final_score) >= 0
     ? Number(report.final_score) : null;
   result.timeTakenMinutes = Number.isFinite(Number(report.time_taken)) ? Number(report.time_taken) : null;

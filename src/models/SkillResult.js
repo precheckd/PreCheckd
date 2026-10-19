@@ -16,7 +16,17 @@ const scoreSchema = new mongoose.Schema({
 const skillScoreSchema = new mongoose.Schema({
   key: { type: String, required: true },
   label: { type: String, required: true },
-  score: { type: Number, default: null }     // null when CoderByte reported none of this skill's ratings
+  score: { type: Number, default: null },    // difficulty-weighted when `weighted`, else CoderByte's plain percent; null if no data
+  weighted: { type: Boolean, default: false },
+  level: { type: String, default: null },    // Foundational / Intermediate / Advanced / Expert
+  tiers: { type: mongoose.Schema.Types.Mixed, default: null } // { easy:{right,total}, medium:{...}, hard:{...} } when weighted
+}, { _id: false });
+
+// Outcome only: question id, its tags, right or wrong. Never question text or the answer given.
+const answerSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  correct: { type: Boolean, required: true },
+  tags: { type: [String], default: [] }
 }, { _id: false });
 
 const skillResultSchema = new mongoose.Schema({
@@ -36,6 +46,7 @@ const skillResultSchema = new mongoose.Schema({
 
   // Raw per-rating percentages from CoderByte, as an array because rating names
   // can contain dots ("Node.js"), which Mongo map keys cannot.
+  answers: { type: [answerSchema], default: [] },
   ratings: { type: [scoreSchema], default: [] },
   // The same data re-expressed in our skill names via SkillAssessment.skills.
   skills: { type: [skillScoreSchema], default: [] },
