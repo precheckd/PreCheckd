@@ -57,6 +57,13 @@ function mask(obj, email) {
 }
 
 (async () => {
+  // node scripts/coderbyte-probe.js details <assessmentId>  -> dump the assessment's settings/details
+  if (process.argv[2] === 'details') {
+    const r = await authed(`/assessments/details/${encodeURIComponent(process.argv[3] || '')}`);
+    console.log(`GET /assessments/details/<id> -> ${r.status} (auth: ${r.mode})`);
+    console.log(JSON.stringify(r.body, null, 2).slice(0, 12000));
+    return;
+  }
   const [email, assessmentId] = process.argv.slice(2);
 
   const list = await authed('/assessments');
