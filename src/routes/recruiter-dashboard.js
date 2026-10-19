@@ -1,4 +1,5 @@
 const express = require('express');
+const skillsService = require('../services/skills');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { notify } = require('../services/notifications');
@@ -178,6 +179,7 @@ router.get('/requests/:id/candidate', async (req, res) => {
       pane,
       requestId: request._id,
       fullAccessStatus: request.fullAccessStatus,
+      skillsView: await skillsService.recruiterView(candidate),
       candidate: getFullCandidateView(candidate, sharedContactFor(request, 'recruiter', candidate)),
       video: hasFullAccess ? {
         introVideoUrl: candidate.introVideoUrl,

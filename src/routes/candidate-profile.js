@@ -1,4 +1,5 @@
 const express = require('express');
+const skillsService = require('../services/skills');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
@@ -48,9 +49,12 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
     }
 
     const viewCounts = await getViewCounts('candidate', candidate._id);
+    const hiddenSkills = new Set(candidate.hiddenSkillKeys || []);
+    const mySkills = (await skillsService.currentSkills(candidate._id)).map((x) => ({ ...x, shown: !hiddenSkills.has(x.key) }));
 
     res.render('candidate-profile', {
       candidate,
+      mySkills,
       viewCounts,
       certExpiry,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`,

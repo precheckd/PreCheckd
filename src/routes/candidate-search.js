@@ -1,4 +1,5 @@
 const express = require('express');
+const skillsService = require('../services/skills');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
@@ -216,6 +217,7 @@ router.get('/:anonId', async (req, res) => {
 
     res.render('candidate-search-profile', {
       candidate: getAnonymizedCandidateView(candidate),
+      skillsView: await skillsService.recruiterView(candidate),
       existingRequest: existingRequest ? { status: existingRequest.status } : null,
       title: `Candidate ${candidate.anonId} | PreCheckd`
     });

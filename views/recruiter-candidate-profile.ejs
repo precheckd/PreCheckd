@@ -252,6 +252,13 @@
     </div>
     <% } %>
 
+    <% if (skillsView && skillsView.tested > 0) { %>
+    <div class="cprofile-section">
+      <h3>Verified Skills</h3>
+      <%- include('partials/skills-recruiter') %>
+    </div>
+    <% } %>
+
     <% if (candidate.certifications && candidate.certifications.length > 0) { %>
     <div class="cprofile-section">
       <h3>Certifications</h3>

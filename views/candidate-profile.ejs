@@ -601,6 +601,22 @@
 
       </div>
 
+      <div class="verification-item" style="margin-top:1rem;">
+        <div class="verification-row">
+          <span class="verification-label">Skills</span>
+          <% if (mySkills && mySkills.length) { %><span class="verification-status status-verified">Tested</span><% } else { %><span class="verification-status status-pending">Not tested</span><% } %>
+        </div>
+        <% if (mySkills && mySkills.length) { %>
+          <% mySkills.forEach(function(sk) { %>
+            <div class="detail-entry" style="display:flex;justify-content:space-between;padding:0.5rem 0.9rem;">
+              <div><div class="detail-title"><%= sk.label %> &middot; <%= sk.level %></div>
+              <div class="detail-sub"><%= sk.score %>% &middot; <%= sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters' %><%= sk.stale ? ' · needs retake' : '' %></div></div>
+            </div>
+          <% }); %>
+        <% } %>
+        <div style="padding:0.5rem 0.9rem 0.9rem;"><a href="/candidate/<%= candidate.slug %>/skills" style="color:#4CC2A6;font-size:0.88rem;"><%= (mySkills && mySkills.length) ? 'Manage skills &amp; retakes' : 'Take a skills test' %> &rarr;</a></div>
+      </div>
+
       <div class="cert-download">
         <a href="/candidate/<%= candidate.slug %>/certificate" class="cert-download-btn">Download Certificate (PDF)</a>
         <p class="cert-download-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
