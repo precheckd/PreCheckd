@@ -35,9 +35,10 @@ router.get('/:slug/skills', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
-    const [assessments, current, attempts] = await Promise.all([
+    const [assessments, current, titles, attempts] = await Promise.all([
       SkillAssessment.find({ active: true }).sort({ name: 1 }),
       skills.currentSkills(candidate._id),
+      skills.titleResults(candidate._id),
       SkillResult.find({ candidateId: candidate._id }).sort({ invitedAt: -1 })
     ]);
     const hidden = new Set(candidate.hiddenSkillKeys || []);
@@ -59,6 +60,9 @@ router.get('/:slug/skills', async (req, res) => {
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
       candidate, cards,
+      skillCards: cards.filter((c) => c.assessment.kind !== 'title'),
+      titleCards: cards.filter((c) => c.assessment.kind === 'title'),
+      titles,
       current: current.map((s) => ({ ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level) })),
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
       notice: req.query.notice || null,
@@ -93,6 +97,18 @@ router.post('/:slug/skills/visibility', async (req, res) => {
     res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
   } catch (e) {
     console.error('Error saving skill visibility:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:slug/skills/titles', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    await skills.setTitleVisibility(candidate, [].concat(req.body.shown || []));
+    res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
+  } catch (e) {
+    console.error('Error saving title visibility:', e);
     res.status(500).send('Server error');
   }
 });

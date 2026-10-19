@@ -252,9 +252,9 @@
     </div>
     <% } %>
 
-    <% if (skillsView && skillsView.tested > 0) { %>
+    <% if (skillsView && (skillsView.tested > 0 || (skillsView.titles && skillsView.titles.length))) { %>
     <div class="cprofile-section">
-      <h3>Verified Skills</h3>
+      <h3>Assessments</h3>
       <%- include('partials/skills-recruiter') %>
     </div>
     <% } %>

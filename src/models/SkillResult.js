@@ -61,6 +61,8 @@ const skillResultSchema = new mongoose.Schema({
   tabLeaving: { type: Number, default: 0 },
   // Integrity hold: set when CoderByte flags the attempt (cheating Likely/Detected or AI usage). Held
   // attempts are never published to recruiters until staff approve them.
+  // Job-title tests only: the candidate has chosen to show this exact score on their profile.
+  showOnProfile: { type: Boolean, default: false },
   held: { type: Boolean, default: false },
   reviewDecision: { type: String, enum: [null, 'approved', 'rejected'], default: null },
   timeExpired: { type: Boolean, default: false },

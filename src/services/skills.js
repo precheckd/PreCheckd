@@ -9,16 +9,22 @@ const STALE_DAYS = 365;
 const DAY = 86400000;
 const SHOWABLE = new Set(['Foundational', 'Intermediate', 'Advanced', 'Expert']);
 
+const isTitle = (a) => !!a && a.kind === 'title';
 const published = (r) => r.status === 'completed' && (!r.held || r.reviewDecision === 'approved');
+
+async function assessmentsById() {
+  return new Map((await SkillAssessment.find({})).map((a) => [a.assessmentId, a]));
+}
 
 // Current published result per skill. A retake replaces the earlier result only once the
 // 60-day window has passed; a result inside the window of an earlier one is ignored for the
 // skills it overlaps (so taking a second test that shares a skill never overwrites it early).
 async function currentSkills(candidateId) {
   const results = await SkillResult.find({ candidateId, status: 'completed' }).sort({ completedAt: 1 });
+  const asms = await assessmentsById();
   const out = new Map();
   for (const r of results) {
-    if (!published(r)) continue;
+    if (!published(r) || isTitle(asms.get(r.assessmentId))) continue;
     for (const s of r.skills || []) {
       if (s.score == null) continue;
       const prev = out.get(s.key);
@@ -30,6 +36,45 @@ async function currentSkills(candidateId) {
   return [...out.values()];
 }
 
+// Latest published job-title test result per title test, with the exact score and enough context
+// to read it: questions right out of total, and the tier breakdown when every question's
+// difficulty is recorded.
+function titleSummary(result, assessment) {
+  const answers = result.answers || [];
+  const diff = new Map(((assessment && assessment.questions) || []).map((q) => [String(q.id), q.difficulty]));
+  let tiers = null;
+  if (answers.length && answers.every((a) => diff.has(a.id))) {
+    tiers = { easy: { right: 0, total: 0 }, medium: { right: 0, total: 0 }, hard: { right: 0, total: 0 } };
+    for (const a of answers) { const t = tiers[diff.get(a.id)]; t.total += 1; if (a.correct) t.right += 1; }
+  }
+  return {
+    assessmentId: result.assessmentId, name: (assessment && assessment.name) || 'Job title assessment',
+    score: result.overallScore, right: answers.filter((a) => a.correct).length, total: answers.length, tiers,
+    takenAt: result.completedAt, stale: Date.now() - result.completedAt.getTime() > STALE_DAYS * DAY,
+    showOnProfile: !!result.showOnProfile, resultId: result._id, result
+  };
+}
+
+async function titleResults(candidateId) {
+  const [results, asms] = await Promise.all([
+    SkillResult.find({ candidateId, status: 'completed' }).sort({ completedAt: 1 }), assessmentsById()
+  ]);
+  const latest = new Map();
+  for (const r of results) {
+    const a = asms.get(r.assessmentId);
+    if (isTitle(a) && published(r) && r.overallScore != null) latest.set(r.assessmentId, titleSummary(r, a));
+  }
+  return [...latest.values()];
+}
+
+async function setTitleVisibility(candidate, shownAssessmentIds) {
+  const shown = new Set(shownAssessmentIds);
+  for (const t of await titleResults(candidate._id)) {
+    t.result.showOnProfile = shown.has(t.assessmentId);
+    await t.result.save();
+  }
+}
+
 // What a recruiter may see: levels only, honouring the candidate's choices.
 async function recruiterView(candidate) {
   const all = await currentSkills(candidate._id);
@@ -37,13 +82,21 @@ async function recruiterView(candidate) {
   // Developing and Provisional results are never shown to recruiters; they still count as tested.
   const shown = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
     .map((s) => ({ key: s.key, label: s.label, level: s.level, needsRetake: s.stale }));
-  return { tested: all.length, shown };
+  const titles = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
+    .map(({ result, resultId, showOnProfile, ...t }) => t);
+  return { tested: all.length, shown, titles };
 }
 
 // Date this assessment can next be taken, or null if allowed now. A skill is locked for 60 days
 // after its last completed attempt; the assessment is open as long as at least one of its skills
 // is not locked (so a test that shares one skill with an earlier test can still be taken).
 async function nextAllowed(candidateId, assessment) {
+  if (isTitle(assessment)) {
+    const last = (await SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' }))
+      .reduce((m, r) => Math.max(m, r.completedAt ? r.completedAt.getTime() : 0), 0);
+    const until = last + RETAKE_DAYS * DAY;
+    return last && until > Date.now() ? new Date(until) : null;
+  }
   const keys = (assessment.skills || []).map((s) => s.key);
   const done = await SkillResult.find({ candidateId, status: 'completed', 'skills.key': { $in: keys } });
   const unlock = keys.map((k) => {
@@ -74,4 +127,4 @@ async function setHidden(candidate, shownKeys) {
   await candidate.save();
 }
 
-module.exports = { SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
+module.exports = { titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };

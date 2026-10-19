@@ -13,6 +13,7 @@ const SEED = [
   {
     assessmentId: 'technical-assessment-9byeoyqm0d',
     name: 'Test: Linux, Agile, Cloud',
+    kind: 'title', // a premade role-style mix, not our controlled 3/3/3 skill module
     skills: [
       { key: 'linux', label: 'Linux', ratingKeys: ['Linux', 'Unix'] },
       { key: 'agile', label: 'Agile', ratingKeys: ['Agile'] },
@@ -30,11 +31,11 @@ connectDatabase()
     for (const row of SEED) {
       const a = byId.get(row.assessmentId);
       if (!a) { console.log(`SKIP ${row.assessmentId}: not found in CoderByte`); continue; }
-      console.log(`${apply ? 'UPSERT' : 'would upsert'} ${row.assessmentId} -> ${row.skills.map((s) => s.label).join(', ')}`);
+      console.log(`${apply ? 'UPSERT' : 'would upsert'} ${row.assessmentId} -> ${row.skills.map((s) => s.label).join(', ')} [${row.kind || 'skill'}]`);
       if (apply) {
         await SkillAssessment.findOneAndUpdate(
           { assessmentId: row.assessmentId },
-          { $set: { name: row.name, publicUrl: a.public_url, skills: row.skills, active: true } },
+          { $set: { name: row.name, kind: row.kind || 'skill', publicUrl: a.public_url, skills: row.skills, active: true } },
           { upsert: true }
         );
       }

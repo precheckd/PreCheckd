@@ -52,9 +52,12 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
     const hiddenSkills = new Set(candidate.hiddenSkillKeys || []);
     const mySkills = (await skillsService.currentSkills(candidate._id)).map((x) => ({ ...x, shown: !hiddenSkills.has(x.key) }));
 
+    const myTitles = await skillsService.titleResults(candidate._id);
+
     res.render('candidate-profile', {
       candidate,
       mySkills,
+      myTitles,
       viewCounts,
       certExpiry,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`,

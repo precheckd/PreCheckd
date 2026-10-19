@@ -5,6 +5,8 @@
   .sk-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
   .sk-back:hover { color: #F2F4F3; }
   .sk-container h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.5rem; }
+  .sk-h2 { font-size: 1.25rem; color: #F2F4F3; margin: 1.5rem 0 0.4rem; }
+  .tr-score { color: #4CC2A6; font-weight: 700; margin-right: 0.5rem; }
   .sk-lead { color: #C7D1CF; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem; }
   .sk-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
   .sk-card h2 { font-size: 1.15rem; color: #F2F4F3; margin-bottom: 0.5rem; }
@@ -62,7 +64,8 @@
     </form>
     <% } %>
 
-    <% cards.forEach((c) => { %>
+    <h2 class="sk-h2">Skill tests</h2>
+    <% skillCards.forEach((c) => { %>
       <div class="sk-card">
         <h2><%= c.assessment.name || 'Technical Assessment' %></h2>
         <div class="sk-tags"><% c.assessment.skills.forEach((s) => { %><span class="sk-tag"><%= s.label %></span><% }) %></div>
@@ -80,7 +83,41 @@
         <% } %>
       </div>
     <% }) %>
-    <% if (!cards.length) { %><div class="sk-card"><p>No tests are available yet. Check back soon.</p></div><% } %>
+    <% if (!skillCards.length) { %><div class="sk-card"><p>No skill tests are available yet. Skill tests set your skill levels, so check back soon.</p></div><% } %>
+
+    <h2 class="sk-h2">Job title assessments</h2>
+    <p class="sk-lead">Role-based tests. These show an exact score and are separate from your skill levels, because we can't control how much of each skill a role test covers. Recruiters only see a result if you turn on Show on my profile, or if you took it at a recruiter's request.</p>
+    <% if (titles.length) { %>
+    <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/titles">
+      <h2>Your title results</h2>
+      <% titles.forEach((t) => { %>
+        <div class="sk-row">
+          <div><div class="sk-name"><%= t.name %></div><div class="sk-meta"><%- include('partials/title-result', { t: t }) %></div></div>
+          <label class="sk-show"><input type="checkbox" name="shown" value="<%= t.assessmentId %>" <%= t.showOnProfile ? 'checked' : '' %>> Show on my profile</label>
+        </div>
+      <% }) %>
+      <div style="margin-top:1rem;"><button class="sk-btn" type="submit">Save</button></div>
+    </form>
+    <% } %>
+    <% titleCards.forEach((c) => { %>
+      <div class="sk-card">
+        <h2><%= c.assessment.name || 'Technical Assessment' %></h2>
+        <div class="sk-tags"><% c.assessment.skills.forEach((s) => { %><span class="sk-tag"><%= s.label %></span><% }) %></div>
+        <% if (c.held) { %>
+          <p>Your last attempt is being reviewed before it's shown. You'll see it here once it's cleared.</p>
+        <% } %>
+        <% if (c.retakeOn) { %>
+          <p>You can take this again on <strong><%= c.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></strong>.</p>
+          <button class="sk-btn" disabled>Retake locked</button>
+        <% } else { %>
+          <p>One sitting, multiple choice, timed. Your results come back to this page automatically. Use your own work and knowledge, since attempts that look assisted aren't published.</p>
+          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= c.assessment.assessmentId %>">
+            <button class="sk-btn" type="submit"><%= c.open ? 'Continue test' : (current.length ? 'Take it again' : 'Start assessment') %></button>
+          </form>
+        <% } %>
+      </div>
+    <% }) %>
+    <% if (!titleCards.length) { %><div class="sk-card"><p>No job title assessments are available yet.</p></div><% } %>
   </div>
 </div>
 <style>

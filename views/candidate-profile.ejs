@@ -456,6 +456,19 @@
         <a class="skp-link" href="/candidate/<%= candidate.slug %>/skills">Take a skills test &rarr;</a>
       <% } %>
     </div>
+    <% if (typeof myTitles !== 'undefined' && myTitles.length) { %>
+    <div class="cprofile-section skp-card" style="margin-top: 1.25rem;">
+      <h3>Job Title Assessments</h3>
+      <% myTitles.forEach(function(t) { %>
+        <div class="skp-row">
+          <div class="skp-top"><span class="skp-name"><%= t.name %></span><span class="skp-level"><%= t.score %>%</span></div>
+          <div class="skm-detail"><%- include('partials/title-result', { t: t, bare: true }) %></div>
+          <div class="skp-sub"><%= t.showOnProfile ? 'Shown to recruiters' : 'Hidden from recruiters' %></div>
+        </div>
+      <% }); %>
+      <a class="skp-link" href="/candidate/<%= candidate.slug %>/skills">Manage assessments &rarr;</a>
+    </div>
+    <% } %>
   </aside>
   <div class="cprofile-main">
 

@@ -27,6 +27,10 @@ const questionSchema = new mongoose.Schema({
 const skillAssessmentSchema = new mongoose.Schema({
   assessmentId: { type: String, required: true, unique: true }, // CoderByte test_id
   name: { type: String, default: '' },
+  // 'skill': our own controlled module (3/3/3 per skill); results become skill levels.
+  // 'title': a CoderByte job-title test with a mix we don't control; results are shown as an exact
+  // score in their own box and never feed skill levels.
+  kind: { type: String, enum: ['skill', 'title'], default: 'skill' },
   publicUrl: { type: String, required: true },                  // CoderByte public_url; the invite API turns this into private links
   skills: { type: [skillSchema], default: [] },
   questions: { type: [questionSchema], default: [] },

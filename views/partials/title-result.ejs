@@ -1,0 +1,5 @@
+<%
+  const parts = t.tiers ? ['easy', 'medium', 'hard'].filter((n) => t.tiers[n].total > 0).map((n) => n.charAt(0).toUpperCase() + n.slice(1) + ' ' + t.tiers[n].right + '/' + t.tiers[n].total) : [];
+%>
+<% if (!locals.bare) { %><span class="tr-score"><%= t.score %>%</span><% } %>
+<span class="tr-detail"><%= t.right %> of <%= t.total %> questions<%= parts.length ? ' · ' + parts.join(' · ') : '' %> · <%= t.takenAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %><%= t.stale ? ' · needs retake' : '' %></span>
