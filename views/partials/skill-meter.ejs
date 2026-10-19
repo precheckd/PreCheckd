@@ -2,11 +2,40 @@
   const LV = ['Developing', 'Foundational', 'Intermediate', 'Advanced', 'Expert'];
   const idx = Math.max(0, LV.indexOf(sk.level));
   const t = sk.tiers;
-  const parts = t ? ['easy', 'medium', 'hard'].filter((n) => t[n] && t[n].total > 0).map((n) => n.charAt(0).toUpperCase() + n.slice(1) + ' ' + t[n].right + '/' + t[n].total) : [];
+  const rows = ['easy', 'medium', 'hard'].map((n) => {
+    const x = t && t[n] ? t[n] : { right: 0, total: 0 };
+    return { name: n.charAt(0).toUpperCase() + n.slice(1), right: x.right, total: x.total,
+      assessed: x.total >= 2, passed: x.total >= 2 && x.right / x.total >= 2 / 3 - 1e-9 };
+  });
 %>
 <div class="skm-bar" aria-label="<%= sk.level %>">
   <% for (let i = 1; i <= 4; i++) { %><span class="<%= i <= idx ? 'on' : '' %>"></span><% } %>
 </div>
-<div class="skm-detail">
-  <% if (sk.level === 'Provisional') { %>Not enough questions to set a level yet<% } else if (parts.length) { %><%= parts.join(' · ') %><% } %>
-</div>
+<% if (sk.level === 'Provisional') { %>
+  <div class="skm-detail">Not enough questions to set a level yet</div>
+<% } %>
+<% if (t) { %>
+<details class="skm-more">
+  <summary>See by difficulty</summary>
+  <% rows.forEach(function(r) { %>
+    <div class="skm-tier">
+      <span class="skm-tname"><%= r.name %></span>
+      <span class="skm-tbar"><span style="width: <%= r.total ? Math.round(r.right / r.total * 100) : 0 %>%" class="<%= r.passed ? 'pass' : '' %>"></span></span>
+      <span class="skm-tcount"><% if (!r.total) { %>not asked<% } else { %><%= r.right %>/<%= r.total %><%= r.passed ? ' ✓' : (r.assessed ? '' : ' (too few)') %><% } %></span>
+    </div>
+  <% }); %>
+</details>
+<% } %>
+<style>
+  .skm-more { margin: 0.3rem 0 0.2rem; }
+  .skm-more summary { cursor: pointer; color: #4ADE80; font-size: 0.85rem; font-weight: 600; list-style: none; }
+  .skm-more summary::-webkit-details-marker { display: none; }
+  .skm-more summary::before { content: '\25B8'; display: inline-block; margin-right: 0.35rem; transition: transform 0.15s; }
+  .skm-more[open] summary::before { transform: rotate(90deg); }
+  .skm-tier { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.5rem; }
+  .skm-tname { width: 4.2rem; color: #C7D1CF; font-size: 0.88rem; }
+  .skm-tbar { flex: 1; height: 7px; background: #1F363C; border-radius: 999px; overflow: hidden; }
+  .skm-tbar span { display: block; height: 100%; background: #5A7880; border-radius: 999px; }
+  .skm-tbar span.pass { background: #2ECC71; }
+  .skm-tcount { width: 5.2rem; text-align: right; color: #C7D1CF; font-size: 0.85rem; }
+</style>
