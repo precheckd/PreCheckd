@@ -21,6 +21,26 @@
   .view-counts strong { color: #F2F4F3; }
   .view-counts-sep { opacity: 0.5; }
 
+
+  .cprofile-layout { max-width: 1240px; margin: 0 auto; display: flex; gap: 1.5rem; align-items: flex-start; }
+  .cprofile-skills { flex: 0 0 280px; position: sticky; top: 7.5rem; }
+  .cprofile-main { flex: 1 1 0; min-width: 0; max-width: 900px; }
+  .skp-card { padding: 1.25rem 1.25rem 1.1rem; }
+  .skp-row { margin-bottom: 1rem; }
+  .skp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+  .skp-name { color: #F2F4F3; font-weight: 600; font-size: 0.95rem; }
+  .skp-level { color: #4ADE80; font-weight: 700; font-size: 0.82rem; }
+  .skp-bar { height: 6px; background: #1F363C; border-radius: 999px; margin: 0.4rem 0 0.3rem; overflow: hidden; }
+  .skp-bar span { display: block; height: 100%; background: #2ECC71; border-radius: 999px; }
+  .skp-sub { color: #8FA6AC; font-size: 0.78rem; }
+  .skp-empty { color: #C7D1CF; font-size: 0.88rem; line-height: 1.5; margin-bottom: 0.75rem; }
+  .skp-link { color: #4ADE80; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+  @media (max-width: 900px) {
+    .cprofile-layout { flex-direction: column; }
+    .cprofile-skills { position: static; flex-basis: auto; width: 100%; }
+    .cprofile-main { width: 100%; }
+  }
+
   .cprofile-header {
     max-width: 900px;
     margin: 0 auto 2rem;
@@ -413,6 +433,27 @@
     </div>
   <% } %>
 
+  <div class="cprofile-layout">
+  <aside class="cprofile-skills">
+    <div class="cprofile-section skp-card">
+      <h3>Skills</h3>
+      <% if (mySkills && mySkills.length) { %>
+        <% mySkills.forEach(function(sk) { %>
+          <div class="skp-row">
+            <div class="skp-top"><span class="skp-name"><%= sk.label %></span><span class="skp-level"><%= sk.level %></span></div>
+            <div class="skp-bar"><span style="width: <%= sk.score %>%"></span></div>
+            <div class="skp-sub"><%= sk.score %>% &middot; <%= sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters' %><%= sk.stale ? ' · needs retake' : '' %></div>
+          </div>
+        <% }); %>
+        <a class="skp-link" href="/candidate/<%= candidate.slug %>/skills">Manage skills &amp; retakes &rarr;</a>
+      <% } else { %>
+        <p class="skp-empty">You haven't been tested yet. Recruiters search and rank by verified skill levels.</p>
+        <a class="skp-link" href="/candidate/<%= candidate.slug %>/skills">Take a skills test &rarr;</a>
+      <% } %>
+    </div>
+  </aside>
+  <div class="cprofile-main">
+
   <div class="cprofile-header">
     <% if (candidate.profilePhotoUrl) { %>
       <div class="cprofile-photo">
@@ -601,27 +642,13 @@
 
       </div>
 
-      <div class="verification-item" style="margin-top:1rem;">
-        <div class="verification-row">
-          <span class="verification-label">Skills</span>
-          <% if (mySkills && mySkills.length) { %><span class="verification-status status-verified">Tested</span><% } else { %><span class="verification-status status-pending">Not tested</span><% } %>
-        </div>
-        <% if (mySkills && mySkills.length) { %>
-          <% mySkills.forEach(function(sk) { %>
-            <div class="detail-entry" style="display:flex;justify-content:space-between;padding:0.5rem 0.9rem;">
-              <div><div class="detail-title"><%= sk.label %> &middot; <%= sk.level %></div>
-              <div class="detail-sub"><%= sk.score %>% &middot; <%= sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters' %><%= sk.stale ? ' · needs retake' : '' %></div></div>
-            </div>
-          <% }); %>
-        <% } %>
-        <div style="padding:0.5rem 0.9rem 0.9rem;"><a href="/candidate/<%= candidate.slug %>/skills" style="color:#4CC2A6;font-size:0.88rem;"><%= (mySkills && mySkills.length) ? 'Manage skills &amp; retakes' : 'Take a skills test' %> &rarr;</a></div>
-      </div>
-
       <div class="cert-download">
         <a href="/candidate/<%= candidate.slug %>/certificate" class="cert-download-btn">Download Certificate (PDF)</a>
         <p class="cert-download-note">Includes your resume on file plus a verified summary of your PreCheckd status. Valid for 60 days from download — regenerate anytime for a fresh copy.</p>
       </div>
     </div>
+  </div>
+  </div>
   </div>
 </div>
 
