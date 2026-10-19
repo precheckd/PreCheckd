@@ -1,6 +1,6 @@
-// Sends ONE real invite (skip_send, our own ID instead of an email) to a candidate
-// and prints CoderByte's raw response, since the invite response format isn't
-// documented. Deliberate, not automatic: this may use an invite credit.
+// Creates ONE invite for a candidate: a no-PII link (public assessment link + our own ID)
+// that you open to take the test. No API call is made, so nothing is sent or spent until
+// the link is opened.
 // Usage: node scripts/coderbyte-invite-test.js <candidateEmail> <assessmentId>
 require('dotenv').config();
 const { connectDatabase } = require('../src/config/database');
@@ -20,7 +20,7 @@ connectDatabase()
     if (!candidate) throw new Error(`No candidate with email ${candidateEmail}`);
     const assessment = await SkillAssessment.findOne({ assessmentId });
     if (!assessment) throw new Error('Not in the catalog yet: run scripts/coderbyte-seed-catalog.js --apply');
-    const result = await coderbyte.inviteCandidate({ candidate, assessment, debug: true });
+    const result = await coderbyte.inviteCandidate({ candidate, assessment });
     console.log(`\ninviteRef: ${result.inviteRef}\ninviteUrl: ${result.inviteUrl}\nexpires:   ${result.expiresAt.toISOString()}`);
     process.exit(0);
   })

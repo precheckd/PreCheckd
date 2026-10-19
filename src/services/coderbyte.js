@@ -1,6 +1,6 @@
 // CoderByte skills-assessment integration.
 //
-//  invite  -> inviteCandidate(): private link, no CoderByte email, our own ID in place of an email
+//  invite  -> inviteCandidate(): no-PII link (public link + our own ID), no CoderByte email
 //  joined  -> handleJoined():    webhook, marks the attempt started
 //  done    -> handleCompleted(): webhook, pulls the full report and stores per-skill scores
 //  repair  -> syncResult():      re-pull a report by hand if a webhook was missed
@@ -113,50 +113,29 @@ async function syncResult(result) {
 
 // ---- invites ------------------------------------------------------------
 
-// The 200 response shape isn't documented, so find the private link wherever it is.
-function extractInviteUrl(body, ref) {
-  const urls = [];
-  (function walk(v, key) {
-    if (typeof v === 'string') {
-      if (/^https?:\/\//i.test(v)) urls.push({ url: v, key });
-    } else if (Array.isArray(v)) v.forEach((x) => walk(x, key));
-    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => walk(x, k));
-  })(body);
-  if (!urls.length) return null;
-  const hit = urls.find((u) => u.key === ref || u.url.includes(ref)) || urls[0];
-  return hit.url;
+// No-PII invite, per CoderByte's documented method: the assessment's public link with
+// `&id=<our ID>&no_pii=true` appended. No API call and no email; CoderByte never sees
+// the candidate's details, only our opaque ID, which comes back to us in webhooks and
+// reports. (The API invite endpoint takes emails only: given our ID it returned an
+// empty candidate list.) The link itself does not expire, so our own `expiresAt` is
+// enforced by whatever shows the link, and `allow_redo: false` blocks reuse.
+function inviteLink(assessment, inviteRef) {
+  const base = assessment.publicUrl;
+  return `${base}${base.includes('?') ? '&' : '?'}id=${encodeURIComponent(inviteRef)}&no_pii=true`;
 }
 
-async function inviteCandidate({ candidate, assessment, debug = false }) {
+async function inviteCandidate({ candidate, assessment }) {
   const inviteRef = `pc_${crypto.randomBytes(9).toString('hex')}`;
   const expiresAt = new Date(Date.now() + INVITE_DAYS() * 86400000);
-  const result = await SkillResult.create({
+  return SkillResult.create({
     candidateId: candidate._id,
     assessmentId: assessment.assessmentId,
     inviteRef,
     status: 'invited',
+    inviteUrl: inviteLink(assessment, inviteRef),
     invitedAt: new Date(),
     expiresAt
   });
-  try {
-    const body = await api('POST', '/candidates/invite', {
-      assessment_url: assessment.publicUrl,
-      candidates: [inviteRef],
-      skip_send: true,
-      expire_date: expiresAt.toISOString().replace(/\.\d{3}Z$/, 'Z')
-    });
-    if (debug) console.log('invite response:', JSON.stringify(body, null, 2));
-    const url = extractInviteUrl(body, inviteRef);
-    if (!url) throw new Error('CoderByte returned no invite link');
-    result.inviteUrl = url;
-    await result.save();
-  } catch (e) {
-    result.status = 'failed';
-    result.lastError = String(e.message).slice(0, 300);
-    await result.save();
-    throw e;
-  }
-  return result;
 }
 
 // ---- webhooks -----------------------------------------------------------
@@ -232,7 +211,7 @@ async function handleCompleted(req, res) {
     const result = await SkillResult.findOne({ inviteRef: p.email, assessmentId: p.assessment_id });
     if (!result) {
       // Not one of ours (e.g. someone opened the public link directly). Acknowledge so it isn't retried.
-      console.warn('[coderbyte] completed webhook for unknown attempt, ignoring');
+      console.warn('[coderbyte] completed webhook for unknown attempt, ignoring. email field:', String(p.email).slice(0, 40));
       return res.json({ ok: true, ignored: true });
     }
     result.timeExpired = !!p.time_expired;
@@ -245,6 +224,6 @@ async function handleCompleted(req, res) {
 }
 
 module.exports = {
-  api, inviteCandidate, syncResult, fetchReport, pickReport, applyReport, computeSkills,
-  extractInviteUrl, verifyWebhookAuth, handleJoined, handleCompleted
+  api, inviteCandidate, inviteLink, syncResult, fetchReport, pickReport, applyReport, computeSkills,
+  verifyWebhookAuth, handleJoined, handleCompleted
 };
