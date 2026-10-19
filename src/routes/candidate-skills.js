@@ -59,7 +59,7 @@ router.get('/:slug/skills', async (req, res) => {
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
       candidate, cards,
-      current: current.map((s) => ({ ...s, shown: !hidden.has(s.key) })),
+      current: current.map((s) => ({ ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level) })),
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
       notice: req.query.notice || null,
       title: 'Skills | PreCheckd'

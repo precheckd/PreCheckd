@@ -1,7 +1,13 @@
-// Turns a 0-100 skill score into a level label. Bands are a starting point to tune
-// once real results exist; they live here so there is one place to change them.
+// Skill LEVELS come from which difficulty tiers a candidate passed, not from a percentage, so a
+// score is never read as a grade. A tier is "assessed" with at least MIN_TIER questions for the
+// skill and "passed" when at least PASS_RATIO of them are right. Fewer than two assessed tiers
+// is not enough evidence for a level, so the skill is "Provisional".
 const WEIGHTS = { easy: 1, medium: 2, hard: 3 };
+const PASS_RATIO = 2 / 3;
+const MIN_TIER = 2;
+const LEVELS = ['Developing', 'Foundational', 'Intermediate', 'Advanced', 'Expert'];
 
+// Kept for the internal 0-100 score (ranking tiebreaks); never shown as a level or to recruiters.
 const BANDS = [
   { min: 90, level: 'Expert' },
   { min: 70, level: 'Advanced' },
@@ -12,6 +18,20 @@ const BANDS = [
 function levelFor(score) {
   if (!Number.isFinite(score)) return null;
   return BANDS.find((b) => score >= b.min).level;
+}
+
+function levelFromTiers(tiers) {
+  if (!tiers) return 'Provisional';
+  const t = (n) => tiers[n] || { right: 0, total: 0 };
+  const assessed = (n) => t(n).total >= MIN_TIER;
+  const passed = (n) => assessed(n) && t(n).right / t(n).total >= PASS_RATIO - 1e-9;
+  if (['easy', 'medium', 'hard'].filter(assessed).length < 2) return 'Provisional';
+  const mediumOk = !assessed('medium') || passed('medium');
+  if (passed('hard') && mediumOk) return 'Expert';
+  if (passed('medium') && t('hard').right >= 1) return 'Advanced';
+  if (passed('medium')) return 'Intermediate';
+  if (passed('easy')) return 'Foundational';
+  return 'Developing';
 }
 
 // answers: [{ id, correct, tags }]   difficultyById: Map(id -> 'easy'|'medium'|'hard')
@@ -38,7 +58,7 @@ function weightedSkill(answers, difficultyById, ratingKeys) {
     if (q.correct) { tiers[d].right += 1; earned += WEIGHTS[d]; }
   }
   const score = Math.round((earned / possible) * 100);
-  return { score, tiers, level: levelFor(score) };
+  return { score, tiers, level: levelFromTiers(tiers) };
 }
 
-module.exports = { WEIGHTS, BANDS, levelFor, weightedSkill };
+module.exports = { WEIGHTS, BANDS, LEVELS, PASS_RATIO, MIN_TIER, levelFor, levelFromTiers, weightedSkill };

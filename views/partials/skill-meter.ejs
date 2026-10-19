@@ -1,0 +1,12 @@
+<%
+  const LV = ['Developing', 'Foundational', 'Intermediate', 'Advanced', 'Expert'];
+  const idx = Math.max(0, LV.indexOf(sk.level));
+  const t = sk.tiers;
+  const parts = t ? ['easy', 'medium', 'hard'].filter((n) => t[n] && t[n].total > 0).map((n) => n.charAt(0).toUpperCase() + n.slice(1) + ' ' + t[n].right + '/' + t[n].total) : [];
+%>
+<div class="skm-bar" aria-label="<%= sk.level %>">
+  <% for (let i = 1; i <= 4; i++) { %><span class="<%= i <= idx ? 'on' : '' %>"></span><% } %>
+</div>
+<div class="skm-detail">
+  <% if (sk.level === 'Provisional') { %>Not enough questions to set a level yet<% } else if (parts.length) { %><%= parts.join(' · ') %><% } %>
+</div>

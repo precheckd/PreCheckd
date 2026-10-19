@@ -31,6 +31,10 @@
   .skp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
   .skp-name { color: #F2F4F3; font-weight: 600; font-size: 1.19rem; }
   .skp-level { color: #4ADE80; font-weight: 700; font-size: 1.03rem; }
+  .skm-bar { display: flex; gap: 4px; margin: 0.5rem 0 0.38rem; }
+  .skm-bar span { flex: 1; height: 7.5px; border-radius: 999px; background: #1F363C; }
+  .skm-bar span.on { background: #2ECC71; }
+  .skm-detail { color: #C7D1CF; font-size: 0.98rem; margin-bottom: 0.2rem; }
   .skp-bar { height: 7.5px; background: #1F363C; border-radius: 999px; margin: 0.5rem 0 0.38rem; overflow: hidden; }
   .skp-bar span { display: block; height: 100%; background: #2ECC71; border-radius: 999px; }
   .skp-sub { color: #8FA6AC; font-size: 0.98rem; }
@@ -442,8 +446,8 @@
         <% mySkills.forEach(function(sk) { %>
           <div class="skp-row">
             <div class="skp-top"><span class="skp-name"><%= sk.label %></span><span class="skp-level"><%= sk.level %></span></div>
-            <div class="skp-bar"><span style="width: <%= sk.score %>%"></span></div>
-            <div class="skp-sub"><%= sk.score %>% &middot; <%= sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters' %><%= sk.stale ? ' · needs retake' : '' %></div>
+            <%- include('partials/skill-meter', { sk: sk }) %>
+            <div class="skp-sub"><%= ['Developing', 'Provisional'].includes(sk.level) ? 'Not shown to recruiters yet' : (sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters') %><%= sk.stale ? ' · needs retake' : '' %></div>
           </div>
         <% }); %>
         <a class="skp-link" href="/candidate/<%= candidate.slug %>/skills">Manage skills &amp; retakes &rarr;</a>

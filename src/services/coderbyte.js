@@ -12,7 +12,7 @@
 const crypto = require('crypto');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
-const { levelFor, weightedSkill } = require('./skillLevels');
+const { weightedSkill } = require('./skillLevels');
 
 const BASE = 'https://coderbyte.com/api/organization';
 const TIMEOUT_MS = 20000;
@@ -60,7 +60,8 @@ function computeSkills(assessment, ratings, answers = []) {
     if (w) return { key: s.key, label: s.label, score: w.score, weighted: true, level: w.level, tiers: w.tiers };
     const present = (s.ratingKeys || []).filter((k) => byName.has(k)).map((k) => byName.get(k));
     const score = present.length ? Math.round(present.reduce((a, b) => a + b, 0) / present.length) : null;
-    return { key: s.key, label: s.label, score, weighted: false, level: levelFor(score), tiers: null };
+    // Difficulty not fully known for this skill's questions: no tier evidence, so no level yet.
+    return { key: s.key, label: s.label, score, weighted: false, level: 'Provisional', tiers: null };
   });
 }
 

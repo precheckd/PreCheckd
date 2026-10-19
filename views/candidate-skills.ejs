@@ -30,7 +30,7 @@
   <div class="sk-container">
     <a href="/candidate/<%= candidate.slug %>/edit" class="sk-back">&larr; Back to your profile</a>
     <h1>Skills &amp; Tests</h1>
-    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Expert. Only you see your percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts.</p>
+    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Expert. Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts.</p>
 
     <% if (finished && processing) { %>
       <div class="sk-banner ok">Thanks, you're done. We're pulling in your results now. This page refreshes on its own and usually takes a few seconds.</div>
@@ -48,12 +48,13 @@
         <div class="sk-row">
           <div>
             <div class="sk-name"><%= s.label %></div>
-            <div class="sk-meta"><%= s.score %>% &middot; taken <%= s.takenAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+            <%- include('partials/skill-meter', { sk: s }) %>
+            <div class="sk-meta">Taken <%= s.takenAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
           </div>
           <div style="display:flex;align-items:center;gap:1rem;">
             <span class="sk-level"><%= s.level %></span>
             <% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %>
-            <label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" <%= s.shown ? 'checked' : '' %>> Show</label>
+            <% if (s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" <%= s.shown ? 'checked' : '' %>> Show</label><% } else { %><span class="sk-meta">Not shown to recruiters yet</span><% } %>
           </div>
         </div>
       <% }) %>
@@ -82,3 +83,9 @@
     <% if (!cards.length) { %><div class="sk-card"><p>No tests are available yet. Check back soon.</p></div><% } %>
   </div>
 </div>
+<style>
+  .skm-bar { display: flex; gap: 4px; margin: 0.45rem 0 0.35rem; width: 220px; }
+  .skm-bar span { flex: 1; height: 7px; border-radius: 999px; background: #1F363C; }
+  .skm-bar span.on { background: #4CC2A6; }
+  .skm-detail { color: #C7D1CF; font-size: 0.82rem; }
+</style>
