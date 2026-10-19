@@ -287,6 +287,10 @@ const candidateSchema = new mongoose.Schema({
     default: false
   },
 
+  // Skill keys (from skill assessments) this candidate has chosen NOT to show recruiters.
+  // Empty means every tested skill is shown. Recruiters see only the count tested vs shown.
+  hiddenSkillKeys: { type: [String], default: [] },
+
   // Which verified sections the public page shows. Chosen by the candidate.
   // Only verified entries are ever shown, and never employer or school names.
   // Certifications default on (the original page content); degrees and job

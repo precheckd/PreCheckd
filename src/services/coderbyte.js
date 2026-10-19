@@ -72,6 +72,14 @@ function pickReport(reports) {
   return (done.length ? done : reports)[(done.length ? done : reports).length - 1];
 }
 
+// CoderByte's flag reads e.g. "Not detected", "Likely", "Detected". Anything but a clear "not" that
+// mentions likely/detected holds the attempt back.
+function isFlagged(flag) {
+  const f = String(flag || '').toLowerCase();
+  if (!f || f.includes('not')) return false;
+  return f.includes('likely') || f.includes('detect');
+}
+
 function applyReport(result, assessment, report) {
   const ratings = Object.entries(report.skill_ratings || {})
     .filter(([, v]) => Number.isFinite(Number(v)))
@@ -89,6 +97,7 @@ function applyReport(result, assessment, report) {
   const cd = report.cheating_details || {};
   result.aiUsage = !!cd.ai_usage;
   result.tabLeaving = Number(cd.tab_leaving) || 0;
+  result.held = isFlagged(result.cheatingFlag) || result.aiUsage;
   result.reportReady = report.report_ready !== false;
   result.status = String(report.status).toLowerCase() === 'completed' ? 'completed' : result.status;
   if (result.status === 'completed' && !result.completedAt) result.completedAt = new Date();
@@ -247,6 +256,6 @@ async function handleCompleted(req, res) {
 }
 
 module.exports = {
-  api, inviteCandidate, inviteLink, deriveCoderbyteId, coderbyteIdFor, syncResult, fetchReport, pickReport, applyReport, computeSkills,
+  api, inviteCandidate, inviteLink, deriveCoderbyteId, coderbyteIdFor, syncResult, fetchReport, pickReport, applyReport, isFlagged, computeSkills,
   verifyWebhookAuth, handleJoined, handleCompleted
 };
