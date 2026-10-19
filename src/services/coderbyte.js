@@ -104,11 +104,33 @@ async function fetchReport(ref, assessmentId) {
 async function syncResult(result) {
   const assessment = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
   if (!assessment) throw new Error(`No catalog entry for assessment ${result.assessmentId}`);
-  const report = await fetchReport(result.inviteRef, result.assessmentId);
+  if (!result.coderbyteId) result.coderbyteId = coderbyteIdFor(result);
+  const report = await fetchReport(result.coderbyteId, result.assessmentId);
   if (!report) throw new Error('CoderByte has no report for this attempt yet');
   applyReport(result, assessment, report);
   await result.save();
   return result;
+}
+
+// ---- identity -----------------------------------------------------------
+
+// For no-PII invites CoderByte does not hand our ID back. It anonymizes it to an address of the
+// form <first 10 hex chars of sha1(id)>@private.com, and that is what webhooks and the report
+// API use. Verified against a live webhook: pc_97cdf7eb4a1640cc8e -> efd41f327e@private.com.
+function deriveCoderbyteId(ref) {
+  return `${crypto.createHash('sha1').update(String(ref)).digest('hex').slice(0, 10)}@private.com`;
+}
+
+// The id CoderByte knows an attempt by. Attempts made with a real email (the earliest tests)
+// keep that email; no-PII attempts (pc_...) use the derived address.
+function coderbyteIdFor(result) {
+  if (result.coderbyteId) return result.coderbyteId;
+  return String(result.inviteRef).startsWith('pc_') ? deriveCoderbyteId(result.inviteRef) : result.inviteRef;
+}
+
+async function findAttempt(email, assessmentId) {
+  return (await SkillResult.findOne({ coderbyteId: email, assessmentId }))
+    || (await SkillResult.findOne({ inviteRef: email, assessmentId }));
 }
 
 // ---- invites ------------------------------------------------------------
@@ -131,6 +153,7 @@ async function inviteCandidate({ candidate, assessment }) {
     candidateId: candidate._id,
     assessmentId: assessment.assessmentId,
     inviteRef,
+    coderbyteId: deriveCoderbyteId(inviteRef),
     status: 'invited',
     inviteUrl: inviteLink(assessment, inviteRef),
     invitedAt: new Date(),
@@ -191,7 +214,7 @@ async function handleJoined(req, res) {
   const p = parseWebhook(req, res);
   if (!p) return;
   try {
-    const result = await SkillResult.findOne({ inviteRef: p.email, assessmentId: p.assessment_id });
+    const result = await findAttempt(p.email, p.assessment_id);
     if (result && result.status === 'invited') {
       result.status = 'started';
       result.startedAt = new Date();
@@ -208,7 +231,7 @@ async function handleCompleted(req, res) {
   const p = parseWebhook(req, res);
   if (!p) return;
   try {
-    const result = await SkillResult.findOne({ inviteRef: p.email, assessmentId: p.assessment_id });
+    const result = await findAttempt(p.email, p.assessment_id);
     if (!result) {
       // Not one of ours (e.g. someone opened the public link directly). Acknowledge so it isn't retried.
       console.warn('[coderbyte] completed webhook for unknown attempt, ignoring. email field:', String(p.email).slice(0, 40));
@@ -224,6 +247,6 @@ async function handleCompleted(req, res) {
 }
 
 module.exports = {
-  api, inviteCandidate, inviteLink, syncResult, fetchReport, pickReport, applyReport, computeSkills,
+  api, inviteCandidate, inviteLink, deriveCoderbyteId, coderbyteIdFor, syncResult, fetchReport, pickReport, applyReport, computeSkills,
   verifyWebhookAuth, handleJoined, handleCompleted
 };

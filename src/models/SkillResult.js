@@ -33,6 +33,9 @@ const skillResultSchema = new mongoose.Schema({
   candidateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Candidate', required: true, index: true },
   assessmentId: { type: String, required: true, index: true },
   inviteRef: { type: String, required: true, unique: true },
+  // What CoderByte calls this candidate in webhooks and report URLs. For no-PII invites it is NOT our
+  // inviteRef: CoderByte rewrites it to <first 10 hex of sha1(ref)>@private.com (see deriveCoderbyteId).
+  coderbyteId: { type: String, default: null, index: true },
   status: {
     type: String,
     enum: ['invited', 'started', 'completed', 'failed'],
