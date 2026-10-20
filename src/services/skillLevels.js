@@ -72,6 +72,26 @@ function weightedSkill(answers, difficultyById, ratingKeys, opts = {}) {
   return { score, tiers, level: levelFromTiers(tiers, opts) };
 }
 
+// How many right answers a tier needs to reach a level: the pass line, or the Advanced line for the hard tier.
+function neededFor(level, total) {
+  const ratio = level === 'Advanced' ? ADVANCED_RATIO : PASS_RATIO;
+  return Math.max(1, Math.ceil(ratio * total - 1e-9));
+}
+
+// For the candidate's own experience bar: the next level, which rung earns it, and how far along they are
+// (right answers out of the number needed, never a percentage score). Returns null once at the top.
+const NEXT_LEVEL = { Developing: 'Foundational', Foundational: 'Intermediate', Intermediate: 'Advanced', Advanced: 'Expert' };
+const EARNED_ON = { Foundational: 'easy', Intermediate: 'medium', Advanced: 'hard', Expert: 'hard' };
+function nextLevelProgress(level, tiers) {
+  const next = NEXT_LEVEL[level || 'Developing'];
+  if (!next) return null;
+  const tier = EARNED_ON[next];
+  const x = tiers && tiers[tier];
+  if (!x || !x.total) return { next, tier, started: false, needed: null, right: 0, fill: 0 };
+  const needed = neededFor(next, x.total);
+  return { next, tier, started: true, needed, right: x.right, total: x.total, fill: Math.min(1, x.right / needed) };
+}
+
 // Internal 0-100 score from tier counts (ranking tiebreaks only), counting just the tiers attempted.
 function scoreFromTiers(tiers) {
   let earned = 0;
@@ -84,4 +104,4 @@ function scoreFromTiers(tiers) {
   return possible ? Math.round((earned / possible) * 100) : null;
 }
 
-module.exports = { WEIGHTS, BANDS, LEVELS, PASS_RATIO, MIN_TIER, ADVANCED_RATIO, TIER_ORDER, TIER_NAMES, levelFor, levelFromTiers, tierPassed, scoreFromTiers, weightedSkill };
+module.exports = { WEIGHTS, BANDS, LEVELS, PASS_RATIO, MIN_TIER, ADVANCED_RATIO, TIER_ORDER, TIER_NAMES, levelFor, levelFromTiers, tierPassed, neededFor, nextLevelProgress, scoreFromTiers, weightedSkill };

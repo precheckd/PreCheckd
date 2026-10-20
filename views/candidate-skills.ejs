@@ -25,6 +25,10 @@
   .sk-btn[disabled] { background: #3B5860; color: #8FA6AC; cursor: not-allowed; }
   .sk-btn.alt { background: transparent; color: #F2F4F3; border: 1px solid #5A7880; }
   .sk-tags { margin: 0.25rem 0 0.9rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .sk-xp { margin: 0.8rem 0 1rem; }
+  .sk-xp-label { color: #C7D1CF; font-size: 0.88rem; margin-bottom: 0.35rem; }
+  .sk-xp-bar { height: 10px; background: #1F363C; border-radius: 999px; overflow: hidden; margin-bottom: 0.3rem; }
+  .sk-xp-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2ECC71, #4CC2A6); border-radius: 999px; transition: width 0.4s; }
   .sk-tag { background: #1F363C; color: #C7D1CF; border-radius: 4px; padding: 0.15rem 0.55rem; font-size: 0.8rem; }
 </style>
 
@@ -78,6 +82,15 @@
         <h2><%= g.label %></h2>
         <div class="sk-tags"><span class="sk-tag"><%= g.level ? 'Your level: ' + g.level : 'Not started' %></span></div>
         <p>Start with Basic. Pass a level to unlock the next one, and your level is the highest one you've passed.</p>
+        <% if (g.progress) { %>
+          <div class="sk-xp">
+            <div class="sk-xp-label">Progress to <strong><%= g.progress.next %></strong></div>
+            <div class="sk-xp-bar" role="img" aria-label="Progress to <%= g.progress.next %>"><span style="width: <%= Math.round(g.progress.fill * 100) %>%"></span></div>
+            <div class="sk-meta"><% if (!g.progress.started) { %>Take the <%= { easy: 'Basic', medium: 'Intermediate', hard: 'Advanced' }[g.progress.tier] %> test to start filling this bar.<% } else if (g.progress.right >= g.progress.needed) { %>Level reached.<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> correct answers needed.<% } %></div>
+          </div>
+        <% } else if (g.topLevel) { %>
+          <div class="sk-xp"><div class="sk-xp-label">You've reached the top level.</div><div class="sk-xp-bar"><span style="width: 100%"></span></div></div>
+        <% } %>
         <% g.rungs.forEach((r, i) => { %>
           <div class="sk-row">
             <div>

@@ -5,7 +5,7 @@ const Candidate = require('../models/Candidate');
 const SkillRequest = require('../models/SkillRequest');
 const coderbyte = require('./coderbyte');
 const { deliver } = require('./skillNotifications');
-const { levelFromTiers, tierPassed, scoreFromTiers, TIER_ORDER, TIER_NAMES } = require('./skillLevels');
+const { levelFromTiers, tierPassed, scoreFromTiers, nextLevelProgress, TIER_ORDER, TIER_NAMES } = require('./skillLevels');
 
 const RETAKE_DAYS = 60;
 const STALE_DAYS = 365;
@@ -92,6 +92,10 @@ function buildLadders(cards, current) {
       r.result = tiers[r.tier] || null;
     });
     g.level = cur ? cur.level : null;
+    // Only show progress toward a level when the rung that earns it exists.
+    const prog = nextLevelProgress(g.level, tiers);
+    g.progress = prog && g.rungs.some((r) => r.tier === prog.tier) ? prog : null;
+    g.topLevel = g.level === 'Expert';
     return g;
   });
 }
