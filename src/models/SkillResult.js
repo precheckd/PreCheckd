@@ -65,6 +65,9 @@ const skillResultSchema = new mongoose.Schema({
   showOnProfile: { type: Boolean, default: false },
   held: { type: Boolean, default: false },
   reviewDecision: { type: String, enum: [null, 'approved', 'rejected'], default: null },
+  reviewedAt: { type: Date, default: null },
+  reviewNote: { type: String, default: '', maxlength: 1000 },   // internal only, never shown to the candidate
+  rejectionCleared: { type: Boolean, default: false },          // staff allowed another retake after repeated rejections
   timeExpired: { type: Boolean, default: false },
   reportReady: { type: Boolean, default: false },
   lastError: { type: String, default: null }

@@ -89,31 +89,52 @@ async function recruiterView(candidate) {
   return { tested: all.length, shown, titles };
 }
 
+const REJECT_COOLDOWN_DAYS = 14;
+const MAX_REJECTIONS = 2;
+
+async function completedFor(candidateId, assessment) {
+  if (isTitle(assessment)) return SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' });
+  const keys = (assessment.skills || []).map((s) => s.key);
+  return SkillResult.find({ candidateId, status: 'completed', 'skills.key': { $in: keys } });
+}
+
+// A rejected attempt does not start the 60-day lock; it starts a short cooldown instead.
+// Two uncleared rejections need staff before another try (see manualHold).
+async function manualHold(candidateId, assessment) {
+  const done = await completedFor(candidateId, assessment);
+  return done.filter((r) => r.reviewDecision === 'rejected' && !r.rejectionCleared).length >= MAX_REJECTIONS;
+}
+
 // Date this assessment can next be taken, or null if allowed now. A skill is locked for 60 days
-// after its last completed attempt; the assessment is open as long as at least one of its skills
+// after its last counted attempt; the assessment is open as long as at least one of its skills
 // is not locked (so a test that shares one skill with an earlier test can still be taken).
 async function nextAllowed(candidateId, assessment) {
+  const done = await completedFor(candidateId, assessment);
+  const counted = done.filter((r) => r.reviewDecision !== 'rejected');
+  const lastRejected = done.filter((r) => r.reviewDecision === 'rejected' && r.reviewedAt)
+    .reduce((m, r) => Math.max(m, r.reviewedAt.getTime()), 0);
+  const cooldown = lastRejected ? lastRejected + REJECT_COOLDOWN_DAYS * DAY : 0;
+  let lockUntil;
   if (isTitle(assessment)) {
-    const last = (await SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' }))
-      .reduce((m, r) => Math.max(m, r.completedAt ? r.completedAt.getTime() : 0), 0);
-    const until = last + RETAKE_DAYS * DAY;
-    return last && until > Date.now() ? new Date(until) : null;
+    const last = counted.reduce((m, r) => Math.max(m, r.completedAt ? r.completedAt.getTime() : 0), 0);
+    lockUntil = last ? last + RETAKE_DAYS * DAY : 0;
+  } else {
+    const keys = (assessment.skills || []).map((s) => s.key);
+    lockUntil = Math.min(...keys.map((k) => {
+      const last = counted.filter((r) => (r.skills || []).some((s) => s.key === k && s.score != null) && r.completedAt)
+        .reduce((m, r) => Math.max(m, r.completedAt.getTime()), 0);
+      return last ? last + RETAKE_DAYS * DAY : 0;
+    }));
   }
-  const keys = (assessment.skills || []).map((s) => s.key);
-  const done = await SkillResult.find({ candidateId, status: 'completed', 'skills.key': { $in: keys } });
-  const unlock = keys.map((k) => {
-    const last = done.filter((r) => (r.skills || []).some((s) => s.key === k && s.score != null) && r.completedAt)
-      .reduce((m, r) => Math.max(m, r.completedAt.getTime()), 0);
-    return last ? last + RETAKE_DAYS * DAY : 0;
-  });
-  const earliest = Math.min(...unlock);
-  return earliest > Date.now() ? new Date(earliest) : null;
+  const until = Math.max(lockUntil, cooldown);
+  return until > Date.now() ? new Date(until) : null;
 }
 
 // Reuse a live invite, otherwise issue a fresh one. Throws with .code 'retake_wait' if too soon.
 async function startAttempt(candidate, assessmentId) {
   const assessment = await SkillAssessment.findOne({ assessmentId, active: true });
   if (!assessment) { const e = new Error('Assessment not available'); e.code = 'not_found'; throw e; }
+  if (await manualHold(candidate._id, assessment)) { const e = new Error('Needs staff approval'); e.code = 'manual'; throw e; }
   const wait = await nextAllowed(candidate._id, assessment);
   if (wait) { const e = new Error('Retake not yet allowed'); e.code = 'retake_wait'; e.until = wait; throw e; }
   const live = await SkillResult.findOne({
@@ -165,4 +186,33 @@ async function fulfillRequests(labels) {
   return open.length;
 }
 
-module.exports = { MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
+// Staff decision on a held attempt. Approve publishes it; reject keeps it unpublished for good.
+async function decideReview(result, decision, note) {
+  if (!['approved', 'rejected'].includes(decision)) throw new Error('Invalid decision');
+  result.reviewDecision = decision;
+  result.reviewedAt = new Date();
+  result.reviewNote = String(note || '').slice(0, 1000);
+  await result.save();
+  const c = await Candidate.findById(result.candidateId);
+  const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
+  const name = (a && a.name) || 'skills';
+  if (c) {
+    if (decision === 'approved') {
+      await notify('candidate', c._id, 'skill_review', `Your ${name} results have been published`, `/candidate/${c.slug}/skills`);
+    } else {
+      const until = new Date(result.reviewedAt.getTime() + REJECT_COOLDOWN_DAYS * DAY).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      await notify('candidate', c._id, 'skill_review', `We couldn't verify your ${name} attempt, so it wasn't published. You can try again from ${until}`, `/candidate/${c.slug}/skills`);
+    }
+  }
+  return result;
+}
+
+// Lets a candidate with repeated rejections try again.
+async function clearRejections(candidateId, assessmentId) {
+  const rows = await SkillResult.find({ candidateId, assessmentId, status: 'completed' });
+  let n = 0;
+  for (const r of rows) if (r.reviewDecision === 'rejected' && !r.rejectionCleared) { r.rejectionCleared = true; await r.save(); n++; }
+  return n;
+}
+
+module.exports = { REJECT_COOLDOWN_DAYS, MAX_REJECTIONS, manualHold, decideReview, clearRejections, MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };

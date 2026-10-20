@@ -53,7 +53,7 @@ router.get('/:slug/skills', async (req, res) => {
         retakeOn: await skills.nextAllowed(candidate._id, a),
         open,
         // Finished but waiting on the integrity review, or still being scored.
-        held: !!(lastDone && lastDone.held && lastDone.reviewDecision !== 'approved'),
+        held: !!(lastDone && lastDone.held && !lastDone.reviewDecision),
         rejected: !!(lastDone && lastDone.reviewDecision === 'rejected')
       });
     }
@@ -83,6 +83,7 @@ router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
     const attempt = await skills.startAttempt(candidate, req.params.assessmentId);
     res.redirect(attempt.inviteUrl);
   } catch (e) {
+    if (e.code === 'manual') return res.redirect(`/candidate/${req.params.slug}/skills?notice=manual`);
     if (e.code === 'retake_wait') return res.redirect(`/candidate/${req.params.slug}/skills?notice=wait`);
     if (e.code === 'not_found') return res.status(404).send('Assessment not available.');
     console.error('Error starting skills assessment:', e);

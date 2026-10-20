@@ -141,6 +141,12 @@
       <span class="id-card-stat <%= flaggedCount > 0 ? 'id-stat-alert' : '' %>"><%= flaggedCount %> flagged</span>
     </a>
 
+    <a class="id-card" href="/integrity-review">
+      <div class="id-card-title">Integrity Review</div>
+      <div class="id-card-desc">Skill-test attempts CoderByte flagged for cheating or AI use. Approve to publish the results or reject to keep them private.</div>
+      <span class="id-card-stat <%= integrityCount > 0 ? 'id-stat-alert' : '' %>"><%= integrityCount %> waiting</span>
+    </a>
+
     <a class="id-card" href="/skill-requests">
       <div class="id-card-title">Skill Requests</div>
       <div class="id-card-desc">Skills candidates want to be tested on, most-requested first. This is the list of tests to build next.</div>

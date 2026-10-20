@@ -1,0 +1,40 @@
+<style>
+  .ir-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1F363C; }
+  .ir-wrap h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .ir-wrap h2 { font-size: 1.05rem; margin: 1.75rem 0 0.6rem; }
+  .ir-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .ir-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5; }
+  .ir-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .ir-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.7rem 1rem; }
+  .ir-table td { padding: 0.7rem 1rem; border-top: 1px solid #DCE4E2; font-size: 0.9rem; }
+  .ir-table a { color: #1F7A4C; font-weight: 600; text-decoration: none; }
+  .ir-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: 1rem 1.25rem; }
+  .ir-kv { display: grid; grid-template-columns: 11rem 1fr; gap: 0.35rem 1rem; font-size: 0.92rem; }
+  .ir-kv dt { color: #7A8B91; } .ir-kv dd { margin: 0; }
+  .ir-bad { color: #B42318; font-weight: 700; }
+  .ir-ok { color: #1F7A4C; font-weight: 700; }
+  .ir-actions { display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; }
+  .ir-actions textarea { flex: 1 1 100%; min-height: 70px; padding: 0.6rem; border: 1px solid #DCE4E2; border-radius: 6px; font: inherit; }
+  .ir-btn { border: 0; border-radius: 6px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; color: #fff; }
+  .ir-approve { background: #1F7A4C; } .ir-reject { background: #B42318; } .ir-neutral { background: #1F363C; }
+</style>
+<div class="ir-wrap">
+  <a class="ir-back" href="/">&larr; Dashboard</a>
+  <h1>Integrity Review</h1>
+  <p class="ir-sub">Attempts CoderByte flagged. Nothing here is visible to recruiters until you approve it. Oldest first.</p>
+  <table class="ir-table">
+    <thead><tr><th>Candidate</th><th>Test</th><th>Completed</th><th>Why held</th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach(function(x) { %>
+        <tr>
+          <td><%= x.candidate ? x.candidate.firstName + ' ' + x.candidate.lastName : 'Unknown' %></td>
+          <td><%= x.assessment ? x.assessment.name : x.r.assessmentId %> <span style="color:#7A8B91">(<%= x.assessment && x.assessment.kind === 'title' ? 'job title' : 'skill' %>)</span></td>
+          <td><%= x.r.completedAt ? x.r.completedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '' %></td>
+          <td><%= [x.r.cheatingFlag && !/not/i.test(x.r.cheatingFlag) ? 'Cheating: ' + x.r.cheatingFlag : null, x.r.aiUsage ? 'AI usage' : null].filter(Boolean).join(', ') %></td>
+          <td><a href="/integrity-review/<%= x.r._id %>">Review</a></td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="5">Nothing waiting.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>

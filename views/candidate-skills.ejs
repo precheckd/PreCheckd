@@ -44,6 +44,7 @@
     <% if (notice === 'exists') { %><div class="sk-banner wait">That skill already has a test. Look for it below.</div><% } %>
     <% if (notice === 'invalid') { %><div class="sk-banner wait">Enter the name of a skill.</div><% } %>
     <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll notify you as they become ready.</div><% } %>
+    <% if (notice === 'manual') { %><div class="sk-banner wait">This test needs a quick check from our team before you can retake it. Contact support and we'll sort it out.</div><% } %>
     <% if (notice === 'saved') { %><div class="sk-banner ok">Saved. Recruiters will see only the skills you ticked.</div><% } %>
 
     <% if (current.length) { %>
@@ -73,6 +74,9 @@
       <div class="sk-card">
         <h2><%= c.assessment.name || 'Technical Assessment' %></h2>
         <div class="sk-tags"><% c.assessment.skills.forEach((s) => { %><span class="sk-tag"><%= s.label %></span><% }) %></div>
+        <% if (c.rejected) { %>
+          <p>Your last attempt couldn't be verified, so it wasn't published.<%= c.retakeOn ? ' You can try again from ' + c.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' : '' %></p>
+        <% } %>
         <% if (c.held) { %>
           <p>Your last attempt is being reviewed before it's shown. You'll see it here once it's cleared.</p>
         <% } %>
@@ -124,6 +128,9 @@
       <div class="sk-card">
         <h2><%= c.assessment.name || 'Technical Assessment' %></h2>
         <div class="sk-tags"><% c.assessment.skills.forEach((s) => { %><span class="sk-tag"><%= s.label %></span><% }) %></div>
+        <% if (c.rejected) { %>
+          <p>Your last attempt couldn't be verified, so it wasn't published.<%= c.retakeOn ? ' You can try again from ' + c.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' : '' %></p>
+        <% } %>
         <% if (c.held) { %>
           <p>Your last attempt is being reviewed before it's shown. You'll see it here once it's cleared.</p>
         <% } %>

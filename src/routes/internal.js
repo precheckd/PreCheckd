@@ -6,6 +6,9 @@ const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
 const Message = require('../models/Message');
 const SkillRequest = require('../models/SkillRequest');
+const SkillResult = require('../models/SkillResult');
+const SkillAssessment = require('../models/SkillAssessment');
+const skillsService = require('../services/skills');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 const { sendAdminLoginAlertEmail, sendAdminLoginCodeEmail } = require('../services/emailService');
 const { getDailyPageViews } = require('../services/googleAnalyticsService');
@@ -265,7 +268,10 @@ router.get('/', async (req, res) => {
 
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
+    const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
+
     res.render('internal-dashboard', {
+      integrityCount,
       skillRequestCount,
       candidateCount,
       flaggedCount: flaggedCount[0]?.total || 0,
@@ -279,6 +285,75 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading internal dashboard:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Held skill-test attempts (CoderByte flagged cheating or AI use), oldest first.
+router.get('/integrity-review', async (req, res) => {
+  try {
+    const held = await SkillResult.find({ status: 'completed', held: true, reviewDecision: null }).sort({ completedAt: 1 });
+    const [cands, asms] = await Promise.all([
+      Candidate.find({ _id: { $in: held.map((r) => r.candidateId) } }),
+      SkillAssessment.find({ assessmentId: { $in: held.map((r) => r.assessmentId) } })
+    ]);
+    const cById = new Map(cands.map((c) => [String(c._id), c]));
+    const aById = new Map(asms.map((a) => [a.assessmentId, a]));
+    res.render('internal-integrity-list', {
+      rows: held.map((r) => ({ r, candidate: cById.get(String(r.candidateId)), assessment: aById.get(r.assessmentId) }))
+    });
+  } catch (error) {
+    console.error('Error loading integrity review:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/integrity-review/:id', async (req, res) => {
+  try {
+    const result = await SkillResult.findById(req.params.id);
+    if (!result) return res.status(404).send('Attempt not found.');
+    const [candidate, assessment, history] = await Promise.all([
+      Candidate.findById(result.candidateId),
+      SkillAssessment.findOne({ assessmentId: result.assessmentId }),
+      SkillResult.find({ candidateId: result.candidateId, status: 'completed' }).sort({ completedAt: -1 })
+    ]);
+    const asms = await SkillAssessment.find({ assessmentId: { $in: history.map((h) => h.assessmentId) } });
+    const nameOf = new Map(asms.map((a) => [a.assessmentId, a.name]));
+    res.render('internal-integrity-detail', {
+      result, candidate, assessment,
+      summary: assessment && assessment.kind === 'title' ? skillsService.titleSummary(result, assessment) : null,
+      history: history.map((h) => ({ h, name: nameOf.get(h.assessmentId) || h.assessmentId })),
+      rejections: history.filter((h) => h.reviewDecision === 'rejected' && !h.rejectionCleared).length,
+      maxRejections: skillsService.MAX_REJECTIONS
+    });
+  } catch (error) {
+    console.error('Error loading integrity detail:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/integrity-review/:id/decision', async (req, res) => {
+  try {
+    const result = await SkillResult.findById(req.params.id);
+    if (!result) return res.status(404).send('Attempt not found.');
+    const decision = req.body.decision === 'approve' ? 'approved' : req.body.decision === 'reject' ? 'rejected' : null;
+    if (!decision) return res.status(400).send('Invalid decision.');
+    await skillsService.decideReview(result, decision, req.body.note);
+    res.redirect('/integrity-review');
+  } catch (error) {
+    console.error('Error saving integrity decision:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/integrity-review/:id/clear', async (req, res) => {
+  try {
+    const result = await SkillResult.findById(req.params.id);
+    if (!result) return res.status(404).send('Attempt not found.');
+    await skillsService.clearRejections(result.candidateId, result.assessmentId);
+    res.redirect(`/integrity-review/${result._id}`);
+  } catch (error) {
+    console.error('Error clearing rejections:', error);
     res.status(500).send('Server error');
   }
 });

@@ -1,0 +1,88 @@
+<style>
+  .ir-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1F363C; }
+  .ir-wrap h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .ir-wrap h2 { font-size: 1.05rem; margin: 1.75rem 0 0.6rem; }
+  .ir-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .ir-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5; }
+  .ir-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .ir-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.7rem 1rem; }
+  .ir-table td { padding: 0.7rem 1rem; border-top: 1px solid #DCE4E2; font-size: 0.9rem; }
+  .ir-table a { color: #1F7A4C; font-weight: 600; text-decoration: none; }
+  .ir-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: 1rem 1.25rem; }
+  .ir-kv { display: grid; grid-template-columns: 11rem 1fr; gap: 0.35rem 1rem; font-size: 0.92rem; }
+  .ir-kv dt { color: #7A8B91; } .ir-kv dd { margin: 0; }
+  .ir-bad { color: #B42318; font-weight: 700; }
+  .ir-ok { color: #1F7A4C; font-weight: 700; }
+  .ir-actions { display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; }
+  .ir-actions textarea { flex: 1 1 100%; min-height: 70px; padding: 0.6rem; border: 1px solid #DCE4E2; border-radius: 6px; font: inherit; }
+  .ir-btn { border: 0; border-radius: 6px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; color: #fff; }
+  .ir-approve { background: #1F7A4C; } .ir-reject { background: #B42318; } .ir-neutral { background: #1F363C; }
+</style>
+<div class="ir-wrap">
+  <a class="ir-back" href="/integrity-review">&larr; Integrity Review</a>
+  <h1><%= candidate ? candidate.firstName + ' ' + candidate.lastName : 'Unknown candidate' %> &middot; <%= assessment ? assessment.name : result.assessmentId %></h1>
+  <p class="ir-sub">Completed <%= result.completedAt ? result.completedAt.toLocaleString('en-US') : '' %>.
+    <% if (result.reviewDecision) { %><strong>Decision: <%= result.reviewDecision %></strong> on <%= result.reviewedAt ? result.reviewedAt.toLocaleDateString('en-US') : '' %>.<% } %></p>
+
+  <h2>Why it was held</h2>
+  <div class="ir-card"><dl class="ir-kv">
+    <dt>CoderByte cheating flag</dt><dd class="<%= /not/i.test(result.cheatingFlag || 'not') ? '' : 'ir-bad' %>"><%= result.cheatingFlag || 'None' %></dd>
+    <dt>AI usage</dt><dd class="<%= result.aiUsage ? 'ir-bad' : '' %>"><%= result.aiUsage ? 'Detected' : 'No' %></dd>
+    <dt>Tab leaves</dt><dd><%= result.tabLeaving %></dd>
+    <dt>Time taken</dt><dd><%= result.timeTakenMinutes != null ? result.timeTakenMinutes + ' min' : 'Unknown' %><%= result.timeExpired ? ' (time expired)' : '' %></dd>
+  </dl></div>
+
+  <h2>What would be published</h2>
+  <div class="ir-card">
+    <% if (summary) { %>
+      <strong><%= summary.score %>%</strong> &middot; <%= summary.right %> of <%= summary.total %> questions
+      <% if (summary.tiers) { %> &middot; <%= ['easy','medium','hard'].filter(function(n){ return summary.tiers[n].total > 0; }).map(function(n){ return n[0].toUpperCase() + n.slice(1) + ' ' + summary.tiers[n].right + '/' + summary.tiers[n].total; }).join(' &middot; ') %><% } %>
+    <% } else { %>
+      <% (result.skills || []).forEach(function(s) { %>
+        <div><strong><%= s.label %></strong>: <%= s.level %>
+          <% if (s.tiers) { %> (<%= ['easy','medium','hard'].filter(function(n){ return s.tiers[n].total > 0; }).map(function(n){ return n[0].toUpperCase() + n.slice(1) + ' ' + s.tiers[n].right + '/' + s.tiers[n].total; }).join(', ') %>)<% } %></div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <h2>Candidate</h2>
+  <div class="ir-card"><dl class="ir-kv">
+    <dt>Email verified</dt><dd><%= candidate && candidate.emailVerifiedAt ? 'Yes' : 'No' %></dd>
+    <dt>Phone verified</dt><dd><%= candidate && candidate.isPhoneVerified ? 'Yes' : 'No' %></dd>
+    <dt>ID verified</dt><dd><%= candidate && candidate.isIdentityVerified ? 'Yes' : 'No' %></dd>
+    <dt>Uncleared rejections</dt><dd class="<%= rejections >= maxRejections ? 'ir-bad' : '' %>"><%= rejections %> of <%= maxRejections %> allowed</dd>
+  </dl></div>
+
+  <h2>All their attempts</h2>
+  <table class="ir-table">
+    <thead><tr><th>Test</th><th>Date</th><th>Flag</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <% history.forEach(function(x) { %>
+        <tr><td><%= x.name %></td><td><%= x.h.completedAt ? x.h.completedAt.toLocaleDateString('en-US') : '' %></td>
+          <td><%= x.h.cheatingFlag || '' %><%= x.h.aiUsage ? ' + AI' : '' %></td>
+          <td><%= x.h.reviewDecision || (x.h.held ? 'awaiting review' : 'published') %></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <h2>Report</h2>
+  <p class="ir-sub">Open this candidate's report from the Candidates list on the test in your CoderByte dashboard (reports are admin-only). Look for the ID ending <code><%= result.coderbyteId %></code>.</p>
+
+  <% if (!result.reviewDecision) { %>
+  <h2>Decision</h2>
+  <form method="POST" action="/integrity-review/<%= result._id %>/decision" class="ir-actions">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <textarea name="note" maxlength="1000" placeholder="Internal note (never shown to the candidate)"></textarea>
+    <button class="ir-btn ir-approve" name="decision" value="approve" type="submit">Approve and publish</button>
+    <button class="ir-btn ir-reject" name="decision" value="reject" type="submit">Reject</button>
+  </form>
+  <% } else if (rejections >= maxRejections) { %>
+  <h2>Retake</h2>
+  <form method="POST" action="/integrity-review/<%= result._id %>/clear">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <p class="ir-sub">This candidate has hit the rejection limit and can't retake this test until you clear it.</p>
+    <button class="ir-btn ir-neutral" type="submit">Allow another retake</button>
+  </form>
+  <% } %>
+  <% if (result.reviewNote) { %><h2>Note</h2><div class="ir-card"><%= result.reviewNote %></div><% } %>
+</div>
