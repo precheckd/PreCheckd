@@ -4,6 +4,7 @@ const Candidate = require('../models/Candidate');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
 const skills = require('../services/skills');
+const SkillRequest = require('../models/SkillRequest');
 
 // CoderByte's "post assessment redirect URL" points here. The candidate's session cookie is
 // what identifies them (CoderByte passes nothing we need), so a logged-out visitor goes to login.
@@ -63,6 +64,7 @@ router.get('/:slug/skills', async (req, res) => {
       skillCards: cards.filter((c) => c.assessment.kind !== 'title'),
       titleCards: cards.filter((c) => c.assessment.kind === 'title'),
       titles,
+      requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
       current: current.map((s) => ({ ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level) })),
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
       notice: req.query.notice || null,
@@ -97,6 +99,19 @@ router.post('/:slug/skills/visibility', async (req, res) => {
     res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
   } catch (e) {
     console.error('Error saving skill visibility:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:slug/skills/request', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    await skills.requestSkill(candidate, req.body.skill);
+    res.redirect(`/candidate/${candidate.slug}/skills?notice=requested`);
+  } catch (e) {
+    if (['invalid', 'exists', 'limit'].includes(e.code)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=${e.code}`);
+    console.error('Error requesting skill:', e);
     res.status(500).send('Server error');
   }
 });

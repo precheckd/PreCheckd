@@ -1,0 +1,42 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; }
+  .sr-table td { padding: 0.75rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.92rem; }
+  .sr-count { font-weight: 700; }
+  .sr-form { display: inline; }
+  .sr-btn { border: 1px solid #1F7A4C; color: #1F7A4C; background: transparent; border-radius: 5px; padding: 0.3rem 0.65rem; font-size: 0.8rem; cursor: pointer; margin-right: 0.3rem; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Skill Requests</h1>
+  <p class="sr-sub">Skills candidates asked to be tested on. Build the test in CoderByte (easy, medium and hard sets), register it with the seed script, and everyone waiting is marked ready and notified automatically.</p>
+  <table class="sr-table">
+    <thead><tr><th>Skill</th><th>Requests</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach((r) => { %>
+        <tr>
+          <td><%= r.skill %></td>
+          <td class="sr-count"><%= r.count %></td>
+          <td><%= r.status %></td>
+          <td>
+            <% if (r.status !== 'ready') { %>
+              <% [['building', 'Building'], ['declined', 'Decline'], ['requested', 'Reset']].filter((o) => o[0] !== r.status).forEach((o) => { %>
+                <form class="sr-form" method="POST" action="/skill-requests/status">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="key" value="<%= r._id %>">
+                  <input type="hidden" name="status" value="<%= o[0] %>">
+                  <button class="sr-btn" type="submit"><%= o[1] %></button>
+                </form>
+              <% }) %>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="4">No requests yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>

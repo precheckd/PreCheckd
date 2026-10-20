@@ -141,6 +141,12 @@
       <span class="id-card-stat <%= flaggedCount > 0 ? 'id-stat-alert' : '' %>"><%= flaggedCount %> flagged</span>
     </a>
 
+    <a class="id-card" href="/skill-requests">
+      <div class="id-card-title">Skill Requests</div>
+      <div class="id-card-desc">Skills candidates want to be tested on, most-requested first. This is the list of tests to build next.</div>
+      <span class="id-card-stat"><%= skillRequestCount %> skill<%= skillRequestCount === 1 ? '' : 's' %> waiting</span>
+    </a>
+
     <a class="id-card" href="/disputes">
       <div class="id-card-title">Dispute Inbox</div>
       <div class="id-card-desc">Recruiters replying to the automated "a report was filed" notice — your morning check for anything that needs a response.</div>

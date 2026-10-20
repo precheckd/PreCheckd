@@ -2,7 +2,9 @@
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
 const Candidate = require('../models/Candidate');
+const SkillRequest = require('../models/SkillRequest');
 const coderbyte = require('./coderbyte');
+const { notify } = require('./notifications');
 
 const RETAKE_DAYS = 60;
 const STALE_DAYS = 365;
@@ -127,4 +129,40 @@ async function setHidden(candidate, shownKeys) {
   await candidate.save();
 }
 
-module.exports = { titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
+// ---- skill requests ------------------------------------------------------
+
+const MAX_OPEN_REQUESTS = 10;
+
+// Same text, different typing ("  Kubernetes ", "kubernetes") groups together.
+function normalizeSkill(text) {
+  return String(text || '').toLowerCase().replace(/[^a-z0-9+#./ -]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+
+// Throws .code: 'invalid' | 'exists' (a test already covers it) | 'limit'.
+async function requestSkill(candidate, text) {
+  const key = normalizeSkill(text);
+  if (key.length < 2) { const e = new Error('Enter a skill name'); e.code = 'invalid'; throw e; }
+  const asms = await SkillAssessment.find({ active: true });
+  const covered = asms.some((a) => a.kind !== 'title' && (a.skills || []).some((s) => normalizeSkill(s.label) === key || s.key === key));
+  if (covered) { const e = new Error('Already available'); e.code = 'exists'; throw e; }
+  const mine = await SkillRequest.find({ candidateId: candidate._id });
+  if (mine.some((r) => r.key === key)) return mine.find((r) => r.key === key);
+  if (mine.filter((r) => ['requested', 'building'].includes(r.status)).length >= MAX_OPEN_REQUESTS) {
+    const e = new Error('Too many open requests'); e.code = 'limit'; throw e;
+  }
+  return SkillRequest.create({ candidateId: candidate._id, skill: String(text).trim().slice(0, 60), key });
+}
+
+// Called when a skill test goes live: marks matching requests ready and tells each candidate.
+async function fulfillRequests(labels) {
+  const keys = labels.map(normalizeSkill);
+  const open = await SkillRequest.find({ key: { $in: keys }, status: { $in: ['requested', 'building'] } });
+  for (const r of open) {
+    r.status = 'ready'; r.readyAt = new Date(); await r.save();
+    const c = await Candidate.findById(r.candidateId);
+    if (c) await notify('candidate', c._id, 'skill_ready', `A ${r.skill} test is ready for you`, `/candidate/${c.slug}/skills`);
+  }
+  return open.length;
+}
+
+module.exports = { MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };

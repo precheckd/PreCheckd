@@ -8,6 +8,7 @@ require('dotenv').config();
 const { connectDatabase } = require('../src/config/database');
 const SkillAssessment = require('../src/models/SkillAssessment');
 const coderbyte = require('../src/services/coderbyte');
+const skillsService = require('../src/services/skills');
 
 const SEED = [
   {
@@ -38,6 +39,10 @@ connectDatabase()
           { $set: { name: row.name, kind: row.kind || 'skill', publicUrl: a.public_url, skills: row.skills, active: true } },
           { upsert: true }
         );
+        if ((row.kind || 'skill') === 'skill') {
+          const n = await skillsService.fulfillRequests(row.skills.map((x) => x.label));
+          if (n) console.log(`  marked ${n} candidate request(s) ready and notified them`);
+        }
       }
     }
     if (!apply) console.log('Run with --apply to save.');

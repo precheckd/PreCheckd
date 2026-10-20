@@ -5,6 +5,7 @@ const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const FraudReport = require('../models/FraudReport');
 const Message = require('../models/Message');
+const SkillRequest = require('../models/SkillRequest');
 const { PUBLIC_EMAIL_DOMAINS, EMAIL_REPORT_THRESHOLD, DOMAIN_REPORT_THRESHOLD } = require('../config/fraudConfig');
 const { sendAdminLoginAlertEmail, sendAdminLoginCodeEmail } = require('../services/emailService');
 const { getDailyPageViews } = require('../services/googleAnalyticsService');
@@ -262,7 +263,10 @@ router.get('/', async (req, res) => {
       }),
     ]);
 
+    const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
+
     res.render('internal-dashboard', {
+      skillRequestCount,
       candidateCount,
       flaggedCount: flaggedCount[0]?.total || 0,
       disputeAttentionCount: disputeThreads[0]?.total || 0,
@@ -275,6 +279,37 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading internal dashboard:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Skills candidates have asked to be tested on, most-requested first. Tests are built by hand in
+// CoderByte, so this is the build queue.
+router.get('/skill-requests', async (req, res) => {
+  try {
+    const rows = await SkillRequest.aggregate([
+      { $group: { _id: '$key', skill: { $first: '$skill' }, count: { $sum: 1 }, latest: { $max: '$createdAt' },
+          statuses: { $addToSet: '$status' } } },
+      { $sort: { count: -1, latest: -1 } }
+    ]);
+    const label = (st) => (st.includes('ready') && st.length === 1 ? 'ready' : st.includes('building') ? 'building' : st.includes('declined') && st.length === 1 ? 'declined' : 'requested');
+    res.render('internal-skill-requests', { rows: rows.map((r) => ({ ...r, status: label(r.statuses) })) });
+  } catch (error) {
+    console.error('Error loading skill requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Mark every open request for a skill as being built, declined, or back to requested. "Ready" is
+// set automatically when the test is registered (scripts/coderbyte-seed-catalog.js).
+router.post('/skill-requests/status', async (req, res) => {
+  try {
+    const { key, status } = req.body;
+    if (!['requested', 'building', 'declined'].includes(status)) return res.status(400).send('Invalid status.');
+    await SkillRequest.updateMany({ key, status: { $ne: 'ready' } }, { $set: { status } });
+    res.redirect('/skill-requests');
+  } catch (error) {
+    console.error('Error updating skill requests:', error);
     res.status(500).send('Server error');
   }
 });

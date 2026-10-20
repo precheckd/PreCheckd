@@ -40,6 +40,10 @@
       <div class="sk-banner ok">Your results are in.</div>
     <% } %>
     <% if (notice === 'wait') { %><div class="sk-banner wait">That skill can't be retaken yet. The date it opens up is shown below.</div><% } %>
+    <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. We'll notify you when that test is ready.</div><% } %>
+    <% if (notice === 'exists') { %><div class="sk-banner wait">That skill already has a test. Look for it below.</div><% } %>
+    <% if (notice === 'invalid') { %><div class="sk-banner wait">Enter the name of a skill.</div><% } %>
+    <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll notify you as they become ready.</div><% } %>
     <% if (notice === 'saved') { %><div class="sk-banner ok">Saved. Recruiters will see only the skills you ticked.</div><% } %>
 
     <% if (current.length) { %>
@@ -84,6 +88,23 @@
       </div>
     <% }) %>
     <% if (!skillCards.length) { %><div class="sk-card"><p>No skill tests are available yet. Skill tests set your skill levels, so check back soon.</p></div><% } %>
+
+    <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/request">
+      <h2>Don't see your skill?</h2>
+      <p>Tell us which skill you want to be tested on. We build tests based on what people ask for, and we'll notify you when yours is ready.</p>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <input type="text" name="skill" maxlength="60" placeholder="e.g. Kubernetes" required style="flex:1;min-width:200px;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid #5A7880;background:#1F363C;color:#F2F4F3;">
+        <button class="sk-btn" type="submit">Request</button>
+      </div>
+      <% if (requests && requests.length) { %>
+        <div style="margin-top:1rem;">
+          <% requests.forEach((r) => { %>
+            <div class="sk-row"><span class="sk-name"><%= r.skill %></span>
+              <span class="sk-meta"><%= { requested: 'Requested', building: 'Being built', ready: 'Ready', declined: 'Not planned' }[r.status] %></span></div>
+          <% }) %>
+        </div>
+      <% } %>
+    </form>
 
     <h2 class="sk-h2">Job title assessments</h2>
     <p class="sk-lead">Role-based tests. These show an exact score and are separate from your skill levels, because we can't control how much of each skill a role test covers. Recruiters only see a result if you turn on Show on my profile, or if you took it at a recruiter's request.</p>
