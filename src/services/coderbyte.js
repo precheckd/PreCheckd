@@ -119,6 +119,8 @@ async function syncResult(result) {
   if (!report) throw new Error('CoderByte has no report for this attempt yet');
   applyReport(result, assessment, report);
   await result.save();
+  // A bell notice must never fail the sync: CoderByte would retry the webhook for nothing.
+  try { await require('./skillNotifications').resultsLanded(result); } catch (e) { console.error('[coderbyte] result notification failed:', e.message); }
   return result;
 }
 

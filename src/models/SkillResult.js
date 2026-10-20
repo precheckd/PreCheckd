@@ -65,6 +65,11 @@ const skillResultSchema = new mongoose.Schema({
   showOnProfile: { type: Boolean, default: false },
   held: { type: Boolean, default: false },
   reviewDecision: { type: String, enum: [null, 'approved', 'rejected'], default: null },
+  // One-shot flags so each bell notification is sent at most once per attempt.
+  resultNotified: { type: Boolean, default: false },
+  retakeNotified: { type: Boolean, default: false },
+  staleNotified: { type: Boolean, default: false },
+  expiryNotified: { type: Boolean, default: false },
   reviewedAt: { type: Date, default: null },
   reviewNote: { type: String, default: '', maxlength: 1000 },   // internal only, never shown to the candidate
   rejectionCleared: { type: Boolean, default: false },          // staff allowed another retake after repeated rejections
