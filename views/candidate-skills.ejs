@@ -32,7 +32,7 @@
   <div class="sk-container">
     <a href="/candidate/<%= candidate.slug %>/edit" class="sk-back">&larr; Back to your profile</a>
     <h1>Skills &amp; Tests</h1>
-    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Expert. Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts.</p>
+    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Expert. Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts. <a href="/skills-explained" style="color:#4ADE80;">How levels work</a></p>
 
     <% if (finished && processing) { %>
       <div class="sk-banner ok">Thanks, you're done. We're pulling in your results now. This page refreshes on its own and usually takes a few seconds.</div>

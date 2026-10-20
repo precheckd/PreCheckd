@@ -95,6 +95,10 @@ router.get('/terms', (req, res) => {
   res.render('terms', { pageTitle: 'PreCheckd - Terms of Service' });
 });
 
+router.get('/skills-explained', (req, res) => {
+  res.render('skills-explained', { pageTitle: 'PreCheckd - How Skill Levels Work' });
+});
+
 router.get('/privacy', (req, res) => {
   res.render('privacy', { pageTitle: 'PreCheckd - Privacy Policy' });
 });

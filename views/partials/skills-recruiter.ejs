@@ -15,7 +15,7 @@
     <span class="skv-chip"><%= s.label %> <b><%= s.level %></b><% if (s.needsRetake) { %> <em>needs retake</em><% } %></span>
   <% }); %>
 </div>
-<div class="skv-note">Tested on <%= skillsView.tested %> skill<%= skillsView.tested === 1 ? '' : 's' %>, showing <%= skillsView.shown.length %>.</div>
+<div class="skv-note">Tested on <%= skillsView.tested %> skill<%= skillsView.tested === 1 ? '' : 's' %>, showing <%= skillsView.shown.length %>. <a href="/skills-explained">How levels work</a></div>
 <% } %>
 <% if (skillsView.titles && skillsView.titles.length) { %>
 <div class="skv-label">Job Title Assessments</div>
