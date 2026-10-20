@@ -5,6 +5,7 @@ const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
 const skills = require('../services/skills');
 const SkillRequest = require('../models/SkillRequest');
+const testRequests = require('../services/testRequests');
 
 // CoderByte's "post assessment redirect URL" points here. The candidate's session cookie is
 // what identifies them (CoderByte passes nothing we need), so a logged-out visitor goes to login.
@@ -65,6 +66,7 @@ router.get('/:slug/skills', async (req, res) => {
       ladders: skills.buildLadders(cards, current),
       titleCards: cards.filter((c) => c.assessment.kind === 'title'),
       titles,
+      testRequests: await testRequests.pendingFor(candidate),
       requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
       current: current.map((s) => ({ ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level) })),
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
@@ -89,6 +91,36 @@ router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
     if (e.code === 'retake_wait') return res.redirect(`/candidate/${req.params.slug}/skills?notice=wait`);
     if (e.code === 'not_found') return res.status(404).send('Assessment not available.');
     console.error('Error starting skills assessment:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+// A recruiter's title-test request. Accepting starts the test; the exact score then goes to that recruiter.
+router.post('/:slug/skills/test-requests/:id/accept', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    const attempt = await testRequests.accept(candidate, req.params.id);
+    res.redirect(attempt.inviteUrl);
+  } catch (e) {
+    const back = (n) => res.redirect(`/candidate/${req.params.slug}/skills?notice=${n}`);
+    if (e.code === 'expired' || e.code === 'not_found') return back('req_closed');
+    if (e.code === 'retake_wait') return back('wait');
+    if (e.code === 'manual') return back('manual');
+    console.error('Error accepting test request:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:slug/skills/test-requests/:id/decline', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    await testRequests.decline(candidate, req.params.id);
+    res.redirect(`/candidate/${req.params.slug}/skills?notice=req_declined`);
+  } catch (e) {
+    if (e.code === 'expired' || e.code === 'not_found') return res.redirect(`/candidate/${req.params.slug}/skills?notice=req_closed`);
+    console.error('Error declining test request:', e);
     res.status(500).send('Server error');
   }
 });

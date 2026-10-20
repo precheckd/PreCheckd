@@ -252,6 +252,34 @@
     </div>
     <% } %>
 
+    <div class="cprofile-section" id="test-request">
+      <h3>Request a job title test</h3>
+      <% const tn = testPanel.notice; %>
+      <% if (tn === 'sent') { %><p style="color:#4ADE80;">Sent. <%= candidate.firstName %> has <%= testPanel.hours %> hours to respond.</p><% } %>
+      <% if (tn === 'no_credits') { %><p style="color:#F3C97A;">You're out of test credits this month. They reset on the 1st.</p><% } %>
+      <% if (tn === 'connection_cap') { %><p style="color:#F3C97A;">You can send up to <%= testPanel.max %> test requests per connection each month.</p><% } %>
+      <% if (tn === 'open') { %><p style="color:#F3C97A;">That test is already out to this candidate.</p><% } %>
+      <% if (tn === 'recent') { %><p style="color:#F3C97A;">This candidate took that test recently and can't retake it yet. No credit was used.</p><% } %>
+      <% if (tn === 'manual' || tn === 'no_test' || tn === 'not_connected') { %><p style="color:#F3C97A;">That test can't be sent right now. No credit was used.</p><% } %>
+      <p style="color:#C7D1CF;font-size:0.9rem;line-height:1.5;margin-bottom:0.9rem;">Ask <%= candidate.firstName %> to take a role-based test. If they accept, you see their exact score here. A credit is used only when they finish; it comes back if they decline or the request expires. <strong><%= testPanel.credits.left %> of <%= testPanel.credits.total %></strong> credits left this month.</p>
+      <% if (testPanel.catalog.length) { %>
+      <form method="POST" action="/recruiter-dashboard/requests/<%= requestId %>/test" style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+        <select name="assessmentId" required style="padding:0.55rem 0.7rem;border-radius:6px;border:1px solid #4A6F7B;background:#24404A;color:#F2F4F3;">
+          <% testPanel.catalog.forEach(function(a) { %><option value="<%= a.assessmentId %>"><%= a.name %></option><% }); %>
+        </select>
+        <button type="submit" <%= testPanel.credits.left < 1 ? 'disabled' : '' %> style="padding:0.55rem 1rem;border:0;border-radius:6px;background:#4CC2A6;color:#12292F;font-weight:700;cursor:pointer;">Send request</button>
+      </form>
+      <% } else { %>
+      <p style="color:#8FA6AC;font-size:0.9rem;">No job title tests are available yet.</p>
+      <% } %>
+      <% if (testPanel.sent.length) { %>
+      <div style="margin-top:1rem;color:#C7D1CF;font-size:0.88rem;">
+        <% const label = { sent: 'Waiting for their answer', accepted: 'Accepted, test in progress', completed: 'Completed (see Assessments)', declined: 'Declined', expired: 'Expired', failed: 'Not completed' }; %>
+        <% testPanel.sent.forEach(function(r) { %><div style="padding:0.25rem 0;"><b><%= r.test %></b> · <%= label[r.status] %> · sent <%= r.sentAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div><% }); %>
+      </div>
+      <% } %>
+    </div>
+
     <% if (skillsView && (skillsView.tested > 0 || (skillsView.titles && skillsView.titles.length))) { %>
     <div class="cprofile-section">
       <h3>Assessments</h3>

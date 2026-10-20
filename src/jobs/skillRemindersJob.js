@@ -27,6 +27,7 @@ function startSkillRemindersJob() {
   }
   const tick = () => {
     maybeSendDigest();
+    require('../services/testRequests').expireOverdue().catch((err) => console.error('[jobs] test request expiry failed:', err));
     runSkillReminders()
       .then((c) => console.log(`[jobs] skill reminders: retake=${c.retake} stale=${c.stale} expiring=${c.expiring}`))
       .catch((err) => console.error('[jobs] skill reminders failed:', err));

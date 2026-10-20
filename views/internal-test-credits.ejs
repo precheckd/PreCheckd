@@ -1,0 +1,36 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; }
+  .sr-table td { padding: 0.75rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.92rem; }
+  .sr-grant { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .sr-grant input { padding: 0.5rem 0.7rem; border: 1px solid #DCE4E2; border-radius: 6px; }
+  .sr-btn { border: 1px solid #1F7A4C; color: #1F7A4C; background: transparent; border-radius: 5px; padding: 0.45rem 0.9rem; cursor: pointer; }
+  .sr-note { margin-bottom: 1rem; color: #1F7A4C; font-weight: 600; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Test Credits</h1>
+  <p class="sr-sub">Every recruiter gets <%= perMonth %> job title test credits a month (set TEST_CREDITS_PER_MONTH to change it). A credit is held when a request is sent and used when the candidate finishes; declined, expired and rejected tests give it back. Credits reset on the 1st with no rollover. A grant below adds to this month only.</p>
+  <% if (notice === 'granted') { %><div class="sr-note">Credits added for this month.</div><% } %>
+  <% if (notice === 'norecruiter') { %><div class="sr-note" style="color:#B42318;">No recruiter with that email.</div><% } %>
+  <% if (notice === 'invalid') { %><div class="sr-note" style="color:#B42318;">Enter a whole number from 1 to 50.</div><% } %>
+  <form class="sr-grant" method="POST" action="/test-credits/grant">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="email" name="email" placeholder="Recruiter email" required>
+    <input type="number" name="amount" min="1" max="50" value="3" required>
+    <button class="sr-btn" type="submit">Grant credits</button>
+  </form>
+  <table class="sr-table">
+    <thead><tr><th>Sent</th><th>Recruiter</th><th>Candidate</th><th>Test</th><th>Status</th></tr></thead>
+    <tbody>
+      <% recent.forEach((r) => { %>
+        <tr><td><%= r.sentAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></td><td><%= r.recruiter %></td><td><%= r.candidate %></td><td><%= r.assessmentId %></td><td><%= r.status %></td></tr>
+      <% }) %>
+      <% if (!recent.length) { %><tr><td colspan="5">No requests yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>

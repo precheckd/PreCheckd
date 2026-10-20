@@ -38,7 +38,7 @@
 <% if (skillsView.titles && skillsView.titles.length) { %>
 <div class="skv-label">Job Title Assessments</div>
 <% skillsView.titles.forEach(function(t) { %>
-  <div class="skv-title"><b><%= t.name %></b> <span class="skv-score"><%= t.score %>%</span><div class="skv-note"><%- include('title-result', { t: t, bare: true }) %></div></div>
+  <div class="skv-title"><b><%= t.name %></b> <span class="skv-score"><%= t.score %>%</span><% if (t.requested) { %> <span class="skv-note">you requested this</span><% } %><div class="skv-note"><%- include('title-result', { t: t, bare: true }) %></div></div>
 <% }); %>
 <% } %>
 <% } %>

@@ -50,7 +50,34 @@
     <% if (notice === 'invalid') { %><div class="sk-banner wait">Enter the name of a skill.</div><% } %>
     <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll email you as each one becomes ready, within 1 business day of your request.</div><% } %>
     <% if (notice === 'manual') { %><div class="sk-banner wait">This test needs a quick check from our team before you can retake it. Contact support and we'll sort it out.</div><% } %>
+    <% if (notice === 'req_declined') { %><div class="sk-banner ok">Declined. The recruiter is told you passed on it, nothing more.</div><% } %>
+    <% if (notice === 'req_closed') { %><div class="sk-banner wait">That request is no longer open. It may have expired, or you already answered it.</div><% } %>
     <% if (notice === 'saved') { %><div class="sk-banner ok">Saved. Recruiters will see only the skills you ticked.</div><% } %>
+
+    <% if (testRequests.length) { %>
+    <div class="sk-card">
+      <h2>Test requests from recruiters</h2>
+      <% testRequests.forEach((q) => { %>
+        <div class="sk-row" style="align-items:flex-start;">
+          <div>
+            <div class="sk-name"><%= q.recruiter %><%= q.company ? ' · ' + q.company : '' %></div>
+            <div class="sk-meta">asked you to take <strong><%= q.test %></strong></div>
+            <% if (q.status === 'sent') { %>
+              <div class="sk-meta" style="margin-top:0.35rem;">Answer by <%= q.expiresAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %>. If you take it, your exact score goes to this recruiter and you can't hold it back. Declining is fine and costs you nothing.</div>
+            <% } else { %>
+              <div class="sk-meta" style="margin-top:0.35rem;">You accepted. Finish the test and your score goes to this recruiter.</div>
+            <% } %>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+            <form method="POST" action="/candidate/<%= candidate.slug %>/skills/test-requests/<%= q.id %>/accept"><button class="sk-btn" type="submit"><%= q.status === 'sent' ? 'Take the test' : 'Continue test' %></button></form>
+            <% if (q.status === 'sent') { %>
+            <form method="POST" action="/candidate/<%= candidate.slug %>/skills/test-requests/<%= q.id %>/decline"><button class="sk-btn alt" type="submit">Decline</button></form>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <% } %>
 
     <% if (current.length) { %>
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/visibility">

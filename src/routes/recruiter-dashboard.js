@@ -1,5 +1,6 @@
 const express = require('express');
 const skillsService = require('../services/skills');
+const testRequests = require('../services/testRequests');
 const router = express.Router();
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { notify } = require('../services/notifications');
@@ -175,11 +176,22 @@ router.get('/requests/:id/candidate', async (req, res) => {
 
     await recordView(req, 'candidate', candidate._id);
 
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    const testPanel = {
+      catalog: (await testRequests.catalog()).map((a) => ({ assessmentId: a.assessmentId, name: a.name })),
+      credits: await testRequests.credits(recruiter),
+      sent: await testRequests.statusFor(recruiter, candidate),
+      max: testRequests.MAX_PER_CONNECTION,
+      hours: testRequests.REQUEST_HOURS,
+      notice: req.query.test || null
+    };
+
     res.render('recruiter-candidate-profile', {
+      testPanel,
       pane,
       requestId: request._id,
       fullAccessStatus: request.fullAccessStatus,
-      skillsView: await skillsService.recruiterView(candidate),
+      skillsView: await skillsService.recruiterView(candidate, { recruiterId: req.session.recruiterId }),
       candidate: getFullCandidateView(candidate, sharedContactFor(request, 'recruiter', candidate)),
       video: hasFullAccess ? {
         introVideoUrl: candidate.introVideoUrl,
@@ -190,6 +202,28 @@ router.get('/requests/:id/candidate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading recruiter candidate profile:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-dashboard/requests/:id/test — ask a connection to take a job-title test (spends a credit
+// once they finish it; see services/testRequests.js).
+router.post('/requests/:id/test', async (req, res) => {
+  try {
+    const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
+    if (!request || request.recruiterId.toString() !== req.session.recruiterId) return res.status(403).send('Not authorized.');
+    if (request.status !== 'accepted') return res.status(403).send('You can only request a test from a connection.');
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    const back = (n) => res.redirect(`/recruiter-dashboard/requests/${request._id}/candidate?test=${n}#test-request`);
+    try {
+      await testRequests.sendRequest(recruiter, request.candidateId, String(req.body.assessmentId || ''));
+    } catch (e) {
+      if (['no_credits', 'connection_cap', 'open', 'recent', 'manual', 'no_test', 'not_connected'].includes(e.code)) return back(e.code);
+      throw e;
+    }
+    back('sent');
+  } catch (error) {
+    console.error('Error sending test request:', error);
     res.status(500).send('Server error');
   }
 });

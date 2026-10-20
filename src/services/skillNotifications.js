@@ -33,6 +33,8 @@ const COPY = {
     paragraphs: [`We couldn't verify your ${n} attempt, so the results weren't published.`, `You can try again from ${d}.`], button: 'Open my Skills page' }),
   skill_ready: (n) => ({ bell: `A ${n} test is ready for you`, subject: `Your ${n} test is ready`, headline: 'The test you asked for is ready',
     paragraphs: [`You asked to be tested on ${n}, and the test is now available.`], button: 'Take the test' }),
+  skill_test_request: (n, who) => ({ bell: `${who} asked you to take the ${n} test`, subject: `${who} asked you to take a test`, headline: 'A recruiter asked you to take a test',
+    paragraphs: [`${who} would like you to take the ${n} test. If you take it, your exact score goes to them. You have 72 hours to accept or decline, and declining is fine.`], button: 'See the request' }),
   skill_unlocked: (n) => ({ bell: `You passed. ${n} is now unlocked`, subject: `${n} is unlocked`, headline: 'You unlocked the next level',
     paragraphs: [`You passed the level below, so the ${n} test is now open. Take it whenever you're ready.`], button: 'Take the next test' }),
   skill_retake: (n) => ({ bell: `You can retake ${n} now`, subject: `You can retake ${n}`, headline: 'You can retake this test', reminder: true,
@@ -53,6 +55,13 @@ async function deliver(c, type, name, date) {
   catch (e) { console.error(`[skills] ${type} email failed:`, e.message); }
 }
 
+// A recruiter requested a title test: bell plus email to the candidate. Never includes anything the recruiter typed.
+async function requestSent(request, recruiter, candidate, assessment) {
+  const who = `${recruiter.firstName} ${recruiter.lastName || ''}`.trim();
+  const company = recruiter.company && recruiter.company !== 'Not provided' ? `${who} (${recruiter.company})` : who;
+  await deliver(candidate, 'skill_test_request', (assessment && assessment.name) || 'job title', company);
+}
+
 // Right after a report is stored: results ready, or held for review (no reason given).
 async function resultsLanded(result) {
   if (result.status !== 'completed' || result.resultNotified) return false;
@@ -60,6 +69,7 @@ async function resultsLanded(result) {
   await result.save();
   const { c, name } = await context(result);
   if (!c) return false;
+  try { await require('./testRequests').onResult(result); } catch (e) { console.error('[skills] test request update failed:', e.message); }
   if (result.held && !result.reviewDecision) { await deliver(c, 'skill_held', name); return true; }
   // Passing one rung of a ladder opens the next, so that notice replaces the plain "results ready" one.
   const unlocked = await unlockedNext(result);
@@ -165,4 +175,4 @@ async function openRequestsDigest(now = Date.now()) {
   return groups.size;
 }
 
-module.exports = { unlockedNext, deliver, resultsLanded, runSkillReminders, newRequestAlert, openRequestsDigest };
+module.exports = { requestSent, unlockedNext, deliver, resultsLanded, runSkillReminders, newRequestAlert, openRequestsDigest };

@@ -271,7 +271,7 @@ router.get('/:anonId', async (req, res) => {
 
     res.render('candidate-search-profile', {
       candidate: getAnonymizedCandidateView(candidate),
-      skillsView: await skillsService.recruiterView(candidate),
+      skillsView: await skillsService.recruiterView(candidate, { recruiterId: req.session.recruiterId }),
       existingRequest: existingRequest ? { status: existingRequest.status } : null,
       title: `Candidate ${candidate.anonId} | PreCheckd`
     });

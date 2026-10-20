@@ -141,15 +141,21 @@ async function setTitleVisibility(candidate, shownAssessmentIds) {
 }
 
 // What a recruiter may see: levels only, honouring the candidate's choices.
-async function recruiterView(candidate) {
+async function recruiterView(candidate, opts = {}) {
   const all = await currentSkills(candidate._id);
   const hidden = new Set(candidate.hiddenSkillKeys || []);
   // Developing and Provisional results are never shown to recruiters; they still count as tested.
   const shown = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
     .map((s) => ({ key: s.key, label: s.label, level: s.level, needsRetake: s.stale,
       tiers: candidate.showSkillBreakdown && s.tiers ? s.tiers : null }));
-  const titles = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
+  let titles = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
     .map(({ result, resultId, showOnProfile, ...t }) => t);
+  // Tests this recruiter asked for are theirs to see whether or not the candidate shows the title on their profile.
+  if (opts.recruiterId) {
+    const asked = await require('./testRequests').resultsFor(opts.recruiterId, candidate._id);
+    const ids = new Set(asked.map((t) => t.assessmentId));
+    titles = titles.filter((t) => !ids.has(t.assessmentId)).concat(asked);
+  }
   return { tested: all.length, shown, titles };
 }
 
@@ -280,6 +286,7 @@ async function decideReview(result, decision, note) {
   result.reviewedAt = new Date();
   result.reviewNote = String(note || '').slice(0, 1000);
   await result.save();
+  try { await require('./testRequests').onResult(result); } catch (e) { console.error('[skills] test request update failed:', e.message); }
   const c = await Candidate.findById(result.candidateId);
   const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
   const name = (a && a.name) || 'skills';

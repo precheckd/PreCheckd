@@ -41,6 +41,12 @@ const recruiterSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Extra job-title test credits staff have granted for one month ('YYYY-MM', New York time). Credits reset
+  // monthly, so a grant from an earlier month counts for nothing. See services/testRequests.js.
+  testCreditBonus: {
+    month: { type: String, default: null },
+    amount: { type: Number, default: 0 }
+  },
   // 'standard': the normal founding/paid recruiter signup flow.
   // 'unverified_claim': created automatically when a fraud report names an
   // email with no matching recruiter — can only ever see the report(s)

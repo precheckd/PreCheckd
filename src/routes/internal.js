@@ -383,6 +383,43 @@ router.get('/skill-requests', async (req, res) => {
   }
 });
 
+// Job-title test credits: recruiters get a monthly allowance (TEST_CREDITS_PER_MONTH); staff can top one up.
+router.get('/test-credits', async (req, res) => {
+  try {
+    const TestRequest = require('../models/TestRequest');
+    const Recruiter = require('../models/Recruiter');
+    const testRequests = require('../services/testRequests');
+    await testRequests.expireOverdue();
+    const recent = await TestRequest.find({}).sort({ sentAt: -1 }).limit(40);
+    const rec = new Map((await Recruiter.find({ _id: { $in: recent.map((r) => r.recruiterId) } })).map((r) => [String(r._id), r]));
+    const cand = new Map((await require('../models/Candidate').find({ _id: { $in: recent.map((r) => r.candidateId) } })).map((c) => [String(c._id), c]));
+    res.render('internal-test-credits', {
+      perMonth: testRequests.monthlyCredits(),
+      notice: req.query.notice || null,
+      recent: recent.map((r) => ({ status: r.status, assessmentId: r.assessmentId, sentAt: r.sentAt,
+        recruiter: rec.get(String(r.recruiterId)) ? rec.get(String(r.recruiterId)).email : '?',
+        candidate: cand.get(String(r.candidateId)) ? `${cand.get(String(r.candidateId)).firstName} ${cand.get(String(r.candidateId)).lastName || ''}`.trim() : '?' }))
+    });
+  } catch (error) {
+    console.error('Error loading test credits:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/test-credits/grant', async (req, res) => {
+  try {
+    const Recruiter = require('../models/Recruiter');
+    const recruiter = await Recruiter.findOne({ email: String(req.body.email || '').trim().toLowerCase() });
+    if (!recruiter) return res.redirect('/test-credits?notice=norecruiter');
+    await require('../services/testRequests').grantCredits(recruiter, req.body.amount);
+    res.redirect('/test-credits?notice=granted');
+  } catch (error) {
+    if (error.code === 'invalid') return res.redirect('/test-credits?notice=invalid');
+    console.error('Error granting test credits:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // Mark every open request for a skill as being built, declined, or back to requested. "Ready" is
 // set automatically when the test is registered (scripts/coderbyte-seed-catalog.js).
 router.post('/skill-requests/status', async (req, res) => {
