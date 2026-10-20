@@ -5,7 +5,7 @@
   const rows = ['easy', 'medium', 'hard'].map((n) => {
     const x = t && t[n] ? t[n] : { right: 0, total: 0 };
     return { name: n.charAt(0).toUpperCase() + n.slice(1), right: x.right, total: x.total,
-      assessed: x.total >= 2, passed: x.total >= 2 && x.right / x.total >= 2 / 3 - 1e-9 };
+      assessed: x.total >= 2, passed: x.total >= 2 && x.right / x.total >= (typeof SKILL_PASS_RATIO !== 'undefined' ? SKILL_PASS_RATIO : 0.6) - 1e-9 };
   });
 %>
 <div class="skm-bar" aria-label="<%= sk.level %>">

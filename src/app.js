@@ -49,6 +49,7 @@ app.set('layout', 'layouts/main');
 
 app.locals.stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 app.locals.gaMeasurementId = process.env.GA_MEASUREMENT_ID || null;
+app.locals.SKILL_PASS_RATIO = require('./services/skillLevels').PASS_RATIO;
 
 // Referenced again below, where the admin-subdomain routing is set up —
 // declared early so this same value can gate the GA tracking snippet in

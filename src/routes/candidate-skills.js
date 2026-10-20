@@ -96,6 +96,7 @@ router.post('/:slug/skills/visibility', async (req, res) => {
     const candidate = await owned(req, res);
     if (!candidate) return;
     const shown = [].concat(req.body.shown || []);
+    candidate.showSkillBreakdown = req.body.breakdown === 'on';
     await skills.setHidden(candidate, shown);
     res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
   } catch (e) {

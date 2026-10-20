@@ -3,7 +3,7 @@
 // skill and "passed" when at least PASS_RATIO of them are right. Fewer than two assessed tiers
 // is not enough evidence for a level, so the skill is "Provisional".
 const WEIGHTS = { easy: 1, medium: 2, hard: 3 };
-const PASS_RATIO = 2 / 3;
+const PASS_RATIO = 0.6; // 2 of 3, 3 of 4 or 3 of 5 passes a tier
 const MIN_TIER = 2;
 const LEVELS = ['Developing', 'Foundational', 'Intermediate', 'Advanced', 'Expert'];
 

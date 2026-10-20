@@ -7,6 +7,11 @@
   .skv-title { color: #F2F4F3; margin-bottom: 0.6rem; }
   .skv-score { color: #4CC2A6; font-weight: 700; margin-left: 0.4rem; }
   .skv-note { color: #8FA6AC; font-size: 0.8rem; }
+  .skv-more { margin: 0.2rem 0 0.5rem; color: #C7D1CF; font-size: 0.85rem; }
+  .skv-more summary { cursor: pointer; color: #4ADE80; font-weight: 600; }
+  .skv-tiers { margin-top: 0.4rem; }
+  .skv-tiers b { color: #F2F4F3; margin-right: 0.6rem; }
+  .skv-tiers span { margin-right: 0.8rem; }
 </style>
 <% if (skillsView.tested > 0) { %>
 <div class="skv-label">Verified Skills</div>
@@ -15,6 +20,19 @@
     <span class="skv-chip"><%= s.label %> <b><%= s.level %></b><% if (s.needsRetake) { %> <em>needs retake</em><% } %></span>
   <% }); %>
 </div>
+<% const withTiers = skillsView.shown.filter(function(s) { return s.tiers; }); %>
+<% if (withTiers.length) { %>
+<details class="skv-more">
+  <summary>See by difficulty</summary>
+  <% withTiers.forEach(function(s) { %>
+    <div class="skv-tiers"><b><%= s.label %></b>
+      <% ['easy', 'medium', 'hard'].forEach(function(n) { const x = s.tiers[n] || { right: 0, total: 0 }; %>
+        <span><%= n.charAt(0).toUpperCase() + n.slice(1) %> <%= x.total ? x.right + '/' + x.total : 'not asked' %></span>
+      <% }); %>
+    </div>
+  <% }); %>
+</details>
+<% } %>
 <div class="skv-note">Tested on <%= skillsView.tested %> skill<%= skillsView.tested === 1 ? '' : 's' %>, showing <%= skillsView.shown.length %>. <a href="/skills-explained">How levels work</a></div>
 <% } %>
 <% if (skillsView.titles && skillsView.titles.length) { %>

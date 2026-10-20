@@ -84,7 +84,8 @@ async function recruiterView(candidate) {
   const hidden = new Set(candidate.hiddenSkillKeys || []);
   // Developing and Provisional results are never shown to recruiters; they still count as tested.
   const shown = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
-    .map((s) => ({ key: s.key, label: s.label, level: s.level, needsRetake: s.stale }));
+    .map((s) => ({ key: s.key, label: s.label, level: s.level, needsRetake: s.stale,
+      tiers: candidate.showSkillBreakdown && s.tiers ? s.tiers : null }));
   const titles = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
     .map(({ result, resultId, showOnProfile, ...t }) => t);
   return { tested: all.length, shown, titles };
