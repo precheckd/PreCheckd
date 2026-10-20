@@ -290,6 +290,15 @@ const candidateSchema = new mongoose.Schema({
   // Skill keys (from skill assessments) this candidate has chosen NOT to show recruiters.
   // Empty means every tested skill is shown. Recruiters see only the count tested vs shown.
   hiddenSkillKeys: { type: [String], default: [] },
+  // Denormalized copy of the skills recruiters may see (shown, Foundational or above), kept in sync by
+  // services/skills.js refreshSkillSummary so recruiter search can query it. Staleness is computed
+  // from takenAt at search time because it changes with the calendar, not with an event.
+  skillSummary: {
+    type: [{
+      key: String, label: String, level: String, levelIndex: Number, takenAt: Date, _id: false
+    }],
+    default: []
+  },
 
   // Which verified sections the public page shows. Chosen by the candidate.
   // Only verified entries are ever shown, and never employer or school names.

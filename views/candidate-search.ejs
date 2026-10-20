@@ -415,6 +415,22 @@
     <input type="hidden" name="availDays" id="filter-avail-days" value="<%= requiredDays.join(',') %>">
 
     <div class="filter-section">
+      <h2>Skills</h2>
+      <% for (let i = 0; i < 3; i++) { const r = requirements[i]; %>
+        <div class="filter-row" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+          <select name="skillKey" style="flex:1;min-width:160px;">
+            <option value="">Skill <%= i + 1 %> (optional)</option>
+            <% skillOptions.forEach(function(o) { %><option value="<%= o.key %>" <%= r && r.key === o.key ? 'selected' : '' %>><%= o.label %></option><% }); %>
+          </select>
+          <select name="skillLevel" style="flex:1;min-width:160px;">
+            <% levels.forEach(function(l) { %><option value="<%= l %>" <%= r && r.minLevel === l ? 'selected' : '' %>>at least <%= l %></option><% }); %>
+          </select>
+        </div>
+      <% } %>
+      <p class="filter-hint">Candidates with every skill at your level come first. Candidates matching only some of them are listed in a separate section below. A skill a candidate hasn't shown, or whose result needs a retake, isn't a no, so just ask.</p>
+    </div>
+
+    <div class="filter-section">
       <h2>Role</h2>
       <div class="filter-row">
         <input type="text" name="q" placeholder="Job title or certification (e.g. product support, AWS)" value="<%= keyword %>">
@@ -491,7 +507,12 @@
   <% } else { %>
     <p class="results-count"><%= candidates.length %> candidate<%= candidates.length === 1 ? '' : 's' %> found</p>
     <div class="candidate-grid">
-      <% candidates.forEach(function(candidate) { %>
+      <% let lastSection = null; candidates.forEach(function(candidate) { %>
+        <% if (candidate.skillSection && candidate.skillSection !== lastSection) { lastSection = candidate.skillSection; %>
+          <div class="availability-divider" style="grid-column: 1 / -1;">
+            <% if (candidate.skillSection === 'full') { %>Full matches<% } else { %>Partial matches &mdash; not every skill is shown at your level. That isn't a no, so just ask<% } %>
+          </div>
+        <% } %>
         <% if (candidate.showNoAvailabilityDivider) { %>
           <div class="availability-divider">No availability info provided &mdash; ask directly</div>
         <% } %>
@@ -521,6 +542,25 @@
           <% } else { %>
             <div class="card-pending-badge">
               Verification Pending
+            </div>
+          <% } %>
+
+          <% if (candidate.skillMatch) { %>
+            <div class="card-certs">
+              <span class="card-section-label">Skill match</span>
+              <% candidate.skillMatch.forEach(function(m) { %>
+                <div style="font-size:0.85rem;">
+                  <% if (m.status === 'met') { %><span style="color:#4ADE80;">&#10003;</span> <%= m.label %> <strong><%= m.level %></strong>
+                  <% } else if (m.status === 'stale') { %><span style="color:#F3C97A;">&#9888;</span> <%= m.label %> <strong><%= m.level %></strong> <em>(needs retake)</em>
+                  <% } else if (m.status === 'below') { %><span style="color:#8FA6AC;">&ndash;</span> <%= m.label %> <strong><%= m.level %></strong> <em>(below <%= m.min %>)</em>
+                  <% } else { %><span style="color:#8FA6AC;">&ndash;</span> <%= m.label %> <em>not shown</em><% } %>
+                </div>
+              <% }); %>
+            </div>
+          <% } else if (candidate.skillChips && candidate.skillChips.length) { %>
+            <div class="card-certs">
+              <span class="card-section-label">Verified Skills</span>
+              <%= candidate.skillChips.map(function(c) { return c.label + ' ' + c.level + (c.stale ? ' (needs retake)' : ''); }).join(', ') %>
             </div>
           <% } %>
 

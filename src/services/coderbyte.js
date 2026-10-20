@@ -119,6 +119,11 @@ async function syncResult(result) {
   if (!report) throw new Error('CoderByte has no report for this attempt yet');
   applyReport(result, assessment, report);
   await result.save();
+  // Keep the recruiter-search summary current. Never fail the sync over it: a backfill can repair it.
+  try {
+    const c = await require('../models/Candidate').findById(result.candidateId);
+    if (c) await require('./skills').refreshSkillSummary(c);
+  } catch (e) { console.error('[coderbyte] skill summary refresh failed:', e.message); }
   // A bell notice must never fail the sync: CoderByte would retry the webhook for nothing.
   try { await require('./skillNotifications').resultsLanded(result); } catch (e) { console.error('[coderbyte] result notification failed:', e.message); }
   return result;

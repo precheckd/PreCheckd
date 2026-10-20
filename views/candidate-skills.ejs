@@ -50,7 +50,7 @@
     <% if (current.length) { %>
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/visibility">
       <h2>Your results</h2>
-      <p>Tick the skills you want recruiters to see. They'll see how many skills you've been tested on and how many you're showing, but never the ones you hide.</p>
+      <p>Tick the skills you want recruiters to see. They'll see how many skills you've been tested on and how many you're showing, but never the ones you hide. Note that recruiters can only match you on skills you show, so a hidden skill can move you into the partial-match section of their searches.</p>
       <% current.forEach((s) => { %>
         <div class="sk-row">
           <div>

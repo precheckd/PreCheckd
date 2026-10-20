@@ -1,6 +1,8 @@
 const express = require('express');
 const skillsService = require('../services/skills');
 const router = express.Router();
+const SkillAssessment = require('../models/SkillAssessment');
+const { parseRequirements, evaluate, compare, LEVELS, STALE_MS } = require('../utils/skillMatching');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const { notify } = require('../services/notifications');
@@ -112,6 +114,16 @@ router.get('/', async (req, res) => {
 
     // Any query string at all counts as a search — including the bare
     // ?searched=1 the form sends when nothing is filled in (show everyone).
+    // Skills that have a test, for the filter dropdowns and to validate what was submitted.
+    const skillOptions = [];
+    for (const a of await SkillAssessment.find({ active: true, kind: { $ne: 'title' } })) {
+      for (const sk of a.skills || []) if (!skillOptions.some((o) => o.key === sk.key)) skillOptions.push({ key: sk.key, label: sk.label });
+    }
+    skillOptions.sort((x, y) => x.label.localeCompare(y.label));
+    const requirements = parseRequirements(req.query, new Set(skillOptions.map((o) => o.key)));
+    if (requirements.length) query['skillSummary.key'] = { $in: requirements.map((r) => r.key) };
+    const labelOf = new Map(skillOptions.map((o) => [o.key, o.label]));
+
     const hasSearched = Object.keys(req.query).length > 0;
 
     let candidatesForView = [];
@@ -140,7 +152,20 @@ router.get('/', async (req, res) => {
         });
       }
 
-      if (hasAvailabilityFilter) {
+      const evalByAnon = new Map();
+      if (requirements.length) {
+        const evaluated = candidates.map((c) => ({ c, ev: evaluate(c.skillSummary, requirements) })).filter((x) => x.ev.any);
+        evaluated.sort((x, y) => compare(x.ev, y.ev));
+        evaluated.forEach((x) => evalByAnon.set(x.c.anonId, x.ev));
+        candidates = evaluated.map((x) => x.c);
+      }
+
+      if (hasAvailabilityFilter && requirements.length) {
+        // Skill sections decide the order. Availability still filters: confirmed-available and
+        // never-set candidates stay, candidates confirmed unavailable are dropped.
+        candidates = candidates.filter((c) => candidateAvailabilityGroup(c, requiredDays, availStart, availEnd) !== 'excluded');
+        candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+      } else if (hasAvailabilityFilter) {
         const matched = [];
         const unset = [];
 
@@ -167,6 +192,19 @@ router.get('/', async (req, res) => {
       } else {
         candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
       }
+
+      // Skill chips on every card, and the per-requirement match detail when skills were searched.
+      const docByAnon = new Map(candidates.map((c) => [c.anonId, c]));
+      candidatesForView.forEach((v) => {
+        const doc = docByAnon.get(v.anonId);
+        const summary = (doc && doc.skillSummary) || [];
+        v.skillChips = summary.map((s) => ({ label: s.label, level: s.level, stale: Date.now() - new Date(s.takenAt).getTime() > STALE_MS }));
+        const ev = evalByAnon.get(v.anonId);
+        if (ev) {
+          v.skillSection = ev.full ? 'full' : 'partial';
+          v.skillMatch = ev.per.map((p, i) => ({ label: labelOf.get(requirements[i].key), min: requirements[i].minLevel, status: p.status, level: p.level || null }));
+        }
+      });
     }
 
     res.render('candidate-search', {
@@ -184,6 +222,9 @@ router.get('/', async (req, res) => {
       availStart,
       availEnd,
       showAvailabilityGrouping,
+      skillOptions,
+      requirements,
+      levels: LEVELS,
       title: 'Find Candidates | PreCheckd'
     });
   } catch (error) {

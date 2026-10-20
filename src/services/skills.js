@@ -143,11 +143,23 @@ async function startAttempt(candidate, assessmentId) {
   return live || coderbyte.inviteCandidate({ candidate, assessment });
 }
 
+const LEVEL_ORDER = ['Foundational', 'Intermediate', 'Advanced', 'Expert'];
+
+// Rebuilds the candidate's searchable skill summary from published results and their visibility choices.
+async function refreshSkillSummary(candidate) {
+  const all = await currentSkills(candidate._id);
+  const hidden = new Set(candidate.hiddenSkillKeys || []);
+  candidate.skillSummary = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
+    .map((s) => ({ key: s.key, label: s.label, level: s.level, levelIndex: LEVEL_ORDER.indexOf(s.level) + 1, takenAt: s.takenAt }));
+  await candidate.save();
+  return candidate.skillSummary;
+}
+
 async function setHidden(candidate, shownKeys) {
   const all = await currentSkills(candidate._id);
   const shown = new Set(shownKeys);
   candidate.hiddenSkillKeys = all.filter((s) => !shown.has(s.key)).map((s) => s.key);
-  await candidate.save();
+  await refreshSkillSummary(candidate);
 }
 
 // ---- skill requests ------------------------------------------------------
@@ -197,6 +209,7 @@ async function decideReview(result, decision, note) {
   const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
   const name = (a && a.name) || 'skills';
   if (c) {
+    await refreshSkillSummary(c);
     if (decision === 'approved') {
       await deliver(c, 'skill_approved', name);
     } else {
@@ -215,4 +228,4 @@ async function clearRejections(candidateId, assessmentId) {
   return n;
 }
 
-module.exports = { REJECT_COOLDOWN_DAYS, MAX_REJECTIONS, manualHold, decideReview, clearRejections, MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
+module.exports = { LEVEL_ORDER, refreshSkillSummary, REJECT_COOLDOWN_DAYS, MAX_REJECTIONS, manualHold, decideReview, clearRejections, MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
