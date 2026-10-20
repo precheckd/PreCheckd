@@ -4,7 +4,7 @@ const SkillResult = require('../models/SkillResult');
 const Candidate = require('../models/Candidate');
 const SkillRequest = require('../models/SkillRequest');
 const coderbyte = require('./coderbyte');
-const { notify } = require('./notifications');
+const { deliver } = require('./skillNotifications');
 
 const RETAKE_DAYS = 60;
 const STALE_DAYS = 365;
@@ -181,7 +181,7 @@ async function fulfillRequests(labels) {
   for (const r of open) {
     r.status = 'ready'; r.readyAt = new Date(); await r.save();
     const c = await Candidate.findById(r.candidateId);
-    if (c) await notify('candidate', c._id, 'skill_ready', `A ${r.skill} test is ready for you`, `/candidate/${c.slug}/skills`);
+    if (c) await deliver(c, 'skill_ready', r.skill);
   }
   return open.length;
 }
@@ -198,10 +198,10 @@ async function decideReview(result, decision, note) {
   const name = (a && a.name) || 'skills';
   if (c) {
     if (decision === 'approved') {
-      await notify('candidate', c._id, 'skill_review', `Your ${name} results have been published`, `/candidate/${c.slug}/skills`);
+      await deliver(c, 'skill_approved', name);
     } else {
-      const until = new Date(result.reviewedAt.getTime() + REJECT_COOLDOWN_DAYS * DAY).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      await notify('candidate', c._id, 'skill_review', `We couldn't verify your ${name} attempt, so it wasn't published. You can try again from ${until}`, `/candidate/${c.slug}/skills`);
+      const until = new Date(result.reviewedAt.getTime() + REJECT_COOLDOWN_DAYS * DAY).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      await deliver(c, 'skill_rejected', name, until);
     }
   }
   return result;

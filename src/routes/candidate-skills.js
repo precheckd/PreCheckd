@@ -117,6 +117,19 @@ router.post('/:slug/skills/request', async (req, res) => {
   }
 });
 
+router.post('/:slug/skills/email-prefs', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    candidate.skillRemindersOptOut = req.body.reminders !== 'on';
+    await candidate.save();
+    res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
+  } catch (e) {
+    console.error('Error saving skill email prefs:', e);
+    res.status(500).send('Server error');
+  }
+});
+
 router.post('/:slug/skills/titles', async (req, res) => {
   try {
     const candidate = await owned(req, res);

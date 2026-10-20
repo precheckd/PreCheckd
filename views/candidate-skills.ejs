@@ -146,6 +146,12 @@
       </div>
     <% }) %>
     <% if (!titleCards.length) { %><div class="sk-card"><p>No job title assessments are available yet.</p></div><% } %>
+    <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/email-prefs">
+      <h2>Email reminders</h2>
+      <p>We always email you when results are ready or reviewed. These are optional: when you can retake a test, when a result needs a retake, and when a test link is about to expire.</p>
+      <label class="sk-show"><input type="checkbox" name="reminders" <%= candidate.skillRemindersOptOut ? '' : 'checked' %>> Send me skill test reminders</label>
+      <div style="margin-top:0.9rem;"><button class="sk-btn" type="submit">Save</button></div>
+    </form>
   </div>
 </div>
 <style>

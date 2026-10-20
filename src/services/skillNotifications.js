@@ -4,6 +4,7 @@ const Candidate = require('../models/Candidate');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
 const { notify } = require('./notifications');
+const { sendSkillNoticeEmail } = require('./emailService');
 
 const DAY = 86400000;
 const RETAKE_DAYS = 60;
@@ -16,6 +17,37 @@ async function context(result) {
 }
 const link = (c) => `/candidate/${c.slug}/skills`;
 
+// Copy for each kind: bell title plus email. No scores and no review reasons, ever.
+// `name` is the test or skill name; `date` is only used by 'rejected'.
+const COPY = {
+  skill_result: (n) => ({ bell: `Your ${n} results are ready`, subject: `Your ${n} results are ready`, headline: 'Your results are ready',
+    paragraphs: [`Your ${n} results are in. Sign in to see them and choose what recruiters can see.`], button: 'View my results' }),
+  skill_held: (n) => ({ bell: `Your ${n} results are being reviewed. We'll let you know when they're done`, subject: `Your ${n} results are being reviewed`, headline: 'Your results are being reviewed',
+    paragraphs: [`We run a quick check on some attempts before the results are published. Yours is in that check now, and we'll email you as soon as it's done.`], button: 'Open my Skills page' }),
+  skill_approved: (n) => ({ bell: `Your ${n} results have been published`, subject: `Your ${n} results are published`, headline: 'Your results are published',
+    paragraphs: [`The check on your ${n} attempt is finished and your results are now on your profile. You choose what recruiters see.`], button: 'View my results' }),
+  skill_rejected: (n, d) => ({ bell: `We couldn't verify your ${n} attempt, so it wasn't published. You can try again from ${d}`, subject: `About your ${n} attempt`, headline: `We couldn't verify this attempt`,
+    paragraphs: [`We couldn't verify your ${n} attempt, so the results weren't published.`, `You can try again from ${d}.`], button: 'Open my Skills page' }),
+  skill_ready: (n) => ({ bell: `A ${n} test is ready for you`, subject: `Your ${n} test is ready`, headline: 'The test you asked for is ready',
+    paragraphs: [`You asked to be tested on ${n}, and the test is now available.`], button: 'Take the test' }),
+  skill_retake: (n) => ({ bell: `You can retake ${n} now`, subject: `You can retake ${n}`, headline: 'You can retake this test', reminder: true,
+    paragraphs: [`It has been 60 days since your ${n} attempt, so you can take it again. Your latest result is the one that counts.`], button: 'Open my Skills page' }),
+  skill_stale: (n) => ({ bell: `Your ${n} result is over a year old and needs a retake`, subject: `Your ${n} result needs a retake`, headline: 'Time for a retake', reminder: true,
+    paragraphs: [`Your ${n} result is more than a year old, so recruiters now see it marked as needing a retake. Retaking keeps it current.`], button: 'Open my Skills page' }),
+  skill_expiring: (n) => ({ bell: `Your ${n} link expires soon`, subject: `Your ${n} test link expires soon`, headline: 'Your test link expires soon', reminder: true,
+    paragraphs: [`You started a ${n} test but haven't finished it, and your link expires in about two days.`], button: 'Continue my test' })
+};
+
+// Bell notification plus email. Email failures are logged and never block the bell or the caller.
+async function deliver(c, type, name, date) {
+  const copy = COPY[type](name, date);
+  await notify('candidate', c._id, type === 'skill_held' || type === 'skill_approved' || type === 'skill_rejected' ? 'skill_review' : type, copy.bell, link(c));
+  if (copy.reminder && c.skillRemindersOptOut) return;
+  if (!c.email) return;
+  try { await sendSkillNoticeEmail(c.email, c.firstName, c.slug, copy); }
+  catch (e) { console.error(`[skills] ${type} email failed:`, e.message); }
+}
+
 // Right after a report is stored: results ready, or held for review (no reason given).
 async function resultsLanded(result) {
   if (result.status !== 'completed' || result.resultNotified) return false;
@@ -23,10 +55,7 @@ async function resultsLanded(result) {
   await result.save();
   const { c, name } = await context(result);
   if (!c) return false;
-  const title = result.held && !result.reviewDecision
-    ? `Your ${name} results are being reviewed. We'll let you know when they're done`
-    : `Your ${name} results are ready`;
-  await notify('candidate', c._id, 'skill_result', title, link(c));
+  await deliver(c, result.held && !result.reviewDecision ? 'skill_held' : 'skill_result', name);
   return true;
 }
 
@@ -44,14 +73,14 @@ async function runSkillReminders(now = Date.now()) {
       r.retakeNotified = true; await r.save();
       if (!newerExists(r)) {
         const { c, name } = await context(r);
-        if (c) { await notify('candidate', c._id, 'skill_retake', `You can retake ${name} now`, link(c)); counts.retake++; }
+        if (c) { await deliver(c, 'skill_retake', name); counts.retake++; }
       }
     }
     if (!r.staleNotified && age >= STALE_DAYS * DAY && (!r.held || r.reviewDecision === 'approved')) {
       r.staleNotified = true; await r.save();
       if (!newerExists(r)) {
         const { c, name } = await context(r);
-        if (c) { await notify('candidate', c._id, 'skill_stale', `Your ${name} result is over a year old and needs a retake`, link(c)); counts.stale++; }
+        if (c) { await deliver(c, 'skill_stale', name); counts.stale++; }
       }
     }
   }
@@ -63,10 +92,10 @@ async function runSkillReminders(now = Date.now()) {
     if (left > 0 && left <= EXPIRY_WARN_MS) {
       r.expiryNotified = true; await r.save();
       const { c, name } = await context(r);
-      if (c) { await notify('candidate', c._id, 'skill_expiring', `Your ${name} link expires soon`, link(c)); counts.expiring++; }
+      if (c) { await deliver(c, 'skill_expiring', name); counts.expiring++; }
     }
   }
   return counts;
 }
 
-module.exports = { resultsLanded, runSkillReminders };
+module.exports = { deliver, resultsLanded, runSkillReminders };

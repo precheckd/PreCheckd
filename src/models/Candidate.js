@@ -423,6 +423,9 @@ const candidateSchema = new mongoose.Schema({
   // weeklyEmailOptOut turns off both (cert expiry reminders are separate
   // service notices and are not affected). The timestamps stop double sends
   // and mark which messages the Thursday email still needs to cover.
+  // Skill-test reminder emails (retake open, result needs retake, link expiring). Results and review
+  // outcome emails are service notices and are always sent.
+  skillRemindersOptOut: { type: Boolean, default: false },
   weeklyEmailOptOut: {
     type: Boolean,
     default: false
