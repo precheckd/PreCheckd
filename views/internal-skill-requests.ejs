@@ -13,15 +13,23 @@
 <div class="sr-wrap">
   <a class="sr-back" href="/">&larr; Dashboard</a>
   <h1>Skill Requests</h1>
-  <p class="sr-sub">Skills candidates asked to be tested on. Build the test in CoderByte (easy, medium and hard sets), register it with the seed script, and everyone waiting is marked ready and notified automatically.</p>
+  <p class="sr-sub">Skills candidates asked to be tested on. Candidates are told their test will be ready within 1 business day; the Waiting column counts weekday hours only and flags a request as due soon at 20 hours and overdue at 24. Build the test in CoderByte (easy, medium and hard sets), register it with the seed script, and everyone waiting is marked ready and notified automatically.</p>
   <table class="sr-table">
-    <thead><tr><th>Skill</th><th>Requests</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Skill</th><th>Requests</th><th>Status</th><th>Waiting</th><th></th></tr></thead>
     <tbody>
       <% rows.forEach((r) => { %>
         <tr>
           <td><%= r.skill %></td>
           <td class="sr-count"><%= r.count %></td>
           <td><%= r.status %></td>
+          <td>
+            <% if (r.waiting === null) { %>&ndash;
+            <% } else { %>
+              <span style="font-weight:700;color:<%= r.flag === 'overdue' ? '#B42318' : r.flag === 'soon' ? '#B7791F' : '#1F363C' %>;">
+                <%= Math.round(r.waiting) %>h<%= r.flag === 'overdue' ? ' overdue' : r.flag === 'soon' ? ' due soon' : '' %>
+              </span>
+            <% } %>
+          </td>
           <td>
             <% if (r.status !== 'ready') { %>
               <% [['building', 'Building'], ['declined', 'Decline'], ['requested', 'Reset']].filter((o) => o[0] !== r.status).forEach((o) => { %>
@@ -36,7 +44,7 @@
           </td>
         </tr>
       <% }) %>
-      <% if (!rows.length) { %><tr><td colspan="4">No requests yet.</td></tr><% } %>
+      <% if (!rows.length) { %><tr><td colspan="5">No requests yet.</td></tr><% } %>
     </tbody>
   </table>
 </div>

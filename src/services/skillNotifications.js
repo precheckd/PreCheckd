@@ -4,7 +4,9 @@ const Candidate = require('../models/Candidate');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
 const { notify } = require('./notifications');
-const { sendSkillNoticeEmail } = require('./emailService');
+const SkillRequest = require('../models/SkillRequest');
+const { sendSkillNoticeEmail, sendStaffAlertEmail } = require('./emailService');
+const { businessHoursSince, slaFlag } = require('../utils/businessTime');
 
 const DAY = 86400000;
 const RETAKE_DAYS = 60;
@@ -98,4 +100,51 @@ async function runSkillReminders(now = Date.now()) {
   return counts;
 }
 
-module.exports = { deliver, resultsLanded, runSkillReminders };
+// ---- staff: skill requests waiting to be built ---------------------------------------------------
+
+const queueUrl = () => `https://${process.env.ADMIN_HOSTNAME || 'admin.precheckd.com'}/skill-requests`;
+
+// Right after a candidate asks for a skill. Never blocks the request if the email fails.
+async function newRequestAlert(skill, key) {
+  try {
+    const waiting = (await SkillRequest.find({ key, status: { $in: ['requested', 'building'] } })).length;
+    await sendStaffAlertEmail({
+      subject: `New skill request: ${skill}`,
+      headline: 'New skill request',
+      paragraphs: [
+        `A candidate asked to be tested on ${skill}. ${waiting <= 1 ? 'They are the first to ask.' : `${waiting} candidates are now waiting for it.`}`,
+        'Candidates are told their test will be ready within 1 business day.'
+      ],
+      buttonUrl: queueUrl(), buttonLabel: 'Open the queue'
+    });
+  } catch (e) { console.error('[skills] new request alert failed:', e.message); }
+}
+
+// Daily list of everything still waiting, oldest first, with how long each has waited.
+async function openRequestsDigest(now = Date.now()) {
+  const open = await SkillRequest.find({ status: { $in: ['requested', 'building'] } });
+  if (!open.length) return 0;
+  const groups = new Map();
+  for (const r of open) {
+    const g = groups.get(r.key) || { skill: r.skill, count: 0, oldest: r.createdAt };
+    g.count += 1;
+    if (r.createdAt < g.oldest) g.oldest = r.createdAt;
+    groups.set(r.key, g);
+  }
+  const rows = [...groups.values()].sort((a, b) => a.oldest - b.oldest).map((g) => {
+    const h = businessHoursSince(g.oldest, now);
+    const flag = slaFlag(h);
+    return `${g.skill}: ${g.count} waiting, oldest ${Math.round(h)} business hours${flag === 'overdue' ? ' (OVERDUE)' : flag === 'soon' ? ' (due soon)' : ''}`;
+  });
+  try {
+    await sendStaffAlertEmail({
+      subject: `${groups.size} skill${groups.size === 1 ? '' : 's'} waiting to be built`,
+      headline: 'Skill tests waiting to be built',
+      paragraphs: rows,
+      buttonUrl: queueUrl(), buttonLabel: 'Open the queue'
+    });
+  } catch (e) { console.error('[skills] open requests digest failed:', e.message); }
+  return groups.size;
+}
+
+module.exports = { deliver, resultsLanded, runSkillReminders, newRequestAlert, openRequestsDigest };

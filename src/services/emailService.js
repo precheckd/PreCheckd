@@ -292,6 +292,23 @@ async function sendSkillNoticeEmail(toEmail, firstName, slug, notice) {
   });
 }
 
+// A plain alert to the staff mailbox (STAFF_ALERT_EMAIL). Without it the alert is only logged.
+async function sendStaffAlertEmail({ subject, headline, paragraphs, buttonUrl, buttonLabel }) {
+  const to = process.env.STAFF_ALERT_EMAIL;
+  if (!to) { console.log(`[staff alert, no STAFF_ALERT_EMAIL set] ${subject}`); return null; }
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Staff</p>
+    <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${escapeHtml(headline)}</h1>
+    ${paragraphs.map((t) => `<p style="margin:0 0 14px;">${escapeHtml(t)}</p>`).join('')}
+    ${buttonUrl ? emailButton(buttonUrl, buttonLabel || 'Open') : ''}`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to,
+    subject,
+    html: brandShell({ bodyHtml, preheader: headline, footerHtml: 'Internal alert for PreCheckd staff.' })
+  });
+}
+
 // --- Weekly candidate emails ---------------------------------------------
 // Monday recap and Thursday unread-messages email (services/weeklyEmails.js).
 // Names who messages are from and how many, never what they said. Each email
@@ -582,6 +599,7 @@ module.exports = {
   sendMessageDigestEmail,
   sendCertExpiryReminderEmail,
   sendSkillNoticeEmail,
+  sendStaffAlertEmail,
   sendWeeklyRecapEmail,
   sendUnreadMessagesEmail,
   sendFraudReportThankYouEmail,

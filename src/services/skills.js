@@ -186,7 +186,9 @@ async function requestSkill(candidate, text) {
   if (mine.filter((r) => ['requested', 'building'].includes(r.status)).length >= MAX_OPEN_REQUESTS) {
     const e = new Error('Too many open requests'); e.code = 'limit'; throw e;
   }
-  return SkillRequest.create({ candidateId: candidate._id, skill: String(text).trim().slice(0, 60), key });
+  const created = await SkillRequest.create({ candidateId: candidate._id, skill: String(text).trim().slice(0, 60), key });
+  await require('./skillNotifications').newRequestAlert(created.skill || String(text).trim().slice(0, 60), key);
+  return created;
 }
 
 // Called when a skill test goes live: marks matching requests ready and tells each candidate.

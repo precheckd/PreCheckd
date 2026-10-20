@@ -40,10 +40,10 @@
       <div class="sk-banner ok">Your results are in.</div>
     <% } %>
     <% if (notice === 'wait') { %><div class="sk-banner wait">That skill can't be retaken yet. The date it opens up is shown below.</div><% } %>
-    <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. We'll notify you when that test is ready.</div><% } %>
+    <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. Your test will be ready within 1 business day, and we'll email you as soon as it is.</div><% } %>
     <% if (notice === 'exists') { %><div class="sk-banner wait">That skill already has a test. Look for it below.</div><% } %>
     <% if (notice === 'invalid') { %><div class="sk-banner wait">Enter the name of a skill.</div><% } %>
-    <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll notify you as they become ready.</div><% } %>
+    <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll email you as each one becomes ready, within 1 business day of your request.</div><% } %>
     <% if (notice === 'manual') { %><div class="sk-banner wait">This test needs a quick check from our team before you can retake it. Contact support and we'll sort it out.</div><% } %>
     <% if (notice === 'saved') { %><div class="sk-banner ok">Saved. Recruiters will see only the skills you ticked.</div><% } %>
 
@@ -95,7 +95,7 @@
 
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/request">
       <h2>Don't see your skill?</h2>
-      <p>Tell us which skill you want to be tested on. We build tests based on what people ask for, and we'll notify you when yours is ready.</p>
+      <p>Tell us which skill you want to be tested on. We build tests on request, and yours will be ready within 1 business day. We'll email you as soon as it is.</p>
       <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
         <input type="text" name="skill" maxlength="60" placeholder="e.g. Kubernetes" required style="flex:1;min-width:200px;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid #5A7880;background:#1F363C;color:#F2F4F3;">
         <button class="sk-btn" type="submit">Request</button>

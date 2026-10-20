@@ -364,11 +364,19 @@ router.get('/skill-requests', async (req, res) => {
   try {
     const rows = await SkillRequest.aggregate([
       { $group: { _id: '$key', skill: { $first: '$skill' }, count: { $sum: 1 }, latest: { $max: '$createdAt' },
-          statuses: { $addToSet: '$status' } } },
+          statuses: { $addToSet: '$status' },
+          oldestOpen: { $min: { $cond: [{ $in: ['$status', ['requested', 'building']] }, '$createdAt', null] } } } },
       { $sort: { count: -1, latest: -1 } }
     ]);
     const label = (st) => (st.includes('ready') && st.length === 1 ? 'ready' : st.includes('building') ? 'building' : st.includes('declined') && st.length === 1 ? 'declined' : 'requested');
-    res.render('internal-skill-requests', { rows: rows.map((r) => ({ ...r, status: label(r.statuses) })) });
+    const { businessHoursSince, slaFlag } = require('../utils/businessTime');
+    const shaped = rows.map((r) => {
+      const waiting = r.oldestOpen ? businessHoursSince(r.oldestOpen) : null;
+      return { ...r, status: label(r.statuses), waiting, flag: waiting === null ? null : slaFlag(waiting) };
+    });
+    // Waiting requests first, oldest at the top; finished ones sink to the bottom.
+    shaped.sort((a, b) => (a.waiting === null) - (b.waiting === null) || (b.waiting || 0) - (a.waiting || 0) || b.count - a.count);
+    res.render('internal-skill-requests', { rows: shaped });
   } catch (error) {
     console.error('Error loading skill requests:', error);
     res.status(500).send('Server error');
