@@ -26,8 +26,8 @@
   <summary>See by difficulty</summary>
   <% withTiers.forEach(function(s) { %>
     <div class="skv-tiers"><b><%= s.label %></b>
-      <% ['easy', 'medium', 'hard'].forEach(function(n) { const x = s.tiers[n] || { right: 0, total: 0 }; %>
-        <span><%= n.charAt(0).toUpperCase() + n.slice(1) %> <%= x.total ? x.right + '/' + x.total : 'not asked' %></span>
+      <% ['easy', 'medium', 'hard'].forEach(function(n) { const x = s.tiers[n]; if (!x || !x.total) return; %>
+        <span><%= n.charAt(0).toUpperCase() + n.slice(1) %> <%= x.right %>/<%= x.total %></span>
       <% }); %>
     </div>
   <% }); %>

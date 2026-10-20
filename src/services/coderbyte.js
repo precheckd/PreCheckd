@@ -55,8 +55,10 @@ async function api(method, path, body) {
 function computeSkills(assessment, ratings, answers = []) {
   const byName = new Map(ratings.map((r) => [r.name, r.score]));
   const difficultyById = new Map((assessment.questions || []).map((q) => [String(q.id), q.difficulty]));
+  // A ladder test holds one tier only, so every question counts as that tier with no tagging step.
+  if (assessment.tier) for (const a of answers) if (!difficultyById.has(String(a.id))) difficultyById.set(String(a.id), assessment.tier);
   return (assessment.skills || []).map((s) => {
-    const w = weightedSkill(answers, difficultyById, s.ratingKeys || []);
+    const w = weightedSkill(answers, difficultyById, s.ratingKeys || [], { ladder: !!assessment.tier });
     if (w) return { key: s.key, label: s.label, score: w.score, weighted: true, level: w.level, tiers: w.tiers };
     const present = (s.ratingKeys || []).filter((k) => byName.has(k)).map((k) => byName.get(k));
     const score = present.length ? Math.round(present.reduce((a, b) => a + b, 0) / present.length) : null;

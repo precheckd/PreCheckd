@@ -7,6 +7,7 @@ const { notify } = require('./notifications');
 const SkillRequest = require('../models/SkillRequest');
 const { sendSkillNoticeEmail, sendStaffAlertEmail } = require('./emailService');
 const { businessHoursSince, slaFlag } = require('../utils/businessTime');
+const { tierPassed, TIER_ORDER, TIER_NAMES } = require('./skillLevels');
 
 const DAY = 86400000;
 const RETAKE_DAYS = 60;
@@ -32,6 +33,8 @@ const COPY = {
     paragraphs: [`We couldn't verify your ${n} attempt, so the results weren't published.`, `You can try again from ${d}.`], button: 'Open my Skills page' }),
   skill_ready: (n) => ({ bell: `A ${n} test is ready for you`, subject: `Your ${n} test is ready`, headline: 'The test you asked for is ready',
     paragraphs: [`You asked to be tested on ${n}, and the test is now available.`], button: 'Take the test' }),
+  skill_unlocked: (n) => ({ bell: `You passed. ${n} is now unlocked`, subject: `${n} is unlocked`, headline: 'You unlocked the next level',
+    paragraphs: [`You passed the level below, so the ${n} test is now open. Take it whenever you're ready.`], button: 'Take the next test' }),
   skill_retake: (n) => ({ bell: `You can retake ${n} now`, subject: `You can retake ${n}`, headline: 'You can retake this test', reminder: true,
     paragraphs: [`It has been 60 days since your ${n} attempt, so you can take it again. Your latest result is the one that counts.`], button: 'Open my Skills page' }),
   skill_stale: (n) => ({ bell: `Your ${n} result is over a year old and needs a retake`, subject: `Your ${n} result needs a retake`, headline: 'Time for a retake', reminder: true,
@@ -57,8 +60,23 @@ async function resultsLanded(result) {
   await result.save();
   const { c, name } = await context(result);
   if (!c) return false;
-  await deliver(c, result.held && !result.reviewDecision ? 'skill_held' : 'skill_result', name);
+  if (result.held && !result.reviewDecision) { await deliver(c, 'skill_held', name); return true; }
+  // Passing one rung of a ladder opens the next, so that notice replaces the plain "results ready" one.
+  const unlocked = await unlockedNext(result);
+  await deliver(c, unlocked ? 'skill_unlocked' : 'skill_result', unlocked || name);
   return true;
+}
+
+// The next rung's display name ("Agile Intermediate") when this attempt passed a rung that has one above it.
+async function unlockedNext(result) {
+  const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
+  if (!a || !a.tier || a.tier === 'hard') return null;
+  const s = (result.skills || [])[0];
+  if (!s || !tierPassed(s.tiers && s.tiers[a.tier])) return null;
+  const next = TIER_ORDER[TIER_ORDER.indexOf(a.tier) + 1];
+  const key = ((a.skills || [])[0] || {}).key;
+  const rungs = await SkillAssessment.find({ active: true, tier: next });
+  return rungs.some((x) => ((x.skills || [])[0] || {}).key === key) ? `${s.label} ${TIER_NAMES[next]}` : null;
 }
 
 // Hourly: retake open, needs retake, link expiring. Returns counts for the job log.
@@ -147,4 +165,4 @@ async function openRequestsDigest(now = Date.now()) {
   return groups.size;
 }
 
-module.exports = { deliver, resultsLanded, runSkillReminders, newRequestAlert, openRequestsDigest };
+module.exports = { unlockedNext, deliver, resultsLanded, runSkillReminders, newRequestAlert, openRequestsDigest };

@@ -21,7 +21,7 @@
     <div class="skm-tier">
       <span class="skm-tname"><%= r.name %></span>
       <span class="skm-tbar"><span style="width: <%= r.total ? Math.round(r.right / r.total * 100) : 0 %>%" class="<%= r.passed ? 'pass' : '' %>"></span></span>
-      <span class="skm-tcount"><% if (!r.total) { %>not asked<% } else { %><%= r.right %>/<%= r.total %><%= r.passed ? ' ✓' : (r.assessed ? '' : ' (too few)') %><% } %></span>
+      <span class="skm-tcount"><% if (!r.total) { %><%= sk.ladder ? 'not taken yet' : 'not asked' %><% } else { %><%= r.right %>/<%= r.total %><%= r.passed ? ' ✓' : (r.assessed ? '' : ' (too few)') %><% } %></span>
     </div>
   <% }); %>
 </details>

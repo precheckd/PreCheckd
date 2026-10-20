@@ -5,6 +5,7 @@ const Candidate = require('../models/Candidate');
 const SkillRequest = require('../models/SkillRequest');
 const coderbyte = require('./coderbyte');
 const { deliver } = require('./skillNotifications');
+const { levelFromTiers, tierPassed, scoreFromTiers, TIER_ORDER, TIER_NAMES } = require('./skillLevels');
 
 const RETAKE_DAYS = 60;
 const STALE_DAYS = 365;
@@ -25,8 +26,23 @@ async function currentSkills(candidateId) {
   const results = await SkillResult.find({ candidateId, status: 'completed' }).sort({ completedAt: 1 });
   const asms = await assessmentsById();
   const out = new Map();
+  const ladder = new Map(); // skill key -> { label, byTier: { easy: { right, total, takenAt }, ... } }
   for (const r of results) {
-    if (!published(r) || isTitle(asms.get(r.assessmentId))) continue;
+    const asm = asms.get(r.assessmentId);
+    if (!published(r) || isTitle(asm)) continue;
+    if (asm && asm.tier) {
+      // One rung of a skill's ladder. The latest result per tier counts, under the same 60-day rule.
+      const s = (r.skills || [])[0];
+      const x = s && s.tiers && s.tiers[asm.tier];
+      if (!x) continue;
+      const entry = ladder.get(s.key) || { key: s.key, label: s.label, byTier: {} };
+      const prev = entry.byTier[asm.tier];
+      if (!(prev && r.completedAt.getTime() - prev.takenAt.getTime() < RETAKE_DAYS * DAY)) {
+        entry.byTier[asm.tier] = { right: x.right, total: x.total, takenAt: r.completedAt };
+      }
+      ladder.set(s.key, entry);
+      continue;
+    }
     for (const s of r.skills || []) {
       if (s.score == null) continue;
       const prev = out.get(s.key);
@@ -35,7 +51,49 @@ async function currentSkills(candidateId) {
         takenAt: r.completedAt, stale: Date.now() - r.completedAt.getTime() > STALE_DAYS * DAY });
     }
   }
+  for (const e of ladder.values()) {
+    const tiers = {};
+    for (const n of TIER_ORDER) if (e.byTier[n]) tiers[n] = { right: e.byTier[n].right, total: e.byTier[n].total };
+    const level = levelFromTiers(tiers, { ladder: true });
+    // Freshness follows the rung that earned the level (Basic, Intermediate, or Advanced), not the newest attempt.
+    const earning = { Foundational: 'easy', Intermediate: 'medium', Advanced: 'hard', Expert: 'hard' }[level];
+    const stamps = TIER_ORDER.filter((n) => e.byTier[n]).map((n) => e.byTier[n].takenAt.getTime());
+    const takenAt = new Date(earning && e.byTier[earning] ? e.byTier[earning].takenAt : Math.max(...stamps));
+    const prev = out.get(e.key);
+    if (prev && prev.takenAt.getTime() > takenAt.getTime()) continue; // a newer combined-test result wins
+    out.set(e.key, { key: e.key, label: e.label, level, score: scoreFromTiers(tiers), weighted: true, tiers, ladder: true,
+      takenAt, stale: Date.now() - takenAt.getTime() > STALE_DAYS * DAY });
+  }
   return [...out.values()];
+}
+
+// The rungs of each skill's ladder for the candidate's Skills page, built from the page's per-assessment
+// cards and current results. A rung is passed, locked (the one below isn't passed yet), or open.
+function buildLadders(cards, current) {
+  const byKey = new Map(current.map((s) => [s.key, s]));
+  const groups = new Map();
+  for (const c of cards) {
+    const a = c.assessment;
+    if (!a.tier || a.kind === 'title') continue;
+    const sk = (a.skills || [])[0];
+    if (!sk) continue;
+    const g = groups.get(sk.key) || { key: sk.key, label: sk.label, rungs: [] };
+    g.rungs.push({ ...c, tier: a.tier, tierName: TIER_NAMES[a.tier], questions: (a.questions || []).length || null });
+    groups.set(sk.key, g);
+  }
+  return [...groups.values()].map((g) => {
+    const cur = byKey.get(g.key);
+    const tiers = (cur && cur.tiers) || {};
+    g.rungs.sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier));
+    g.rungs.forEach((r, i) => {
+      r.passed = tierPassed(tiers[r.tier]);
+      const below = g.rungs[i - 1];
+      r.locked = !!below && !tierPassed(tiers[below.tier]);
+      r.result = tiers[r.tier] || null;
+    });
+    g.level = cur ? cur.level : null;
+    return g;
+  });
 }
 
 // Latest published job-title test result per title test, with the exact score and enough context
@@ -95,7 +153,8 @@ const REJECT_COOLDOWN_DAYS = 14;
 const MAX_REJECTIONS = 2;
 
 async function completedFor(candidateId, assessment) {
-  if (isTitle(assessment)) return SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' });
+  // A title test or one rung of a ladder is its own thing: other tiers of the same skill don't count against it.
+  if (isTitle(assessment) || assessment.tier) return SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' });
   const keys = (assessment.skills || []).map((s) => s.key);
   return SkillResult.find({ candidateId, status: 'completed', 'skills.key': { $in: keys } });
 }
@@ -136,6 +195,12 @@ async function nextAllowed(candidateId, assessment) {
 async function startAttempt(candidate, assessmentId) {
   const assessment = await SkillAssessment.findOne({ assessmentId, active: true });
   if (!assessment) { const e = new Error('Assessment not available'); e.code = 'not_found'; throw e; }
+  if (assessment.tier && assessment.tier !== 'easy') {
+    // Each rung opens once the one below it is passed.
+    const below = TIER_ORDER[TIER_ORDER.indexOf(assessment.tier) - 1];
+    const cur = (await currentSkills(candidate._id)).find((s) => s.key === ((assessment.skills || [])[0] || {}).key);
+    if (!cur || !tierPassed(cur.tiers && cur.tiers[below])) { const e = new Error('Pass the level below first'); e.code = 'locked'; throw e; }
+  }
   if (await manualHold(candidate._id, assessment)) { const e = new Error('Needs staff approval'); e.code = 'manual'; throw e; }
   const wait = await nextAllowed(candidate._id, assessment);
   if (wait) { const e = new Error('Retake not yet allowed'); e.code = 'retake_wait'; e.until = wait; throw e; }
@@ -234,4 +299,4 @@ async function clearRejections(candidateId, assessmentId) {
   return n;
 }
 
-module.exports = { LEVEL_ORDER, refreshSkillSummary, REJECT_COOLDOWN_DAYS, MAX_REJECTIONS, manualHold, decideReview, clearRejections, MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };
+module.exports = { TIER_NAMES, buildLadders, LEVEL_ORDER, refreshSkillSummary, REJECT_COOLDOWN_DAYS, MAX_REJECTIONS, manualHold, decideReview, clearRejections, MAX_OPEN_REQUESTS, normalizeSkill, requestSkill, fulfillRequests, titleResults, setTitleVisibility, titleSummary, SHOWABLE, RETAKE_DAYS, STALE_DAYS, published, currentSkills, recruiterView, nextAllowed, startAttempt, setHidden };

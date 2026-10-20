@@ -41,6 +41,7 @@
     <% } %>
     <% if (notice === 'wait') { %><div class="sk-banner wait">That skill can't be retaken yet. The date it opens up is shown below.</div><% } %>
     <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. Your test will be ready within 1 business day, and we'll email you as soon as it is.</div><% } %>
+    <% if (notice === 'locked') { %><div class="sk-banner wait">Pass the level below first and this one will unlock.</div><% } %>
     <% if (notice === 'exists') { %><div class="sk-banner wait">That skill already has a test. Look for it below.</div><% } %>
     <% if (notice === 'invalid') { %><div class="sk-banner wait">Enter the name of a skill.</div><% } %>
     <% if (notice === 'limit') { %><div class="sk-banner wait">You have the maximum number of open requests. We'll email you as each one becomes ready, within 1 business day of your request.</div><% } %>
@@ -70,6 +71,43 @@
     </form>
     <% } %>
 
+    <% if (ladders.length) { %>
+    <h2 class="sk-h2">Climb your skills</h2>
+    <% ladders.forEach((g) => { %>
+      <div class="sk-card">
+        <h2><%= g.label %></h2>
+        <div class="sk-tags"><span class="sk-tag"><%= g.level ? 'Your level: ' + g.level : 'Not started' %></span></div>
+        <p>Start with Basic. Pass a level to unlock the next one, and your level is the highest one you've passed.</p>
+        <% g.rungs.forEach((r, i) => { %>
+          <div class="sk-row">
+            <div>
+              <div class="sk-name"><%= r.tierName %><% if (r.questions) { %> <span class="sk-meta">&middot; <%= r.questions %> questions</span><% } %></div>
+              <div class="sk-meta">
+                <% if (r.held) { %>Being reviewed before it's shown.
+                <% } else if (r.rejected) { %>That attempt couldn't be verified, so it wasn't published.<%= r.retakeOn ? ' You can try again from ' + r.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' : '' %>
+                <% } else if (r.locked) { %>Pass <%= g.rungs[i - 1].tierName %> to unlock.
+                <% } else if (r.passed) { %>Passed &#10003;<%= r.retakeOn ? '' : ' (you can retake it)' %>
+                <% } else if (r.result) { %>Not passed yet. You got <%= r.result.right %> of <%= r.result.total %>.<%= r.retakeOn ? ' You can try again on ' + r.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' : '' %>
+                <% } else { %>Ready when you are.<% } %>
+              </div>
+            </div>
+            <div>
+              <% if (r.locked) { %>
+                <button class="sk-btn" disabled>Locked</button>
+              <% } else if (r.retakeOn) { %>
+                <button class="sk-btn" disabled>Retake locked</button>
+              <% } else { %>
+                <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= r.assessment.assessmentId %>">
+                  <button class="sk-btn" type="submit"><%= r.open ? 'Continue test' : (r.passed || r.result ? 'Take it again' : 'Start ' + r.tierName) %></button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% }) %>
+    <% } %>
+
     <h2 class="sk-h2">Skill tests</h2>
     <% skillCards.forEach((c) => { %>
       <div class="sk-card">
@@ -92,7 +130,7 @@
         <% } %>
       </div>
     <% }) %>
-    <% if (!skillCards.length) { %><div class="sk-card"><p>No skill tests are available yet. Skill tests set your skill levels, so check back soon.</p></div><% } %>
+    <% if (!skillCards.length && !ladders.length) { %><div class="sk-card"><p>No skill tests are available yet. Skill tests set your skill levels, so check back soon.</p></div><% } %>
 
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/request">
       <h2>Don't see your skill?</h2>

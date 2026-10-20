@@ -31,6 +31,9 @@ const skillAssessmentSchema = new mongoose.Schema({
   // 'title': a CoderByte job-title test with a mix we don't control; results are shown as an exact
   // score in their own box and never feed skill levels.
   kind: { type: String, enum: ['skill', 'title'], default: 'skill' },
+  // Set on a 'skill' assessment that is one rung of a skill's ladder (Basic, Intermediate, Advanced): all of
+  // its questions are this tier and it covers one skill. Null for a combined test.
+  tier: { type: String, enum: ['easy', 'medium', 'hard'], default: null },
   publicUrl: { type: String, required: true },                  // CoderByte public_url; the invite API turns this into private links
   skills: { type: [skillSchema], default: [] },
   questions: { type: [questionSchema], default: [] },

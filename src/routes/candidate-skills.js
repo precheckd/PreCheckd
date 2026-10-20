@@ -61,7 +61,8 @@ router.get('/:slug/skills', async (req, res) => {
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
       candidate, cards,
-      skillCards: cards.filter((c) => c.assessment.kind !== 'title'),
+      skillCards: cards.filter((c) => c.assessment.kind !== 'title' && !c.assessment.tier),
+      ladders: skills.buildLadders(cards, current),
       titleCards: cards.filter((c) => c.assessment.kind === 'title'),
       titles,
       requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
@@ -84,6 +85,7 @@ router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
     res.redirect(attempt.inviteUrl);
   } catch (e) {
     if (e.code === 'manual') return res.redirect(`/candidate/${req.params.slug}/skills?notice=manual`);
+    if (e.code === 'locked') return res.redirect(`/candidate/${req.params.slug}/skills?notice=locked`);
     if (e.code === 'retake_wait') return res.redirect(`/candidate/${req.params.slug}/skills?notice=wait`);
     if (e.code === 'not_found') return res.status(404).send('Assessment not available.');
     console.error('Error starting skills assessment:', e);
