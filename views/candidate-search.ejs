@@ -430,6 +430,20 @@
       <p class="filter-hint">Candidates with every skill at your level come first. Candidates matching only some of them are listed in a separate section below. A skill a candidate hasn't shown, or whose result needs a retake, isn't a no, so just ask.</p>
     </div>
 
+    <% if (titleOptions.length) { %>
+    <div class="filter-section">
+      <h2>Job title test score</h2>
+      <div class="filter-row" style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <select name="titleTest" style="flex:2;min-width:200px;">
+          <option value="">Any (optional)</option>
+          <% titleOptions.forEach(function(o) { %><option value="<%= o.id %>" <%= titleFilter && titleFilter.assessmentId === o.id ? 'selected' : '' %>><%= o.name %></option><% }); %>
+        </select>
+        <input type="number" name="titleMin" min="0" max="100" placeholder="Minimum score (0-100)" value="<%= titleFilter && titleFilter.minScore ? titleFilter.minScore : '' %>" style="flex:1;min-width:160px;">
+      </div>
+      <p class="filter-hint">Only candidates who chose to show this test result are included, and results over 12 months old are left out. A candidate who hasn't shown a result isn't a no, so just ask.</p>
+    </div>
+    <% } %>
+
     <div class="filter-section">
       <h2>Role</h2>
       <div class="filter-row">
@@ -561,6 +575,13 @@
             <div class="card-certs">
               <span class="card-section-label">Verified Skills</span>
               <%= candidate.skillChips.map(function(c) { return c.label + ' ' + c.level + (c.stale ? ' (needs retake)' : ''); }).join(', ') %>
+            </div>
+          <% } %>
+
+          <% if (candidate.titleChips && candidate.titleChips.length) { %>
+            <div class="card-certs">
+              <span class="card-section-label">Job Title Tests</span>
+              <%= candidate.titleChips.map(function(t) { return t.name + ': ' + t.score + (t.total ? ' (' + t.right + '/' + t.total + ')' : '') + (t.stale ? ' (needs retake)' : ''); }).join(', ') %>
             </div>
           <% } %>
 

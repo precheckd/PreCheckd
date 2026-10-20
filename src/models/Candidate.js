@@ -300,6 +300,15 @@ const candidateSchema = new mongoose.Schema({
     default: []
   },
 
+  // Job-title test results the candidate chose to show recruiters (exact score, so recruiters can
+  // filter on it). Kept in sync by refreshSkillSummary; staleness is computed from takenAt at search time.
+  titleSummary: {
+    type: [{
+      assessmentId: String, name: String, score: Number, right: Number, total: Number, takenAt: Date, _id: false
+    }],
+    default: []
+  },
+
   // Which verified sections the public page shows. Chosen by the candidate.
   // Only verified entries are ever shown, and never employer or school names.
   // Certifications default on (the original page content); degrees and job

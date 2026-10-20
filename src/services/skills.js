@@ -75,6 +75,7 @@ async function setTitleVisibility(candidate, shownAssessmentIds) {
     t.result.showOnProfile = shown.has(t.assessmentId);
     await t.result.save();
   }
+  await refreshSkillSummary(candidate);
 }
 
 // What a recruiter may see: levels only, honouring the candidate's choices.
@@ -151,6 +152,8 @@ async function refreshSkillSummary(candidate) {
   const hidden = new Set(candidate.hiddenSkillKeys || []);
   candidate.skillSummary = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
     .map((s) => ({ key: s.key, label: s.label, level: s.level, levelIndex: LEVEL_ORDER.indexOf(s.level) + 1, takenAt: s.takenAt }));
+  candidate.titleSummary = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
+    .map((t) => ({ assessmentId: t.assessmentId, name: t.name, score: t.score, right: t.right, total: t.total, takenAt: t.takenAt }));
   await candidate.save();
   return candidate.skillSummary;
 }

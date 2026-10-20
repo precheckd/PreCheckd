@@ -2,7 +2,7 @@ const express = require('express');
 const skillsService = require('../services/skills');
 const router = express.Router();
 const SkillAssessment = require('../models/SkillAssessment');
-const { parseRequirements, evaluate, compare, LEVELS, STALE_MS } = require('../utils/skillMatching');
+const { parseRequirements, evaluate, compare, LEVELS, STALE_MS, parseTitleFilter, meetsTitle } = require('../utils/skillMatching');
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const { notify } = require('../services/notifications');
@@ -124,6 +124,12 @@ router.get('/', async (req, res) => {
     if (requirements.length) query['skillSummary.key'] = { $in: requirements.map((r) => r.key) };
     const labelOf = new Map(skillOptions.map((o) => [o.key, o.label]));
 
+    // Job-title tests a recruiter can filter on (exact score; only candidates who chose to show it).
+    const titleOptions = (await SkillAssessment.find({ active: true, kind: 'title' }))
+      .map((a) => ({ id: a.assessmentId, name: a.name })).sort((x, y) => (x.name || '').localeCompare(y.name || ''));
+    const titleFilter = parseTitleFilter(req.query, new Set(titleOptions.map((o) => o.id)));
+    if (titleFilter) query['titleSummary.assessmentId'] = titleFilter.assessmentId;
+
     const hasSearched = Object.keys(req.query).length > 0;
 
     let candidatesForView = [];
@@ -151,6 +157,8 @@ router.get('/', async (req, res) => {
           return keywordTerms.every((term) => searchable.includes(term));
         });
       }
+
+      if (titleFilter) candidates = candidates.filter((c) => meetsTitle(c.titleSummary, titleFilter));
 
       const evalByAnon = new Map();
       if (requirements.length) {
@@ -199,6 +207,9 @@ router.get('/', async (req, res) => {
         const doc = docByAnon.get(v.anonId);
         const summary = (doc && doc.skillSummary) || [];
         v.skillChips = summary.map((s) => ({ label: s.label, level: s.level, stale: Date.now() - new Date(s.takenAt).getTime() > STALE_MS }));
+        v.titleChips = ((doc && doc.titleSummary) || []).map((t) => ({
+          name: t.name, score: t.score, right: t.right, total: t.total, stale: Date.now() - new Date(t.takenAt).getTime() > STALE_MS
+        }));
         const ev = evalByAnon.get(v.anonId);
         if (ev) {
           v.skillSection = ev.full ? 'full' : 'partial';
@@ -223,6 +234,8 @@ router.get('/', async (req, res) => {
       availEnd,
       showAvailabilityGrouping,
       skillOptions,
+      titleOptions,
+      titleFilter,
       requirements,
       levels: LEVELS,
       title: 'Find Candidates | PreCheckd'

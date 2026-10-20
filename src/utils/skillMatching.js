@@ -50,4 +50,18 @@ function compare(a, b) {
   return (b.score - a.score) || (b.levelSum - a.levelSum);
 }
 
-module.exports = { LEVELS, STALE_MS, MAX_SKILLS, parseRequirements, evaluate, compare };
+// Job-title test filter: one title test and a minimum exact score (0-100). Only results the candidate
+// chose to show are in titleSummary, and a result over 12 months old needs a retake, so it doesn't count.
+function parseTitleFilter(query, validIds) {
+  const id = String(query.titleTest || '');
+  if (!validIds.has(id)) return null;
+  const n = parseInt(query.titleMin, 10);
+  return { assessmentId: id, minScore: Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0 };
+}
+
+function meetsTitle(summary, filter, now = Date.now()) {
+  return (summary || []).some((t) => t.assessmentId === filter.assessmentId && t.score >= filter.minScore &&
+    now - new Date(t.takenAt).getTime() <= STALE_MS);
+}
+
+module.exports = { LEVELS, STALE_MS, MAX_SKILLS, parseRequirements, evaluate, compare, parseTitleFilter, meetsTitle };
