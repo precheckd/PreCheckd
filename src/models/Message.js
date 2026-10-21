@@ -21,6 +21,14 @@ const messageSchema = new mongoose.Schema({
     default: null
   },
 
+  // Set instead of connectionRequestId for a PreCheckd Verification thread (staff <-> candidate about one
+  // employment or education entry). See models/VerificationCase.js.
+  verificationCaseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'VerificationCase',
+    default: null
+  },
+
   senderType: {
     type: String,
     enum: ['recruiter', 'candidate', 'system'],

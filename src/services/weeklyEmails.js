@@ -64,8 +64,8 @@ async function unreadBySender(candidateId, { since = null } = {}) {
   if (messages.length > 0) {
     const names = await senderNames(messages);
     messages.forEach((m) => {
-      const key = m.senderType === 'system' ? 'system' : `${m.senderType}:${m.senderId}`;
-      const name = m.senderType === 'system' ? 'PreCheckd Trust & Safety' : names.get(key) || 'Someone';
+      const key = m.senderType === 'system' ? (m.verificationCaseId ? 'system:verification' : 'system') : `${m.senderType}:${m.senderId}`;
+      const name = m.senderType === 'system' ? (m.verificationCaseId ? 'PreCheckd Verification' : 'PreCheckd Trust & Safety') : names.get(key) || 'Someone';
       if (!senders.has(key)) senders.set(key, { name, count: 0 });
       senders.get(key).count += 1;
     });

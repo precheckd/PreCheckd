@@ -1,0 +1,42 @@
+<style>
+  .sr-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-wrap h2 { color: #1F363C; font-size: 1.1rem; margin: 2rem 0 0.6rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; }
+  .sr-table td { padding: 0.75rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.92rem; }
+  .sr-table a { color: #1F7A4C; font-weight: 600; text-decoration: none; }
+  .sr-act { font-weight: 700; }
+  .sr-act.reply, .sr-act.call { color: #B42318; }
+  .sr-act.contact { color: #B7791F; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Verification Cases</h1>
+  <p class="sr-sub">Employment and education checks. The routine is automatic where it can be: the candidate is told on day 0, the employer or school is emailed on business days 1, 3 and 5 (if you saved a contact email), you phone on days 3 and 5, and on day <%= openDay %> the case opens to the candidate for help. Start a case from a candidate's verify screen. Needs-you items are at the top.</p>
+  <table class="sr-table">
+    <thead><tr><th>Candidate</th><th>Check</th><th>Day</th><th>Next</th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach((r) => { %>
+        <tr>
+          <td><%= r.candidate %></td>
+          <td><%= r.kind %>: <%= r.subject %><%= r.detail ? ' (' + r.detail + ')' : '' %></td>
+          <td><%= r.day %></td>
+          <td class="sr-act <%= r.action.kind %>"><%= r.action.label %></td>
+          <td><a href="/verification-cases/<%= r.id %>">Open</a></td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="5">No open cases.</td></tr><% } %>
+    </tbody>
+  </table>
+  <% if (closed.length) { %>
+    <h2>Recently closed</h2>
+    <table class="sr-table">
+      <tbody>
+        <% closed.forEach((r) => { %><tr><td><a href="/verification-cases/<%= r.id %>"><%= r.subject %></a></td><td><%= r.status === 'verified' ? 'Verified' : 'Unable to verify' %></td><td><%= r.closedAt ? r.closedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '' %></td></tr><% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>

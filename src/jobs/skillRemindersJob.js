@@ -18,6 +18,9 @@ function maybeSendDigest() {
   openRequestsDigest()
     .then((n) => console.log(`[jobs] skill request digest: ${n} skills waiting`))
     .catch((err) => console.error('[jobs] skill request digest failed:', err));
+  require('../services/verificationCases').sendDigest()
+    .then((n) => console.log(`[jobs] verification digest: ${n} items`))
+    .catch((err) => console.error('[jobs] verification digest failed:', err));
 }
 
 function startSkillRemindersJob() {
@@ -27,6 +30,9 @@ function startSkillRemindersJob() {
   }
   const tick = () => {
     maybeSendDigest();
+    require('../services/verificationCases').runDue()
+      .then((c) => console.log(`[jobs] verification cases: emailed=${c.emails} opened=${c.opened}`))
+      .catch((err) => console.error('[jobs] verification cases failed:', err));
     require('../services/testRequests').expireOverdue().catch((err) => console.error('[jobs] test request expiry failed:', err));
     runSkillReminders()
       .then((c) => console.log(`[jobs] skill reminders: retake=${c.retake} stale=${c.stale} expiring=${c.expiring}`))

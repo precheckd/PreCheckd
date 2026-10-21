@@ -153,6 +153,12 @@
       <span class="id-card-stat"><%= skillRequestCount %> skill<%= skillRequestCount === 1 ? '' : 's' %> waiting</span>
     </a>
 
+    <a class="id-card" href="/verification-cases">
+      <div class="id-card-title">Verification Cases</div>
+      <div class="id-card-desc">Employment and education checks that need a call, a contact or a reply. Open a case from a candidate's verify screen.</div>
+      <span class="id-card-stat <%= verificationCount > 0 ? 'id-stat-alert' : '' %>"><%= verificationCount %> need you · <%= verificationOpen %> open</span>
+    </a>
+
     <a class="id-card" href="/test-credits">
       <div class="id-card-title">Test Credits</div>
       <div class="id-card-desc">Recruiter-requested job title tests. Top up a recruiter's monthly credits and see the latest requests.</div>

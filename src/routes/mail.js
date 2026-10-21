@@ -213,6 +213,21 @@ async function conversationRows(type, ownerId) {
     });
   });
 
+  if (!isRecruiter) {
+    for (const v of await require('../services/verificationCases').inboxRows(id)) {
+      rows.push({
+        href: `/messages/verification/${v.id}`,
+        name: 'PreCheckd Verification',
+        subject: null,
+        preview: oneLine(`${v.last.senderType === 'candidate' ? 'You: ' : ''}${v.last.body}`, 110),
+        at: v.last.sentAt,
+        unread: v.unread > 0,
+        unreadCount: v.unread,
+        kind: 'conversation'
+      });
+    }
+  }
+
   return rows;
 }
 

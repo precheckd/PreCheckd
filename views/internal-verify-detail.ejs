@@ -119,6 +119,10 @@
     font-size: 0.9rem;
     font-style: italic;
   }
+  .case-start { margin-top: 0.6rem; font-size: 0.8rem; color: #B9C7CA; }
+  .case-start summary { cursor: pointer; color: #4ADE80; }
+  .case-start form { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .case-start input { padding: 0.4rem 0.6rem; border-radius: 5px; border: 1px solid #4A6F7B; background: #1F363C; color: #F2F4F3; font-size: 0.8rem; }
 </style>
 
 <div class="internal-content">
@@ -129,6 +133,10 @@
   </div>
 
   <div class="internal-wrapper">
+    <% const cn = locals.caseNotice; %>
+    <% if (cn) { %><div class="internal-section" style="color:#F3C97A;">
+      <%= cn === 'exists' ? 'A case is already open for that entry.' : cn === 'already_verified' ? 'That entry is already verified.' : cn === 'bad_email' ? 'That email does not look right.' : 'Could not start a case for that entry.' %>
+    </div><% } %>
 
     <div class="internal-section">
       <h3>Work History</h3>
@@ -150,6 +158,19 @@
                 <%= job.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
               </button>
             </form>
+            <% if (!job.verified) { %>
+            <details class="case-start"><summary>Start verification case</summary>
+              <form method="POST" action="/verify/<%= candidate._id %>/case">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="category" value="workHistory">
+                <input type="hidden" name="index" value="<%= index %>">
+                <input name="contactName" placeholder="Contact name (optional)">
+                <input name="contactEmail" type="email" placeholder="HR / registrar email (optional)">
+                <input name="contactPhone" placeholder="Phone (optional)">
+                <button type="submit" class="toggle-btn is-pending">Start case</button>
+              </form>
+            </details>
+            <% } %>
           </div>
         <% }); %>
       <% } %>
@@ -175,6 +196,19 @@
                 <%= edu.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
               </button>
             </form>
+            <% if (!edu.verified) { %>
+            <details class="case-start"><summary>Start verification case</summary>
+              <form method="POST" action="/verify/<%= candidate._id %>/case">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="category" value="educationHistory">
+                <input type="hidden" name="index" value="<%= index %>">
+                <input name="contactName" placeholder="Contact name (optional)">
+                <input name="contactEmail" type="email" placeholder="HR / registrar email (optional)">
+                <input name="contactPhone" placeholder="Phone (optional)">
+                <button type="submit" class="toggle-btn is-pending">Start case</button>
+              </form>
+            </details>
+            <% } %>
           </div>
         <% }); %>
       <% } %>

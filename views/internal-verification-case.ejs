@@ -1,0 +1,111 @@
+<style>
+  .vc-wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1F363C; }
+  .vc-wrap h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+  .vc-wrap h2 { font-size: 1.05rem; margin-bottom: 0.7rem; }
+  .vc-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .vc-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+  .vc-sub { color: #5A6B70; font-size: 0.9rem; line-height: 1.5; }
+  .vc-next { font-weight: 700; font-size: 1rem; }
+  .vc-next.reply, .vc-next.call { color: #B42318; }
+  .vc-next.contact { color: #B7791F; }
+  .vc-steps { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .vc-steps td { padding: 0.4rem 0.6rem; border-top: 1px solid #DCE4E2; }
+  .vc-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .vc-card input, .vc-card select, .vc-card textarea { padding: 0.5rem 0.7rem; border: 1px solid #C9D5D2; border-radius: 6px; font-size: 0.9rem; font-family: inherit; }
+  .vc-card textarea { width: 100%; min-height: 110px; }
+  .vc-btn { border: 1px solid #1F7A4C; color: #1F7A4C; background: transparent; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; font-size: 0.88rem; }
+  .vc-btn.solid { background: #1F7A4C; color: #fff; }
+  .vc-btn.warn { border-color: #B42318; color: #B42318; }
+  .vc-msg { padding: 0.7rem 0.9rem; border-radius: 6px; margin-bottom: 0.5rem; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5; }
+  .vc-msg.staff { background: #E3F1EA; }
+  .vc-msg.cand { background: #fff; border: 1px solid #DCE4E2; }
+  .vc-meta { font-size: 0.75rem; color: #7A8B91; margin-bottom: 0.2rem; white-space: normal; }
+  .vc-log { font-size: 0.85rem; color: #5A6B70; line-height: 1.7; }
+  .vc-note { margin-bottom: 1rem; font-weight: 600; color: #1F7A4C; }
+</style>
+<div class="vc-wrap">
+  <a class="vc-back" href="/verification-cases">&larr; All cases</a>
+  <h1><%= c.category === 'workHistory' ? 'Employment' : 'Education' %>: <%= c.subject %></h1>
+  <p class="vc-sub"><%= candidate ? candidate.firstName + ' ' + (candidate.lastName || '') : 'Unknown candidate' %> &middot; <%= c.detail %> &middot; <%= c.dates %> &middot; day <%= day %> &middot; <%= c.status === 'outreach' ? 'contacting them' : c.status === 'with_candidate' ? 'with the candidate' : c.status === 'verified' ? 'verified' : 'unable to verify' %></p>
+  <% if (notice) { %><div class="vc-note" style="margin-top:0.8rem;"><%= ({ saved: 'Contact saved.', logged: 'Call logged.', noted: 'Note added.', opened: 'Opened to the candidate.', sent: 'Message sent.', closed: 'Case closed and the candidate was told.', bad_email: 'That email does not look right.', invalid: 'Pick or write something first.', empty: 'Write a message first.' })[notice] || '' %></div><% } %>
+
+  <div class="vc-card" style="margin-top:1rem;">
+    <div class="vc-next <%= action.kind %>"><%= action.label %></div>
+    <table class="vc-steps">
+      <% c.steps.forEach((s) => { %>
+        <tr><td>Day <%= s.day %></td><td><%= s.type === 'open' ? 'Open to the candidate' : s.type === 'email' ? 'Email the ' + (c.category === 'workHistory' ? 'employer' : 'school') + ' (automatic)' : 'Phone call' %></td>
+          <td><%= s.doneAt ? '✓ ' + s.doneAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + (s.note ? ' (' + s.note + ')' : '') : (s.day <= day && c.status === 'outreach' ? 'due' : '') %></td></tr>
+      <% }) %>
+    </table>
+  </div>
+
+  <% if (c.status === 'outreach' || c.status === 'with_candidate') { %>
+  <div class="vc-card">
+    <h2>Who to contact</h2>
+    <form method="POST" action="/verification-cases/<%= c._id %>/contact" class="vc-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input name="contactName" placeholder="Name" value="<%= c.contact.name %>">
+      <input name="contactEmail" type="email" placeholder="Email (the automatic emails go here)" value="<%= c.contact.email %>" style="min-width:260px;">
+      <input name="contactPhone" placeholder="Phone" value="<%= c.contact.phone %>">
+      <button class="vc-btn" type="submit">Save</button>
+    </form>
+    <% if (c.contact.phone) { %><p class="vc-sub" style="margin-top:0.6rem;">Call: <strong><%= c.contact.phone %></strong></p><% } %>
+    <form method="POST" action="/verification-cases/<%= c._id %>/call" class="vc-row" style="margin-top:0.8rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="outcome"><% Object.keys(outcomes).forEach((k) => { %><option value="<%= k %>"><%= outcomes[k] %></option><% }) %></select>
+      <button class="vc-btn" type="submit">Log a call</button>
+    </form>
+    <% if (c.status === 'outreach') { %>
+    <form method="POST" action="/verification-cases/<%= c._id %>/open" style="margin-top:0.8rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="vc-btn" type="submit">Open to the candidate now (skip waiting for day <%= openDay %>)</button>
+    </form>
+    <% } %>
+  </div>
+  <% } %>
+
+  <div class="vc-card">
+    <h2>Conversation with the candidate</h2>
+    <% messages.forEach((m) => { const staff = m.senderType === 'system'; %>
+      <div class="vc-msg <%= staff ? 'staff' : 'cand' %>"><div class="vc-meta"><%= staff ? 'PreCheckd Verification' : 'Candidate' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %></div>
+    <% }) %>
+    <% if (c.status !== 'verified') { %>
+    <form method="POST" action="/verification-cases/<%= c._id %>/reply" style="margin-top:0.8rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <textarea name="body" id="vc-body" placeholder="Reply as PreCheckd Verification"></textarea>
+      <div class="vc-row" style="margin-top:0.5rem;">
+        <button class="vc-btn solid" type="submit">Send</button>
+        <button class="vc-btn" type="button" id="vc-ask">Fill in the standard request for help</button>
+      </div>
+    </form>
+    <% } %>
+  </div>
+
+  <% if (c.status === 'outreach' || c.status === 'with_candidate') { %>
+  <div class="vc-card">
+    <h2>Close the case</h2>
+    <div class="vc-row">
+      <form method="POST" action="/verification-cases/<%= c._id %>/verified"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="vc-btn solid" type="submit">Verified: mark the profile entry verified</button></form>
+      <form method="POST" action="/verification-cases/<%= c._id %>/unable"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="vc-btn warn" type="submit">Unable to verify</button></form>
+    </div>
+    <p class="vc-sub" style="margin-top:0.6rem;">Either one messages the candidate. Unable to verify is neutral wording and never counts against them; if they reply afterwards the case reopens.</p>
+  </div>
+  <% } %>
+
+  <div class="vc-card">
+    <h2>Notes and history (staff only)</h2>
+    <form method="POST" action="/verification-cases/<%= c._id %>/note" class="vc-row" style="margin-bottom:0.8rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input name="note" placeholder="Add a note, e.g. spoke to Dana in HR, calling back Thursday" style="flex:1;min-width:260px;">
+      <button class="vc-btn" type="submit">Add</button>
+    </form>
+    <div class="vc-log">
+      <% c.log.slice().reverse().forEach((l) => { %><div><%= l.at.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %> &mdash; <%= l.text %></div><% }) %>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('vc-ask') && document.getElementById('vc-ask').addEventListener('click', function () {
+    document.getElementById('vc-body').value = <%- JSON.stringify(asks.open).replace(/</g, '\\u003c') %>;
+  });
+</script>

@@ -1,0 +1,50 @@
+<style>
+  .vt-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .vt-container { max-width: 700px; width: 100%; }
+  .vt-back { display: inline-block; color: #8FA6AC; font-size: 0.85rem; text-decoration: none; margin-bottom: 1rem; }
+  .vt-back:hover { color: #F2F4F3; }
+  .vt-head { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .vt-head h1 { font-size: 1.15rem; color: #F2F4F3; margin-bottom: 0.3rem; }
+  .vt-head p { color: #C7D1CF; font-size: 0.88rem; line-height: 1.5; }
+  .vt-badge { display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: #1F363C; border: 1px solid #3B5860; color: #F2F4F3; }
+  .vt-badge.ok { color: #4ADE80; border-color: #2ECC71; }
+  .vt-msg { border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; }
+  .vt-msg.them { background: #2A4750; border: 1px solid #3B5860; color: #E4EBEA; }
+  .vt-msg.me { background: #24493F; border: 1px solid #3D7A68; color: #E4F2EC; margin-left: 2rem; }
+  .vt-meta { font-size: 0.75rem; color: #8FA6AC; margin-bottom: 0.35rem; white-space: normal; }
+  .vt-reply { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-top: 1rem; }
+  .vt-reply textarea { width: 100%; min-height: 110px; padding: 0.75rem; border-radius: 6px; border: 1px solid #4A6F7B; background: #24404A; color: #F2F4F3; font-size: 0.92rem; font-family: inherit; }
+  .vt-reply button { margin-top: 0.75rem; background: #4CC2A6; color: #12292F; border: 0; border-radius: 6px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; }
+  .vt-note { color: #8FA6AC; font-size: 0.8rem; margin-top: 0.75rem; line-height: 1.5; }
+  .vt-banner { border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.9rem; background: #4A4228; border: 1px solid #8A7A3A; color: #F3E8BE; }
+  .vt-banner.ok { background: #24493F; border-color: #3D7A68; color: #D8F0E8; }
+</style>
+<div class="vt-content">
+  <div class="vt-container">
+    <a class="vt-back" href="/mail?tab=conversations">&larr; Back to Mail</a>
+    <div class="vt-head">
+      <h1>PreCheckd Verification</h1>
+      <p>About your <%= c.category === 'workHistory' ? 'employment' : 'education' %> at <strong><%= c.subject %></strong><%= c.detail ? ' (' + c.detail + ')' : '' %>.</p>
+      <span class="vt-badge <%= c.status === 'verified' ? 'ok' : '' %>"><%= c.status === 'verified' ? 'Verified' : c.status === 'unable' ? 'Not verified' : 'In progress' %></span>
+    </div>
+
+    <% if (error === 'empty') { %><div class="vt-banner">Write a message before sending.</div><% } %>
+    <% if (error === 'unsafe') { %><div class="vt-banner">For your safety, please don't include Social Security, card or bank account numbers. Take those out and try again.</div><% } %>
+    <% if (error === 'closed') { %><div class="vt-banner">This one is already verified, so there's nothing left to send.</div><% } %>
+
+    <% messages.forEach(function(m) { const mine = m.senderType === 'candidate'; %>
+      <div class="vt-msg <%= mine ? 'me' : 'them' %>">
+        <div class="vt-meta"><%= mine ? 'You' : 'PreCheckd Verification' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %>
+      </div>
+    <% }); %>
+
+    <% if (c.status !== 'verified') { %>
+    <form class="vt-reply" method="POST" action="/messages/verification/<%= c._id %>/reply">
+      <label for="vt-body" style="color:#F2F4F3;font-weight:600;font-size:0.92rem;">Reply</label>
+      <textarea id="vt-body" name="body" required placeholder="Write your reply..."></textarea>
+      <button type="submit">Send</button>
+      <p class="vt-note">PreCheckd will never ask you for anything by email; verification questions only happen here. We'll never ask for your Social Security number, card or bank details, and you shouldn't send them.</p>
+    </form>
+    <% } %>
+  </div>
+</div>

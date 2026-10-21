@@ -316,6 +316,39 @@ router.post('/contact/respond', async (req, res) => {
   }
 });
 
+// GET /messages/verification/:caseId — the PreCheckd Verification thread for one profile entry. Candidates only;
+// the case must be theirs. Staff write from the admin site.
+router.get('/verification/:caseId', async (req, res) => {
+  try {
+    if (req.currentUser.type !== 'candidate') return res.status(403).send('Not authorized.');
+    const vc = require('../services/verificationCases');
+    const { c, messages } = await vc.thread(req.currentUser.id, req.params.caseId);
+    res.render('verification-thread', { c, messages, error: req.query.error || null, currentUserType: 'candidate' });
+  } catch (error) {
+    if (error.code === 'not_found') return res.status(404).send('Not found.');
+    console.error('Error loading verification thread:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/verification/:caseId/reply', async (req, res) => {
+  try {
+    if (req.currentUser.type !== 'candidate') return res.status(403).send('Not authorized.');
+    const candidate = await Candidate.findById(req.currentUser.id);
+    try {
+      await require('../services/verificationCases').candidateReply(candidate, req.params.caseId, req.body.body);
+    } catch (e) {
+      if (['empty', 'unsafe', 'closed'].includes(e.code)) return res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${e.code}`);
+      if (e.code === 'not_found') return res.status(404).send('Not found.');
+      throw e;
+    }
+    res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?sent=1`);
+  } catch (error) {
+    console.error('Error replying to verification thread:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET /messages/:id — view a single message, marks it read
 router.get('/:id', async (req, res) => {
   try {

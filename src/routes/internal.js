@@ -266,6 +266,8 @@ router.get('/', async (req, res) => {
       }),
     ]);
 
+    const vcDigest = await require('../services/verificationCases').digestSummary();
+    const verificationCount = vcDigest.calls + vcDigest.replies + vcDigest.contacts;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
@@ -273,6 +275,8 @@ router.get('/', async (req, res) => {
     res.render('internal-dashboard', {
       integrityCount,
       skillRequestCount,
+      verificationCount,
+      verificationOpen: vcDigest.open,
       candidateCount,
       flaggedCount: flaggedCount[0]?.total || 0,
       disputeAttentionCount: disputeThreads[0]?.total || 0,
@@ -420,6 +424,97 @@ router.post('/test-credits/grant', async (req, res) => {
   }
 });
 
+// ---- Verification cases (employment and education) ------------------------------------------------------
+// The routine and its wording live in services/verificationCases.js. Staff start a case from a candidate's
+// verify screen; this queue shows what needs doing today.
+router.post('/verify/:candidateId/case', async (req, res) => {
+  try {
+    const vc = require('../services/verificationCases');
+    const candidate = await Candidate.findById(req.params.candidateId);
+    if (!candidate) return res.status(404).send('Candidate not found.');
+    const created = await vc.start(candidate, req.body.category, Number(req.body.index), {
+      name: req.body.contactName, email: req.body.contactEmail, phone: req.body.contactPhone
+    });
+    res.redirect(`/verification-cases/${created._id}`);
+  } catch (error) {
+    if (['no_entry', 'already_verified', 'exists', 'bad_email'].includes(error.code)) {
+      return res.redirect(`/verify/${req.params.candidateId}?case=${error.code}`);
+    }
+    console.error('Error starting verification case:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/verification-cases', async (req, res) => {
+  try {
+    const vc = require('../services/verificationCases');
+    const VerificationCase = require('../models/VerificationCase');
+    const cases = await VerificationCase.find({ status: { $in: ['outreach', 'with_candidate'] } });
+    const cands = new Map((await Candidate.find({ _id: { $in: cases.map((c) => c.candidateId) } })).map((c) => [String(c._id), c]));
+    const rank = { reply: 0, call: 1, contact: 2, wait: 3 };
+    const rows = cases.map((c) => {
+      const cand = cands.get(String(c.candidateId));
+      return { id: c._id, candidate: cand ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '?', kind: c.category === 'workHistory' ? 'Employment' : 'Education',
+        subject: c.subject, detail: c.detail, day: vc.dayOf(c), status: c.status, action: vc.nextAction(c) };
+    }).sort((a, b) => rank[a.action.kind] - rank[b.action.kind] || b.day - a.day);
+    const closed = await VerificationCase.find({ status: { $in: ['verified', 'unable'] } }).sort({ closedAt: -1 }).limit(15);
+    res.render('internal-verification-cases', {
+      rows, openDay: vc.OPEN_DAY,
+      closed: closed.map((c) => ({ id: c._id, subject: c.subject, status: c.status, closedAt: c.closedAt }))
+    });
+  } catch (error) {
+    console.error('Error loading verification cases:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/verification-cases/:id', async (req, res) => {
+  try {
+    const vc = require('../services/verificationCases');
+    const VerificationCase = require('../models/VerificationCase');
+    const c = await VerificationCase.findById(req.params.id).catch(() => null);
+    if (!c) return res.status(404).send('Case not found.');
+    const candidate = await Candidate.findById(c.candidateId);
+    const messages = await Message.find({ verificationCaseId: c._id }).sort({ sentAt: 1 });
+    await Message.updateMany({ verificationCaseId: c._id, recipientType: 'system', readAt: null }, { readAt: new Date() });
+    res.render('internal-verification-case', {
+      c, candidate, messages, day: vc.dayOf(c), action: vc.nextAction(c), openDay: vc.OPEN_DAY,
+      outcomes: vc.OUTCOMES, notice: req.query.notice || null,
+      asks: { open: vc.TEXT.open(c) }
+    });
+  } catch (error) {
+    console.error('Error loading verification case:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/verification-cases/:id/:action', async (req, res) => {
+  try {
+    const vc = require('../services/verificationCases');
+    const VerificationCase = require('../models/VerificationCase');
+    const c = await VerificationCase.findById(req.params.id).catch(() => null);
+    if (!c) return res.status(404).send('Case not found.');
+    const back = (n) => res.redirect(`/verification-cases/${c._id}${n ? `?notice=${n}` : ''}`);
+    try {
+      switch (req.params.action) {
+        case 'contact': await vc.saveContact(c, { name: req.body.contactName, email: req.body.contactEmail, phone: req.body.contactPhone }); return back('saved');
+        case 'call': await vc.logCall(c, req.body.outcome); return back('logged');
+        case 'note': await vc.note(c, req.body.note); return back('noted');
+        case 'open': await vc.openNow(c); return back('opened');
+        case 'reply': await vc.staffReply(c, req.body.body); return back('sent');
+        case 'verified': case 'unable': await vc.resolve(c, req.params.action); return back('closed');
+        default: return res.status(400).send('Unknown action.');
+      }
+    } catch (e) {
+      if (['bad_email', 'invalid', 'empty', 'closed'].includes(e.code)) return back(e.code);
+      throw e;
+    }
+  } catch (error) {
+    console.error('Error updating verification case:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // Mark every open request for a skill as being built, declined, or back to requested. "Ready" is
 // set automatically when the test is registered (scripts/coderbyte-seed-catalog.js).
 router.post('/skill-requests/status', async (req, res) => {
@@ -459,7 +554,7 @@ router.get('/verify/:candidateId', async (req, res) => {
     if (!candidate) {
       return res.status(404).send('Candidate not found.');
     }
-    res.render('internal-verify-detail', { candidate });
+    res.render('internal-verify-detail', { candidate, caseNotice: req.query.case || null });
   } catch (error) {
     console.error('Error loading candidate for internal verify:', error);
     res.status(500).send('Server error');
