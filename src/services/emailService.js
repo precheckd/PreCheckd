@@ -320,7 +320,7 @@ async function sendEmployerVerificationEmail({ to, contactName, kind, candidateN
   ];
   const factHtml = [[isWork ? 'Job title' : 'Degree', detail], ['Dates', dates], [isWork ? 'Employer' : 'School', subject]]
     .filter((r) => r[1]).map((r) => `<tr><td style="padding:2px 14px 2px 0;color:#5A6B70;">${escapeHtml(r[0])}</td><td style="padding:2px 0;font-weight:600;">${escapeHtml(r[1])}</td></tr>`).join('');
-  const reply = process.env.VERIFICATION_REPLY_TO || 'verification@precheckd.com';
+  const reply = process.env.VERIFICATION_REPLY_TO || 'verifications@precheckd.com';
   const bodyHtml = `
     <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Verification request</p>
     <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${isWork ? 'Can you confirm an employment record?' : 'Can you confirm an education record?'}</h1>
