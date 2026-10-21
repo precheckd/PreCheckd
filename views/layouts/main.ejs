@@ -434,6 +434,8 @@
             </details>
           <% } %>
         </div>
+      <% } else if (typeof isAdminHost !== 'undefined' && isAdminHost) { %>
+        <a href="/" class="nav-btn-outline">Admin Home</a>
       <% } else { %>
         <a href="/recruiter-search" class="nav-btn-outline">Browse Recruiters</a>
         <a href="/recruiter-landing" class="nav-btn-outline">Recruiters</a>
