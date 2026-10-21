@@ -73,6 +73,18 @@ const messageSchema = new mongoose.Schema({
     required: true
   },
 
+  // Verification threads only: documents the candidate attached. Private storage keys, never public URLs;
+  // staff open them through the admin site. Deleted ~30 days after the case closes.
+  attachments: {
+    type: [{
+      key: { type: String, required: true },
+      name: { type: String, required: true },
+      mime: { type: String, required: true },
+      size: { type: Number, default: 0 }
+    }],
+    default: []
+  },
+
   sentAt: {
     type: Date,
     default: Date.now

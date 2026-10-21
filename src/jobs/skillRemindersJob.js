@@ -30,6 +30,7 @@ function startSkillRemindersJob() {
   }
   const tick = () => {
     maybeSendDigest();
+    require('../services/verificationCases').purgeOldFiles().catch((err) => console.error('[jobs] verification file purge failed:', err));
     require('../services/verificationCases').runDue()
       .then((c) => console.log(`[jobs] verification cases: emailed=${c.emails} opened=${c.opened}`))
       .catch((err) => console.error('[jobs] verification cases failed:', err));

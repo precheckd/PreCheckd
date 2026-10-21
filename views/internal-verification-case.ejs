@@ -27,7 +27,7 @@
   <a class="vc-back" href="/verification-cases">&larr; All cases</a>
   <h1><%= c.category === 'workHistory' ? 'Employment' : 'Education' %>: <%= c.subject %></h1>
   <p class="vc-sub"><%= candidate ? candidate.firstName + ' ' + (candidate.lastName || '') : 'Unknown candidate' %> &middot; <%= c.detail %> &middot; <%= c.dates %> &middot; day <%= day %> &middot; <%= c.status === 'outreach' ? 'contacting them' : c.status === 'with_candidate' ? 'with the candidate' : c.status === 'verified' ? 'verified' : 'unable to verify' %></p>
-  <% if (notice) { %><div class="vc-note" style="margin-top:0.8rem;"><%= ({ saved: 'Contact saved.', logged: 'Call logged.', noted: 'Note added.', opened: 'Opened to the candidate.', sent: 'Message sent.', closed: 'Case closed and the candidate was told.', bad_email: 'That email does not look right.', invalid: 'Pick or write something first.', empty: 'Write a message first.' })[notice] || '' %></div><% } %>
+  <% if (notice) { %><div class="vc-note" style="margin-top:0.8rem;"><%= ({ saved: 'Contact saved.', logged: 'Call logged.', noted: 'Note added.', opened: 'Opened to the candidate.', sent: 'Message sent.', closed: 'Case closed and the candidate was told.', filedeleted: 'File deleted.', bad_email: 'That email does not look right.', invalid: 'Pick or write something first.', empty: 'Write a message first.' })[notice] || '' %></div><% } %>
 
   <div class="vc-card" style="margin-top:1rem;">
     <div class="vc-next <%= action.kind %>"><%= action.label %></div>
@@ -67,7 +67,12 @@
   <div class="vc-card">
     <h2>Conversation with the candidate</h2>
     <% messages.forEach((m) => { const staff = m.senderType === 'system'; %>
-      <div class="vc-msg <%= staff ? 'staff' : 'cand' %>"><div class="vc-meta"><%= staff ? 'PreCheckd Verification' : 'Candidate' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %></div>
+      <div class="vc-msg <%= staff ? 'staff' : 'cand' %>"><div class="vc-meta"><%= staff ? 'PreCheckd Verification' : 'Candidate' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %>
+        <% (m.attachments || []).forEach((a, i) => { %>
+          <div class="vc-meta" style="margin-top:0.4rem;"><a href="/verification-cases/<%= c._id %>/file/<%= m._id %>/<%= i %>">📎 <%= a.name %></a> (<%= Math.max(1, Math.round(a.size / 1024)) %> KB)
+            <form method="POST" action="/verification-cases/<%= c._id %>/file/<%= m._id %>/<%= i %>/delete" style="display:inline;" onsubmit="return confirm('Delete this file now?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="vc-btn warn" type="submit" style="padding:0.1rem 0.5rem;font-size:0.75rem;">Delete now</button></form></div>
+        <% }) %>
+      </div>
     <% }) %>
     <% if (c.status !== 'verified') { %>
     <form method="POST" action="/verification-cases/<%= c._id %>/reply" style="margin-top:0.8rem;">
@@ -76,6 +81,7 @@
       <div class="vc-row" style="margin-top:0.5rem;">
         <button class="vc-btn solid" type="submit">Send</button>
         <button class="vc-btn" type="button" id="vc-ask">Fill in the standard request for help</button>
+        <button class="vc-btn" type="button" id="vc-docs">Ask for a document</button>
       </div>
     </form>
     <% } %>
@@ -107,5 +113,8 @@
 <script>
   document.getElementById('vc-ask') && document.getElementById('vc-ask').addEventListener('click', function () {
     document.getElementById('vc-body').value = <%- JSON.stringify(asks.open).replace(/</g, '\\u003c') %>;
+  });
+  document.getElementById('vc-docs') && document.getElementById('vc-docs').addEventListener('click', function () {
+    document.getElementById('vc-body').value = <%- JSON.stringify(asks.docs).replace(/</g, '\\u003c') %>;
   });
 </script>

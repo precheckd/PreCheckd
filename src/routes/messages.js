@@ -1,5 +1,8 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
+// Verification documents: held in memory, checked and sent to private storage by services/verificationCases.js.
+const docUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 3 } }).array('files', 3);
 const Message = require('../models/Message');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const Recruiter = require('../models/Recruiter');
@@ -331,14 +334,20 @@ router.get('/verification/:caseId', async (req, res) => {
   }
 });
 
-router.post('/verification/:caseId/reply', async (req, res) => {
+router.post('/verification/:caseId/reply', (req, res, next) => {
+  if (req.currentUser.type !== 'candidate') return res.status(403).send('Not authorized.');
+  docUpload(req, res, (err) => {
+    if (!err) return next();
+    const back = (n) => res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${n}`);
+    return back(err.code === 'LIMIT_FILE_SIZE' ? 'too_big' : err.code === 'LIMIT_UNEXPECTED_FILE' || err.code === 'LIMIT_FILE_COUNT' ? 'too_many' : 'bad_file');
+  });
+}, async (req, res) => {
   try {
-    if (req.currentUser.type !== 'candidate') return res.status(403).send('Not authorized.');
     const candidate = await Candidate.findById(req.currentUser.id);
     try {
-      await require('../services/verificationCases').candidateReply(candidate, req.params.caseId, req.body.body);
+      await require('../services/verificationCases').candidateReply(candidate, req.params.caseId, (req.body || {}).body, req.files || []);
     } catch (e) {
-      if (['empty', 'unsafe', 'closed'].includes(e.code)) return res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${e.code}`);
+      if (['empty', 'unsafe', 'closed', 'too_many', 'bad_file', 'too_big'].includes(e.code)) return res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${e.code}`);
       if (e.code === 'not_found') return res.status(404).send('Not found.');
       throw e;
     }

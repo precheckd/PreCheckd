@@ -25,7 +25,13 @@ const SCHEDULE = [
   { key: 'call5', type: 'call', day: 5 },
   { key: 'open7', type: 'open', day: OPEN_DAY }
 ];
+const MAX_FILES_PER_MESSAGE = 2;
+const MAX_FILES_PER_CASE = 6;
+const KEEP_FILES_DAYS = 30;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const FILE_TYPES = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 const NO_SENSITIVE = 'Please do not send Social Security, card or bank account numbers here.';
+const REDACT = 'Black out your Social Security number, pay amounts and account numbers first; we only need your name, the school or employer, and the dates.';
 const fail = (code, msg) => { const e = new Error(msg || code); e.code = code; return e; };
 const isWork = (c) => c.category === 'workHistory';
 const noun = (c) => (isWork(c) ? 'employment' : 'education');
@@ -34,8 +40,11 @@ const noun = (c) => (isWork(c) ? 'employment' : 'education');
 const TEXT = {
   start: (c) => `We've started verifying your ${isWork(c) ? `${c.detail ? c.detail + ' role' : 'role'} at` : `${c.detail ? c.detail + ' at' : 'time at'}`} ${c.subject}. This usually takes up to 7 business days and you don't need to do anything. If you know a good contact, such as ${isWork(c) ? 'someone in HR or a former manager' : 'the registrar or records office'}, you can reply here with their name and email or phone to speed it up. ${NO_SENSITIVE}`,
   open: (c) => isWork(c)
-    ? `We haven't been able to confirm your time at ${c.subject} yet, and we could use your help. Could you reply with:\n\n1. The name and email or phone of someone in HR or payroll there, or a former manager who can confirm your dates\n2. Your exact start and end dates, if the ones on your profile are approximate\n3. Any other name you used while you worked there\n\n${NO_SENSITIVE}`
-    : `We haven't been able to confirm your time at ${c.subject} yet, and we could use your help. Could you reply with:\n\n1. The name and email or phone of the registrar or records office\n2. Your exact graduation date, if the one on your profile is approximate\n3. Any other name you used while you were enrolled\n\n${NO_SENSITIVE}`,
+    ? `We haven't been able to confirm your time at ${c.subject} yet, and we could use your help. Could you reply with:\n\n1. The name and email or phone of someone in HR or payroll there, or a former manager who can confirm your dates\n2. Your exact start and end dates, if the ones on your profile are approximate\n3. Any other name you used while you worked there\n\nIf you have a document that shows it, such as an offer letter, you can attach it below. ${REDACT} ${NO_SENSITIVE}`
+    : `We haven't been able to confirm your time at ${c.subject} yet, and we could use your help. Could you reply with:\n\n1. The name and email or phone of the registrar or records office\n2. Your exact graduation date, if the one on your profile is approximate\n3. Any other name you used while you were enrolled\n\nIf you have a document that shows it, such as a diploma or transcript, you can attach it below. ${REDACT} ${NO_SENSITIVE}`,
+  docs: (c) => isWork(c)
+    ? `If it's easier, you can attach a document that shows your time at ${c.subject}, such as an offer letter or a pay stub. ${REDACT} Use the attach button below your reply.`
+    : `If it's easier, you can attach a document that shows your time at ${c.subject}, such as a diploma or transcript. ${REDACT} Use the attach button below your reply.`,
   verified: (c) => `Good news: your ${noun(c)} at ${c.subject} is now verified and shows as verified on your profile.`,
   unable: (c) => `We weren't able to confirm your ${noun(c)} at ${c.subject}. It stays on your profile as unverified, and this doesn't count against you. If you can get us a new contact for them, reply here and we'll try again.`
 };
@@ -232,19 +241,48 @@ async function thread(candidateId, id) {
   return { c, messages };
 }
 
-// Throws .code: not_found | empty | unsafe | closed (verified, nothing left to say).
-async function candidateReply(candidate, id, body) {
+// Recognizes the real file type from its first bytes, so a renamed file can't slip through.
+function sniff(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf.slice(0, 4).toString('latin1') === '%PDF') return 'application/pdf';
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  if (buf.slice(1, 4).toString('latin1') === 'PNG' && buf[0] === 0x89) return 'image/png';
+  if (buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
+  return null;
+}
+const safeName = (n) => String(n || 'document').split(/[\\/]/).pop().replace(/[^\w.\- ()]/g, '').slice(0, 80) || 'document';
+
+// Throws .code: not_found | empty | unsafe | closed | too_many | bad_file | too_big.
+// A message needs text or a file. Files go to private storage and are never linked from the candidate's profile.
+async function candidateReply(candidate, id, body, files = []) {
   const c = await ownCase(candidate._id, id);
   const text = String(body || '').trim();
-  if (!text) throw fail('empty');
-  const unsafe = checkOutgoing(text);
-  if (unsafe) { const e = fail('unsafe', unsafe.message); throw e; }
+  files = (files || []).filter(Boolean);
+  if (!text && !files.length) throw fail('empty');
+  if (text) { const unsafe = checkOutgoing(text); if (unsafe) throw fail('unsafe', unsafe.message); }
   if (c.status === 'verified') throw fail('closed');
-  await Message.create({ verificationCaseId: c._id, senderType: 'candidate', senderId: candidate._id, recipientType: 'system', body: text.slice(0, 4000) });
+  const attachments = [];
+  if (files.length) {
+    if (files.length > MAX_FILES_PER_MESSAGE) throw fail('too_many');
+    const prior = (await Message.find({ verificationCaseId: c._id })).reduce((n, m) => n + (m.attachments || []).length, 0);
+    if (prior + files.length > MAX_FILES_PER_CASE) throw fail('too_many');
+    for (const f of files) {
+      if (!f.buffer || f.size > MAX_FILE_BYTES || f.buffer.length > MAX_FILE_BYTES) throw fail('too_big');
+      const type = sniff(f.buffer);
+      if (!type || !FILE_TYPES[type]) throw fail('bad_file');
+    }
+    const s3 = require('../utils/s3Upload');
+    for (const f of files) {
+      const type = sniff(f.buffer);
+      const key = await s3.uploadPrivateDocument('verification-docs', String(c._id), { buffer: f.buffer, mimetype: type }, FILE_TYPES[type]);
+      attachments.push({ key, name: safeName(f.originalname), mime: type, size: f.buffer.length });
+    }
+  }
+  await Message.create({ verificationCaseId: c._id, senderType: 'candidate', senderId: candidate._id, recipientType: 'system', body: (text || '(attached a file)').slice(0, 4000), attachments });
   c.turn = 'staff';
   // A reply after "unable to verify" means they have something new: it goes back in the queue.
   if (c.status === 'unable') { c.status = 'with_candidate'; c.closedAt = null; logLine(c, 'Candidate replied after closing: reopened'); }
-  else logLine(c, 'Candidate replied');
+  else logLine(c, attachments.length ? `Candidate replied with ${attachments.length} file${attachments.length === 1 ? '' : 's'}` : 'Candidate replied');
   await c.save();
   try {
     await require('./emailService').sendStaffAlertEmail({
@@ -254,6 +292,45 @@ async function candidateReply(candidate, id, body) {
     });
   } catch (e) { console.error('[verification] staff alert failed:', e.message); }
   return c;
+}
+
+// ---- documents (staff side) --------------------------------------------
+
+// The stored file behind a link on the case page, or null.
+async function fileFor(caseId, messageId, index) {
+  const m = await Message.findById(messageId).catch(() => null);
+  if (!m || String(m.verificationCaseId) !== String(caseId)) return null;
+  return (m.attachments || [])[Number(index)] || null;
+}
+
+async function deleteFile(c, messageId, index) {
+  const m = await Message.findById(messageId).catch(() => null);
+  if (!m || String(m.verificationCaseId) !== String(c._id) || !(m.attachments || [])[Number(index)]) throw fail('not_found');
+  const [f] = m.attachments.splice(Number(index), 1);
+  await require('../utils/s3Upload').deletePrivateObject(f.key);
+  await m.save();
+  logLine(c, `Deleted file ${f.name}`);
+  await c.save();
+  return c;
+}
+
+// Hourly: documents are kept for KEEP_FILES_DAYS after a case closes, then removed.
+async function purgeOldFiles(now = Date.now()) {
+  const cutoff = now - KEEP_FILES_DAYS * 86400000;
+  const closed = await VerificationCase.find({ status: { $in: ['verified', 'unable'] } });
+  let n = 0;
+  for (const c of closed) {
+    if (!c.closedAt || c.closedAt.getTime() > cutoff) continue;
+    const msgs = await Message.find({ verificationCaseId: c._id });
+    let here = 0;
+    for (const m of msgs) {
+      if (!(m.attachments || []).length) continue;
+      for (const f of m.attachments) { await require('../utils/s3Upload').deletePrivateObject(f.key); here++; }
+      m.attachments = []; await m.save();
+    }
+    if (here) { n += here; logLine(c, 'Documents removed (30 days after closing)'); await c.save(); }
+  }
+  return n;
 }
 
 // Mail page rows: one per case, most recent message first.
@@ -286,4 +363,4 @@ async function sendDigest() {
   return d.calls + d.replies + d.contacts;
 }
 
-module.exports = { OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };
+module.exports = { MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, KEEP_FILES_DAYS, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };

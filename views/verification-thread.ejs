@@ -30,18 +30,26 @@
 
     <% if (error === 'empty') { %><div class="vt-banner">Write a message before sending.</div><% } %>
     <% if (error === 'unsafe') { %><div class="vt-banner">For your safety, please don't include Social Security, card or bank account numbers. Take those out and try again.</div><% } %>
+    <% if (error === 'too_big') { %><div class="vt-banner">That file is over 5 MB. Try a smaller scan or photo.</div><% } %>
+    <% if (error === 'bad_file') { %><div class="vt-banner">We can only accept PDF, JPG, PNG or WebP files.</div><% } %>
+    <% if (error === 'too_many') { %><div class="vt-banner">You can attach up to 2 files at a time, and 6 in total for this check.</div><% } %>
     <% if (error === 'closed') { %><div class="vt-banner">This one is already verified, so there's nothing left to send.</div><% } %>
 
     <% messages.forEach(function(m) { const mine = m.senderType === 'candidate'; %>
       <div class="vt-msg <%= mine ? 'me' : 'them' %>">
-        <div class="vt-meta"><%= mine ? 'You' : 'PreCheckd Verification' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %>
+        <div class="vt-meta"><%= mine ? 'You' : 'PreCheckd Verification' %> &middot; <%= m.sentAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div><%= m.body %><% if (m.attachments && m.attachments.length) { %><div class="vt-meta" style="margin-top:0.5rem;">Attached: <%= m.attachments.map(function(a) { return a.name; }).join(', ') %></div><% } %>
       </div>
     <% }); %>
 
     <% if (c.status !== 'verified') { %>
-    <form class="vt-reply" method="POST" action="/messages/verification/<%= c._id %>/reply">
+    <form class="vt-reply" method="POST" enctype="multipart/form-data" action="/messages/verification/<%= c._id %>/reply">
       <label for="vt-body" style="color:#F2F4F3;font-weight:600;font-size:0.92rem;">Reply</label>
-      <textarea id="vt-body" name="body" required placeholder="Write your reply..."></textarea>
+      <textarea id="vt-body" name="body" placeholder="Write your reply..."></textarea>
+      <div style="margin-top:0.75rem;color:#C7D1CF;font-size:0.85rem;">
+        <label for="vt-files">Attach a document (optional, PDF, JPG or PNG, up to 5 MB, 2 files at a time)</label><br>
+        <input id="vt-files" type="file" name="files" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" multiple style="margin-top:0.35rem;color:#C7D1CF;">
+        <p class="vt-note" style="margin-top:0.4rem;">Black out your Social Security number, pay amounts and account numbers first. We only need your name, the employer or school, and the dates. Only PreCheckd staff can open it, it never appears on your profile, and it is deleted about 30 days after this check closes.</p>
+      </div>
       <button type="submit">Send</button>
       <p class="vt-note">PreCheckd will never ask you for anything by email; verification questions only happen here. We'll never ask for your Social Security number, card or bank details, and you shouldn't send them.</p>
     </form>

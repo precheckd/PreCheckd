@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const crypto = require('crypto');
 const path = require('path');
 
@@ -219,6 +219,25 @@ async function uploadCandidateInterviewVideo(candidateId, questionId, file) {
   return `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
 }
 
+// Private files (verification documents): no public URL is ever made. Only the storage key is kept, and the
+// only way to read one is getPrivateObject through a staff-only route.
+async function uploadPrivateDocument(prefix, ownerId, file, extension) {
+  const key = `${prefix}/${ownerId}-${crypto.randomBytes(12).toString('hex')}${extension}`;
+  await s3Client.send(new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, Body: file.buffer, ContentType: file.mimetype, ServerSideEncryption: 'AES256' }));
+  return key;
+}
+
+async function getPrivateObject(key) {
+  const out = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }));
+  return { body: out.Body, contentType: out.ContentType, length: out.ContentLength };
+}
+
+async function deletePrivateObject(key) {
+  if (!key) return;
+  try { await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: key })); }
+  catch (error) { console.error('Failed to delete private S3 file:', error); }
+}
+
 async function deleteS3Object(fileUrl) {
   if (!fileUrl) return;
   try {
@@ -242,6 +261,9 @@ module.exports = {
   uploadCandidateIntroVideo,
   uploadCandidateInterviewVideo,
   deleteS3Object,
+  uploadPrivateDocument,
+  getPrivateObject,
+  deletePrivateObject,
   validateImageFile,
   validateResumeFile,
   validateEvidenceFile,

@@ -480,10 +480,43 @@ router.get('/verification-cases/:id', async (req, res) => {
     res.render('internal-verification-case', {
       c, candidate, messages, day: vc.dayOf(c), action: vc.nextAction(c), openDay: vc.OPEN_DAY,
       outcomes: vc.OUTCOMES, notice: req.query.notice || null,
-      asks: { open: vc.TEXT.open(c) }
+      asks: { open: vc.TEXT.open(c), docs: vc.TEXT.docs(c) }
     });
   } catch (error) {
     console.error('Error loading verification case:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Streams one attached document. Staff only; always downloaded, never rendered in the page.
+router.get('/verification-cases/:id/file/:messageId/:index', async (req, res) => {
+  try {
+    const f = await require('../services/verificationCases').fileFor(req.params.id, req.params.messageId, req.params.index);
+    if (!f) return res.status(404).send('File not found.');
+    const obj = await require('../utils/s3Upload').getPrivateObject(f.key);
+    res.set({
+      'Content-Type': f.mime,
+      'Content-Disposition': `attachment; filename="${f.name.replace(/"/g, '')}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'private, no-store'
+    });
+    if (obj.body && typeof obj.body.pipe === 'function') obj.body.pipe(res); else res.send(obj.body);
+  } catch (error) {
+    console.error('Error opening verification file:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/verification-cases/:id/file/:messageId/:index/delete', async (req, res) => {
+  try {
+    const VerificationCase = require('../models/VerificationCase');
+    const c = await VerificationCase.findById(req.params.id).catch(() => null);
+    if (!c) return res.status(404).send('Case not found.');
+    try { await require('../services/verificationCases').deleteFile(c, req.params.messageId, req.params.index); }
+    catch (e) { if (e.code === 'not_found') return res.status(404).send('File not found.'); throw e; }
+    res.redirect(`/verification-cases/${c._id}?notice=filedeleted`);
+  } catch (error) {
+    console.error('Error deleting verification file:', error);
     res.status(500).send('Server error');
   }
 });
