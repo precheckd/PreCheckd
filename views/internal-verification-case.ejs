@@ -27,7 +27,7 @@
   <a class="vc-back" href="/verification-cases">&larr; All cases</a>
   <h1><%= c.category === 'workHistory' ? 'Employment' : 'Education' %>: <%= c.subject %></h1>
   <p class="vc-sub"><%= candidate ? candidate.firstName + ' ' + (candidate.lastName || '') : 'Unknown candidate' %> &middot; <%= c.detail %> &middot; <%= c.dates %> &middot; day <%= day %> &middot; <%= c.status === 'outreach' ? 'contacting them' : c.status === 'with_candidate' ? 'with the candidate' : c.status === 'verified' ? 'verified' : 'unable to verify' %></p>
-  <% if (notice) { %><div class="vc-note" style="margin-top:0.8rem;"><%= ({ saved: 'Contact saved.', logged: 'Call logged.', noted: 'Note added.', opened: 'Opened to the candidate.', sent: 'Message sent.', closed: 'Case closed and the candidate was told.', filedeleted: 'File deleted.', bad_email: 'That email does not look right.', invalid: 'Pick or write something first.', empty: 'Write a message first.' })[notice] || '' %></div><% } %>
+  <% if (notice) { %><div class="vc-note" style="margin-top:0.8rem;"><%= ({ saved: 'Contact saved.', logged: 'Call logged.', noted: 'Note added.', opened: 'Opened to the candidate.', sent: 'Message sent.', closed: 'Case closed and the candidate was told.', filedeleted: 'File deleted.', held: 'Legal hold on. Files on this case will not be auto-deleted.', released: 'Legal hold released.', bad_email: 'That email does not look right.', invalid: 'Pick or write something first.', empty: 'Write a message first.' })[notice] || '' %></div><% } %>
 
   <div class="vc-card" style="margin-top:1rem;">
     <div class="vc-next <%= action.kind %>"><%= action.label %></div>
@@ -97,6 +97,17 @@
     <p class="vc-sub" style="margin-top:0.6rem;">Either one messages the candidate. Unable to verify is neutral wording and never counts against them; if they reply afterwards the case reopens.</p>
   </div>
   <% } %>
+
+  <div class="vc-card">
+    <h2>Legal hold</h2>
+    <% if (c.legalHold) { %>
+      <p class="vc-sub">On since <%= c.legalHoldAt ? c.legalHoldAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '' %>. Documents on this case are kept until you release it.</p>
+      <form method="POST" action="/verification-cases/<%= c._id %>/release"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="vc-btn" type="submit">Release the hold</button></form>
+    <% } else { %>
+      <p class="vc-sub">Documents are deleted <%= retention %> after a case closes. Put a case on hold if there is a dispute or legal threat, and its files will be kept until you release it.</p>
+      <form method="POST" action="/verification-cases/<%= c._id %>/hold" class="vc-row"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="reason" placeholder="Why (optional)" style="min-width:260px;"><button class="vc-btn warn" type="submit">Keep for legal reasons</button></form>
+    <% } %>
+  </div>
 
   <div class="vc-card">
     <h2>Notes and history (staff only)</h2>

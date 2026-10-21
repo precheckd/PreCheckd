@@ -27,7 +27,10 @@ const SCHEDULE = [
 ];
 const MAX_FILES_PER_MESSAGE = 2;
 const MAX_FILES_PER_CASE = 6;
-const KEEP_FILES_DAYS = 30;
+// How long documents are kept after a case closes. One setting so counsel can change it without code; a case on
+// legal hold is never purged. The case record itself (the log) is kept, documents are not part of it.
+const keepFilesDays = () => Number(process.env.VERIFICATION_FILE_RETENTION_DAYS) || 365;
+const retentionPhrase = () => { const d = keepFilesDays(); return d % 365 === 0 ? (d === 365 ? 'a year' : `${d / 365} years`) : d % 30 === 0 ? `${d / 30} months` : `${d} days`; };
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const FILE_TYPES = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 const NO_SENSITIVE = 'Please do not send Social Security, card or bank account numbers here.';
@@ -294,6 +297,15 @@ async function candidateReply(candidate, id, body, files = []) {
   return c;
 }
 
+// Legal hold: files on this case are never auto-deleted until staff release it. (Staff can still delete by hand.)
+async function setLegalHold(c, on, reason) {
+  c.legalHold = !!on;
+  c.legalHoldAt = on ? new Date() : null;
+  logLine(c, on ? `Legal hold ON${reason ? ': ' + String(reason).trim().slice(0, 300) : ''}` : 'Legal hold released');
+  await c.save();
+  return c;
+}
+
 // ---- documents (staff side) --------------------------------------------
 
 // The stored file behind a link on the case page, or null.
@@ -314,13 +326,13 @@ async function deleteFile(c, messageId, index) {
   return c;
 }
 
-// Hourly: documents are kept for KEEP_FILES_DAYS after a case closes, then removed.
+// Hourly: documents are kept for the retention period after a case closes, then removed. Legal-hold cases are skipped.
 async function purgeOldFiles(now = Date.now()) {
-  const cutoff = now - KEEP_FILES_DAYS * 86400000;
+  const cutoff = now - keepFilesDays() * 86400000;
   const closed = await VerificationCase.find({ status: { $in: ['verified', 'unable'] } });
   let n = 0;
   for (const c of closed) {
-    if (!c.closedAt || c.closedAt.getTime() > cutoff) continue;
+    if (c.legalHold || !c.closedAt || c.closedAt.getTime() > cutoff) continue;
     const msgs = await Message.find({ verificationCaseId: c._id });
     let here = 0;
     for (const m of msgs) {
@@ -328,7 +340,7 @@ async function purgeOldFiles(now = Date.now()) {
       for (const f of m.attachments) { await require('../utils/s3Upload').deletePrivateObject(f.key); here++; }
       m.attachments = []; await m.save();
     }
-    if (here) { n += here; logLine(c, 'Documents removed (30 days after closing)'); await c.save(); }
+    if (here) { n += here; logLine(c, `Documents removed (${retentionPhrase()} after closing)`); await c.save(); }
   }
   return n;
 }
@@ -363,4 +375,4 @@ async function sendDigest() {
   return d.calls + d.replies + d.contacts;
 }
 
-module.exports = { MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, KEEP_FILES_DAYS, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };
+module.exports = { MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, keepFilesDays, retentionPhrase, setLegalHold, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };

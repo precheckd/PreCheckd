@@ -480,6 +480,7 @@ router.get('/verification-cases/:id', async (req, res) => {
     res.render('internal-verification-case', {
       c, candidate, messages, day: vc.dayOf(c), action: vc.nextAction(c), openDay: vc.OPEN_DAY,
       outcomes: vc.OUTCOMES, notice: req.query.notice || null,
+      retention: vc.retentionPhrase(),
       asks: { open: vc.TEXT.open(c), docs: vc.TEXT.docs(c) }
     });
   } catch (error) {
@@ -535,6 +536,8 @@ router.post('/verification-cases/:id/:action', async (req, res) => {
         case 'note': await vc.note(c, req.body.note); return back('noted');
         case 'open': await vc.openNow(c); return back('opened');
         case 'reply': await vc.staffReply(c, req.body.body); return back('sent');
+        case 'hold': await vc.setLegalHold(c, true, req.body.reason); return back('held');
+        case 'release': await vc.setLegalHold(c, false); return back('released');
         case 'verified': case 'unable': await vc.resolve(c, req.params.action); return back('closed');
         default: return res.status(400).send('Unknown action.');
       }

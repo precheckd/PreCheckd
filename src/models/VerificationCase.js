@@ -35,6 +35,9 @@ const verificationCaseSchema = new mongoose.Schema({
   closedAt: { type: Date, default: null },
   steps: { type: [stepSchema], default: [] },
   log: { type: [logSchema], default: [] },                       // staff-only history
+  // Legal hold: documents are exempt from the automatic purge until staff release it.
+  legalHold: { type: Boolean, default: false },
+  legalHoldAt: { type: Date, default: null },
   // Whose turn it is in the thread: 'staff' after a candidate reply, 'candidate' after ours. Null until anyone writes.
   turn: { type: String, enum: [null, 'staff', 'candidate'], default: null }
 }, { timestamps: true });

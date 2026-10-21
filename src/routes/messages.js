@@ -326,7 +326,7 @@ router.get('/verification/:caseId', async (req, res) => {
     if (req.currentUser.type !== 'candidate') return res.status(403).send('Not authorized.');
     const vc = require('../services/verificationCases');
     const { c, messages } = await vc.thread(req.currentUser.id, req.params.caseId);
-    res.render('verification-thread', { c, messages, error: req.query.error || null, currentUserType: 'candidate' });
+    res.render('verification-thread', { retention: require('../services/verificationCases').retentionPhrase(), c, messages, error: req.query.error || null, currentUserType: 'candidate' });
   } catch (error) {
     if (error.code === 'not_found') return res.status(404).send('Not found.');
     console.error('Error loading verification thread:', error);

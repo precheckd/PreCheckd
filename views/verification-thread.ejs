@@ -48,7 +48,7 @@
       <div style="margin-top:0.75rem;color:#C7D1CF;font-size:0.85rem;">
         <label for="vt-files">Attach a document (optional, PDF, JPG or PNG, up to 5 MB, 2 files at a time)</label><br>
         <input id="vt-files" type="file" name="files" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" multiple style="margin-top:0.35rem;color:#C7D1CF;">
-        <p class="vt-note" style="margin-top:0.4rem;">Black out your Social Security number, pay amounts and account numbers first. We only need your name, the employer or school, and the dates. Only PreCheckd staff can open it, it never appears on your profile, and it is deleted about 30 days after this check closes.</p>
+        <p class="vt-note" style="margin-top:0.4rem;">Black out your Social Security number, pay amounts and account numbers first. We only need your name, the employer or school, and the dates. Only PreCheckd staff can open it, it never appears on your profile, and it is kept for up to <%= locals.retention || 'a year' %> after this check closes, then deleted (longer only if a legal matter requires it).</p>
       </div>
       <button type="submit">Send</button>
       <p class="vt-note">PreCheckd will never ask you for anything by email; verification questions only happen here. We'll never ask for your Social Security number, card or bank details, and you shouldn't send them.</p>
