@@ -219,22 +219,32 @@ async function uploadCandidateInterviewVideo(candidateId, questionId, file) {
   return `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
 }
 
+// Private files (verification documents) live in their OWN bucket (AWS_S3_PRIVATE_BUCKET_NAME) with Block Public
+// Access on, never in the photo bucket, whose contents are public. If it isn't configured, uploads are refused
+// rather than falling back to the shared bucket.
+const PRIVATE_BUCKET = process.env.AWS_S3_PRIVATE_BUCKET_NAME;
+function requirePrivateBucket() {
+  if (!PRIVATE_BUCKET || PRIVATE_BUCKET === BUCKET_NAME) { const e = new Error('Private bucket not configured'); e.code = 'private_bucket_missing'; throw e; }
+}
+
 // Private files (verification documents): no public URL is ever made. Only the storage key is kept, and the
 // only way to read one is getPrivateObject through a staff-only route.
 async function uploadPrivateDocument(prefix, ownerId, file, extension) {
+  requirePrivateBucket();
   const key = `${prefix}/${ownerId}-${crypto.randomBytes(12).toString('hex')}${extension}`;
-  await s3Client.send(new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, Body: file.buffer, ContentType: file.mimetype, ServerSideEncryption: 'AES256' }));
+  await s3Client.send(new PutObjectCommand({ Bucket: PRIVATE_BUCKET, Key: key, Body: file.buffer, ContentType: file.mimetype, ServerSideEncryption: 'AES256' }));
   return key;
 }
 
 async function getPrivateObject(key) {
-  const out = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }));
+  requirePrivateBucket();
+  const out = await s3Client.send(new GetObjectCommand({ Bucket: PRIVATE_BUCKET, Key: key }));
   return { body: out.Body, contentType: out.ContentType, length: out.ContentLength };
 }
 
 async function deletePrivateObject(key) {
   if (!key) return;
-  try { await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: key })); }
+  try { requirePrivateBucket(); await s3Client.send(new DeleteObjectCommand({ Bucket: PRIVATE_BUCKET, Key: key })); }
   catch (error) { console.error('Failed to delete private S3 file:', error); }
 }
 

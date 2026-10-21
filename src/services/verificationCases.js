@@ -277,7 +277,14 @@ async function candidateReply(candidate, id, body, files = []) {
     const s3 = require('../utils/s3Upload');
     for (const f of files) {
       const type = sniff(f.buffer);
-      const key = await s3.uploadPrivateDocument('verification-docs', String(c._id), { buffer: f.buffer, mimetype: type }, FILE_TYPES[type]);
+      let key;
+      try { key = await s3.uploadPrivateDocument('verification-docs', String(c._id), { buffer: f.buffer, mimetype: type }, FILE_TYPES[type]); }
+      catch (e) {
+        console.error('[verification] document upload failed:', e.message);
+        // Files already stored for this message are removed so nothing is left behind.
+        for (const a of attachments) await s3.deletePrivateObject(a.key);
+        throw fail('unavailable', 'Uploads unavailable');
+      }
       attachments.push({ key, name: safeName(f.originalname), mime: type, size: f.buffer.length });
     }
   }

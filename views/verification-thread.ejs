@@ -33,6 +33,7 @@
     <% if (error === 'too_big') { %><div class="vt-banner">That file is over 5 MB. Try a smaller scan or photo.</div><% } %>
     <% if (error === 'bad_file') { %><div class="vt-banner">We can only accept PDF, JPG, PNG or WebP files.</div><% } %>
     <% if (error === 'too_many') { %><div class="vt-banner">You can attach up to 2 files at a time, and 6 in total for this check.</div><% } %>
+    <% if (error === 'unavailable') { %><div class="vt-banner">File uploads are temporarily unavailable. Send your reply without a file for now, or try again later.</div><% } %>
     <% if (error === 'closed') { %><div class="vt-banner">This one is already verified, so there's nothing left to send.</div><% } %>
 
     <% messages.forEach(function(m) { const mine = m.senderType === 'candidate'; %>

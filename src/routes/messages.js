@@ -347,7 +347,7 @@ router.post('/verification/:caseId/reply', (req, res, next) => {
     try {
       await require('../services/verificationCases').candidateReply(candidate, req.params.caseId, (req.body || {}).body, req.files || []);
     } catch (e) {
-      if (['empty', 'unsafe', 'closed', 'too_many', 'bad_file', 'too_big'].includes(e.code)) return res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${e.code}`);
+      if (['empty', 'unsafe', 'closed', 'too_many', 'bad_file', 'too_big', 'unavailable'].includes(e.code)) return res.redirect(`/messages/verification/${encodeURIComponent(req.params.caseId)}?error=${e.code}`);
       if (e.code === 'not_found') return res.status(404).send('Not found.');
       throw e;
     }
