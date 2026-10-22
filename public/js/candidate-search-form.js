@@ -5,9 +5,8 @@
   const locationInput = document.getElementById('filter-location');
   const latInput = document.getElementById('filter-lat');
   const lngInput = document.getElementById('filter-lng');
-  const daysInput = document.getElementById('filter-avail-days');
-  const startInput = document.getElementById('filter-avail-start');
-  const endInput = document.getElementById('filter-avail-end');
+  const shiftInput = document.getElementById('filter-shift');
+  const clearanceInput = document.getElementById('filter-clearance');
   const budgetAmount = document.getElementById('filter-budget-amount');
   const budgetType = document.getElementById('filter-budget-type');
   const submitBtn = document.getElementById('filter-submit');
@@ -51,14 +50,6 @@
     e.preventDefault();
     clearError();
 
-    const checkedDays = Array.from(form.querySelectorAll('.filter-day:checked')).map((el) => el.value);
-    const hasAnyAvailability = checkedDays.length > 0 || startInput.value || endInput.value;
-    if (hasAnyAvailability && (checkedDays.length === 0 || !startInput.value || !endInput.value)) {
-      showError('For required hours, pick at least one day and both a start and end time — or clear them.');
-      return;
-    }
-    daysInput.value = checkedDays.join(',');
-
     const locationText = locationInput.value.trim();
     if (!locationText) {
       latInput.value = '';
@@ -83,7 +74,7 @@
 
     // Keep the URL tidy: don't send fields that were left blank.
     if (!budgetAmount.value) budgetType.disabled = true;
-    [budgetAmount, startInput, endInput, daysInput, locationInput, latInput, lngInput].forEach((el) => {
+    [budgetAmount, shiftInput, clearanceInput, locationInput, latInput, lngInput].forEach((el) => {
       if (!el.value) el.disabled = true;
     });
     const arrangement = document.getElementById('filter-arrangement');

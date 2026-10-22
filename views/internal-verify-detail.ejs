@@ -186,6 +186,7 @@
             <div>
               <div class="entry-title"><%= edu.degree %></div>
               <div class="entry-sub"><%= edu.schoolName %></div>
+              <div class="entry-sub">Level: <%= edu.levelLabel %></div>
               <div class="entry-dates"><%= edu.graduationDate %></div>
             </div>
             <form class="toggle-form" method="POST" action="/verify/<%= candidate._id %>/toggle">

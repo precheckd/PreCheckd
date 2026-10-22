@@ -7,6 +7,8 @@ const { parseResume } = require('../utils/resumeParser');
 const { syncWithCredly } = require('../utils/credlyVerification');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { parseExpiry } = require('../utils/certExpiry');
+const { guessLevel, CODES: EDUCATION_LEVEL_CODES, LEVELS: EDUCATION_LEVELS } = require('../utils/educationLevel');
+const { CATALOG } = require('../content/certCatalog');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -62,6 +64,21 @@ function mergeEntries(newEntries, existingEntries, matchFields, requiredFields) 
     });
 }
 
+// Level is part of what an education entry is matched on: changing it makes a new entry that must be
+// verified again, so a verified associate degree cannot be turned into a doctorate by editing the
+// dropdown. Saved entries without a level are compared using the same guess the form showed.
+function mergeEducation(submitted, existing) {
+  const existingForMerge = (existing || []).map((e) => ({
+    schoolName: e.schoolName, degree: e.degree, graduationDate: e.graduationDate,
+    verified: e.verified, verifiedAt: e.verifiedAt, level: e.level || guessLevel(e.degree) || null,
+  }));
+  const submittedClean = (submitted || []).map((e) => ({
+    ...e, level: EDUCATION_LEVEL_CODES.includes(e.level) ? e.level : null,
+  }));
+  return mergeEntries(submittedClean, existingForMerge,
+    ['schoolName', 'degree', 'graduationDate', 'level'], ['schoolName', 'degree', 'graduationDate']);
+}
+
 // mergeEntries keeps an existing entry untouched when its name + credential
 // ID are unchanged, which would drop an edited expiry date. This copies the
 // submitted expiry onto the merged entries (matched the same way). A later
@@ -81,6 +98,24 @@ function applySubmittedExpiry(mergedCerts, submittedCerts) {
   });
 }
 
+// Education entries saved before levels existed have none; the form pre-fills a guess from the degree
+// text so the candidate only has to confirm it. The guess is what the entry is matched on when saving,
+// so confirming it keeps the entry verified, and picking a different level makes a new, unverified one.
+function educationForForm(candidate) {
+  return (candidate.educationHistory || []).map((e) => ({
+    schoolName: e.schoolName, degree: e.degree, graduationDate: e.graduationDate,
+    verified: e.verified, verifiedAt: e.verifiedAt, level: e.level || guessLevel(e.degree) || '',
+  }));
+}
+
+function formExtras(candidate) {
+  return {
+    educationForForm: educationForForm(candidate),
+    educationLevels: EDUCATION_LEVELS,
+    certSuggestions: CATALOG.map((c) => c.name),
+  };
+}
+
 // GET /candidate/:slug/edit — owner-only edit form
 router.get('/:slug/edit', async (req, res) => {
   try {
@@ -98,7 +133,8 @@ router.get('/:slug/edit', async (req, res) => {
       candidate,
       title: `Edit Profile | PreCheckd`,
       error: null,
-      missingRequirements: getMissingMatchingRequirements(candidate)
+      missingRequirements: getMissingMatchingRequirements(candidate),
+      ...formExtras(candidate)
     });
   } catch (error) {
     console.error('Error loading candidate edit page:', error);
@@ -333,13 +369,14 @@ router.post('/:slug/edit', upload.fields([
           candidate,
           title: `Edit Profile | PreCheckd`,
           error: uploadError.message,
-          missingRequirements: getMissingMatchingRequirements(candidate)
+          missingRequirements: getMissingMatchingRequirements(candidate),
+          ...formExtras(candidate)
         });
       }
     }
 
     candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
-    candidate.educationHistory = mergeEntries(submittedEducationHistory, candidate.educationHistory, ['schoolName', 'degree', 'graduationDate']);
+    candidate.educationHistory = mergeEducation(submittedEducationHistory, candidate.educationHistory);
     candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId'], ['name']);
     applySubmittedExpiry(candidate.certifications, submittedCertifications);
 
@@ -391,7 +428,8 @@ router.post('/:slug/edit', upload.fields([
         candidate,
         title: `Edit Profile | PreCheckd`,
         error: resumeParseError || credlyError,
-        missingRequirements: getMissingMatchingRequirements(candidate)
+        missingRequirements: getMissingMatchingRequirements(candidate),
+        ...formExtras(candidate)
       });
     }
 
@@ -403,3 +441,5 @@ router.post('/:slug/edit', upload.fields([
 });
 
 module.exports = router;
+// Exposed for tests only.
+module.exports._internals = { mergeEntries, mergeEducation, educationForForm };

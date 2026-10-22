@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
-const { DAY_CODES, DAY_OPTIONS } = require('../utils/availabilityMatching');
+const { SHIFT_OPTIONS, SHIFT_CODES } = require('../utils/availabilityMatching');
 
 const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
 const VALID_SECURITY_CLEARANCES = ['none', 'public_trust', 'secret', 'top_secret', 'ts_sci', 'other'];
@@ -47,7 +47,7 @@ router.get('/:slug/job-preferences', async (req, res) => {
       title: `Job Preferences | PreCheckd`,
       error: null,
       missingRequirements: getMissingMatchingRequirements(candidate),
-      dayOptions: DAY_OPTIONS
+      shiftOptions: SHIFT_OPTIONS
     });
   } catch (error) {
     console.error('Error loading candidate job-preferences page:', error);
@@ -67,7 +67,7 @@ router.post('/:slug/job-preferences', async (req, res) => {
     const {
       openToOpportunities,
       minSalaryAmount, minSalaryType, preferredSalaryAmount, preferredSalaryType,
-      availableStartTime, availableEndTime,
+      availableFrom,
       securityClearance, securityClearanceOther, noticePeriod
     } = req.body;
 
@@ -97,30 +97,25 @@ router.post('/:slug/job-preferences', async (req, res) => {
     candidate.preferredSalaryAmount = Number.isFinite(parsedPreferredSalary) && parsedPreferredSalary > 0 ? parsedPreferredSalary : null;
     candidate.preferredSalaryType = preferredSalaryType === 'hourly' ? 'hourly' : 'annual';
 
-    // Availability is all-or-nothing: it only means something as a
-    // complete picture (which days + what window), so a partial submission
-    // (e.g. days checked but a time field cleared) is treated as "opted
-    // out" rather than stored half-filled.
-    const submittedDaysRaw = req.body.availableDays;
-    const submittedDays = !submittedDaysRaw
+    // Shifts: a checkbox group, so absence means none ticked. Anything not on the fixed list is dropped.
+    const submittedShiftsRaw = req.body.shifts;
+    candidate.shifts = !submittedShiftsRaw
       ? []
-      : (Array.isArray(submittedDaysRaw) ? submittedDaysRaw : [submittedDaysRaw])
-          .filter((d) => DAY_CODES.includes(d));
+      : [...new Set((Array.isArray(submittedShiftsRaw) ? submittedShiftsRaw : [submittedShiftsRaw])
+          .filter((sh) => SHIFT_CODES.includes(sh)))];
 
-    if (submittedDays.length > 0 && availableStartTime && availableEndTime) {
-      candidate.availableDays = submittedDays;
-      candidate.availableStartTime = availableStartTime;
-      candidate.availableEndTime = availableEndTime;
-    } else {
-      candidate.availableDays = [];
-      candidate.availableStartTime = null;
-      candidate.availableEndTime = null;
-    }
+    // Available-to-start is a calendar day, stored as UTC midnight so it reads back as the same day.
+    // Blank or unreadable means "not set", which never blocks an application.
+    const dayMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(availableFrom || '').trim());
+    const startDay = dayMatch ? new Date(`${dayMatch[0]}T00:00:00Z`) : null;
+    candidate.availableFrom = startDay && !Number.isNaN(startDay.getTime()) ? startDay : null;
 
     candidate.securityClearance = VALID_SECURITY_CLEARANCES.includes(securityClearance) ? securityClearance : 'none';
     candidate.securityClearanceOther = candidate.securityClearance === 'other' && securityClearanceOther && securityClearanceOther.trim()
       ? securityClearanceOther.trim().slice(0, 100)
       : null;
+
+    candidate.showClearanceInSearch = req.body.showClearanceInSearch === 'true';
 
     candidate.noticePeriod = VALID_NOTICE_PERIODS.includes(noticePeriod) ? noticePeriod : null;
 

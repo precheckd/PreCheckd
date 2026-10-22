@@ -11,7 +11,8 @@ const { getAnonymizedCandidateView } = require('../utils/candidateAnonymization'
 const { candidateMeetsMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { recordView } = require('../utils/viewTracker');
 const { activeCerts } = require('../utils/certExpiry');
-const { DAY_CODES, DAY_OPTIONS, candidateAvailabilityGroup } = require('../utils/availabilityMatching');
+const { SHIFT_OPTIONS, SHIFT_CODES, candidateShiftGroup } = require('../utils/availabilityMatching');
+const { CLEARANCE_OPTIONS, candidateClearanceGroup } = require('../utils/clearanceMatching');
 
 const VALID_WORK_ARRANGEMENTS = ['remote', 'hybrid', 'in_office'];
 const FULL_TIME_ANNUAL_HOURS = 2080; // 40 hrs/week * 52 weeks — same assumption used on the candidate side
@@ -63,14 +64,14 @@ router.use(requireRecruiterLogin);
 //   candidate here has at least one value set — a candidate whose
 //   selections don't include the one the recruiter is filtering for gets
 //   excluded.
-// - A role's required days/hours (?availDays=mon,tue&availStart=&availEnd=):
-//   unlike the filters above, this doesn't simply exclude non-matches.
-//   "Never set an availability preference" isn't the same as "confirmed
-//   can't do these hours," so candidates split into two groups: those who
-//   opted in and cover the required window (shown first), and those who
-//   never set availability at all (shown below, clearly labeled so the
-//   recruiter knows to just ask). Anyone who opted in but does NOT cover
-//   the required window is excluded outright.
+// - A role's shift (?shift=daytime|evenings|overnight|rotating) and minimum security
+//   clearance (?clearance=public_trust|secret|top_secret|ts_sci): unlike the
+//   filters above, these don't simply exclude non-matches. A candidate who
+//   never chose shifts, or who hasn't chosen to show their clearance, isn't a
+//   confirmed no, so candidates split into two groups: those confirmed to
+//   match every one of these filters (shown first), and those with something
+//   unknown (shown below, clearly labeled so the recruiter knows to just ask).
+//   Anyone who chose to show a value that does NOT meet the filter is excluded.
 router.get('/', async (req, res) => {
   try {
     const query = {
@@ -107,10 +108,9 @@ router.get('/', async (req, res) => {
     const hasBudget = Number.isFinite(budgetAmountRaw) && budgetAmountRaw > 0;
     const budgetAnnualEquivalent = hasBudget ? toAnnualEquivalent(budgetAmountRaw, budgetType) : null;
 
-    const requiredDays = (req.query.availDays || '').split(',').filter((d) => DAY_CODES.includes(d));
-    const availStart = req.query.availStart || '';
-    const availEnd = req.query.availEnd || '';
-    const hasAvailabilityFilter = requiredDays.length > 0 && Boolean(availStart) && Boolean(availEnd);
+    const requiredShift = SHIFT_CODES.includes(req.query.shift) && req.query.shift !== 'flexible' ? req.query.shift : '';
+    const requiredClearance = CLEARANCE_OPTIONS.some((c) => c.code === req.query.clearance) ? req.query.clearance : '';
+    const hasSoftFilter = Boolean(requiredShift || requiredClearance);
 
     // Any query string at all counts as a search — including the bare
     // ?searched=1 the form sends when nothing is filled in (show everyone).
@@ -133,7 +133,6 @@ router.get('/', async (req, res) => {
     const hasSearched = Object.keys(req.query).length > 0;
 
     let candidatesForView = [];
-    let showAvailabilityGrouping = false;
 
     if (hasSearched) {
       let candidates = await Candidate.find(query).sort({ createdAt: -1 });
@@ -168,35 +167,27 @@ router.get('/', async (req, res) => {
         candidates = evaluated.map((x) => x.c);
       }
 
-      if (hasAvailabilityFilter && requirements.length) {
-        // Skill sections decide the order. Availability still filters: confirmed-available and
-        // never-set candidates stay, candidates confirmed unavailable are dropped.
-        candidates = candidates.filter((c) => candidateAvailabilityGroup(c, requiredDays, availStart, availEnd) !== 'excluded');
-        candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
-      } else if (hasAvailabilityFilter) {
+      if (hasSoftFilter) {
         const matched = [];
-        const unset = [];
-
+        const unknown = [];
         candidates.forEach((c) => {
-          const group = candidateAvailabilityGroup(c, requiredDays, availStart, availEnd);
-          if (group === 'matched') matched.push(c);
-          else if (group === 'unset') unset.push(c);
-          // 'excluded' candidates are dropped entirely.
+          const groups = [];
+          if (requiredShift) groups.push(candidateShiftGroup(c, requiredShift));
+          if (requiredClearance) groups.push(candidateClearanceGroup(c, requiredClearance));
+          if (groups.includes('excluded')) return; // confirmed not a fit: dropped entirely
+          (groups.includes('unset') ? unknown : matched).push(c);
         });
 
-        candidatesForView = matched.map((c) => getAnonymizedCandidateView(c))
-          .concat(unset.map((c) => getAnonymizedCandidateView(c)));
-
-        // Mark exactly the first candidate of the "unset" group so the view
-        // knows where to drop in the divider, without the view needing to
-        // re-derive group membership itself.
-        if (matched.length > 0 && unset.length > 0) {
-          candidatesForView[matched.length].showNoAvailabilityDivider = true;
-        } else if (matched.length === 0 && unset.length > 0) {
-          candidatesForView[0].showNoAvailabilityDivider = true;
+        if (requirements.length) {
+          // Skill sections decide the order; these filters only drop confirmed non-fits.
+          candidates = candidates.filter((c) => matched.includes(c) || unknown.includes(c));
+          candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+        } else {
+          candidates = matched.concat(unknown);
+          candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
+          // Mark exactly the first "unknown" candidate so the view knows where to drop the divider.
+          if (unknown.length > 0) candidatesForView[matched.length].showUnknownDivider = true;
         }
-
-        showAvailabilityGrouping = true;
       } else {
         candidatesForView = candidates.map((c) => getAnonymizedCandidateView(c));
       }
@@ -228,11 +219,10 @@ router.get('/', async (req, res) => {
       budgetAmount: hasBudget ? budgetAmountRaw : null,
       budgetType,
       workArrangement,
-      dayOptions: DAY_OPTIONS,
-      requiredDays,
-      availStart,
-      availEnd,
-      showAvailabilityGrouping,
+      shiftOptions: SHIFT_OPTIONS,
+      requiredShift,
+      clearanceOptions: CLEARANCE_OPTIONS,
+      requiredClearance,
       skillOptions,
       titleOptions,
       titleFilter,

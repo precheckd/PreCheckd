@@ -156,7 +156,7 @@ Depends on billing (later): the paying-member check, posting credits, plan limit
 
 ## 8. Engine notes (step 1, built Oct 22)
 
-`src/services/applyGate.js` is a pure function with 26 tests (`node tests/apply-gate.test.js`). It is not wired to any screen yet. Choices made while building it that Kent has not explicitly confirmed:
+`src/services/applyGate.js` is a pure function with 26 tests (`node tests/apply-gate.test.js`). It is not wired to any screen yet. Choices made while building it. Kent said to go ahead on Oct 22, so the first three are accepted; the rest are still open to change:
 
 - **On-site and hybrid jobs** are checked against the candidate's Work Areas the same way Remote in Area is (a candidate with no Work Areas drawn is asked to add them). Remote jobs skip the area check.
 - **Shifts:** a posting marked "flexible" has no shift requirement; a candidate who ticked "flexible" satisfies any shift.
@@ -165,3 +165,18 @@ Depends on billing (later): the paying-member check, posting credits, plan limit
 - **Seniority labels** (what to call a posting that is not entry level) are not defined yet; only `isEntryLevel` exists.
 - Every blocker ends with a `withdraw` action, and the engine returns all blockers at once, not just the first.
 - The engine reads **real** skill levels (hidden skills count). The adapter that builds those facts, the geo check for Work Areas, and the certification and education catalogs come in step 2.
+
+---
+
+## 9. Candidate profile changes (step 2, built Oct 22)
+
+Tests: `node tests/geo.test.js`, `tests/profile-facts.test.js`, `tests/profile-screens.test.js` (plus `tests/apply-gate.test.js`). Nothing here is wired to an apply screen yet; the adapter is ready for step 3.
+
+- **Shifts** replace the days-and-hours picker. Candidate Job Preferences has five checkboxes (`Candidate.shifts`). Recruiter search has a Shift dropdown: confirmed matches first, candidates who never chose shifts below ("ask directly"), candidates who chose other shifts dropped. Flexible counts as any shift. The old `availableDays/StartTime/EndTime` fields are still on the record but nothing reads them.
+- **Available to start** (`availableFrom`, optional date) on Job Preferences.
+- **Clearance:** the self-reported field already existed. Added the opt-in `showClearanceInSearch` (off by default) and a recruiter search filter ("at least Secret", etc.). Only opted-in candidates can be matched; the rest fall in the "ask directly" group. The apply gate always reads the real value ("other" counts as none).
+- **Education level:** each education entry has a Level dropdown (high school or GED, associate, bachelor's, master's, doctorate). Older entries are pre-filled with a guess from the degree text, which the candidate confirms. Changing the level makes a new, unverified entry (so a verified degree cannot be upgraded by editing). The admin verify screen shows each entry's level.
+- **Certification catalog:** `src/content/certCatalog.js`, a starter list of about 45 certifications with aliases (Credly titles included). A candidate's cert counts toward a posting only when its name matches the catalog, and it is verified and unexpired. Cert names on Edit Profile now suggest catalog names. **To add a certification, add a line to that file.** Unlisted certs still show on the profile; they just cannot be required.
+- **Adapter:** `src/services/applyFacts.js` builds the gate's facts from a Candidate: real skill levels (hidden included), the 60-day lock, "being reviewed" for held results, education, certs, clearance, shifts, start date, area.
+- **Location check:** `src/utils/geo.js`, pure JavaScript. A posting's `areaRule` is `{ point }` (on-site, hybrid), `{ point, radiusMiles }` or `{ states: [...] }` (Remote in Area). Any overlap with a candidate's drawn Work Areas counts. State outlines are Census boundaries in `src/data/us-states-10m.topo.json`.
+- **Still open:** seniority labels; whether a catalog miss should alert Kent (right now it silently does not count); step 3 must save `areaRule` on each posting (geocode the address once at save time).

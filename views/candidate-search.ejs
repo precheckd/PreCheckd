@@ -412,7 +412,6 @@
     <input type="hidden" name="searched" value="1">
     <input type="hidden" name="lat" id="filter-lat" value="<%= pinnedLat !== null ? pinnedLat : '' %>">
     <input type="hidden" name="lng" id="filter-lng" value="<%= pinnedLng !== null ? pinnedLng : '' %>">
-    <input type="hidden" name="availDays" id="filter-avail-days" value="<%= requiredDays.join(',') %>">
 
     <div class="filter-section">
       <h2>Skills</h2>
@@ -484,21 +483,29 @@
     </div>
 
     <div class="filter-section">
-      <h2>Required days &amp; hours</h2>
-      <div class="availability-days-row" style="margin-bottom: 0.75rem;">
-        <% dayOptions.forEach(function(day) { %>
-          <label class="availability-day-checkbox">
-            <input type="checkbox" class="filter-day" value="<%= day.code %>" <%= requiredDays.includes(day.code) ? 'checked' : '' %>>
-            <span><%= day.label %></span>
-          </label>
-        <% }); %>
-      </div>
+      <h2>Shift</h2>
       <div class="filter-row">
-        <input type="time" name="availStart" id="filter-avail-start" value="<%= availStart %>">
-        <span style="color: #8FA6AC; font-size: 0.9rem;">to</span>
-        <input type="time" name="availEnd" id="filter-avail-end" value="<%= availEnd %>">
+        <select name="shift" id="filter-shift">
+          <option value="" <%= !requiredShift ? 'selected' : '' %>>Any shift</option>
+          <% shiftOptions.filter(function(s) { return s.code !== 'flexible'; }).forEach(function(s) { %>
+            <option value="<%= s.code %>" <%= requiredShift === s.code ? 'selected' : '' %>><%= s.label %></option>
+          <% }); %>
+        </select>
       </div>
-      <p class="filter-hint">Candidates confirmed available for these hours are shown first. Candidates who never set availability are listed below them &mdash; that's not a no, so just ask.</p>
+      <p class="filter-hint">Candidates who said they'll work this shift (or any shift) are shown first. Candidates who haven't chosen shifts are listed below them &mdash; that's not a no, so just ask.</p>
+    </div>
+
+    <div class="filter-section">
+      <h2>Security clearance</h2>
+      <div class="filter-row">
+        <select name="clearance" id="filter-clearance">
+          <option value="" <%= !requiredClearance ? 'selected' : '' %>>Any (optional)</option>
+          <% clearanceOptions.forEach(function(c) { %>
+            <option value="<%= c.code %>" <%= requiredClearance === c.code ? 'selected' : '' %>>At least <%= c.label %></option>
+          <% }); %>
+        </select>
+      </div>
+      <p class="filter-hint">Reported by the candidate, never verified. Only candidates who chose to show their clearance can be matched here; the rest are listed below as "ask directly."</p>
     </div>
 
     <div class="filter-error hidden" id="filter-error"></div>
@@ -527,8 +534,8 @@
             <% if (candidate.skillSection === 'full') { %>Full matches<% } else { %>Partial matches &mdash; not every skill is shown at your level. That isn't a no, so just ask<% } %>
           </div>
         <% } %>
-        <% if (candidate.showNoAvailabilityDivider) { %>
-          <div class="availability-divider">No availability info provided &mdash; ask directly</div>
+        <% if (candidate.showUnknownDivider) { %>
+          <div class="availability-divider">Not every detail you searched for is shown &mdash; ask directly</div>
         <% } %>
         <%
           const jobTitles = (candidate.workHistory || []).map((j) => j.jobTitle).filter(Boolean);

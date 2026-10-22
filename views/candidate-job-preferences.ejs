@@ -486,35 +486,27 @@
           </label>
 
           <div>
-            <div class="section-label" style="margin-top: 0.5rem;">Availability</div>
-            <p class="cert-hint">Leave this blank if you're open to standard business hours. If you have real constraints (school hours, a second job, etc.) or you're specifically looking for odd-hours work, filling this in helps recruiters searching for those hours find you and skip the ones that won't work for you.</p>
-
-            <label>
-              Days you're available
-              <div class="availability-days-row">
-                <% dayOptions.forEach(function(day) { %>
-                  <label class="availability-day-checkbox">
-                    <input type="checkbox" name="availableDays" value="<%= day.code %>" <%= (candidate.availableDays || []).includes(day.code) ? 'checked' : '' %>>
-                    <span><%= day.label %></span>
-                  </label>
-                <% }); %>
-              </div>
-            </label>
-
-            <label>
-              Hours you're available on those days
-              <div class="availability-time-row">
-                <input type="time" name="availableStartTime" value="<%= candidate.availableStartTime || '' %>">
-                <span class="label-hint" style="margin: 0;">to</span>
-                <input type="time" name="availableEndTime" value="<%= candidate.availableEndTime || '' %>">
-              </div>
-              <span class="label-hint">An end time earlier than the start time means it wraps past midnight (an overnight shift) — that's expected, not a mistake.</span>
-            </label>
+            <div class="section-label" style="margin-top: 0.5rem;">Shifts you'll work</div>
+            <p class="cert-hint">Tick every kind of shift you're willing to work. Jobs that need a shift you haven't ticked will ask you to update this before you can apply, and recruiters searching for a shift can find you. Tick "Flexible" if you can work any of them.</p>
+            <div class="availability-days-row">
+              <% shiftOptions.forEach(function(shift) { %>
+                <label class="availability-day-checkbox">
+                  <input type="checkbox" name="shifts" value="<%= shift.code %>" <%= (candidate.shifts || []).includes(shift.code) ? 'checked' : '' %>>
+                  <span><%= shift.label %></span>
+                </label>
+              <% }); %>
+            </div>
           </div>
 
           <label>
+            Available to start
+            <span class="label-hint">Optional. The first day you could start a new job. A job with a firm start date earlier than this will ask you to update it before you can apply.</span>
+            <input type="date" name="availableFrom" value="<%= candidate.availableFrom ? new Date(candidate.availableFrom).toISOString().slice(0, 10) : '' %>">
+          </label>
+
+          <label>
             Security clearance
-            <span class="label-hint">Self-reported — we don't have a way to verify this, but recruiters can still search by it.</span>
+            <span class="label-hint">Self-reported &mdash; we can't verify this, so it's always shown as "reported by the candidate." Jobs that require a clearance check this field, whether or not you show it to recruiters.</span>
             <select name="securityClearance" id="security-clearance-select">
               <option value="none" <%= (candidate.securityClearance || 'none') === 'none' ? 'selected' : '' %>>None</option>
               <option value="public_trust" <%= candidate.securityClearance === 'public_trust' ? 'selected' : '' %>>Public Trust</option>
@@ -523,6 +515,11 @@
               <option value="ts_sci" <%= candidate.securityClearance === 'ts_sci' ? 'selected' : '' %>>TS/SCI</option>
               <option value="other" <%= candidate.securityClearance === 'other' ? 'selected' : '' %>>Other</option>
             </select>
+          </label>
+
+          <label class="availability-day-checkbox" style="margin-bottom: 0.75rem;">
+            <input type="checkbox" name="showClearanceInSearch" value="true" <%= candidate.showClearanceInSearch ? 'checked' : '' %>>
+            <span>Let recruiters find me by clearance level (off by default)</span>
           </label>
 
           <label id="security-clearance-other-label" style="<%= candidate.securityClearance === 'other' ? '' : 'display: none;' %>">

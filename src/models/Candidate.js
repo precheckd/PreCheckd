@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { guessLevel, LEVELS: EDUCATION_LEVEL_LIST } = require('../utils/educationLevel');
 
 const workHistorySchema = new mongoose.Schema({
   employerName: { type: String, required: true },
@@ -13,10 +14,22 @@ const workHistorySchema = new mongoose.Schema({
 const educationHistorySchema = new mongoose.Schema({
   schoolName: { type: String, required: true },
   degree: { type: String, required: true },
+  // Level the job apply gate reads (a higher level satisfies a lower one). Chosen by the candidate;
+  // changing it makes a new, unverified entry. Entries saved before levels existed have none and fall
+  // back to a guess from the degree text (see utils/educationLevel.js).
+  level: { type: String, enum: [null, 'high_school', 'associate', 'bachelor', 'master', 'doctorate'], default: null },
   graduationDate: { type: String, default: null }, // "YYYY-MM" — not always determinable from a resume
   verified: { type: Boolean, default: false },
   verifiedAt: { type: Date, default: null },
 }, { _id: false });
+
+// The level the apply gate will read for this entry, and a label for staff screens.
+educationHistorySchema.virtual('effectiveLevel').get(function () { return this.level || guessLevel(this.degree); });
+educationHistorySchema.virtual('levelLabel').get(function () {
+  const found = EDUCATION_LEVEL_LIST.find((l) => l.code === this.effectiveLevel);
+  if (!found) return 'Not set';
+  return this.level ? found.label : `${found.label} (guessed from the degree text)`;
+});
 
 const certificationSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -235,6 +248,12 @@ const candidateSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Opt-in, off by default: let recruiters find this candidate by clearance level in search. The job
+  // apply gate always uses the real value above, shown or not.
+  showClearanceInSearch: {
+    type: Boolean,
+    default: false
+  },
 
   // Optional, informational only — not used to filter anything. Same tier
   // as preferredSalary: good context for a recruiter who's already
@@ -398,7 +417,21 @@ const candidateSchema = new mongoose.Schema({
     default: []
   },
 
-  // Optional recurring weekly availability — NOT one of the required
+  // Shifts the candidate is willing to work (replaces the weekly days-and-hours picker below, which
+  // is no longer shown or read; its data is left in place). Same choices as a job posting's shift.
+  shifts: {
+    type: [String],
+    enum: ['daytime', 'evenings', 'overnight', 'rotating', 'flexible'],
+    default: []
+  },
+  // The first day the candidate could start a new job (a calendar day, stored as UTC midnight).
+  // Optional. A job with a firm start date blocks only candidates who set a later date.
+  availableFrom: {
+    type: Date,
+    default: null
+  },
+
+  // DEPRECATED (replaced by `shifts`): optional recurring weekly availability — NOT one of the required
   // matching fields (unlike workAreas/minSalary). A candidate who leaves
   // this blank still shows up normally; it only matters once a recruiter
   // filters a search by a role's required hours (see

@@ -990,6 +990,10 @@
             </div>
 
             <p class="cert-hint">Add a credential ID to any certification not covered by Credly if you'd like us to verify it another way. Editing a credential ID or name resets that certification's verification status.</p>
+            <datalist id="cert-name-suggestions">
+              <% (certSuggestions || []).forEach(function(n) { %><option value="<%= n %>"><% }); %>
+            </datalist>
+            <p class="cert-hint">Start typing and pick your certification from the list when you see it. Jobs can only require certifications on that list, so a name we recognize is one that can count toward a job. Only verified, unexpired certifications count.</p>
             <div id="certification-entries"></div>
             <button type="button" id="add-certification-entry" class="add-entry-btn">+ Add certification</button>
           </div>
@@ -1039,9 +1043,10 @@
 <script>
   window.PRECHECKD_CANDIDATE_DATA = {
     workHistory: <%- JSON.stringify(candidate.workHistory || []) %>,
-    educationHistory: <%- JSON.stringify(candidate.educationHistory || []) %>,
+    educationHistory: <%- JSON.stringify(educationForForm || []) %>,
     certifications: <%- JSON.stringify(candidate.certifications || []) %>
   };
+  window.PRECHECKD_EDUCATION_LEVELS = <%- JSON.stringify(educationLevels || []) %>;
   window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
 <script src="/js/candidate-edit.js"></script>

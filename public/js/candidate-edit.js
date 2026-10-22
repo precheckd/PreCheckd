@@ -34,6 +34,12 @@
     container.appendChild(div);
   }
 
+  function levelOptionsHtml(selected) {
+    const levels = window.PRECHECKD_EDUCATION_LEVELS || [];
+    return '<option value="">Choose a level</option>' + levels.map((l) =>
+      `<option value="${l.code}" ${l.code === selected ? 'selected' : ''}>${l.label}</option>`).join('');
+  }
+
   function addEducationEntry(entry) {
     const container = document.getElementById('education-entries');
     const index = educationEntryCount++;
@@ -48,6 +54,7 @@
       </div>
       <label>School<input type="text" class="edu-school" value="${entry?.schoolName || ''}" placeholder="e.g. State University"></label>
       <label>Degree<input type="text" class="edu-degree" value="${entry?.degree || ''}" placeholder="e.g. BS Computer Science"></label>
+      <label>Level <span class="label-hint">(jobs that require a degree check this, and it must be verified)</span><select class="edu-level">${levelOptionsHtml(entry?.level)}</select></label>
       <label>Graduation date <span class="label-hint">(YYYY-MM)</span><input type="text" class="edu-date" value="${entry?.graduationDate || ''}" placeholder="2020-05"></label>
     `;
     div.querySelector('.remove-entry').addEventListener('click', () => div.remove());
@@ -66,7 +73,7 @@
         ${statusBadgeHtml(entry?.verified)}
         <button type="button" class="remove-entry">Remove</button>
       </div>
-      <label>Certification name<input type="text" class="cert-name" value="${entry?.name || ''}" placeholder="e.g. AWS Certified Cloud Practitioner"></label>
+      <label>Certification name<input type="text" class="cert-name" list="cert-name-suggestions" value="${entry?.name || ''}" placeholder="e.g. AWS Certified Cloud Practitioner"></label>
       <label>Credential ID <span class="label-hint">(optional)</span><input type="text" class="cert-credential-id" value="${entry?.credentialId || ''}" placeholder="e.g. AWS-1234ABCD"></label>
       <label>Expires <span class="label-hint">(optional — we'll remind you before it does)</span><input type="date" class="cert-expires" value="${entry?.expiresAt ? String(entry.expiresAt).slice(0, 10) : ''}"></label>
     `;
@@ -96,6 +103,7 @@
     return Array.from(document.querySelectorAll('#education-entries .entry-card')).map((card) => ({
       schoolName: card.querySelector('.edu-school').value.trim(),
       degree: card.querySelector('.edu-degree').value.trim(),
+      level: card.querySelector('.edu-level').value || null,
       graduationDate: card.querySelector('.edu-date').value.trim(),
     })).filter((entry) => entry.schoolName && entry.degree && entry.graduationDate);
   }
