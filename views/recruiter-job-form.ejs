@@ -48,8 +48,9 @@
 </style>
 
 <div class="jp-wrap"><div class="jp-inner">
-  <a class="jp-back" href="/recruiter-jobs">&larr; My job postings</a>
-  <h1>Post a job</h1>
+  <a class="jp-back" href="<%= backHref %>">&larr; <%= isEdit ? 'Back to this posting' : 'My job postings' %></a>
+  <h1><%= heading %></h1>
+  <% if (isEdit) { %><p class="jp-lead">Change anything below and save. The same rules apply as when you posted. If you change commission figures you will need to confirm them again.</p><% } %>
   <p class="jp-lead">Everything here is a fixed choice except the description. Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean. Your name and verified badge are added automatically.</p>
 
   <% if (errorKeys.length) { %>
@@ -57,7 +58,7 @@
       <ul><% errorKeys.forEach(function(k) { %><li><%= errors[k] %></li><% }); %></ul></div>
   <% } %>
 
-  <form method="POST" action="/recruiter-jobs/new" id="job-form" novalidate>
+  <form method="POST" action="<%= action %>" id="job-form" novalidate>
 
     <!-- 1. Skills and title -->
     <div class="jp-card">
@@ -342,7 +343,7 @@
       </div>
     </div>
 
-    <button type="submit" class="jp-btn">Post this job</button>
+    <button type="submit" class="jp-btn"><%= submitLabel %></button>
   </form>
 </div></div>
 <script src="/js/job-form.js"></script>

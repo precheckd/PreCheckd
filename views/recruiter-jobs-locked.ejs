@@ -1,7 +1,13 @@
 <div style="flex:1;padding:3rem 1.5rem;background:#1F363C;min-height:100vh;display:flex;justify-content:center;">
   <div style="max-width:600px;width:100%;background:#2A4750;border:1px solid #3B5860;border-radius:8px;padding:2rem;color:#F2F4F3;">
+    <% if (typeof notEditable !== 'undefined' && notEditable) { %>
+    <h1 style="font-size:1.5rem;margin:0 0 0.75rem;">This posting can no longer be edited</h1>
+    <p style="color:#C7D1CF;line-height:1.5;">Only open postings can be edited. Post a new job to start again; you can copy your answers from the old one.</p>
+    <p><a href="/recruiter-jobs" style="color:#2ECC71;">Back to my postings</a></p>
+  <% } else { %>
     <h1 style="font-size:1.5rem;margin:0 0 0.75rem;">Finish verification to post jobs</h1>
     <p style="color:#C7D1CF;line-height:1.5;">Posting is open to recruiters whose account is active and fully verified (email, phone and identity). Once your account is verified and active you can post here. If you think this is a mistake, contact PreCheckd support.</p>
     <p><a href="/recruiter-dashboard/claim" style="color:#2ECC71;">Back to my account</a></p>
+  <% } %>
   </div>
 </div>

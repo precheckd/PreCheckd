@@ -231,8 +231,12 @@ function validatePosting(body, ctx) {
   if (!close) err('closeDate', 'Enter the date applications close.');
   else {
     const days = Math.round((close.utcMidnight - today.utcMidnight) / DAY);
-    if (days < 1) err('closeDate', 'The close date must be after today.');
-    else if (days > opt.LIMITS.maxCloseDays) err('closeDate', `Applications can stay open at most ${opt.LIMITS.maxCloseDays} days.`);
+    // Editing: the posting may stay open through today, and the 45 days count from the day it was first posted
+    // (so a recruiter can extend a posting, but not keep it open forever).
+    const editing = ctx.editing && ctx.editing.createdAt;
+    const limitDays = editing ? Math.round((todayNewYork(new Date(ctx.editing.createdAt).getTime()).utcMidnight - today.utcMidnight) / DAY) + opt.LIMITS.maxCloseDays : opt.LIMITS.maxCloseDays;
+    if (days < (editing ? 0 : 1)) err('closeDate', editing ? 'The close date cannot be in the past. To end the posting now, close it instead.' : 'The close date must be after today.');
+    else if (days > limitDays) err('closeDate', editing ? `Applications can stay open at most ${opt.LIMITS.maxCloseDays} days from the day the job was first posted.` : `Applications can stay open at most ${opt.LIMITS.maxCloseDays} days.`);
     else v.closeDate = endOfDayNewYork(close);
   }
   const start = parseYmd(b.startDate);

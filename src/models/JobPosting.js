@@ -90,6 +90,10 @@ const jobPostingSchema = new mongoose.Schema({
   growth: { type: String, default: '' },
 
   closedAt: { type: Date, default: null },
+
+  // Every save after the first, newest last: when, and which parts changed (kept to the last 30).
+  editedAt: { type: Date, default: null },
+  edits: { type: [{ at: { type: Date, required: true }, parts: { type: [String], default: [] }, _id: false }], default: [] },
 }, { timestamps: true });
 
 jobPostingSchema.index({ status: 1, closeDate: 1 });

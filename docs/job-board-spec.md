@@ -190,8 +190,17 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 - **Where:** recruiters open **My job postings** from the account menu (`/recruiter-jobs`), then **Post a job**. Only an active, fully verified, unsuspended recruiter can post. The public `/jobs` pages come in step 4.
 - **Form sections:** (1) skills and title, (2) company, (3) job details, (4) location and schedule, (5) pay, (6) requirements and dates, (7) description. Every rule from sections 1 to 5 of this spec is enforced on the server in `src/services/postingValidation.js` (pay width 25%, commission-only forces base 0, commission warning accepted every time, benefits grid or "none", good-faith box, up to 3 cert groups of 5, close date 1 to 45 days out, start date not before close, 3 to 8 responsibilities, attestation boxes).
 - **Title:** `src/content/jobTitles.js` (41 starter titles). A title is offered when it covers EVERY skill the recruiter picked, so fewer skills gives more titles. No fit: the recruiter taps "Ask us to add a title", which lands in the admin **Catalog Requests** page. **The skill keys in that file must match the keys of the tests you build** (for example `linux`, `agile`, `cloud`); fix any that differ.
-- **Seniority** (proposed, change if you want different words): no minimum level on any skill = Entry level, highest minimum Foundational = Junior, Intermediate = Mid-level, Advanced = Senior, Expert = Lead / Principal.
+- **Seniority** (wording confirmed by Kent, Oct 22): no minimum level on any skill = Entry level, highest minimum Foundational = Junior, Intermediate = Mid-level, Advanced = Senior, Expert = Lead / Principal.
 - **Free-text scan:** `src/utils/textScan.js` blocks emails, phone numbers, links, WhatsApp/Telegram/"text me" wording, "X+ years of experience", "citizens only", and age/gender/nationality wording (young, digital native, recent grad, native English speaker, he/she). `.NET`, `Node.js` and company names like Booking.com are fine.
 - **Location:** the address is looked up once when the posting is saved (US Census geocoder, OpenStreetMap as backup). The saved rule (`areaRule`) is what the apply gate checks. Candidates only ever get city and state. The private address is shown to the posting's owner only.
 - **Catalog Requests** (admin dashboard card): certifications candidates saved that are not in `certCatalog.js`, and job titles recruiters could not find. Add the line to the catalog file, then Mark added.
 - **Not built yet in step 3:** editing a posted job (a recruiter can close it; to change requirements, post a new one), company suggestions come only from earlier postings (none exist yet), posting limits per plan (waits for billing), the awaiting-outcome gate at the close date (step 7).
+
+## 11. Editing an open posting (built Oct 22)
+
+- Recruiters can edit an **open** posting: every field, same rules as posting. Closed postings cannot be edited (409 page).
+- The saved address is not looked up again unless it changed. The commission statement must be confirmed again on every edit (never pre-ticked).
+- Close date may stay today or move later, up to 45 days after the **first** posting date, never into the past.
+- Every save is logged on the posting (`editedAt`, `edits[]` with the parts changed: title and skills, company, job details, location, pay, requirements, dates, description; last 30 kept). The internal nickname is not logged.
+- **Open for step 5:** what happens to people who already applied when requirements or pay change after applications exist.
+

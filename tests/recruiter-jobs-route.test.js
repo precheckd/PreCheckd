@@ -207,11 +207,99 @@ const validForm = (over = {}) => ({
     assert.strictEqual((await get('/recruiter-jobs/not-an-id')).status, 404);
   });
 
+  // ---- editing an open posting ----
+  const editPath = () => `/recruiter-jobs/${saved[0]._id}/edit`;
+  const editForm = (over = {}) => validForm({ commissionAck: undefined, ...over });
+
+  await t('the edit form opens filled in, with the private address and a re-confirm note', async () => {
+    const res = await get(editPath());
+    const html = await res.text();
+    assert.strictEqual(res.status, 200);
+    assert.ok(html.includes('1 Main St, Boston, MA') && html.includes('Acme Corp') && html.includes('Save changes'));
+    assert.ok(html.includes(`action="${editPath()}"`));
+  });
+
+  await t('saving an edit with the same address does not look the address up again', async () => {
+    geocodeCalls = 0;
+    const before = saved[0].areaRule.point.slice();
+    const res = await post(editPath(), editForm({ baseMax: '125000' }));
+    assert.strictEqual(res.status, 302);
+    assert.ok(res.headers.get('location').endsWith('?saved=1'));
+    assert.strictEqual(geocodeCalls, 0);
+    assert.strictEqual(saved[0].baseMax, 125000);
+    assert.deepStrictEqual(saved[0].areaRule.point.slice(), before);
+    assert.ok(saved[0].editedAt instanceof Date);
+    assert.deepStrictEqual(saved[0].edits.map((e) => e.parts), [['pay']]);
+  });
+
+  await t('a changed address is looked up again', async () => {
+    geocodeCalls = 0;
+    const res = await post(editPath(), editForm({ baseMax: '125000', address: '9 Elm St, Boston, MA' }));
+    assert.strictEqual(res.status, 302);
+    assert.ok(geocodeCalls >= 1);
+    assert.strictEqual(saved[0].address, '9 Elm St, Boston, MA');
+    assert.deepStrictEqual(saved[0].edits.map((e) => e.parts)[1], ['location']);
+    await post(editPath(), editForm({ baseMax: '125000' })); // put it back
+    assert.strictEqual(saved[0].address, '1 Main St, Boston, MA');
+  });
+
+  await t('saving with nothing changed says so and logs nothing', async () => {
+    const count = saved[0].edits.length;
+    const res = await post(editPath(), editForm({ baseMax: '125000' }));
+    assert.strictEqual(res.status, 302);
+    assert.ok(res.headers.get('location').endsWith('?saved=nochange'));
+    assert.strictEqual(saved[0].edits.length, count);
+  });
+
+  await t('a mistake on the edit form re-shows it with the answers kept and saves nothing', async () => {
+    const count = saved[0].edits.length;
+    const res = await post(editPath(), editForm({ baseMax: '500000', summary: 'Email me at a@b.co for details of this role' }));
+    const html = await res.text();
+    assert.strictEqual(res.status, 400);
+    assert.ok(html.includes('Save changes') && html.includes('500000'));
+    assert.strictEqual(saved[0].edits.length, count);
+    assert.strictEqual(saved[0].baseMax, 125000);
+  });
+
+  await t('commission must be confirmed again on every edit', async () => {
+    const withCommission = editForm({ commissionEnabled: 'on', commissionMin: '5000', commissionAverage: '20000' });
+    const res = await post(editPath(), withCommission);
+    assert.strictEqual(res.status, 400);
+    assert.ok((await res.text()).toLowerCase().includes('commission'));
+    const ok = await post(editPath(), { ...withCommission, commissionAck: 'on' });
+    assert.strictEqual(ok.status, 302);
+    assert.strictEqual(saved[0].commission.average, 20000);
+    assert.ok(saved[0].commissionAckAt instanceof Date);
+  });
+
+  await t('the detail page shows the edit button, the saved banner and the edit log', async () => {
+    const html = await (await get(`/recruiter-jobs/${saved[0]._id}?saved=1`)).text();
+    assert.ok(html.includes('Edit this posting') && html.includes('Changes saved.') && html.includes('Last edited'));
+    assert.ok((await (await get(`/recruiter-jobs/${saved[0]._id}?saved=nochange`)).text()).includes('Nothing was changed.'));
+  });
+
+  await t('someone else\'s posting cannot be edited', async () => {
+    saved[0].recruiterId = '507f1f77bcf86cd799439099';
+    assert.strictEqual((await get(editPath())).status, 404);
+    assert.strictEqual((await post(editPath(), editForm())).status, 404);
+    saved[0].recruiterId = '507f1f77bcf86cd799439011';
+  });
+
   await t('closing a posting', async () => {
     const res = await post(`/recruiter-jobs/${saved[0]._id}/close`, {});
     assert.strictEqual(res.status, 302);
     assert.strictEqual(saved[0].status, 'closed');
     assert.ok(saved[0].closedAt instanceof Date);
+  });
+
+  await t('a closed posting cannot be edited', async () => {
+    const before = saved[0].baseMax;
+    const g = await get(editPath());
+    assert.strictEqual(g.status, 409);
+    assert.ok((await g.text()).includes('can no longer be edited'));
+    assert.strictEqual((await post(editPath(), editForm({ baseMax: '126000' }))).status, 409);
+    assert.strictEqual(saved[0].baseMax, before);
+    assert.ok(!(await (await get(`/recruiter-jobs/${saved[0]._id}`)).text()).includes('Edit this posting'));
   });
 
   await t('an unverified, inactive or suspended recruiter cannot post', async () => {
