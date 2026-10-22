@@ -45,6 +45,24 @@ const SEED = [
     name: 'Agile: Advanced',
     tier: 'hard',
     skills: [{ key: 'agile', label: 'Agile', ratingKeys: ['Agile'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-60u9p66',
+    name: 'Linux: Basic',
+    tier: 'easy',
+    skills: [{ key: 'linux', label: 'Linux', ratingKeys: ['Linux'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1h80fbo',
+    name: 'Linux: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'linux', label: 'Linux', ratingKeys: ['Linux'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q9cw2os',
+    name: 'Linux: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'linux', label: 'Linux', ratingKeys: ['Linux'] }]
   }
 ];
 
