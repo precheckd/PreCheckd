@@ -3,7 +3,7 @@
 // skill and "passed" when at least PASS_RATIO of them are right. Fewer than two assessed tiers
 // is not enough evidence for a level, so the skill is "Provisional".
 const WEIGHTS = { easy: 1, medium: 2, hard: 3 };
-const PASS_RATIO = 0.6; // 2 of 3, 3 of 4 or 3 of 5 passes a tier
+const PASS_RATIO = 0.8; // raised from 0.6 on Oct 22 (a guesser clears 3 of 5 about 10% of the time, 4 of 5 under 2%): 4 of 5, 3 of 3 or 4 of 4 passes a tier
 const MIN_TIER = 2;
 const ADVANCED_RATIO = 1 / 3; // share of hard questions right that makes Advanced once the medium tier is passed
 const TIER_ORDER = ['easy', 'medium', 'hard'];
