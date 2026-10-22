@@ -33,6 +33,18 @@ const SEED = [
     name: 'Agile: Basic',
     tier: 'easy',
     skills: [{ key: 'agile', label: 'Agile', ratingKeys: ['Agile'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ri47ell',
+    name: 'Agile: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'agile', label: 'Agile', ratingKeys: ['Agile'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mf0xyfm',
+    name: 'Agile: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'agile', label: 'Agile', ratingKeys: ['Agile'] }]
   }
 ];
 
