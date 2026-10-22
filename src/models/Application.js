@@ -39,7 +39,8 @@ const applicationSchema = new mongoose.Schema({
   messageIds: [{ type: String }],
   mailIds: [{ type: mongoose.Schema.Types.ObjectId }],
 
-  source: { type: String, enum: ['manual', 'mail'], default: 'manual' },
+  source: { type: String, enum: ['manual', 'mail', 'precheckd'], default: 'manual' },
+  jobPostingId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set when the application was made on a PreCheckd posting
   history: [historySchema],
   lastActivityAt: { type: Date, default: Date.now }
 }, { timestamps: true });

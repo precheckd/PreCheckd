@@ -10,6 +10,9 @@ const { buildLocation } = require('../services/postingLocation');
 const { recordMissingTitle } = require('../services/catalogRequests');
 const { docFromValue, formFromPosting, changedParts } = require('../services/postingEdit');
 const { titlesForSkills } = require('../content/jobTitles');
+const { analyseEdit, applyImpact } = require('../services/postingImpact');
+const JobApplication = require('../models/JobApplication');
+const { ACTIVE } = require('../services/jobApplications');
 const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
 const opt = require('../content/postingOptions');
@@ -51,7 +54,7 @@ function formLocals(extra) {
     minLevels: opt.MIN_LEVELS, educationLevels: opt.EDUCATION_LEVELS, clearanceOptions: opt.CLEARANCE_OPTIONS,
     certOptions: CATALOG.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)),
     states: US_STATES, limits: opt.LIMITS, standard,
-    isEdit: false, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
+    isEdit: false, withdrawPrompt: 0, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
     ...extra,
   };
 }
@@ -186,6 +189,56 @@ router.get('/:id/edit', async (req, res) => {
   }
 });
 
+// Validates an edit and works out what it would do. Shared by the save and the pre-save count.
+async function checkEdit(req, posting) {
+  const skillChoices = await skillOptions();
+  const skillLabels = new Map(skillChoices.map((o) => [o.key, o.label]));
+  const { errors, value } = validatePosting(req.body, { skillLabels, editing: { createdAt: posting.createdAt } });
+  let location = null;
+  if (!Object.keys(errors).length) {
+    try {
+      // The address is only looked up again if it changed; otherwise the saved point is reused.
+      const point = posting.areaRule && posting.areaRule.point && posting.areaRule.point.length === 2 ? posting.areaRule.point : null;
+      const sameAddress = point && value.address && value.address === posting.address;
+      location = await buildLocation(value, sameAddress
+        ? async () => ({ lng: point[0], lat: point[1], city: posting.displayCity, state: posting.displayState })
+        : undefined);
+    } catch (e) {
+      if (e.code !== 'geocode_failed') throw e;
+      errors.address = e.message;
+    }
+  }
+  if (Object.keys(errors).length) return { errors, value, skillChoices };
+  const next = docFromValue(value, location);
+  const parts = changedParts(posting, next);
+  let impact = { withdraw: [], keep: [] };
+  if (parts.length) {
+    const draft = new JobPosting({ ...posting.toObject(), ...next });
+    draft.areaRule = location.areaRule || undefined;
+    impact = await analyseEdit(posting.toGateShape(), draft.toGateShape());
+  }
+  return { errors, value, skillChoices, location, next, parts, impact };
+}
+
+const confirmed = (v) => v === 'on' || v === 'true' || v === '1';
+
+// POST /recruiter-jobs/:id/edit/preview — how many applicants an edit would withdraw or notify (the pop-up)
+router.post('/:id/edit/preview', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    if (posting.status !== 'open') return res.status(409).json({ ok: false });
+    const r = await checkEdit(req, posting);
+    if (Object.keys(r.errors).length) return res.json({ ok: false });
+    res.json({ ok: true, withdraw: r.impact.withdraw.length, notify: r.impact.keep.length });
+  } catch (error) {
+    console.error('Error previewing posting edit:', error);
+    res.status(500).json({ ok: false });
+  }
+});
+
 // POST /recruiter-jobs/:id/edit — same rules as posting; only an open posting can be edited
 router.post('/:id/edit', async (req, res) => {
   try {
@@ -195,43 +248,47 @@ router.post('/:id/edit', async (req, res) => {
     if (!posting) return;
     if (posting.status !== 'open') return res.status(409).render('recruiter-jobs-locked', { title: 'Edit Job | PreCheckd', notEditable: true });
 
-    const skillChoices = await skillOptions();
-    const skillLabels = new Map(skillChoices.map((o) => [o.key, o.label]));
-    const { errors, value } = validatePosting(req.body, { skillLabels, editing: { createdAt: posting.createdAt } });
-
-    let location = null;
-    if (!Object.keys(errors).length) {
-      try {
-        // The address is only looked up again if it changed; otherwise the saved point is reused.
-        const point = posting.areaRule && posting.areaRule.point && posting.areaRule.point.length === 2 ? posting.areaRule.point : null;
-        const sameAddress = point && value.address && value.address === posting.address;
-        location = await buildLocation(value, sameAddress
-          ? async () => ({ lng: point[0], lat: point[1], city: posting.displayCity, state: posting.displayState })
-          : undefined);
-      } catch (e) {
-        if (e.code !== 'geocode_failed') throw e;
-        errors.address = e.message;
-      }
+    const r = await checkEdit(req, posting);
+    const titleChoices = () => titlesForSkills((r.value.skills || []).map((x) => x.key)).map((t) => ({ id: t.id, title: t.title }));
+    if (Object.keys(r.errors).length) {
+      return res.status(400).render('recruiter-job-form', editLocals(posting, { errors: r.errors, form: req.body, skillChoices: r.skillChoices, titleChoices: titleChoices() }));
     }
 
-    if (Object.keys(errors).length) {
-      return res.status(400).render('recruiter-job-form', editLocals(posting, {
-        errors, form: req.body, skillChoices,
-        titleChoices: titlesForSkills(value.skills.map((s) => s.key)).map((t) => ({ id: t.id, title: t.title })),
+    if (!r.parts.length) return res.redirect(`/recruiter-jobs/${posting._id}?saved=nochange`);
+
+    // Withdrawing people is never silent: the recruiter confirms the count first.
+    if (r.impact.withdraw.length && !confirmed(req.body.confirmWithdraw)) {
+      return res.status(409).render('recruiter-job-form', editLocals(posting, {
+        errors: {}, form: req.body, skillChoices: r.skillChoices, titleChoices: titleChoices(), withdrawPrompt: r.impact.withdraw.length,
       }));
     }
 
-    const next = docFromValue(value, location);
-    const parts = changedParts(posting, next);
-    if (!parts.length) return res.redirect(`/recruiter-jobs/${posting._id}?saved=nochange`);
-    posting.set(next);
-    if (!location.areaRule) posting.areaRule = undefined;
+    posting.set(r.next);
+    if (!r.location.areaRule) posting.areaRule = undefined;
     posting.editedAt = new Date();
-    posting.edits = [...posting.edits, { at: posting.editedAt, parts }].slice(-30);
+    posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
-    res.redirect(`/recruiter-jobs/${posting._id}?saved=1`);
+    await applyImpact(posting, r.impact, r.parts);
+    const extra = r.impact.withdraw.length ? `&withdrawn=${r.impact.withdraw.length}` : '';
+    res.redirect(`/recruiter-jobs/${posting._id}?saved=1${extra}`);
   } catch (error) {
     console.error('Error saving posting edit:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// GET /recruiter-jobs/:id/applicants — who has applied (their full profile opens through the connection)
+router.get('/:id/applicants', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    const apps = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } }).populate('candidateId');
+    res.render('recruiter-job-applicants', {
+      title: `Applicants | ${posting.title} | PreCheckd`, posting,
+      applicants: apps.filter((a) => a.candidateId).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)),
+    });
+  } catch (error) {
+    console.error('Error loading applicants:', error);
     res.status(500).send('Server error');
   }
 });
@@ -242,7 +299,8 @@ router.get('/:id', async (req, res) => {
     const posting = await loadOwnPosting(req, res);
     if (!posting) return;
     res.render('recruiter-job-detail', {
-      title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', saved: req.query.saved || '',
+      title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
+      applicantCount: await JobApplication.countDocuments({ jobId: posting._id, status: { $in: ACTIVE } }),
       options: { arrangements: opt.ARRANGEMENTS, employmentTypes: opt.EMPLOYMENT_TYPES, travel: opt.TRAVEL, shifts: opt.SHIFT_OPTIONS,
         payBasis: opt.PAY_BASIS, benefits: opt.BENEFITS, education: opt.EDUCATION_LEVELS, clearance: opt.CLEARANCE_OPTIONS },
     });

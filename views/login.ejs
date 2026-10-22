@@ -184,7 +184,7 @@
 
         if (res.ok && data.success) {
           if (data.accountType === 'candidate') {
-            window.location.href = `/candidate/${data.slug}`;
+            window.location.href = (data.returnTo && data.isFullyVerified) ? data.returnTo : `/candidate/${data.slug}`;
           } else {
             window.location.href = data.accountTier === 'unverified_claim'
               ? '/recruiter-dashboard/claim'

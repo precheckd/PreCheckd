@@ -1,0 +1,32 @@
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+%>
+<style>
+  .ja-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .ja-inner { max-width: 820px; width: 100%; color: #F2F4F3; }
+  .ja-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .ja-inner h1 { font-size: 1.6rem; margin: 0 0 0.3rem; }
+  .ja-sub { color: #C7D1CF; margin-bottom: 1.25rem; }
+  .ja-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.7rem; }
+  .ja-name { font-weight: 700; }
+  .ja-meta { color: #C7D1CF; font-size: 0.85rem; }
+  .ja-btn { background: #2ECC71; color: #10261C; border-radius: 6px; padding: 0.5rem 1rem; font-weight: 700; text-decoration: none; font-size: 0.9rem; white-space: nowrap; }
+  .ja-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
+</style>
+<div class="ja-wrap"><div class="ja-inner">
+  <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
+  <h1>Applicants</h1>
+  <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Applying opens their full profile, video and resume to you.</p>
+  <% if (applicants.length === 0) { %>
+    <div class="ja-empty">No applicants yet.</div>
+  <% } %>
+  <% applicants.forEach(function(a) { const c = a.candidateId; %>
+    <div class="ja-card">
+      <div>
+        <div class="ja-name"><%= c.firstName %> <%= c.lastName %></div>
+        <div class="ja-meta">Applied <%= fmt(a.appliedAt) %> &middot; <%= a.status %></div>
+      </div>
+      <% if (a.connectionId) { %><a class="ja-btn" href="/recruiter-dashboard/requests/<%= a.connectionId %>/candidate">View profile</a><% } %>
+    </div>
+  <% }); %>
+</div></div>

@@ -1,0 +1,32 @@
+<%
+  const lbl = (list, code) => label(list, code);
+  const fmtClose = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+  const per = j.basePayType === 'hourly' ? ' an hour' : ' a year';
+%>
+<style>
+  .ap-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .ap-inner { max-width: 640px; width: 100%; color: #F2F4F3; }
+  .ap-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .ap-inner h1 { font-size: 1.6rem; margin: 0 0 0.3rem; }
+  .ap-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin: 1rem 0; }
+  .ap-card li { margin: 0.4rem 0; line-height: 1.5; }
+  .ap-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.8rem 1.6rem; font-weight: 700; font-size: 1rem; cursor: pointer; }
+  .ap-cancel { margin-left: 1rem; color: #8FA6AC; }
+</style>
+<div class="ap-wrap"><div class="ap-inner">
+  <a class="ap-back" href="<%= back %>">&larr; Back to the job</a>
+  <h1>Apply: <%= j.title %></h1>
+  <p><%= j.hiringCompany %> &middot; <%= j.location %></p>
+  <div class="ap-card">
+    <strong>Before you apply, please know:</strong>
+    <ul>
+      <li>Applying shares your <strong>full profile, video and resume</strong> with <%= posterName %>, and connects you with them. There is no separate resume or cover letter.</li>
+      <li>You are accepting the posted pay: <%= j.commissionOnly ? 'commission only' : money(j.baseMin) + ' to ' + money(j.baseMax) + per %>.</li>
+      <li>You should expect to interview if they want to move forward.</li>
+      <li>Applications close <%= fmtClose(j.closeDate) %>. You can withdraw any time before then.</li>
+    </ul>
+  </div>
+  <form method="POST" action="/jobs/<%= postingId %>/apply">
+    <button class="ap-btn" type="submit">Apply and share my profile</button><a class="ap-cancel" href="<%= back %>">Not now</a>
+  </form>
+</div></div>

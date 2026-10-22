@@ -103,6 +103,32 @@
 
   // Disabled inputs are not submitted; the server forces base pay to 0 for commission-only jobs anyway.
 
+  // ---- editing: tell the recruiter how many applicants a change would withdraw, before it saves ----
+  const previewUrl = form.getAttribute('data-preview');
+  if (previewUrl) {
+    let confirming = false;
+    form.addEventListener('submit', async function (e) {
+      if (confirming) return;
+      e.preventDefault();
+      let ok = true;
+      try {
+        const params = new URLSearchParams(new FormData(form));
+        const res = await fetch(previewUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+        const data = await res.json();
+        if (data && data.ok && data.withdraw > 0) {
+          ok = window.confirm(data.withdraw + (data.withdraw === 1 ? ' applicant' : ' applicants') +
+            ' will be withdrawn because of this change. They will be told what changed and how to fix it. Save the change?');
+          if (ok) {
+            let box = form.querySelector('input[name="confirmWithdraw"]');
+            if (!box) { box = document.createElement('input'); box.type = 'hidden'; box.name = 'confirmWithdraw'; form.appendChild(box); }
+            box.value = 'on'; box.checked = true;
+          }
+        }
+      } catch (err) { /* the server still asks for confirmation if it is needed */ }
+      if (ok) { confirming = true; form.submit(); }
+    });
+  }
+
   // ---- summary counter ----
   const summary = $('jp-summary');
   const count = $('jp-summary-count');

@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+
+// Where to send someone back to after they log in or sign up: only a job page on this site.
+function safeJobPath(p) {
+  return typeof p === 'string' && /^\/jobs\/[a-f0-9]{24}(\/[a-z0-9-]*)?$/.test(p) ? p : null;
+}
 const bcrypt = require('bcryptjs');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
@@ -68,7 +73,8 @@ router.post('/login', async (req, res) => {
       success: true,
       accountType: 'candidate',
       slug: candidate.slug,
-      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.isIdentityVerified)
+      isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.isIdentityVerified),
+      returnTo: safeJobPath(req.session.returnTo)
     });
   } catch (error) {
     console.error('Error logging in:', error);
@@ -217,3 +223,4 @@ router.get('/logout', (req, res) => {
 });
 
 module.exports = router;
+module.exports.safeJobPath = safeJobPath;

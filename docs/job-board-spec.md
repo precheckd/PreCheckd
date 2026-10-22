@@ -214,3 +214,14 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 - **Viewers:** guest sees sign-up / log-in; candidate sees what they are missing with fix links (the gate runs live); recruiters cannot apply; the owner gets a manage link. The Apply button arrives in step 5. "Jobs" is in the top nav.
 - **For step 5:** log-in and sign-up do not yet return the person to the job they came from; add that.
 
+## 13. Apply flow (step 5, built Oct 22)
+
+- **Apply:** `/jobs/<id>/apply` is the last screen. It says plainly that applying shares the full profile, video and resume with the recruiter, accepts the posted pay, and means expecting an interview. The same gate runs again on submit, so a blocked candidate cannot apply by posting directly.
+- **Auto-connect:** applying creates (or accepts) a connection with the posting's recruiter and grants full access. Withdrawing stops the access (unless another live application with that recruiter remains); the connection stays.
+- **Tracker:** an entry is created on the candidate's Application Tracker (source `precheckd`) and set to withdrawn if they withdraw or are withdrawn.
+- **Recruiter:** bell "New applicant for ...", and `/recruiter-jobs/<id>/applicants` lists active applicants with a link to the full profile. The "Applicants (N)" button is on the posting page.
+- **Withdraw:** candidate button on the job page; applying again later revives the same application.
+- **Edits with applicants (decided Oct 22):** an edit that adds or tightens a requirement withdraws applicants who now fail something they did not fail before (so an unrelated edit never sweeps up someone whose own situation drifted). The recruiter sees a pop-up with the count before saving; the server also refuses to save without the confirmation (checkbox fallback). Withdrawn candidates get a bell message and the job page shows what changed and how to fix it. Any other change withdraws no one and every current applicant gets a "was updated (parts)" bell.
+- **Return to the job:** "Sign up to apply" and "Log in" on a job page remember the job. Login sends a fully verified candidate straight back; anyone still setting up sees a "Go back to it" bar until they visit the job.
+- **Not built yet:** recruiter pipeline stages and rejection reasons, email versions of these notices (step 6), "blocked by recruiter" (there is no candidate-block feature yet, so the gate input is always false), membership check (billing).
+

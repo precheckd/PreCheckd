@@ -13,6 +13,7 @@ const Recruiter = require('../src/models/Recruiter');
 const JobPosting = require('../src/models/JobPosting');
 const SkillAssessment = require('../src/models/SkillAssessment');
 const CatalogRequest = require('../src/models/CatalogRequest');
+const JobApplication = require('../src/models/JobApplication');
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }
@@ -32,6 +33,8 @@ JobPosting.create = async (doc) => {
 JobPosting.find = () => ({ sort: async () => saved.slice() });
 JobPosting.findById = async (id) => saved.find((p) => String(p._id) === String(id)) || null;
 JobPosting.distinct = async () => ['Acme Corp', 'ACME corp', 'Acme Labs'];
+JobApplication.find = async () => [];
+JobApplication.countDocuments = async () => 0;
 const catalogWrites = [];
 CatalogRequest.updateOne = async (...args) => { catalogWrites.push(args); return {}; };
 Object.defineProperty(JobPosting.prototype, 'save', { value: async function () { return this; }, configurable: true, writable: true });

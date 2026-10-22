@@ -41,13 +41,21 @@
     <h2>Apply</h2>
     <% if (viewer.kind === 'guest') { %>
       <p>Everyone who applies here has a verified identity, tested skills and verified credentials. Sign up or log in to see if you qualify.</p>
-      <a class="jp-btn" href="/candidate-landing">Sign up to apply</a><a class="jp-btn alt" href="/login">Log in</a>
+      <a class="jp-btn" href="/jobs/<%= postingId %>/start?to=signup">Sign up to apply</a><a class="jp-btn alt" href="/jobs/<%= postingId %>/start?to=login">Log in</a>
     <% } else if (viewer.kind === 'recruiter') { %>
       <p><%= viewer.isOwner ? 'This is your posting.' : 'Recruiters cannot apply to jobs.' %></p>
       <% if (viewer.isOwner) { %><a class="jp-btn alt" href="/recruiter-jobs/<%= postingId %>">Manage this posting</a><% } %>
+    <% } else if (application && application.active) { %>
+      <% if (notice === 'applied') { %><div class="jp-ok">You applied. The recruiter can now see your full profile, video and resume, and you are connected.</div><% } else { %><p>You applied on <%= fmt(application.appliedAt) %>.</p><% } %>
+      <form method="POST" action="/jobs/<%= postingId %>/withdraw" onsubmit="return confirm('Withdraw your application? The recruiter will no longer see your full profile for this job.');"><button class="jp-btn alt" type="submit">Withdraw my application</button></form>
     <% } else if (gate && gate.canApply) { %>
-      <div class="jp-ok">You meet every requirement for this job. Applying opens very soon.</div>
+      <% if (notice === 'withdrew') { %><div class="jp-ok">Your application was withdrawn.</div><% } %>
+      <% if (application && application.withdrawnBy === 'requirement_change') { %><div class="jp-block">Your earlier application was withdrawn because the job's requirements changed. You now meet them, so you can apply again.</div><% } %>
+      <div class="jp-ok">You meet every requirement for this job.</div>
+      <a class="jp-btn" href="/jobs/<%= postingId %>/apply">Apply</a>
     <% } else if (gate) { %>
+      <% if (notice === 'withdrew') { %><div class="jp-ok">Your application was withdrawn.</div><% } %>
+      <% if (application && application.withdrawnBy === 'requirement_change') { %><div class="jp-block"><strong>Your application was withdrawn because the requirements for this job changed.</strong></div><% } %>
       <p>You do not meet every requirement yet. Here is what is missing and how to fix it:</p>
       <% gate.blockers.forEach(function(b) { %>
         <div class="jp-block"><%= b.message %>

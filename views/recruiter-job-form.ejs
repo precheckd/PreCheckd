@@ -58,7 +58,7 @@
       <ul><% errorKeys.forEach(function(k) { %><li><%= errors[k] %></li><% }); %></ul></div>
   <% } %>
 
-  <form method="POST" action="<%= action %>" id="job-form" novalidate>
+  <form method="POST" action="<%= action %>" id="job-form" data-preview="<%= isEdit ? action + '/preview' : '' %>" novalidate>
 
     <!-- 1. Skills and title -->
     <div class="jp-card">
@@ -343,6 +343,12 @@
       </div>
     </div>
 
+    <% if (isEdit && withdrawPrompt) { %>
+      <div class="jp-confirm-box" style="background:#3A3320;border-left:4px solid #E0B341;color:#F5E7B8;padding:0.9rem 1.1rem;border-radius:6px;margin-bottom:1rem;">
+        <strong>This change adds or tightens a requirement.</strong> <%= withdrawPrompt %> applicant<%= withdrawPrompt === 1 ? '' : 's' %> will be withdrawn automatically and told what changed and how to fix it.
+        <label style="display:block;margin-top:0.6rem;"><input type="checkbox" name="confirmWithdraw" value="on"> Yes, withdraw <%= withdrawPrompt === 1 ? 'this applicant' : 'these ' + withdrawPrompt + ' applicants' %> and save my changes</label>
+      </div>
+    <% } %>
     <button type="submit" class="jp-btn"><%= submitLabel %></button>
   </form>
 </div></div>

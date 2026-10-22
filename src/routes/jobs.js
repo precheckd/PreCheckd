@@ -6,6 +6,9 @@ const router = express.Router();
 const JobPosting = require('../models/JobPosting');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
+const JobApplication = require('../models/JobApplication');
+const { ACTIVE, applyToJob, withdrawApplication } = require('../services/jobApplications');
+const { notify } = require('../services/notifications');
 const { evaluate } = require('../services/applyGate');
 const { buildCandidateFacts } = require('../services/applyFacts');
 const pub = require('../services/publicJob');
@@ -34,6 +37,85 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading jobs:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// ---- sending a visitor to sign up or log in, and bringing them back to the job afterwards ----
+// GET /jobs/:id/start?to=login|signup — remembers the job, then goes to the right page
+router.get('/:id/start', async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.redirect('/jobs');
+    const posting = await JobPosting.findById(req.params.id);
+    if (!posting || posting.status === 'removed') return res.redirect('/jobs');
+    if (req.session) req.session.returnTo = pub.pathOf(posting);
+    res.redirect(req.query.to === 'login' ? '/login' : '/candidate-landing');
+  } catch (error) {
+    console.error('Error starting a job visit:', error);
+    res.redirect('/jobs');
+  }
+});
+
+// Everything the apply screens need, or null after answering the request itself.
+async function loadForApply(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) { res.status(404).render('error', { title: 'Not found', message: 'We could not find that job.' }); return null; }
+  const posting = await JobPosting.findById(req.params.id);
+  if (!posting || posting.status === 'removed') { res.status(404).render('error', { title: 'Not found', message: 'We could not find that job.' }); return null; }
+  const back = pub.pathOf(posting);
+  if (!req.session || !req.session.candidateId) {
+    if (req.session) req.session.returnTo = back;
+    res.redirect('/login'); return null;
+  }
+  const candidate = await Candidate.findById(req.session.candidateId);
+  if (!candidate) { res.redirect('/login'); return null; }
+  const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
+  const alreadyApplied = Boolean(existing && ACTIVE.includes(existing.status));
+  const gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
+  return { posting, candidate, existing, gate, back };
+}
+
+// GET /jobs/:id/apply — the last screen before applying: says plainly what applying does
+router.get('/:id/apply', async (req, res) => {
+  try {
+    const c = await loadForApply(req, res);
+    if (!c) return;
+    if (!c.gate.canApply) return res.redirect(c.back);
+    const j = pub.publicShape(c.posting);
+    const poster = await Recruiter.findById(c.posting.recruiterId);
+    res.render('job-apply', { pageTitle: `Apply: ${j.title} | PreCheckd`, robotsMeta: 'noindex', j, back: c.back, postingId: String(c.posting._id),
+      posterName: poster ? [poster.firstName, poster.lastName].filter(Boolean).join(' ') : 'the recruiter', ...helpers });
+  } catch (error) {
+    console.error('Error loading apply screen:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /jobs/:id/apply
+router.post('/:id/apply', async (req, res) => {
+  try {
+    const c = await loadForApply(req, res);
+    if (!c) return;
+    if (!c.gate.canApply) return res.redirect(c.back);
+    await applyToJob(c.candidate, c.posting);
+    res.redirect(`${c.back}?applied=1`);
+  } catch (error) {
+    console.error('Error applying:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /jobs/:id/withdraw — the candidate takes their application back
+router.post('/:id/withdraw', async (req, res) => {
+  try {
+    const c = await loadForApply(req, res);
+    if (!c) return;
+    if (c.existing && ACTIVE.includes(c.existing.status)) {
+      await withdrawApplication(c.existing, { by: 'candidate' });
+      await notify('recruiter', c.posting.recruiterId, 'job_withdrew', `An applicant withdrew from ${c.posting.title}`.slice(0, 200), `/recruiter-jobs/${c.posting._id}/applicants`);
+    }
+    res.redirect(`${c.back}?withdrew=1`);
+  } catch (error) {
+    console.error('Error withdrawing:', error);
     res.status(500).send('Server error');
   }
 });
@@ -68,13 +150,18 @@ router.get('/:id/:slug?', async (req, res) => {
     // Who is looking: a candidate sees whether they qualify; a recruiter cannot apply.
     let viewer = { kind: 'guest' };
     let gate = null;
+    let application = null;
     if (open && req.session && req.session.candidateId) {
       viewer = { kind: 'candidate' };
       try {
         const candidate = await Candidate.findById(req.session.candidateId);
         if (candidate) {
           viewer.slug = candidate.slug;
-          gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape() }), posting.toGateShape());
+          const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
+          const alreadyApplied = Boolean(existing && ACTIVE.includes(existing.status));
+          if (existing) application = { active: alreadyApplied, appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote };
+          gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
+          if (req.session.returnTo === j.path) delete req.session.returnTo;
         }
       } catch (e) { console.error('Error checking a candidate against a posting:', e); gate = null; }
     } else if (req.session && req.session.recruiterId) {
@@ -88,7 +175,7 @@ router.get('/:id/:slug?', async (req, res) => {
       canonicalUrl: meta.canonical,
       robotsMeta: open ? '' : 'noindex',
       headExtra: open ? pub.jsonLdScript(pub.jobPostingJsonLd(j)) : '',
-      j, open, viewer, gate, standard, ...helpers,
+      j, open, viewer, gate, application, notice: req.query.applied ? 'applied' : (req.query.withdrew ? 'withdrew' : ''), standard, ...helpers,
       poster: poster && poster.isActive !== false && !poster.isSuspended
         ? { name: [poster.firstName, poster.lastName].filter(Boolean).join(' '), slug: poster.slug } : null,
       postingId: String(posting._id),

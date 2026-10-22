@@ -104,6 +104,7 @@ const EDU_INDEX = Object.fromEntries(EDUCATION_LEVELS.map((l) => [l.code, l.inde
 const CLR_INDEX = Object.fromEntries(CLEARANCE_OPTIONS.map((c) => [c.code, c.index]));
 jobPostingSchema.methods.toGateShape = function toGateShape() {
   return {
+    jobId: this._id,
     status: this.status,
     closeDate: this.closeDate,
     skills: this.skills.map((s) => ({ key: s.key, label: s.label, minLevel: s.minLevel })),

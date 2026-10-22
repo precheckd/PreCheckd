@@ -86,6 +86,7 @@ app.use(async (req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.loggedInRecruiterSlug = null;
   res.locals.loggedInCandidateSlug = null;
+  res.locals.returnToJob = null;
   res.locals.navPhotoUrl = null;
   res.locals.navInitials = '';
   res.locals.navName = '';
@@ -148,6 +149,7 @@ app.use(async (req, res, next) => {
       const candidate = await Candidate.findById(req.session.candidateId);
       if (candidate) {
         res.locals.loggedInCandidateSlug = candidate.slug;
+        res.locals.returnToJob = require('./routes/auth').safeJobPath(req.session.returnTo);
         res.locals.navPhotoUrl = candidate.profilePhotoUrl || null;
         res.locals.navInitials = `${(candidate.firstName || '?').charAt(0)}${(candidate.lastName || '').charAt(0)}`.toUpperCase();
         res.locals.navName = [candidate.firstName, candidate.lastName].filter(Boolean).join(' ');
