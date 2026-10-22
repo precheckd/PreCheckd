@@ -40,6 +40,7 @@ JobPosting.find = (filter) => ({ sort: async () => postings.filter((p) => !filte
 JobPosting.findById = async (id) => postings.find((p) => String(p._id) === String(id)) || null;
 Recruiter.findById = async () => ({ firstName: 'Pat', lastName: 'Lee', slug: 'pat-lee', isActive: true, isSuspended: false });
 const SkillResult = require('../src/models/SkillResult');
+require('../src/models/JobApplication').findOne = async () => null;
 SkillResult.find = () => ({ select: async () => [] });
 require('../src/services/skills').currentSkills = async () => [];
 let candidate = null;
