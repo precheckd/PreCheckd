@@ -1,0 +1,56 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .jl-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jl-inner { max-width: 1100px; width: 100%; color: #F2F4F3; }
+  .jl-inner h1 { font-size: 1.75rem; margin: 0 0 0.3rem; }
+  .jl-lead { color: #C7D1CF; margin-bottom: 1.25rem; }
+  .jl-filter { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .jl-filter input, .jl-filter select { background: #2A4750; border: 1px solid #3B5860; color: #F2F4F3; border-radius: 6px; padding: 0.6rem 0.8rem; font-size: 0.95rem; }
+  .jl-filter input { flex: 1; min-width: 180px; }
+  .jl-filter button { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; }
+  .jl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  @media (max-width: 800px) { .jl-grid { grid-template-columns: 1fr; } }
+  .jl-card { display: block; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; text-decoration: none; color: #F2F4F3; }
+  .jl-card:hover { border-color: #2ECC71; }
+  .jl-title { font-weight: 700; font-size: 1.05rem; }
+  .jl-sub { color: #C7D1CF; font-size: 0.88rem; margin-top: 0.2rem; }
+  .jl-skills { color: #8FA6AC; font-size: 0.82rem; margin-top: 0.35rem; }
+  #jl-map { height: 520px; border-radius: 8px; border: 1px solid #3B5860; position: sticky; top: 90px; }
+  .jl-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
+  .jl-note { color: #8FA6AC; font-size: 0.8rem; margin-top: 0.5rem; }
+</style>
+<div class="jl-wrap"><div class="jl-inner">
+  <h1>Open jobs</h1>
+  <p class="jl-lead">Every applicant here has a verified identity, tested skills and verified credentials. <%= totalOpen %> open <%= totalOpen === 1 ? 'job' : 'jobs' %>.</p>
+  <form class="jl-filter" method="get" action="/jobs">
+    <input type="search" name="q" value="<%= q %>" maxlength="100" placeholder="Title, company, skill or place" aria-label="Search jobs">
+    <select name="arrangement" aria-label="Work arrangement">
+      <option value="">Any arrangement</option>
+      <% options.arrangements.forEach(function(a) { %><option value="<%= a.code %>"<%= arrangement === a.code ? ' selected' : '' %>><%= a.label %></option><% }); %>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+  <% if (jobs.length === 0) { %>
+    <div class="jl-empty"><%= totalOpen === 0 ? 'No jobs are open right now. Check back soon.' : 'No open jobs match that search.' %></div>
+  <% } else { %>
+  <div class="jl-grid">
+    <div>
+      <% jobs.forEach(function(j) { %>
+        <a class="jl-card" href="<%= j.path %>">
+          <div class="jl-title"><%= j.title %></div>
+          <div class="jl-sub"><%= j.hiringCompany %> &middot; <%= j.location %></div>
+          <div class="jl-sub"><%= j.payLine %> &middot; <%= j.seniorityLabel %></div>
+          <div class="jl-skills"><%= j.skills.map(function(s) { return s.label + (s.minLevel ? ' (' + s.minLevel + ')' : ''); }).join(' · ') %></div>
+        </a>
+      <% }); %>
+    </div>
+    <div>
+      <div id="jl-map" role="img" aria-label="Map of job areas"></div>
+      <p class="jl-note">Circles show the general area of a job. Exact addresses are never shown.</p>
+    </div>
+  </div>
+  <% } %>
+</div></div>
+<script type="application/json" id="jl-pins"><%- JSON.stringify(pins).replace(/</g, '\\u003c') %></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/jobs-map.js"></script>

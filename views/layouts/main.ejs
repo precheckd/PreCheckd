@@ -5,12 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitleResolved %></title>
-  <meta name="description" content="PreCheckd verifies recruiters' identity, phone, email, and company domain, so job seekers know exactly who they're talking to.">
+  <% const metaDesc = (typeof metaDescription !== 'undefined' && metaDescription) ? metaDescription : "PreCheckd verifies recruiters' identity, phone, email, and company domain, so job seekers know exactly who they're talking to."; %>
+  <meta name="description" content="<%= metaDesc %>">
+  <% if (typeof robotsMeta !== 'undefined' && robotsMeta) { %><meta name="robots" content="<%= robotsMeta %>"><% } %>
+  <% if (typeof canonicalUrl !== 'undefined' && canonicalUrl) { %><link rel="canonical" href="<%= canonicalUrl %>"><% } %>
+  <meta name="twitter:card" content="summary">
+  <% if (typeof headExtra !== 'undefined' && headExtra) { %><%- headExtra %><% } %>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:title" content="<%= pageTitleResolved %>">
-  <meta property="og:description" content="PreCheckd verifies recruiters' identity, phone, email, and company domain, so job seekers know exactly who they're talking to.">
+  <meta property="og:description" content="<%= metaDesc %>">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://precheckd.com/">
+  <meta property="og:site_name" content="PreCheckd">
+  <meta property="og:url" content="<%= (typeof canonicalUrl !== 'undefined' && canonicalUrl) ? canonicalUrl : 'https://precheckd.com/' %>">
   <link rel="stylesheet" href="/css/main.css">
   <% if (typeof gaMeasurementId !== 'undefined' && gaMeasurementId && !isAdminHost) { %>
     <!-- Google Analytics (GA4) — skipped entirely on the admin subdomain so
@@ -398,6 +404,7 @@
               const navDisplayName = typeof navName !== 'undefined' ? navName : '';
             %>
             <a href="<%= navHomeHref %>" class="nav-btn-outline<%= navPath === navHomeHref ? ' is-active' : '' %>">Home</a>
+            <a href="/jobs" class="nav-btn-outline<%= navOn('/jobs') %>">Jobs</a>
             <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Inbox<%- navMailBadge %></a>
             <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
             <% if (navLoggedInCandidate) { %>
@@ -437,6 +444,7 @@
       <% } else if (typeof isAdminHost !== 'undefined' && isAdminHost) { %>
         <a href="/" class="nav-btn-outline">Admin Home</a>
       <% } else { %>
+        <a href="/jobs" class="nav-btn-outline">Jobs</a>
         <a href="/recruiter-search" class="nav-btn-outline">Browse Recruiters</a>
         <a href="/recruiter-landing" class="nav-btn-outline">Recruiters</a>
         <a href="/candidate-landing" class="nav-btn-outline">Candidates</a>

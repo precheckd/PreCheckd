@@ -204,3 +204,13 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 - Every save is logged on the posting (`editedAt`, `edits[]` with the parts changed: title and skills, company, job details, location, pay, requirements, dates, description; last 30 kept). The internal nickname is not logged.
 - **Decided (Kent, Oct 22), built in step 5 when applications exist:** if an edit adds or tightens a requirement (skill added or level raised, education, certification, clearance, shift, area, firm start date), applicants who no longer meet it are **withdrawn automatically** and told which requirement changed and how to fix it (fix-or-withdraw wording). Before saving, the recruiter sees a **pop-up with how many applicants will be withdrawn** and must confirm. Any other change (pay, description, loosened requirements, dates, etc.) withdraws no one, but **all current applicants are notified** of what changed (Kent, Oct 22).
 
+## 12. Public posting pages (step 4, built Oct 22)
+
+- `/jobs` lists every open posting (search by title, company, skill or place; filter by arrangement) with a map. `/jobs/<id>/<title-company>` is the shareable link; a wrong or missing words part redirects (301) to the right one.
+- Public view: title, company, city and state, pay, skills and requirements, description, standing lines, the verified recruiter who posted it. Never the street address, internal label or exact point.
+- **Map:** each on-site, hybrid or radius-limited posting is a 2.5-mile circle that contains the real spot but is not centred on it (offset from a server secret, same every time). Zoomed in, the circle fills the screen, so it reads as an area, not a pin.
+- **Link previews:** title, company, place, pay and skills; no address. Closed or past-due postings show "This position is closed." (status 200, `noindex`, no job markup).
+- **Search engines:** schema.org JobPosting markup (city and state only, salary range, remote marked as telecommute) and `/jobs/sitemap.xml`. After launch, submit the sitemap once in Google Search Console.
+- **Viewers:** guest sees sign-up / log-in; candidate sees what they are missing with fix links (the gate runs live); recruiters cannot apply; the owner gets a manage link. The Apply button arrives in step 5. "Jobs" is in the top nav.
+- **For step 5:** log-in and sign-up do not yet return the person to the job they came from; add that.
+

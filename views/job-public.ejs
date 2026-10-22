@@ -1,0 +1,99 @@
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const fmtClose = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+  const lbl = (list, code) => label(list, code);
+  const per = j.basePayType === 'hourly' ? ' an hour' : ' a year';
+  const sectionHref = { education: '/edit', certifications: '/edit', clearance: '/job-preferences', shifts: '/job-preferences', availability: '/job-preferences', workAreas: '/work-areas' };
+  const actionLink = (a) => {
+    if (!viewer.slug) return null;
+    if (a.kind === 'start_track') return { href: '/candidate/' + viewer.slug + '/skills', text: 'Start this skill track' };
+    if (a.kind === 'edit_profile') return { href: a.section === 'verification' ? '/candidate/' + viewer.slug : '/candidate/' + viewer.slug + (sectionHref[a.section] || '/edit'), text: a.section === 'verification' ? 'Finish verifying' : 'Update your profile' };
+    return null;
+  };
+%>
+<style>
+  .jp-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jp-inner { max-width: 820px; width: 100%; color: #F2F4F3; }
+  .jp-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .jp-inner h1 { font-size: 1.75rem; margin: 0 0 0.3rem; }
+  .jp-meta { color: #C7D1CF; margin-bottom: 1.25rem; }
+  .jp-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .jp-card h2 { font-size: 1rem; color: #8FA6AC; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.6rem; }
+  .jp-card p, .jp-card li { color: #E8EBEA; line-height: 1.55; font-size: 0.95rem; }
+  .jp-card ul { margin: 0.3rem 0 0 1.1rem; padding: 0; }
+  .jp-closed { background: #3A2B2B; border-left: 4px solid #FF8A8A; color: #FFD6D6; padding: 1rem 1.2rem; border-radius: 6px; margin-bottom: 1rem; font-size: 1.05rem; }
+  .jp-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.9rem 1.1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .jp-block { background: #3A3320; border-left: 4px solid #E0B341; color: #F5E7B8; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 0.6rem; }
+  .jp-block a { color: #2ECC71; font-weight: 700; margin-right: 1rem; }
+  .jp-btn { display: inline-block; background: #2ECC71; color: #10261C; border-radius: 6px; padding: 0.7rem 1.3rem; font-weight: 700; text-decoration: none; margin: 0.3rem 0.6rem 0.3rem 0; }
+  .jp-btn.alt { background: transparent; color: #2ECC71; border: 1px solid #2ECC71; }
+  .jp-std { color: #C7D1CF; font-size: 0.85rem; }
+  .jp-poster a { color: #2ECC71; }
+</style>
+<div class="jp-wrap"><div class="jp-inner">
+  <a class="jp-back" href="/jobs">&larr; All open jobs</a>
+  <% if (!open) { %><div class="jp-closed"><strong>This position is closed.</strong> It is no longer taking applications.</div><% } %>
+  <h1><%= j.title %></h1>
+  <div class="jp-meta"><%= j.seniorityLabel %> &middot; <%= j.hiringCompany %> &middot; <%= j.location %></div>
+
+  <% if (open) { %>
+  <div class="jp-card">
+    <h2>Apply</h2>
+    <% if (viewer.kind === 'guest') { %>
+      <p>Everyone who applies here has a verified identity, tested skills and verified credentials. Sign up or log in to see if you qualify.</p>
+      <a class="jp-btn" href="/candidate-landing">Sign up to apply</a><a class="jp-btn alt" href="/login">Log in</a>
+    <% } else if (viewer.kind === 'recruiter') { %>
+      <p><%= viewer.isOwner ? 'This is your posting.' : 'Recruiters cannot apply to jobs.' %></p>
+      <% if (viewer.isOwner) { %><a class="jp-btn alt" href="/recruiter-jobs/<%= postingId %>">Manage this posting</a><% } %>
+    <% } else if (gate && gate.canApply) { %>
+      <div class="jp-ok">You meet every requirement for this job. Applying opens very soon.</div>
+    <% } else if (gate) { %>
+      <p>You do not meet every requirement yet. Here is what is missing and how to fix it:</p>
+      <% gate.blockers.forEach(function(b) { %>
+        <div class="jp-block"><%= b.message %>
+          <% (b.actions || []).forEach(function(a) { const l = actionLink(a); if (l) { %><div style="margin-top:0.4rem;"><a href="<%= l.href %>"><%= l.text %></a></div><% } }); %>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <p>We could not check your profile against this job just now. Please try again in a moment.</p>
+    <% } %>
+  </div>
+  <% } %>
+
+  <div class="jp-card"><h2>Pay</h2>
+    <p>
+      <% if (j.commissionOnly) { %>Base pay: $0 (commission only)<% } else { %>Base pay: <%= money(j.baseMin) %> to <%= money(j.baseMax) %><%= per %><% } %><br>
+      Based on: <%= j.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %>
+      <% if (j.commission && j.commission.average) { %><br>Commission: at least <%= money(j.commission.minAnticipated) %>, average <%= money(j.commission.average) %> a year<% } %>
+      <% ['bonus', 'equity', 'tips'].forEach(function(k) { if (j[k] && j[k].offered) { %><br><%= k.charAt(0).toUpperCase() + k.slice(1) %> offered<%= j[k].note ? ': ' + j[k].note : '' %><% } }); %>
+    </p>
+    <p>Benefits: <%= j.noBenefits ? 'None offered' : j.benefits.map((c) => lbl(options.benefits, c)).concat(j.benefitsOther ? [j.benefitsOther] : []).join(', ') %></p>
+  </div>
+
+  <div class="jp-card"><h2>Where and when</h2>
+    <p><%= lbl(options.arrangements, j.arrangement) %><% if (j.inOfficeDays) { %> (<%= j.inOfficeDays %> days a week in the office)<% } %>
+      <% if (j.arrangement !== 'remote') { %> &middot; <%= j.location %><% } %><br>
+      <%= lbl(options.employmentTypes, j.employmentType) %><%= j.contractLength ? ' (' + j.contractLength + ')' : '' %> &middot; <%= j.openings %> opening<%= j.openings === 1 ? '' : 's' %><br>
+      Shift: <%= lbl(options.shifts, j.shift) %> &middot; Travel: <%= lbl(options.travel, j.travel) %> &middot; Relocation: <%= j.relocation ? 'offered' : 'not offered' %><br>
+      Starts <%= fmt(j.startDate) %><%= j.startFirm ? ' (firm)' : '' %> &middot; applications close <%= fmtClose(j.closeDate) %></p>
+  </div>
+
+  <div class="jp-card"><h2>Requirements</h2>
+    <ul>
+      <% j.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + s.minLevel : 'no minimum level' %></li><% }); %>
+      <% if (j.education) { %><li>Education: <%= lbl(options.education, j.education) %> or higher (verified)</li><% } %>
+      <% j.certGroups.forEach(function(g) { %><li>Certification: one of <%= g.join(', ') %> (verified, current)</li><% }); %>
+      <% if (j.clearance) { %><li>Clearance: <%= lbl(options.clearance, j.clearance) %> or higher (reported by the candidate)</li><% } %>
+    </ul>
+  </div>
+
+  <div class="jp-card"><h2>Description</h2>
+    <p><%= j.summary %></p>
+    <ul><% j.responsibilities.forEach(function(r) { %><li><%= r %></li><% }); %></ul>
+    <% if (j.team) { %><p>Team: <%= j.team %></p><% } %>
+    <% if (j.growth) { %><p>Growth: <%= j.growth %></p><% } %>
+    <div class="jp-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
+  </div>
+
+  <% if (poster) { %><p class="jp-std jp-poster">Posted by <a href="/recruiter/<%= poster.slug %>"><%= poster.name %></a>, a PreCheckd verified recruiter.</p><% } %>
+</div></div>
