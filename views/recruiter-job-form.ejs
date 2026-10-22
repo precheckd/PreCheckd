@@ -1,0 +1,348 @@
+<%
+  const list = (v) => (v === undefined || v === null || v === '' ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]);
+  const val = (n) => (form[n] === undefined || form[n] === null ? '' : form[n]);
+  const has = (n, x) => list(form[n]).map(String).includes(String(x));
+  const on = (n) => ['on', 'true', '1', 'yes'].includes(String(form[n]));
+  const picked = list(form.skills);
+  const sk = (i, k) => (picked[i] && picked[i][k]) || '';
+  const groups = list(form.certGroups).map((g) => list(g));
+  const errorKeys = Object.keys(errors || {});
+%>
+<style>
+  .jp-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jp-inner { max-width: 820px; width: 100%; }
+  .jp-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .jp-inner h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.4rem; }
+  .jp-lead { color: #C7D1CF; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem; }
+  .jp-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .jp-card h2 { font-size: 1.15rem; color: #F2F4F3; margin: 0 0 0.35rem; }
+  .jp-card .jp-hint { color: #8FA6AC; font-size: 0.85rem; line-height: 1.45; margin: 0 0 1rem; }
+  .jp-field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.9rem; color: #E8EBEA; font-weight: 500; font-size: 0.9rem; }
+  .jp-field input[type="text"], .jp-field input[type="number"], .jp-field input[type="date"], .jp-field select, .jp-field textarea,
+  .jp-row input[type="text"], .jp-row input[type="number"], .jp-row select {
+    padding: 0.7rem; border: 1px solid #4A6F7B; border-radius: 6px; font-size: 0.95rem; background: #24404A; color: #F2F4F3; font-family: inherit; width: 100%; box-sizing: border-box;
+  }
+  .jp-field textarea { min-height: 110px; resize: vertical; }
+  .jp-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; align-items: center; }
+  .jp-row > * { flex: 1; min-width: 140px; }
+  .jp-row > .jp-narrow { flex: 0 0 150px; min-width: 120px; }
+  .jp-check { display: flex; align-items: flex-start; gap: 0.55rem; color: #E8EBEA; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.55rem; cursor: pointer; }
+  .jp-check input { width: 18px; height: 18px; margin-top: 0.1rem; flex-shrink: 0; accent-color: #2ECC71; }
+  .jp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.25rem 1rem; margin-bottom: 0.6rem; }
+  .jp-states { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-height: 220px; overflow-y: auto; padding: 0.5rem; border: 1px solid #3B5860; border-radius: 6px; }
+  .jp-label { color: #E8EBEA; font-weight: 600; font-size: 0.9rem; margin: 0.4rem 0 0.35rem; display: block; }
+  .jp-err { color: #FF8A8A; font-size: 0.85rem; margin: 0.25rem 0 0.6rem; }
+  .jp-errbox { background: #3A2020; color: #FF8A8A; padding: 0.9rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; border-left: 4px solid #E53E3E; font-size: 0.9rem; }
+  .jp-errbox ul { margin: 0.4rem 0 0 1.1rem; padding: 0; }
+  .jp-warn { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.6rem 0 0.9rem; font-size: 0.88rem; line-height: 1.45; }
+  .jp-titles label { display: flex; gap: 0.55rem; align-items: center; padding: 0.55rem 0.7rem; border: 1px solid #3B5860; border-radius: 6px; margin-bottom: 0.4rem; color: #F2F4F3; cursor: pointer; font-size: 0.92rem; }
+  .jp-titles input { accent-color: #2ECC71; }
+  .jp-muted { color: #8FA6AC; font-size: 0.85rem; }
+  .jp-btn { background: #2ECC71; color: #10261C; border: none; border-radius: 6px; padding: 0.8rem 1.6rem; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .jp-btn-ghost { background: transparent; color: #2ECC71; border: 1px solid #2ECC71; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.88rem; cursor: pointer; }
+  .jp-standard { color: #C7D1CF; font-size: 0.85rem; line-height: 1.5; border-top: 1px solid #3B5860; padding-top: 0.9rem; margin-top: 0.6rem; }
+  .jp-standard p { margin: 0 0 0.5rem; }
+  .jp-count { color: #8FA6AC; font-size: 0.8rem; text-align: right; }
+  [hidden] { display: none !important; }
+  @media (max-width: 600px) { .jp-card { padding: 1.1rem; } .jp-row > .jp-narrow { flex: 1; } }
+</style>
+
+<div class="jp-wrap"><div class="jp-inner">
+  <a class="jp-back" href="/recruiter-jobs">&larr; My job postings</a>
+  <h1>Post a job</h1>
+  <p class="jp-lead">Everything here is a fixed choice except the description. Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean. Your name and verified badge are added automatically.</p>
+
+  <% if (errorKeys.length) { %>
+    <div class="jp-errbox"><strong>Please fix <%= errorKeys.length === 1 ? 'one thing' : errorKeys.length + ' things' %> below:</strong>
+      <ul><% errorKeys.forEach(function(k) { %><li><%= errors[k] %></li><% }); %></ul></div>
+  <% } %>
+
+  <form method="POST" action="/recruiter-jobs/new" id="job-form" novalidate>
+
+    <!-- 1. Skills and title -->
+    <div class="jp-card">
+      <h2>1. Skills and job title</h2>
+      <p class="jp-hint">Pick up to 3 skills first, each with the lowest level a candidate needs (or no minimum). The job title comes from your skills, so every posting uses the same names. No minimum level on any skill makes it an entry-level job.</p>
+      <% for (let i = 0; i < 3; i++) { %>
+        <div class="jp-row">
+          <select name="skills[<%= i %>][key]" class="jp-skill-key" aria-label="Skill <%= i + 1 %>">
+            <option value="">Skill <%= i + 1 %><%= i === 0 ? '' : ' (optional)' %></option>
+            <% skillChoices.forEach(function(o) { %><option value="<%= o.key %>" <%= sk(i, 'key') === o.key ? 'selected' : '' %>><%= o.label %></option><% }); %>
+          </select>
+          <select name="skills[<%= i %>][minLevel]" aria-label="Minimum level for skill <%= i + 1 %>">
+            <option value="">No minimum level</option>
+            <% minLevels.forEach(function(l) { %><option value="<%= l %>" <%= sk(i, 'minLevel') === l ? 'selected' : '' %>>At least <%= l %></option><% }); %>
+          </select>
+        </div>
+      <% } %>
+      <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
+
+      <span class="jp-label">Job title</span>
+      <div class="jp-titles" id="jp-titles">
+        <% titleChoices.forEach(function(t) { %>
+          <label><input type="radio" name="titleId" value="<%= t.id %>" <%= val('titleId') === t.id ? 'checked' : '' %>> <%= t.title %></label>
+        <% }); %>
+      </div>
+      <p class="jp-muted" id="jp-titles-empty" <%= titleChoices.length ? 'hidden' : '' %>>Pick your skills above and the matching titles appear here.</p>
+      <div id="jp-no-title" hidden>
+        <p class="jp-muted">No title fits those skills yet. Fewer skills gives more titles. Or ask us to add one:</p>
+        <button type="button" class="jp-btn-ghost" id="jp-request-title">Ask us to add a title</button>
+        <span class="jp-muted" id="jp-request-status" role="status"></span>
+      </div>
+      <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
+
+      <label class="jp-field" style="margin-top:0.9rem;">Internal nickname <span class="jp-muted">(optional, only you see it, to tell your postings apart)</span>
+        <input type="text" name="nickname" maxlength="60" value="<%= val('nickname') %>">
+      </label>
+    </div>
+
+    <!-- 2. Company -->
+    <div class="jp-card">
+      <h2>2. Company</h2>
+      <p class="jp-hint">The company where the job is. Candidates see this name. Confidential or blind postings are not allowed.</p>
+      <label class="jp-field">Hiring company
+        <input type="text" name="hiringCompany" id="jp-company" list="jp-company-list" maxlength="100" autocomplete="off" value="<%= val('hiringCompany') %>">
+        <datalist id="jp-company-list"></datalist>
+      </label>
+      <% if (errors.hiringCompany) { %><div class="jp-err"><%= errors.hiringCompany %></div><% } %>
+      <label class="jp-check"><input type="checkbox" name="authorizedToRecruit" value="on" <%= on('authorizedToRecruit') ? 'checked' : '' %>> I am authorized by this company to recruit for this role. A false claim means the posting is removed and posting privileges may be suspended.</label>
+      <% if (errors.authorizedToRecruit) { %><div class="jp-err"><%= errors.authorizedToRecruit %></div><% } %>
+    </div>
+
+    <!-- 3. Job details -->
+    <div class="jp-card">
+      <h2>3. Job details</h2>
+      <div class="jp-row">
+        <label class="jp-field" style="margin:0;">Employment type
+          <select name="employmentType" id="jp-emp">
+            <option value="">Choose</option>
+            <% employmentTypes.forEach(function(t) { %><option value="<%= t.code %>" <%= val('employmentType') === t.code ? 'selected' : '' %>><%= t.label %></option><% }); %>
+          </select>
+        </label>
+        <label class="jp-field jp-narrow" style="margin:0;">Openings
+          <input type="number" name="openings" min="1" max="500" value="<%= val('openings') || '1' %>">
+        </label>
+      </div>
+      <% if (errors.employmentType) { %><div class="jp-err"><%= errors.employmentType %></div><% } %>
+      <% if (errors.openings) { %><div class="jp-err"><%= errors.openings %></div><% } %>
+      <label class="jp-field" id="jp-contract" hidden>Contract end date or length
+        <input type="text" name="contractLength" maxlength="60" placeholder="e.g. 6 months, or ends June 30" value="<%= val('contractLength') %>">
+      </label>
+      <% if (errors.contractLength) { %><div class="jp-err"><%= errors.contractLength %></div><% } %>
+    </div>
+
+    <!-- 4. Location -->
+    <div class="jp-card">
+      <h2>4. Location and schedule</h2>
+      <p class="jp-hint">The street address is used to place the job and is never shown to candidates. They see the city and state only. Candidates must be authorized to work in the US.</p>
+      <label class="jp-field">How is the work done?
+        <select name="arrangement" id="jp-arr">
+          <option value="">Choose</option>
+          <% arrangements.forEach(function(a) { %><option value="<%= a.code %>" <%= val('arrangement') === a.code ? 'selected' : '' %>><%= a.label %></option><% }); %>
+        </select>
+      </label>
+      <% if (errors.arrangement) { %><div class="jp-err"><%= errors.arrangement %></div><% } %>
+
+      <div id="jp-hybrid" hidden>
+        <label class="jp-field">Days a week in the office
+          <select name="inOfficeDays"><option value="">Choose</option>
+            <% [1,2,3,4].forEach(function(d) { %><option value="<%= d %>" <%= String(val('inOfficeDays')) === String(d) ? 'selected' : '' %>><%= d %></option><% }); %>
+          </select>
+        </label>
+        <% if (errors.inOfficeDays) { %><div class="jp-err"><%= errors.inOfficeDays %></div><% } %>
+      </div>
+
+      <div id="jp-area" hidden>
+        <label class="jp-field">Why is this remote job limited to an area?
+          <select name="areaReason" id="jp-reason">
+            <option value="">Choose</option>
+            <option value="states" <%= val('areaReason') === 'states' ? 'selected' : '' %>>State restrictions (tax, licensing, payroll)</option>
+            <option value="radius" <%= val('areaReason') === 'radius' ? 'selected' : '' %>>People come to the office for some things (a radius)</option>
+          </select>
+        </label>
+        <% if (errors.areaReason) { %><div class="jp-err"><%= errors.areaReason %></div><% } %>
+        <div id="jp-states" hidden>
+          <span class="jp-label">Allowed states</span>
+          <div class="jp-grid jp-states">
+            <% states.forEach(function(s) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="states" value="<%= s.code %>" <%= has('states', s.code) ? 'checked' : '' %>> <%= s.name %></label><% }); %>
+          </div>
+          <% if (errors.states) { %><div class="jp-err"><%= errors.states %></div><% } %>
+        </div>
+        <div id="jp-radius" hidden>
+          <label class="jp-field">Within how many miles of the address below? (5 to 300)
+            <input type="number" name="radiusMiles" min="5" max="300" value="<%= val('radiusMiles') %>">
+          </label>
+          <% if (errors.radiusMiles) { %><div class="jp-err"><%= errors.radiusMiles %></div><% } %>
+        </div>
+      </div>
+
+      <div id="jp-address" hidden>
+        <label class="jp-field">Street address <span class="jp-muted">(private, never shown to candidates)</span>
+          <input type="text" name="address" maxlength="200" placeholder="123 Main St, Boston, MA 02110" value="<%= val('address') %>">
+        </label>
+        <% if (errors.address) { %><div class="jp-err"><%= errors.address %></div><% } %>
+      </div>
+
+      <div class="jp-row">
+        <label class="jp-field" style="margin:0;">Relocation offered?
+          <select name="relocation"><option value="">Choose</option>
+            <option value="yes" <%= val('relocation') === 'yes' ? 'selected' : '' %>>Yes</option>
+            <option value="no" <%= val('relocation') === 'no' ? 'selected' : '' %>>No</option>
+          </select>
+        </label>
+        <label class="jp-field" style="margin:0;">Travel required
+          <select name="travel"><option value="">Choose</option>
+            <% travelOptions.forEach(function(t) { %><option value="<%= t.code %>" <%= val('travel') === t.code ? 'selected' : '' %>><%= t.label %></option><% }); %>
+          </select>
+        </label>
+        <label class="jp-field" style="margin:0;">Shift
+          <select name="shift"><option value="">Choose</option>
+            <% shiftOptions.forEach(function(s) { %><option value="<%= s.code %>" <%= val('shift') === s.code ? 'selected' : '' %>><%= s.label %></option><% }); %>
+          </select>
+        </label>
+      </div>
+      <% ['relocation', 'travel', 'shift'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+      <p class="jp-muted">A candidate who has not said they will work this shift is stopped before applying. Choose Flexible if any shift is fine.</p>
+    </div>
+
+    <!-- 5. Pay -->
+    <div class="jp-card">
+      <h2>5. Pay</h2>
+      <p class="jp-hint">Required on every posting. The most the range can be above the minimum is 25%.</p>
+      <label class="jp-check"><input type="checkbox" name="commissionOnly" id="jp-comm-only" value="on" <%= on('commissionOnly') ? 'checked' : '' %>> This is a commission-only job (base pay is $0)</label>
+      <div class="jp-row" id="jp-base-row">
+        <select name="basePayType" class="jp-narrow" aria-label="Base pay type">
+          <option value="">Pay type</option>
+          <option value="salary" <%= val('basePayType') === 'salary' ? 'selected' : '' %>>Salary (per year)</option>
+          <option value="hourly" <%= val('basePayType') === 'hourly' ? 'selected' : '' %>>Hourly</option>
+        </select>
+        <input type="text" name="baseMin" inputmode="decimal" placeholder="Base pay minimum" value="<%= val('baseMin') %>" aria-label="Base pay minimum">
+        <input type="text" name="baseMax" inputmode="decimal" placeholder="Base pay maximum" value="<%= val('baseMax') %>" aria-label="Base pay maximum">
+      </div>
+      <% ['basePayType', 'baseRange'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+
+      <span class="jp-label">What the base pay range is based on (pick any)</span>
+      <div class="jp-grid">
+        <% payBasisOptions.forEach(function(p) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="payBasis" value="<%= p.code %>" <%= has('payBasis', p.code) ? 'checked' : '' %>> <%= p.label %></label><% }); %>
+      </div>
+      <% if (errors.payBasis) { %><div class="jp-err"><%= errors.payBasis %></div><% } %>
+
+      <label class="jp-check" id="jp-comm-enable-row" style="margin-top:0.8rem;"><input type="checkbox" name="commissionEnabled" id="jp-comm-enable" value="on" <%= on('commissionEnabled') ? 'checked' : '' %>> Commission is part of the pay</label>
+      <div id="jp-comm" hidden>
+        <div class="jp-row">
+          <input type="text" name="commissionMin" inputmode="decimal" placeholder="Minimum anticipated commission ($ a year)" value="<%= val('commissionMin') %>" aria-label="Minimum anticipated commission">
+          <input type="text" name="commissionAverage" inputmode="decimal" placeholder="Average commission ($ a year)" value="<%= val('commissionAverage') %>" aria-label="Average commission">
+        </div>
+        <div class="jp-warn">You are attesting that most people in this position earn commission of at least the minimum and about the average you entered. Postings with false pay information are removed, and your and the company's posting privileges may be suspended.</div>
+        <label class="jp-check"><input type="checkbox" name="commissionAck" value="on" <%= on('commissionAck') ? 'checked' : '' %>> I confirm these commission figures are accurate.</label>
+        <% ['commission', 'commissionAck'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+      </div>
+
+      <span class="jp-label" style="margin-top:0.9rem;">Also offered</span>
+      <% [['bonus', 'Bonus'], ['equity', 'Equity'], ['tips', 'Tips']].forEach(function(x) { %>
+        <div class="jp-row">
+          <label class="jp-check jp-narrow" style="margin:0;"><input type="checkbox" name="<%= x[0] %>Offered" value="on" <%= on(x[0] + 'Offered') ? 'checked' : '' %>> <%= x[1] %></label>
+          <input type="text" name="<%= x[0] %>Note" maxlength="80" placeholder="Optional note, e.g. 10% of salary" value="<%= val(x[0] + 'Note') %>" aria-label="<%= x[1] %> note">
+        </div>
+      <% }); %>
+      <% if (errors.bonus) { %><div class="jp-err"><%= errors.bonus %></div><% } %>
+
+      <span class="jp-label" style="margin-top:0.9rem;">Benefits</span>
+      <div class="jp-grid">
+        <% benefitOptions.forEach(function(b) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="benefits" value="<%= b.code %>" <%= has('benefits', b.code) ? 'checked' : '' %>> <%= b.label %></label><% }); %>
+      </div>
+      <div class="jp-row">
+        <input type="text" name="benefitsOther" maxlength="80" placeholder="Other benefit (optional)" value="<%= val('benefitsOther') %>" aria-label="Other benefit">
+        <label class="jp-check" style="margin:0;"><input type="checkbox" name="noBenefits" value="on" <%= on('noBenefits') ? 'checked' : '' %>> No benefits offered</label>
+      </div>
+      <% if (errors.benefits) { %><div class="jp-err"><%= errors.benefits %></div><% } %>
+
+      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="goodFaith" value="on" <%= on('goodFaith') ? 'checked' : '' %>> This pay is what I actually expect to pay for this role.</label>
+      <% if (errors.goodFaith) { %><div class="jp-err"><%= errors.goodFaith %></div><% } %>
+    </div>
+
+    <!-- 6. Requirements -->
+    <div class="jp-card">
+      <h2>6. Requirements</h2>
+      <p class="jp-hint">Every requirement stops candidates who do not meet it, and they are told exactly why. There is no years-of-experience requirement on PreCheckd; skills and verified credentials replace it. Only verified, unexpired certifications and verified degrees count.</p>
+      <label class="jp-field">Minimum education (verified)
+        <select name="education"><option value="">None required</option>
+          <% educationLevels.forEach(function(l) { %><option value="<%= l.code %>" <%= val('education') === l.code ? 'selected' : '' %>><%= l.label %> or higher</option><% }); %>
+        </select>
+      </label>
+      <% if (errors.education) { %><div class="jp-err"><%= errors.education %></div><% } %>
+
+      <span class="jp-label">Certifications (optional)</span>
+      <p class="jp-muted" style="margin-top:0;">Up to 3 groups. A candidate needs at least ONE certification from EACH group. The job accepts exactly what you list, nothing is treated as equivalent.</p>
+      <% for (let g = 0; g < 3; g++) { const gv = groups[g] || []; %>
+        <fieldset style="border:1px solid #3B5860;border-radius:6px;padding:0.7rem;margin:0 0 0.6rem;">
+          <legend class="jp-muted" style="padding:0 0.4rem;">Group <%= g + 1 %> &mdash; any one of these</legend>
+          <div class="jp-grid" style="margin:0;">
+            <% for (let c = 0; c < 5; c++) { %>
+              <select name="certGroups[<%= g %>][]" aria-label="Group <%= g + 1 %> certification <%= c + 1 %>" style="padding:0.5rem;border:1px solid #4A6F7B;border-radius:6px;background:#24404A;color:#F2F4F3;">
+                <option value="">&mdash;</option>
+                <% certOptions.forEach(function(o) { %><option value="<%= o.id %>" <%= gv[c] === o.id ? 'selected' : '' %>><%= o.name %></option><% }); %>
+              </select>
+            <% } %>
+          </div>
+        </fieldset>
+      <% } %>
+      <% if (errors.certGroups) { %><div class="jp-err"><%= errors.certGroups %></div><% } %>
+
+      <label class="jp-field">Security clearance
+        <select name="clearance"><option value="">None required</option>
+          <% clearanceOptions.forEach(function(c) { %><option value="<%= c.code %>" <%= val('clearance') === c.code ? 'selected' : '' %>><%= c.label %> or higher</option><% }); %>
+        </select>
+        <span class="jp-muted">Candidates report their clearance themselves. PreCheckd never says it was verified.</span>
+      </label>
+      <% if (errors.clearance) { %><div class="jp-err"><%= errors.clearance %></div><% } %>
+
+      <div class="jp-row">
+        <label class="jp-field" style="margin:0;">Applications close
+          <input type="date" name="closeDate" value="<%= val('closeDate') %>">
+          <span class="jp-muted">At most 45 days from today. The posting stays open through the end of that day (New York time).</span>
+        </label>
+        <label class="jp-field" style="margin:0;">In-seat start date
+          <input type="date" name="startDate" value="<%= val('startDate') %>">
+        </label>
+      </div>
+      <% ['closeDate', 'startDate'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+      <label class="jp-check"><input type="checkbox" name="startFirm" value="on" <%= on('startFirm') ? 'checked' : '' %>> The start date is firm. Candidates who cannot start by then are stopped before applying.</label>
+
+      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="requirementsAttested" value="on" <%= on('requirementsAttested') ? 'checked' : '' %>> I confirm these requirements are genuinely required for this job and lawful.</label>
+      <% if (errors.requirementsAttested) { %><div class="jp-err"><%= errors.requirementsAttested %></div><% } %>
+    </div>
+
+    <!-- 7. Description -->
+    <div class="jp-card">
+      <h2>7. Description</h2>
+      <p class="jp-hint">No phone numbers, emails, links, or "message me on" wording (candidates apply through PreCheckd only), no "X+ years of experience", no "US citizens only", and no wording that signals age, gender or nationality preferences.</p>
+      <label class="jp-field">Role summary
+        <textarea name="summary" id="jp-summary" maxlength="<%= limits.summaryMax %>"><%= val('summary') %></textarea>
+        <span class="jp-count"><span id="jp-summary-count">0</span> / <%= limits.summaryMax %></span>
+      </label>
+      <% if (errors.summary) { %><div class="jp-err"><%= errors.summary %></div><% } %>
+      <label class="jp-field">Responsibilities <span class="jp-muted">(<%= limits.respMin %> to <%= limits.respMax %>, one per line)</span>
+        <textarea name="responsibilities"><%= val('responsibilities') %></textarea>
+      </label>
+      <% if (errors.responsibilities) { %><div class="jp-err"><%= errors.responsibilities %></div><% } %>
+      <label class="jp-field">Team and who it reports to <span class="jp-muted">(optional)</span>
+        <input type="text" name="team" maxlength="<%= limits.shortLine %>" value="<%= val('team') %>">
+      </label>
+      <% if (errors.team) { %><div class="jp-err"><%= errors.team %></div><% } %>
+      <label class="jp-field">Growth path <span class="jp-muted">(optional)</span>
+        <input type="text" name="growth" maxlength="<%= limits.shortLine %>" value="<%= val('growth') %>">
+      </label>
+      <% if (errors.growth) { %><div class="jp-err"><%= errors.growth %></div><% } %>
+      <div class="jp-standard">
+        <p><strong>Added to every posting automatically:</strong></p>
+        <p><%= standard.EEO %></p>
+        <p><%= standard.ACCOMMODATION %></p>
+        <p><%= standard.BACKGROUND %></p>
+      </div>
+    </div>
+
+    <button type="submit" class="jp-btn">Post this job</button>
+  </form>
+</div></div>
+<script src="/js/job-form.js"></script>

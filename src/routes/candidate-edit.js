@@ -9,6 +9,7 @@ const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRe
 const { parseExpiry } = require('../utils/certExpiry');
 const { guessLevel, CODES: EDUCATION_LEVEL_CODES, LEVELS: EDUCATION_LEVELS } = require('../utils/educationLevel');
 const { CATALOG } = require('../content/certCatalog');
+const { recordUnlistedCerts } = require('../services/catalogRequests');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -422,6 +423,7 @@ router.post('/:slug/edit', upload.fields([
     }
 
     await candidate.save();
+    await recordUnlistedCerts(candidate); // names the catalog does not know go to staff's Catalog Requests
 
     if (resumeParseError || credlyError) {
       return res.render('candidate-edit', {

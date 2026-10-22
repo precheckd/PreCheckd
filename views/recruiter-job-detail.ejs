@@ -1,0 +1,71 @@
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const fmtClose = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+  const money = (n) => '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const lbl = (list, code) => { const f = list.find((x) => x.code === code); return f ? f.label : code; };
+  const per = posting.basePayType === 'hourly' ? ' an hour' : ' a year';
+  const statusLabel = { open: 'Open', awaiting_outcome: 'Awaiting outcome', closed: 'Closed', removed: 'Removed' };
+%>
+<style>
+  .jd-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jd-inner { max-width: 820px; width: 100%; color: #F2F4F3; }
+  .jd-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .jd-inner h1 { font-size: 1.75rem; margin: 0 0 0.3rem; }
+  .jd-meta { color: #C7D1CF; margin-bottom: 1.25rem; }
+  .jd-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .jd-card h2 { font-size: 1rem; color: #8FA6AC; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.6rem; }
+  .jd-card p, .jd-card li { color: #E8EBEA; line-height: 1.55; font-size: 0.95rem; }
+  .jd-card ul { margin: 0.3rem 0 0 1.1rem; padding: 0; }
+  .jd-priv { color: #E0B341; font-size: 0.85rem; }
+  .jd-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .jd-btn { background: transparent; color: #FF8A8A; border: 1px solid #FF8A8A; border-radius: 6px; padding: 0.6rem 1.1rem; cursor: pointer; font-size: 0.9rem; }
+  .jd-std { color: #C7D1CF; font-size: 0.85rem; }
+</style>
+<div class="jd-wrap"><div class="jd-inner">
+  <a class="jd-back" href="/recruiter-jobs">&larr; My job postings</a>
+  <% if (justPosted) { %><div class="jd-ok">Your job is posted. Candidates who meet every requirement can now apply.</div><% } %>
+  <h1><%= posting.title %></h1>
+  <div class="jd-meta"><%= posting.seniorityLabel %> &middot; <%= posting.hiringCompany %> &middot; <strong><%= statusLabel[posting.status] %></strong><% if (posting.nickname) { %> &middot; your label: <%= posting.nickname %><% } %></div>
+
+  <div class="jd-card"><h2>Pay</h2>
+    <p>
+      <% if (posting.commissionOnly) { %>Base pay: $0 (commission only)<% } else { %>Base pay: <%= money(posting.baseMin) %> to <%= money(posting.baseMax) %><%= per %><% } %><br>
+      Based on: <%= posting.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %>
+      <% if (posting.commission && posting.commission.average) { %><br>Commission: at least <%= money(posting.commission.minAnticipated) %>, average <%= money(posting.commission.average) %> a year<% } %>
+      <% ['bonus', 'equity', 'tips'].forEach(function(k) { if (posting[k] && posting[k].offered) { %><br><%= k.charAt(0).toUpperCase() + k.slice(1) %> offered<%= posting[k].note ? ': ' + posting[k].note : '' %><% } }); %>
+    </p>
+    <p>Benefits: <%= posting.noBenefits ? 'None offered' : posting.benefits.map((c) => lbl(options.benefits, c)).concat(posting.benefitsOther ? [posting.benefitsOther] : []).join(', ') %></p>
+  </div>
+
+  <div class="jd-card"><h2>Where and when</h2>
+    <p><%= lbl(options.arrangements, posting.arrangement) %><% if (posting.inOfficeDays) { %> (<%= posting.inOfficeDays %> days a week in the office)<% } %>
+      <% if (posting.areaLabel) { %> &middot; <%= posting.arrangement === 'remote_in_area' ? 'limited to ' : '' %><%= posting.areaLabel %><% } %><br>
+      <%= lbl(options.employmentTypes, posting.employmentType) %><%= posting.contractLength ? ' (' + posting.contractLength + ')' : '' %> &middot; <%= posting.openings %> opening<%= posting.openings === 1 ? '' : 's' %><br>
+      Shift: <%= lbl(options.shifts, posting.shift) %> &middot; Travel: <%= lbl(options.travel, posting.travel) %> &middot; Relocation: <%= posting.relocation ? 'offered' : 'not offered' %><br>
+      Starts <%= fmt(posting.startDate) %><%= posting.startFirm ? ' (firm)' : '' %> &middot; applications close <%= fmtClose(posting.closeDate) %></p>
+    <% if (posting.address) { %><p class="jd-priv">Street address (only you see this): <%= posting.address %></p><% } %>
+  </div>
+
+  <div class="jd-card"><h2>Requirements</h2>
+    <ul>
+      <% posting.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + s.minLevel : 'no minimum level' %></li><% }); %>
+      <% if (posting.education) { %><li>Education: <%= lbl(options.education, posting.education) %> or higher (verified)</li><% } %>
+      <% posting.certGroups.forEach(function(g, i) { %><li>Certification: one of <%= g.certs.map((c) => c.label).join(', ') %> (verified, current)</li><% }); %>
+      <% if (posting.clearance) { %><li>Clearance: <%= lbl(options.clearance, posting.clearance) %> or higher (reported by the candidate)</li><% } %>
+    </ul>
+  </div>
+
+  <div class="jd-card"><h2>Description</h2>
+    <p><%= posting.summary %></p>
+    <ul><% posting.responsibilities.forEach(function(r) { %><li><%= r %></li><% }); %></ul>
+    <% if (posting.team) { %><p>Team: <%= posting.team %></p><% } %>
+    <% if (posting.growth) { %><p>Growth: <%= posting.growth %></p><% } %>
+    <div class="jd-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
+  </div>
+
+  <% if (posting.status === 'open') { %>
+    <form method="POST" action="/recruiter-jobs/<%= posting._id %>/close" onsubmit="return confirm('Close this posting now? Candidates will no longer be able to apply.');">
+      <button class="jd-btn" type="submit">Close this posting</button>
+    </form>
+  <% } %>
+</div></div>

@@ -153,6 +153,12 @@
       <span class="id-card-stat"><%= skillRequestCount %> skill<%= skillRequestCount === 1 ? '' : 's' %> waiting</span>
     </a>
 
+    <a class="id-card" href="/catalog-requests">
+      <div class="id-card-title">Catalog Requests</div>
+      <div class="id-card-desc">Certifications candidates entered that are not in our catalog, and job titles recruiters could not find. Add them to the catalog files, most-requested first.</div>
+      <span class="id-card-stat <%= catalogRequestCount > 0 ? 'id-stat-alert' : '' %>"><%= catalogRequestCount %> waiting</span>
+    </a>
+
     <a class="id-card" href="/verification-cases">
       <div class="id-card-title">Verification Cases</div>
       <div class="id-card-desc">Employment and education checks that need a call, a contact or a reply. Open a case from a candidate's verify screen.</div>

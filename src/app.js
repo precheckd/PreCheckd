@@ -251,6 +251,7 @@ app.use('/api/candidate', candidateRoutes);
 app.use('/api/email-checker', emailCheckerRoutes);
 app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
+app.use('/recruiter-jobs', require('./routes/recruiter-jobs'));
 app.use('/candidate-dashboard', candidateDashboardRoutes);
 app.use('/candidate-search', candidateSearchRoutes);
 app.use('/connections', connectionsRoutes);

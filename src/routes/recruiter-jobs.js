@@ -1,0 +1,212 @@
+// Recruiter side of the Job Board: post a job, see your postings, close one. (Public pages and applying
+// come in later steps; see docs/job-board-spec.md.)
+const express = require('express');
+const router = express.Router();
+const Recruiter = require('../models/Recruiter');
+const JobPosting = require('../models/JobPosting');
+const SkillAssessment = require('../models/SkillAssessment');
+const { validatePosting } = require('../services/postingValidation');
+const { buildLocation } = require('../services/postingLocation');
+const { recordMissingTitle } = require('../services/catalogRequests');
+const { titlesForSkills } = require('../content/jobTitles');
+const { CATALOG } = require('../content/certCatalog');
+const { US_STATES } = require('../utils/geo');
+const opt = require('../content/postingOptions');
+const standard = require('../content/postingStandardLines');
+
+function requireRecruiterLogin(req, res, next) {
+  if (!req.session.recruiterId) return res.redirect('/login');
+  next();
+}
+router.use(requireRecruiterLogin);
+
+// Only a fully verified, active, unsuspended recruiter can post.
+async function loadPostingRecruiter(req, res) {
+  const recruiter = await Recruiter.findById(req.session.recruiterId);
+  if (!recruiter) { res.redirect('/login'); return null; }
+  const ok = recruiter.accountTier !== 'unverified_claim' && recruiter.isActive && recruiter.isIdentityVerified
+    && recruiter.isPhoneVerified && !recruiter.isSuspended;
+  if (!ok) {
+    res.status(403).render('recruiter-jobs-locked', { title: 'Post a Job | PreCheckd' });
+    return null;
+  }
+  return recruiter;
+}
+
+// Skills a posting can ask for: the ones we have a test for (same list recruiter search uses).
+async function skillOptions() {
+  const out = [];
+  for (const a of await SkillAssessment.find({ active: true, kind: { $ne: 'title' } })) {
+    for (const sk of a.skills || []) if (!out.some((o) => o.key === sk.key)) out.push({ key: sk.key, label: sk.label });
+  }
+  return out.sort((x, y) => x.label.localeCompare(y.label));
+}
+
+function formLocals(extra) {
+  return {
+    title: 'Post a Job | PreCheckd',
+    arrangements: opt.ARRANGEMENTS, employmentTypes: opt.EMPLOYMENT_TYPES, travelOptions: opt.TRAVEL,
+    shiftOptions: opt.SHIFT_OPTIONS.filter((s) => true), payBasisOptions: opt.PAY_BASIS, benefitOptions: opt.BENEFITS,
+    minLevels: opt.MIN_LEVELS, educationLevels: opt.EDUCATION_LEVELS, clearanceOptions: opt.CLEARANCE_OPTIONS,
+    certOptions: CATALOG.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)),
+    states: US_STATES, limits: opt.LIMITS, standard,
+    ...extra,
+  };
+}
+
+const formList = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]);
+
+// GET /recruiter-jobs — my postings
+router.get('/', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const postings = await JobPosting.find({ recruiterId: recruiter._id }).sort({ createdAt: -1 });
+    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, justPosted: req.query.posted === '1' });
+  } catch (error) {
+    console.error('Error loading recruiter postings:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// GET /recruiter-jobs/titles?skills=linux,cloud — titles that cover every picked skill
+router.get('/titles', async (req, res) => {
+  const keys = String(req.query.skills || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, opt.LIMITS.maxSkills);
+  res.json({ titles: titlesForSkills(keys).map((t) => ({ id: t.id, title: t.title })) });
+});
+
+// GET /recruiter-jobs/companies?q=acm — company names already used on postings
+router.get('/companies', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim().slice(0, 60);
+    if (q.length < 2) return res.json({ companies: [] });
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const names = await JobPosting.distinct('hiringCompany', { hiringCompany: new RegExp(escaped, 'i') });
+    const seen = new Map();
+    for (const n of names) { const k = n.toLowerCase().replace(/[^a-z0-9]/g, ''); if (!seen.has(k)) seen.set(k, n); }
+    res.json({ companies: [...seen.values()].sort().slice(0, 8) });
+  } catch (error) {
+    res.json({ companies: [] });
+  }
+});
+
+// POST /recruiter-jobs/request-title — no catalog title fits the skills; staff are told
+router.post('/request-title', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const labels = await skillOptions();
+    const byKey = new Map(labels.map((o) => [o.key, o.label]));
+    const names = formList(req.body.skills).map((s) => byKey.get(String((s && s.key) || s))).filter(Boolean).slice(0, opt.LIMITS.maxSkills);
+    if (!names.length) return res.status(400).json({ error: 'Pick your skills first.' });
+    await recordMissingTitle(recruiter._id, names);
+    res.json({ ok: true, message: 'Thanks. We will add a title for these skills, usually within one business day, and you can finish your posting then.' });
+  } catch (error) {
+    console.error('Error recording title request:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
+// GET /recruiter-jobs/new
+router.get('/new', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    res.render('recruiter-job-form', formLocals({ errors: {}, form: {}, skillChoices: await skillOptions(), titleChoices: [] }));
+  } catch (error) {
+    console.error('Error loading job form:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/new
+router.post('/new', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const skillChoices = await skillOptions();
+    const skillLabels = new Map(skillChoices.map((o) => [o.key, o.label]));
+    const { errors, value } = validatePosting(req.body, { skillLabels });
+
+    let location = null;
+    if (!Object.keys(errors).length) {
+      try {
+        location = await buildLocation(value);
+      } catch (e) {
+        if (e.code !== 'geocode_failed') throw e;
+        errors.address = e.message;
+      }
+    }
+
+    if (Object.keys(errors).length) {
+      const pickedKeys = value.skills.map((s) => s.key);
+      return res.status(400).render('recruiter-job-form', formLocals({
+        errors, form: req.body, skillChoices, titleChoices: titlesForSkills(pickedKeys).map((t) => ({ id: t.id, title: t.title })),
+      }));
+    }
+
+    const posting = await JobPosting.create({
+      recruiterId: recruiter._id, source: 'precheckd',
+      nickname: value.nickname, titleId: value.titleId, title: value.title, skills: value.skills, seniorityLabel: value.seniorityLabel,
+      hiringCompany: value.hiringCompany, authorizedToRecruit: value.authorizedToRecruit,
+      employmentType: value.employmentType, contractLength: value.contractLength, openings: value.openings,
+      arrangement: value.arrangement, inOfficeDays: value.inOfficeDays, areaReason: value.areaReason,
+      address: value.address, areaRule: location.areaRule || undefined, areaLabel: location.areaLabel,
+      displayCity: location.displayCity, displayState: location.displayState,
+      relocation: value.relocation, travel: value.travel, shift: value.shift,
+      basePayType: value.basePayType, baseMin: value.baseMin, baseMax: value.baseMax, commissionOnly: value.commissionOnly,
+      payBasis: value.payBasis, commission: value.commission, bonus: value.bonus, equity: value.equity, tips: value.tips,
+      benefits: value.benefits, benefitsOther: value.benefitsOther, noBenefits: value.noBenefits,
+      goodFaithAt: value.goodFaithAt, commissionAckAt: value.commissionAckAt,
+      education: value.education, certGroups: value.certGroups, clearance: value.clearance,
+      startDate: value.startDate, startFirm: value.startFirm, closeDate: value.closeDate, requirementsAttestedAt: value.requirementsAttestedAt,
+      summary: value.summary, responsibilities: value.responsibilities, team: value.team, growth: value.growth,
+    });
+    res.redirect(`/recruiter-jobs/${posting._id}?posted=1`);
+  } catch (error) {
+    console.error('Error creating job posting:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+async function loadOwnPosting(req, res) {
+  if (!/^[0-9a-f]{24}$/i.test(req.params.id)) { res.status(404).send('Posting not found.'); return null; }
+  const posting = await JobPosting.findById(req.params.id);
+  if (!posting || String(posting.recruiterId) !== String(req.session.recruiterId)) { res.status(404).send('Posting not found.'); return null; }
+  return posting;
+}
+
+// GET /recruiter-jobs/:id — your own view of a posting (shows the private address)
+router.get('/:id', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    res.render('recruiter-job-detail', {
+      title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1',
+      options: { arrangements: opt.ARRANGEMENTS, employmentTypes: opt.EMPLOYMENT_TYPES, travel: opt.TRAVEL, shifts: opt.SHIFT_OPTIONS,
+        payBasis: opt.PAY_BASIS, benefits: opt.BENEFITS, education: opt.EDUCATION_LEVELS, clearance: opt.CLEARANCE_OPTIONS },
+    });
+  } catch (error) {
+    console.error('Error loading posting:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/close — take a posting down early (the close-date outcome gate comes in a later step)
+router.post('/:id/close', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    if (posting.status === 'open') {
+      posting.status = 'closed';
+      posting.closedAt = new Date();
+      await posting.save();
+    }
+    res.redirect('/recruiter-jobs');
+  } catch (error) {
+    console.error('Error closing posting:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+module.exports = router;

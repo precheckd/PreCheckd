@@ -1,0 +1,43 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; }
+  .sr-table td { padding: 0.75rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.92rem; }
+  .sr-count { font-weight: 700; }
+  .sr-form { display: inline; }
+  .sr-btn { border: 1px solid #1F7A4C; color: #1F7A4C; background: transparent; border-radius: 5px; padding: 0.3rem 0.65rem; font-size: 0.8rem; cursor: pointer; margin-right: 0.3rem; }
+  .sr-detail { color: #7A8B91; font-size: 0.82rem; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Catalog Requests</h1>
+  <p class="sr-sub">Things members typed that our fixed lists do not have. <strong>Certification</strong>: a candidate saved a certification that is not in <code>src/content/certCatalog.js</code>, so it cannot count toward any job. <strong>Job title</strong>: a recruiter picked skills for a posting and no title in <code>src/content/jobTitles.js</code> fit. To fix one, add a line to that file and deploy (existing certs match automatically). Then press Mark added to clear it here.</p>
+  <table class="sr-table">
+    <thead><tr><th>Type</th><th>What they typed</th><th>Requests</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach((r) => { %>
+        <tr>
+          <td><%= r.kind === 'certification' ? 'Certification' : 'Job title' %></td>
+          <td><%= r.name %><% if (r.kind === 'job_title') { %><div class="sr-detail">skills picked</div><% } %></td>
+          <td class="sr-count"><%= r.count %></td>
+          <td><%= r.status %></td>
+          <td>
+            <% [['added', 'Mark added'], ['declined', 'Decline'], ['requested', 'Reset']].filter((o) => o[0] !== r.status).forEach((o) => { %>
+              <form class="sr-form" method="POST" action="/catalog-requests/status">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="kind" value="<%= r.kind %>">
+                <input type="hidden" name="key" value="<%= r.key %>">
+                <input type="hidden" name="status" value="<%= o[0] %>">
+                <button class="sr-btn" type="submit"><%= o[1] %></button>
+              </form>
+            <% }) %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="5">Nothing yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>

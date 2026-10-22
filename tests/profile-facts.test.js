@@ -89,6 +89,12 @@ t('search and byId', () => {
   assert.strictEqual(byId('nope'), null);
 });
 
+t('unlisted cert names are the ones staff hear about', () => {
+  const { unlistedCertNames } = require('../src/services/catalogRequests');
+  assert.deepStrictEqual(unlistedCertNames([{ name: 'Security+' }, { name: 'Homemade Badge' }, { name: '' }, null]), ['Homemade Badge']);
+  assert.deepStrictEqual(unlistedCertNames(undefined), []);
+});
+
 // ---- adapter: skills ---------------------------------------------------------------------------
 t('skillFactsFrom keeps real levels and finds the 60-day lock', () => {
   const current = [{ key: 'linux', label: 'Linux', level: 'Intermediate', takenAt: new Date(NOW - 10 * DAY) }];

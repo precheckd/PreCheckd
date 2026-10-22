@@ -390,7 +390,7 @@
               const navMailBadge = navBadge(navUnreadCount + (typeof commandCenterMailUnreadCount !== 'undefined' ? commandCenterMailUnreadCount : 0));
               const navMenuItems = navLoggedInCandidate
                 ? [[navEditHref, 'Edit profile', ''], [`/candidate/${loggedInCandidateSlug}/certificate`, 'Download certificate', ''], ['/signature', 'Email signature', ''], ['/safety', 'Safety Center', '']]
-                : [[navEditHref, 'Edit profile', ''], ['/signature', 'Email signature', ''], [navReportsHref, 'Reports about you', navBadge(navFraudReportCount)]];
+                : [[navEditHref, 'Edit profile', ''], ['/recruiter-jobs', 'My job postings', ''], ['/signature', 'Email signature', ''], [navReportsHref, 'Reports about you', navBadge(navFraudReportCount)]];
               const navMenuActive = navMenuItems.some((i) => navOn(i[0]));
               const navMenuBadge = (!navLoggedInCandidate && navFraudReportCount > 0) ? '<span class="nav-btn-badge">' + (navFraudReportCount > 9 ? '9+' : navFraudReportCount) + '</span>' : '';
               const navAvatarPhoto = typeof navPhotoUrl !== 'undefined' ? navPhotoUrl : null;

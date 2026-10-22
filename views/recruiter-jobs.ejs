@@ -1,0 +1,37 @@
+<%
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+  const statusLabel = { open: 'Open', awaiting_outcome: 'Awaiting outcome', closed: 'Closed', removed: 'Removed' };
+%>
+<style>
+  .rj-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .rj-inner { max-width: 820px; width: 100%; }
+  .rj-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .rj-top h1 { font-size: 1.75rem; color: #F2F4F3; margin: 0; }
+  .rj-btn { background: #2ECC71; color: #10261C; border-radius: 6px; padding: 0.7rem 1.3rem; font-weight: 700; text-decoration: none; font-size: 0.95rem; }
+  .rj-card { display: block; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.1rem 1.3rem; margin-bottom: 0.8rem; text-decoration: none; color: #F2F4F3; }
+  .rj-card:hover { border-color: #2ECC71; }
+  .rj-title { font-weight: 700; font-size: 1.05rem; }
+  .rj-sub { color: #C7D1CF; font-size: 0.88rem; margin-top: 0.25rem; }
+  .rj-nick { color: #8FA6AC; font-size: 0.8rem; }
+  .rj-status { float: right; font-size: 0.78rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: #24404A; border: 1px solid #4A6F7B; }
+  .rj-status.is-open { color: #2ECC71; border-color: #2ECC71; }
+  .rj-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
+  .rj-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+</style>
+<div class="rj-wrap"><div class="rj-inner">
+  <div class="rj-top">
+    <h1>My job postings</h1>
+    <a class="rj-btn" href="/recruiter-jobs/new">Post a job</a>
+  </div>
+  <% if (postings.length === 0) { %>
+    <div class="rj-empty">You have not posted a job yet. Pick the skills, set the requirements, and candidates who qualify can apply.</div>
+  <% } %>
+  <% postings.forEach(function(p) { %>
+    <a class="rj-card" href="/recruiter-jobs/<%= p._id %>">
+      <span class="rj-status <%= p.status === 'open' ? 'is-open' : '' %>"><%= statusLabel[p.status] %></span>
+      <div class="rj-title"><%= p.title %> <span class="rj-sub">&middot; <%= p.seniorityLabel %></span></div>
+      <div class="rj-sub"><%= p.hiringCompany %> &middot; <%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %> &middot; closes <%= fmt(p.closeDate) %></div>
+      <% if (p.nickname) { %><div class="rj-nick">Your label: <%= p.nickname %></div><% } %>
+    </a>
+  <% }); %>
+</div></div>

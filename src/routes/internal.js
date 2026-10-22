@@ -268,6 +268,7 @@ router.get('/', async (req, res) => {
 
     const vcDigest = await require('../services/verificationCases').digestSummary();
     const verificationCount = vcDigest.calls + vcDigest.replies + vcDigest.contacts;
+    const catalogRequestCount = (await require('../models/CatalogRequest').aggregate([{ $match: { status: 'requested' } }, { $group: { _id: { k: '$kind', n: '$key' } } }])).length;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
@@ -275,6 +276,7 @@ router.get('/', async (req, res) => {
     res.render('internal-dashboard', {
       integrityCount,
       skillRequestCount,
+      catalogRequestCount,
       verificationCount,
       verificationOpen: vcDigest.open,
       candidateCount,
@@ -383,6 +385,42 @@ router.get('/skill-requests', async (req, res) => {
     res.render('internal-skill-requests', { rows: shaped });
   } catch (error) {
     console.error('Error loading skill requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Things members typed that our fixed catalogs lack (certifications candidates saved, job titles recruiters
+// could not find), most-requested first. Adding an item = add a line to src/content/certCatalog.js or
+// src/content/jobTitles.js; "Mark added" here only clears it from the list.
+router.get('/catalog-requests', async (req, res) => {
+  try {
+    const CatalogRequest = require('../models/CatalogRequest');
+    const rows = await CatalogRequest.aggregate([
+      { $group: { _id: { kind: '$kind', key: '$key' }, name: { $first: '$name' }, detail: { $first: '$detail' }, count: { $sum: 1 },
+          latest: { $max: '$createdAt' }, statuses: { $addToSet: '$status' } } },
+      { $sort: { count: -1, latest: -1 } }
+    ]);
+    const shaped = rows.map((r) => ({
+      kind: r._id.kind, key: r._id.key, name: r.name, detail: r.detail, count: r.count, latest: r.latest,
+      status: r.statuses.includes('requested') ? 'requested' : r.statuses.includes('added') ? 'added' : 'declined',
+    }));
+    shaped.sort((a, b) => (a.status === 'requested' ? 0 : 1) - (b.status === 'requested' ? 0 : 1) || b.count - a.count);
+    res.render('internal-catalog-requests', { rows: shaped });
+  } catch (error) {
+    console.error('Error loading catalog requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/catalog-requests/status', async (req, res) => {
+  try {
+    const CatalogRequest = require('../models/CatalogRequest');
+    const { kind, key, status } = req.body;
+    if (!['requested', 'added', 'declined'].includes(status) || !['certification', 'job_title'].includes(kind)) return res.status(400).send('Invalid request.');
+    await CatalogRequest.updateMany({ kind, key }, { $set: { status } });
+    res.redirect('/catalog-requests');
+  } catch (error) {
+    console.error('Error updating catalog requests:', error);
     res.status(500).send('Server error');
   }
 });
