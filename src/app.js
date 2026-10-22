@@ -222,6 +222,8 @@ if (process.env.NODE_ENV !== 'production') {
   app.use('/internal', internalRoutes);
 }
 
+app.use(require('./middleware/outcomeGate').outcomeGate({ adminHost: ADMIN_HOSTNAME }));
+
 app.get('/founding-recruiter-landing', (req, res) => {
   res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Recruiters' });
 });
@@ -255,6 +257,7 @@ app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/recruiter-jobs', require('./routes/recruiter-jobs'));
 app.use('/jobs', require('./routes/jobs'));
+app.use('/hire-confirm', require('./routes/hire-confirm'));
 app.use('/candidate-dashboard', candidateDashboardRoutes);
 app.use('/candidate-search', candidateSearchRoutes);
 app.use('/connections', connectionsRoutes);

@@ -17,7 +17,7 @@ const good = (over = {}) => ({
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
   benefits: ['health', '401k'], goodFaith: 'on',
   education: 'bachelor', certGroups: [['comptia-security-plus', 'isc2-cissp']], clearance: 'secret',
-  closeDate: '2026-11-15', startDate: '2026-12-07', startFirm: 'on', requirementsAttested: 'on',
+  closeDate: '2026-11-15', startDate: '2026-12-07', startFirm: 'on', requirementsAttested: 'on', outcomeAck: 'on',
   summary: 'Run and improve our cloud platform with a small, friendly team that ships every week.',
   responsibilities: 'Operate cloud infrastructure\nImprove deploy pipelines\nRespond to incidents',
   team: 'Reports to the head of platform', growth: 'Path to lead engineer',
@@ -190,6 +190,10 @@ t('the attestation that requirements are genuine and lawful is required', () => 
   only({ requirementsAttested: undefined }, 'requirementsAttested');
 });
 
+t('the acknowledgment that an outcome must be recorded is required', () => {
+  only({ outcomeAck: undefined }, 'outcomeAck');
+});
+
 // dates
 t('dates: helpers', () => {
   assert.strictEqual(parseYmd('2026-02-31'), null);
@@ -236,7 +240,7 @@ t('the free-text scan blocks contact details, years, citizens only and age wordi
 t('several mistakes are all reported at once', () => {
   const { errors } = validatePosting({}, ctx);
   for (const f of ['skills', 'titleId', 'hiringCompany', 'authorizedToRecruit', 'employmentType', 'openings', 'arrangement', 'relocation',
-    'travel', 'shift', 'basePayType', 'baseRange', 'payBasis', 'benefits', 'goodFaith', 'closeDate', 'startDate', 'requirementsAttested', 'summary', 'responsibilities']) {
+    'travel', 'shift', 'basePayType', 'baseRange', 'payBasis', 'benefits', 'goodFaith', 'closeDate', 'startDate', 'requirementsAttested', 'outcomeAck', 'summary', 'responsibilities']) {
     assert.ok(errors[f], 'no error for ' + f);
   }
 });

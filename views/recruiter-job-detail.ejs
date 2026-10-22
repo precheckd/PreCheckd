@@ -25,6 +25,7 @@
 <div class="jd-wrap"><div class="jd-inner">
   <a class="jd-back" href="/recruiter-jobs">&larr; My job postings</a>
   <% if (justPosted) { %><div class="jd-ok">Your job is posted. Candidates who meet every requirement can now apply.</div><% } %>
+  <% if (outcomeDone) { %><div class="jd-ok">Outcome recorded. Thank you.</div><% } %>
   <% if (saved === '1') { %><div class="jd-ok">Changes saved.<% if (withdrawn) { %> <%= withdrawn %> applicant<%= withdrawn === 1 ? ' was' : 's were' %> withdrawn and told what changed.<% } %></div><% } else if (saved === 'nochange') { %><div class="jd-ok">Nothing was changed.</div><% } %>
   <h1><%= posting.title %></h1>
   <div class="jd-meta"><%= posting.seniorityLabel %> &middot; <%= posting.hiringCompany %> &middot; <strong><%= statusLabel[posting.status] %></strong><% if (posting.nickname) { %> &middot; your label: <%= posting.nickname %><% } %></div>
@@ -69,8 +70,6 @@
   <a class="jd-edit" href="/recruiter-jobs/<%= posting._id %>/applicants">Applicants (<%= applicantCount %>)</a>
   <% if (posting.status === 'open') { %>
     <a class="jd-edit" href="/recruiter-jobs/<%= posting._id %>/edit">Edit this posting</a>
-    <form method="POST" action="/recruiter-jobs/<%= posting._id %>/close" style="display:inline;" onsubmit="return confirm('Close this posting now? Candidates will no longer be able to apply.');">
-      <button class="jd-btn" type="submit">Close this posting</button>
-    </form>
+    <a class="jd-edit" href="/recruiter-jobs/<%= posting._id %>/outcome">End this posting early</a>
   <% } %>
 </div></div>

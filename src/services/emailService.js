@@ -653,6 +653,36 @@ async function sendApplicantDigestEmail(recruiter, groups) {
   });
 }
 
+// The person a recruiter named as hired elsewhere gets one question. Never names the recruiter.
+async function sendHireConfirmationEmail({ to, title, company, url }) {
+  const bodyHtml = `<p style="margin:0 0 14px;">Hello,</p>
+    <p style="margin:0 0 14px;">A recruiter told PreCheckd that someone was hired as <strong>${weeklyEscape(title)}</strong> at <strong>${weeklyEscape(company)}</strong>, and gave this email address. Please tell us if that is you. It takes one click.</p>
+    ${weeklyButton(url, 'Answer in one click')}
+    <p style="margin:14px 0 0;font-size:13px;color:#6B7B80;">We use your answer only to confirm the hire. We never publish names. The link works for 30 days.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>', to,
+    subject: `Were you hired as ${title}?`,
+    html: brandShell({ bodyHtml, preheader: 'One question about a new job', footerHtml: 'If this reached you by mistake, you can ignore it.' }),
+  });
+}
+
+// Reminder to record how a job ended. kind 'upcoming' (applications close soon) or 'overdue' (account paused).
+async function sendOutcomeReminderEmail(recruiter, posting, { kind, daysLeft }) {
+  const base = process.env.APP_BASE_URL;
+  const url = `${base}/recruiter-jobs/${posting._id}/outcome`;
+  const overdue = kind === 'overdue';
+  const bodyHtml = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(recruiter.firstName))},</p>
+    <p style="margin:0 0 14px;">${overdue
+      ? `Applications for <strong>${weeklyEscape(posting.title)}</strong> have closed. Your account stays paused until you tell us how the job ended. It takes under a minute.`
+      : `Applications for <strong>${weeklyEscape(posting.title)}</strong> close in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. When they close you will be asked how the job ended: hired, not filled or cancelled. You can answer early to finish sooner.`}</p>
+    ${weeklyButton(url, overdue ? 'Record the outcome' : 'Open the job')}`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>', to: recruiter.email,
+    subject: overdue ? `Action needed: how did ${posting.title} end?` : `${posting.title} closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`,
+    html: brandShell({ bodyHtml, preheader: overdue ? 'Your account is paused' : 'Closing soon', footerHtml: 'You get this because you posted a job on PreCheckd.' }),
+  });
+}
+
 module.exports = {
   brandedHtml,
   sendVerificationEmail,
@@ -676,6 +706,8 @@ module.exports = {
   sendWeeklyRecapEmail,
   weeklyJobsSection,
   sendApplicantDigestEmail,
+  sendHireConfirmationEmail,
+  sendOutcomeReminderEmail,
   sendUnreadMessagesEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,

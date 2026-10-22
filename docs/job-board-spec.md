@@ -237,3 +237,15 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 
 **Not built / limits:** no email version of the bell notices (only the Monday list); the candidate-side sweep checks every verified candidate when a job is posted (fine at launch size, batch it if the candidate count grows past a few thousand); identity or phone verification done by webhook does not trigger a sweep by itself (the next profile save or the Monday email picks it up).
 
+
+## 15. Close date and outcome gate (step 7, built Oct 22)
+
+- **No silent expiry.** When a posting's close date passes it becomes `awaiting_outcome` (checked hourly and on every recruiter request). Public pages treat it as closed.
+- **The gate.** A recruiter who owes an outcome is redirected from every page to `/recruiter-jobs/<id>/outcome` (JSON requests get 423). Not dismissable. Exempt: log out, Terms, Privacy, billing, hire-confirmation links, webhooks, static files, the admin host. If the check itself errors, the recruiter is let through.
+- **Outcome form** (also used to end a posting early, replacing the old "Close this posting" button): hired through PreCheckd (pick up to the number of openings from live applicants; they move to Hired), hired elsewhere (name + business work email; personal domains refused), not filled (reason), cancelled (reason). "Other" needs a note; notes are scanned for contact details.
+- **Applicants.** Everyone still in play and not hired is closed out: status rejected, reason `posting_closed`, neutral text ("The position has been filled." / "did not fill" / "was cancelled"), tracker updated, access released, bell. The recruiter's reason is never shown to them.
+- **Hired elsewhere.** A one-click confirmation email goes to the work address (token stored hashed, valid 30 days). The page names the title and company, never the person or the recruiter. "No" flags the posting `hire_denied` and alerts staff.
+- **Reminders.** 3 days and 1 day before close (each once), then daily once paused. Mornings 8:00-10:59 ET. Emails plus a bell for the upcoming ones.
+- **Posting form.** New required acknowledgment that the outcome must be recorded when applications close.
+- **Repost flag.** Same recruiter, same title, within 30 days of a cancelled posting: flagged `repost_after_cancel` and staff alerted.
+- **Not built:** posting credit-back and the Trusted tier (depend on billing), a staff view of unconfirmed or denied hires, manual/LinkedIn audit of "hired elsewhere", a billing/cancel page does not exist yet (the exempt path is reserved). Lawyer review list: outcome gate, hire confirmation emails, NYC AEDT.

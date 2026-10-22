@@ -246,7 +246,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
       arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
       payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on', education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',
       closeDate: new Date(strict.closeDate.getTime() - 4 * 3600000).toISOString().slice(0, 10), startDate: strict.startDate.toISOString().slice(0, 10),
-      summary: 'Run our cloud platform with a small friendly team that ships every week.', responsibilities: 'Operate infrastructure\nImprove pipelines\nRespond to incidents', requirementsAttested: 'on', confirmWithdraw: 'on',
+      summary: 'Run our cloud platform with a small friendly team that ships every week.', responsibilities: 'Operate infrastructure\nImprove pipelines\nRespond to incidents', requirementsAttested: 'on', outcomeAck: 'on', confirmWithdraw: 'on',
     };
     const res = await post(`/recruiter-jobs/${strict._id}/edit`, form);
     assert.strictEqual(res.status, 302, await res.clone().text());

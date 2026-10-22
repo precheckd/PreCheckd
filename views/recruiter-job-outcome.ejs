@@ -1,0 +1,66 @@
+<style>
+  .oc-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .oc-inner { max-width: 720px; width: 100%; color: #F2F4F3; }
+  .oc-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .oc-warn { background: #3A3320; border-left: 4px solid #E0B341; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; color: #F5E7B8; }
+  .oc-err { color: #FF8A8A; font-size: 0.85rem; margin: 0.3rem 0; }
+  .oc-opt { display: block; padding: 0.5rem 0; line-height: 1.4; }
+  .oc-in { width: 100%; box-sizing: border-box; background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; border-radius: 6px; padding: 0.55rem; margin-top: 0.3rem; }
+  .oc-sub { margin: 0.4rem 0 0 1.6rem; display: none; }
+  .oc-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; font-size: 1rem; cursor: pointer; }
+  .oc-muted { color: #C7D1CF; font-size: 0.85rem; }
+</style>
+<div class="oc-wrap"><div class="oc-inner">
+  <h1>How did this job end?</h1>
+  <p class="oc-muted"><%= posting.title %> at <%= posting.hiringCompany %></p>
+  <% if (overdue) { %><div class="oc-warn">Applications for this job have closed. Your account is paused until you answer. It takes under a minute.</div>
+  <% } else { %><div class="oc-warn">Ending this job now closes it to new applicants and tells everyone still in the process that it closed.</div><% } %>
+  <form method="POST" action="/recruiter-jobs/<%= posting._id %>/outcome" class="oc-card">
+    <% if (errors.kind) { %><div class="oc-err"><%= errors.kind %></div><% } %>
+    <% kinds.forEach(function(k) { %>
+      <label class="oc-opt"><input type="radio" name="kind" value="<%= k.code %>" <%= form.kind === k.code ? 'checked' : '' %>> <%= k.label %></label>
+      <% if (k.code === 'hired_precheckd') { %>
+        <div class="oc-sub" data-for="hired_precheckd">
+          <% if (!applicants.length) { %><p class="oc-muted">No one is still in the process on PreCheckd.</p><% } %>
+          <% applicants.forEach(function(a) { %>
+            <label class="oc-opt"><input type="checkbox" name="hiredIds" value="<%= a._id %>" <%= [].concat(form.hiredIds || []).map(String).includes(String(a._id)) ? 'checked' : '' %>> <%= a.candidateId.firstName %> <%= a.candidateId.lastName %></label>
+          <% }); %>
+          <% if (errors.hiredIds) { %><div class="oc-err"><%= errors.hiredIds %></div><% } %>
+        </div>
+      <% } else if (k.code === 'hired_elsewhere') { %>
+        <div class="oc-sub" data-for="hired_elsewhere">
+          <label>Full name of the person hired<input class="oc-in" name="hireName" maxlength="80" value="<%= form.hireName || '' %>"></label>
+          <% if (errors.hireName) { %><div class="oc-err"><%= errors.hireName %></div><% } %>
+          <label style="display:block;margin-top:0.6rem;">Their work email at <%= posting.hiringCompany %><input class="oc-in" type="email" name="hireEmail" value="<%= form.hireEmail || '' %>"></label>
+          <% if (errors.hireEmail) { %><div class="oc-err"><%= errors.hireEmail %></div><% } %>
+          <p class="oc-muted">We email them one question to confirm. Their name is never shown publicly.</p>
+        </div>
+      <% } else if (k.code === 'not_filled' || k.code === 'cancelled') { %>
+        <div class="oc-sub" data-for="<%= k.code %>">
+          <label>Reason
+            <select class="oc-in" name="<%= form.kind === k.code ? 'reason' : '' %>" data-reason="<%= k.code %>">
+              <option value="">Choose one</option>
+              <% (k.code === 'cancelled' ? cancelReasons : notFilledReasons).forEach(function(r) { %><option value="<%= r.code %>" <%= form.kind === k.code && form.reason === r.code ? 'selected' : '' %>><%= r.label %></option><% }); %>
+            </select></label>
+          <% if (errors.reason && form.kind === k.code) { %><div class="oc-err"><%= errors.reason %></div><% } %>
+        </div>
+      <% } %>
+    <% }); %>
+    <label style="display:block;margin-top:0.8rem;">Note (needed if you chose "Other")<input class="oc-in" name="reasonNote" maxlength="300" value="<%= form.reasonNote || '' %>"></label>
+    <% if (errors.reasonNote) { %><div class="oc-err"><%= errors.reasonNote %></div><% } %>
+    <p style="margin-top:1rem;"><button class="oc-btn" type="submit">Record outcome</button></p>
+    <% if (!overdue) { %><p><a href="/recruiter-jobs/<%= posting._id %>" class="oc-muted">Never mind, keep it open</a></p><% } %>
+  </form>
+</div></div>
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name=kind]');
+    function sync() {
+      var chosen = (document.querySelector('input[name=kind]:checked') || {}).value;
+      document.querySelectorAll('.oc-sub').forEach(function (d) { d.style.display = d.getAttribute('data-for') === chosen ? 'block' : 'none'; });
+      document.querySelectorAll('select[data-reason]').forEach(function (s) { s.name = s.getAttribute('data-reason') === chosen ? 'reason' : ''; });
+    }
+    radios.forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  })();
+</script>

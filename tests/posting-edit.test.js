@@ -19,7 +19,7 @@ const base = (over = {}) => ({
   commissionEnabled: 'on', commissionMin: '10000', commissionAverage: '30000', commissionAck: 'on',
   bonusOffered: 'on', bonusNote: '10% of salary', equityOffered: 'on', benefits: ['health', '401k'], benefitsOther: 'Lunch', goodFaith: 'on',
   education: 'bachelor', certGroups: [['comptia-security-plus', 'isc2-cissp'], ['aws-cloud-practitioner']], clearance: 'secret',
-  closeDate: '2026-11-15', startDate: '2026-12-07', startFirm: 'on', requirementsAttested: 'on',
+  closeDate: '2026-11-15', startDate: '2026-12-07', startFirm: 'on', requirementsAttested: 'on', outcomeAck: 'on',
   summary: 'Run and improve our cloud platform with a small, friendly team that ships every week.',
   responsibilities: 'Operate cloud infrastructure\nImprove deploy pipelines\nRespond to incidents', team: 'Platform team', growth: 'Lead path',
   ...over,
@@ -61,6 +61,7 @@ t('the commission confirmation is never pre-ticked, so it must be given again', 
   assert.ok(errors.commissionAck);
   assert.strictEqual(form.goodFaith, 'on');
   assert.strictEqual(form.requirementsAttested, 'on');
+  assert.strictEqual(form.outcomeAck, 'on');
 });
 
 t('a commission-only posting round-trips', () => {

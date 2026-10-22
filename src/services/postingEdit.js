@@ -19,7 +19,7 @@ function docFromValue(value, location) {
     benefits: value.benefits, benefitsOther: value.benefitsOther, noBenefits: value.noBenefits,
     goodFaithAt: value.goodFaithAt, commissionAckAt: value.commissionAckAt,
     education: value.education, certGroups: value.certGroups, clearance: value.clearance,
-    startDate: value.startDate, startFirm: value.startFirm, closeDate: value.closeDate, requirementsAttestedAt: value.requirementsAttestedAt,
+    startDate: value.startDate, startFirm: value.startFirm, closeDate: value.closeDate, requirementsAttestedAt: value.requirementsAttestedAt, outcomeAckAt: value.outcomeAckAt,
     summary: value.summary, responsibilities: value.responsibilities, team: value.team, growth: value.growth,
   };
 }
@@ -58,7 +58,7 @@ function formFromPosting(p) {
     goodFaith: yes(o.goodFaithAt),
     education: o.education || '', certGroups: groups, clearance: o.clearance || '',
     closeDate: nyDay(o.closeDate), startDate: new Date(o.startDate).toISOString().slice(0, 10), startFirm: yes(o.startFirm),
-    requirementsAttested: yes(o.requirementsAttestedAt),
+    requirementsAttested: yes(o.requirementsAttestedAt), outcomeAck: yes(o.outcomeAckAt),
     summary: o.summary, responsibilities: (o.responsibilities || []).join('\n'), team: o.team || '', growth: o.growth || '',
   };
   Object.keys(f).forEach((k) => { if (f[k] === undefined) delete f[k]; });

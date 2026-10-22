@@ -1,4 +1,4 @@
-// Recruiter side of the Job Board: post a job, see your postings, close one. (Public pages and applying
+// Recruiter side of the Job Board: post a job, see your postings, record how one ended. (Public pages and applying
 // come in later steps; see docs/job-board-spec.md.)
 const express = require('express');
 const router = express.Router();
@@ -17,6 +17,8 @@ const { ACTIVE, HAS_APPLIED, STAGE_LABEL, moveStage } = require('../services/job
 const { REJECTION_REASONS } = require('../content/rejectionReasons');
 const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
+const { validateOutcome, recordOutcome, flagRepost } = require('../services/postingOutcome');
+const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS } = require('../content/outcomeReasons');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
 
@@ -155,6 +157,7 @@ router.post('/new', async (req, res) => {
 
     const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location) });
     sweepPostingLater(posting);
+    try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
     res.redirect(`/recruiter-jobs/${posting._id}?posted=1`);
   } catch (error) {
     console.error('Error creating job posting:', error);
@@ -335,7 +338,7 @@ router.get('/:id', async (req, res) => {
     const posting = await loadOwnPosting(req, res);
     if (!posting) return;
     res.render('recruiter-job-detail', {
-      title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
+      title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', outcomeDone: req.query.outcome === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
       applicantCount: await JobApplication.countDocuments({ jobId: posting._id, status: { $in: ACTIVE } }),
       options: { arrangements: opt.ARRANGEMENTS, employmentTypes: opt.EMPLOYMENT_TYPES, travel: opt.TRAVEL, shifts: opt.SHIFT_OPTIONS,
         payBasis: opt.PAY_BASIS, benefits: opt.BENEFITS, education: opt.EDUCATION_LEVELS, clearance: opt.CLEARANCE_OPTIONS },
@@ -346,19 +349,42 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /recruiter-jobs/:id/close — take a posting down early (the close-date outcome gate comes in a later step)
-router.post('/:id/close', async (req, res) => {
+// The outcome form: how did this job end? Used when the close date passes (the gate sends you here and nothing else
+// works until it is done) and for ending a posting early.
+async function outcomeLocals(posting, extra) {
+  const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } }).populate('candidateId');
+  return {
+    title: `How did ${posting.title} end? | PreCheckd`, posting, kinds: OUTCOME_KINDS, notFilledReasons: NOT_FILLED_REASONS, cancelReasons: CANCEL_REASONS,
+    applicants: live.filter((a) => a.candidateId), overdue: posting.status === 'awaiting_outcome', errors: {}, form: {}, ...extra,
+  };
+}
+
+router.get('/:id/outcome', async (req, res) => {
   try {
     const posting = await loadOwnPosting(req, res);
     if (!posting) return;
-    if (posting.status === 'open') {
-      posting.status = 'closed';
-      posting.closedAt = new Date();
-      await posting.save();
-    }
-    res.redirect('/recruiter-jobs');
+    if (!['open', 'awaiting_outcome'].includes(posting.status)) return res.redirect(`/recruiter-jobs/${posting._id}`);
+    res.render('recruiter-job-outcome', await outcomeLocals(posting));
   } catch (error) {
-    console.error('Error closing posting:', error);
+    console.error('Error loading outcome form:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:id/outcome', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    if (!['open', 'awaiting_outcome'].includes(posting.status)) return res.redirect(`/recruiter-jobs/${posting._id}`);
+    const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } });
+    const { errors, value } = validateOutcome(req.body, { posting, liveIds: live.map((a) => String(a._id)) });
+    if (Object.keys(errors).length) {
+      return res.status(400).render('recruiter-job-outcome', await outcomeLocals(posting, { errors, form: req.body }));
+    }
+    await recordOutcome(posting, value);
+    res.redirect(`/recruiter-jobs/${posting._id}?outcome=1`);
+  } catch (error) {
+    console.error('Error recording outcome:', error);
     res.status(500).send('Server error');
   }
 });

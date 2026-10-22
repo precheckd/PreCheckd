@@ -250,6 +250,8 @@ function validatePosting(body, ctx) {
   v.startFirm = flag(b.startFirm);
   if (!flag(b.requirementsAttested)) err('requirementsAttested', 'Confirm the requirements are genuinely required for this job and lawful.');
   v.requirementsAttestedAt = flag(b.requirementsAttested) ? new Date(now) : null;
+  if (!flag(b.outcomeAck)) err('outcomeAck', 'Confirm you understand that you must record how this job ended when applications close.');
+  v.outcomeAckAt = flag(b.outcomeAck) ? new Date(now) : null;
 
   // Description
   v.summary = String(b.summary || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim();

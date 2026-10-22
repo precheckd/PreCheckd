@@ -217,7 +217,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',
     closeDate: new Date(job.closeDate.getTime() - 4 * 3600000).toISOString().slice(0, 10), startDate: job.startDate.toISOString().slice(0, 10),
     summary: 'Run our cloud platform with a small friendly team that ships every week.',
-    responsibilities: 'Operate infrastructure\nImprove pipelines\nRespond to incidents', team: '', growth: '', requirementsAttested: 'on',
+    responsibilities: 'Operate infrastructure\nImprove pipelines\nRespond to incidents', team: '', growth: '', requirementsAttested: 'on', outcomeAck: 'on',
     ...over,
   });
 

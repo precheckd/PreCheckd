@@ -31,10 +31,10 @@ JobPosting.create = async (doc) => {
   saved.push(p);
   return p;
 };
-JobPosting.find = () => ({ sort: async () => saved.slice() });
+JobPosting.find = () => { const p = Promise.resolve(saved.slice()); p.sort = async () => saved.slice(); return p; };
 JobPosting.findById = async (id) => saved.find((p) => String(p._id) === String(id)) || null;
 JobPosting.distinct = async () => ['Acme Corp', 'ACME corp', 'Acme Labs'];
-JobApplication.find = async () => [];
+JobApplication.find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 JobApplication.countDocuments = async () => 0;
 const catalogWrites = [];
 CatalogRequest.updateOne = async (...args) => { catalogWrites.push(args); return {}; };
@@ -65,7 +65,7 @@ const validForm = (over = {}) => ({
   relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
   payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
   education: 'bachelor', certGroups: [['comptia-security-plus', 'isc2-cissp', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',
-  closeDate: soon(20), startDate: soon(40), startFirm: 'on', requirementsAttested: 'on',
+  closeDate: soon(20), startDate: soon(40), startFirm: 'on', requirementsAttested: 'on', outcomeAck: 'on',
   summary: 'Run and improve our cloud platform with a small, friendly team that ships every week.',
   responsibilities: 'Operate cloud infrastructure\nImprove deploy pipelines\nRespond to incidents', team: '', growth: '',
   ...over,
@@ -200,7 +200,7 @@ const validForm = (over = {}) => ({
     const html = await detail.text();
     assert.strictEqual(detail.status, 200);
     assert.ok(html.includes('Your job is posted') && html.includes('1 Main St, Boston, MA') && html.includes('CompTIA Security+, CISSP'));
-    assert.ok(html.includes('equal opportunity employer') && html.includes('Close this posting'));
+    assert.ok(html.includes('equal opportunity employer') && html.includes('End this posting early'));
     assert.ok(html.includes('Starts ') && html.includes('(firm)'));
   });
 
@@ -290,7 +290,7 @@ const validForm = (over = {}) => ({
   });
 
   await t('closing a posting', async () => {
-    const res = await post(`/recruiter-jobs/${saved[0]._id}/close`, {});
+    const res = await post(`/recruiter-jobs/${saved[0]._id}/outcome`, { kind: 'cancelled', reason: 'budget' });
     assert.strictEqual(res.status, 302);
     assert.strictEqual(saved[0].status, 'closed');
     assert.ok(saved[0].closedAt instanceof Date);

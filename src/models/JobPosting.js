@@ -81,6 +81,7 @@ const jobPostingSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },                        // in-seat start (a calendar day, UTC midnight)
   startFirm: { type: Boolean, default: false },
   closeDate: { type: Date, required: true },                        // applications close (end of that day, New York)
+  outcomeAckAt: { type: Date, default: null },                      // "I must record how this job ended"
   requirementsAttestedAt: { type: Date, required: true },           // "these requirements are genuinely required and lawful"
 
   // Description
@@ -91,6 +92,33 @@ const jobPostingSchema = new mongoose.Schema({
 
   closedAt: { type: Date, default: null },
 
+  // How it ended (step 7). The close date moves an open posting to awaiting_outcome; the recruiter is gated until
+  // an outcome is recorded (see services/postingOutcome.js and middleware/outcomeGate.js).
+  awaitingOutcomeAt: { type: Date, default: null },
+  closeRemindersSent: { type: [Number], default: [] },           // days-before reminders already sent (3, 1)
+  lastOutcomeReminderAt: { type: Date, default: null },
+  reviewFlag: { type: String, default: null },                    // staff attention: 'repost_after_cancel', 'hire_denied'
+  outcome: {
+    kind: { type: String, enum: [null, 'hired_precheckd', 'hired_elsewhere', 'not_filled', 'cancelled'], default: null },
+    reason: { type: String, default: null },
+    reasonNote: { type: String, default: '', maxlength: 300 },
+    recordedAt: { type: Date, default: null },
+    hires: {
+      type: [{
+        source: { type: String, enum: ['precheckd', 'elsewhere'], required: true },
+        applicationId: { type: mongoose.Schema.Types.ObjectId, default: null },
+        name: { type: String, default: '', maxlength: 80 },          // elsewhere hires only; never shown publicly
+        workEmail: { type: String, default: '', maxlength: 120 },
+        tokenHash: { type: String, default: null },
+        status: { type: String, enum: ['confirmed', 'pending', 'denied', 'expired'], default: 'pending' },
+        sentAt: { type: Date, default: null },
+        respondedAt: { type: Date, default: null },
+        _id: false,
+      }],
+      default: [],
+    },
+  },
+
   // Every save after the first, newest last: when, and which parts changed (kept to the last 30).
   editedAt: { type: Date, default: null },
   edits: { type: [{ at: { type: Date, required: true }, parts: { type: [String], default: [] }, _id: false }], default: [] },
@@ -98,6 +126,7 @@ const jobPostingSchema = new mongoose.Schema({
 
 jobPostingSchema.index({ status: 1, closeDate: 1 });
 jobPostingSchema.index({ hiringCompany: 1 });
+jobPostingSchema.index({ 'outcome.hires.tokenHash': 1 }, { sparse: true });
 
 // The shape services/applyGate.js reads (see its header comment).
 const EDU_INDEX = Object.fromEntries(EDUCATION_LEVELS.map((l) => [l.code, l.index]));

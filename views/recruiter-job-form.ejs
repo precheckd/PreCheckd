@@ -312,6 +312,8 @@
 
       <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="requirementsAttested" value="on" <%= on('requirementsAttested') ? 'checked' : '' %>> I confirm these requirements are genuinely required for this job and lawful.</label>
       <% if (errors.requirementsAttested) { %><div class="jp-err"><%= errors.requirementsAttested %></div><% } %>
+      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="outcomeAck" value="on" <%= on('outcomeAck') ? 'checked' : '' %>> I understand that when applications close I must record how this job ended (hired, not filled, or cancelled, with a reason). Until I do, my account is paused.</label>
+      <% if (errors.outcomeAck) { %><div class="jp-err"><%= errors.outcomeAck %></div><% } %>
     </div>
 
     <!-- 7. Description -->

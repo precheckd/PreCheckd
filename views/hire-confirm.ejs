@@ -1,0 +1,24 @@
+<style>
+  .hc-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .hc-inner { max-width: 560px; width: 100%; color: #F2F4F3; }
+  .hc-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; }
+  .hc-btn { border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; font-size: 1rem; cursor: pointer; margin-right: 0.6rem; }
+  .hc-yes { background: #2ECC71; color: #10261C; } .hc-no { background: transparent; color: #FF8A8A; border: 1px solid #FF8A8A; }
+</style>
+<div class="hc-wrap"><div class="hc-inner"><div class="hc-card">
+<% if (state === 'invalid') { %>
+  <h1>Link not found</h1><p>This link is not valid. If you think this is a mistake, ignore this message.</p>
+<% } else if (state === 'expired') { %>
+  <h1>This link has expired</h1><p>Thank you for opening it. No answer was recorded.</p>
+<% } else if (state === 'done') { %>
+  <h1>Thank you</h1><p>Your answer has been recorded.</p>
+<% } else { %>
+  <h1>Were you hired?</h1>
+  <p>A recruiter told PreCheckd that a person was hired as <strong><%= info.title %></strong> at <strong><%= info.company %></strong>, and gave us this email address. Is that you?</p>
+  <p>We only use your answer to confirm the hire. We never publish names.</p>
+  <form method="POST" action="/hire-confirm/<%= token %>">
+    <button class="hc-btn hc-yes" type="submit" name="answer" value="yes">Yes, I was hired</button>
+    <button class="hc-btn hc-no" type="submit" name="answer" value="no">No, I was not</button>
+  </form>
+<% } %>
+</div></div></div>
