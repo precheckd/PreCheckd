@@ -27,6 +27,7 @@ const { daysUntilExpiry, isoDay } = require('../utils/certExpiry');
 const { currentWhatsNew, tipForWeek } = require('../content/weeklyEmail');
 const { senderNames } = require('./messageDigest');
 const { sendWeeklyRecapEmail, sendUnreadMessagesEmail } = require('./emailService');
+const { qualifyingJobsFor } = require('./jobMatches');
 
 const TZ = 'America/New_York';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -124,10 +125,14 @@ async function gatherRecap(candidate, now) {
     });
   }
 
-  const personal = unread.total > 0 || pendingRequests > 0 || fullAccessRequests > 0 || newConnections > 0
+  // every open job they can apply to right now (a failure here must not stop the email)
+  let jobs = [];
+  try { jobs = await qualifyingJobsFor(candidate, { now: now.getTime() }); } catch (e) { console.error('Weekly recap jobs list failed:', e.message); }
+
+  const personal = jobs.length > 0 || unread.total > 0 || pendingRequests > 0 || fullAccessRequests > 0 || newConnections > 0
     || views > 0 || expiringCerts.length > 0 || todo.length > 0;
 
-  return { unread, pendingRequests, fullAccessRequests, newConnections, views, expiringCerts, todo, personal };
+  return { unread, pendingRequests, fullAccessRequests, newConnections, views, expiringCerts, todo, jobs, personal };
 }
 
 // Monday. Returns { sent, skipped, outsideWindow? }.

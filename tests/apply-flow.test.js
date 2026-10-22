@@ -2,6 +2,7 @@
 // Apply, withdraw, auto-connect, tracker sync, and what editing a posting does to applicants. Database stubbed.
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
 process.env.SESSION_SECRET = 'test-secret';
+process.env.DISABLE_JOB_NOTICES = 'true';
 const assert = require('assert');
 const path = require('path');
 const http = require('http');
@@ -20,6 +21,7 @@ const SkillResult = require('../src/models/SkillResult');
 const SkillAssessment = require('../src/models/SkillAssessment');
 const skills = require('../src/services/skills');
 const pub = require('../src/services/publicJob');
+require('../src/models/JobNotice').deleteOne = async () => ({});
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }

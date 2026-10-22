@@ -397,11 +397,19 @@ function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
+// "Jobs you qualify for": the full list, each one a job the candidate can apply to right now.
+function weeklyJobsSection(jobs, base) {
+  const lines = jobs.map((j) => `<li><a href="${base}${j.path}" style="color:#1B7F4B;font-weight:700;">${weeklyEscape(j.title)}</a> at ${weeklyEscape(j.company)}<br><span style="font-size:14px;color:#52666C;">${weeklyEscape(j.location)} · ${weeklyEscape(j.pay)}</span></li>`).join('');
+  return weeklySection('Jobs you qualify for', `<ul style="margin:0;padding-left:20px;">${lines}</ul><p style="margin:8px 0 0;font-size:14px;">You meet every requirement for these, so you can apply right now.</p>${weeklyButton(`${base}/jobs`, 'See all open jobs')}`);
+}
+
 async function sendWeeklyRecapEmail(candidate, recap) {
   const base = process.env.APP_BASE_URL;
   const unsubUrl = unsubscribeUrl(candidate._id.toString());
   const settingsUrl = `${base}/candidate/${candidate.slug}/edit`;
   const sections = [];
+
+  if (recap.jobs && recap.jobs.length > 0) sections.push(weeklyJobsSection(recap.jobs, base));
 
   if (recap.unread.total > 0) {
     sections.push(`<div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
@@ -628,6 +636,23 @@ async function sendAdminLoginAlertEmail(ip, attemptCount) {
   });
 }
 
+// Recruiter's daily "new applicants" summary. Names only counts and postings, never candidate details.
+async function sendApplicantDigestEmail(recruiter, groups) {
+  const base = process.env.APP_BASE_URL;
+  const total = groups.reduce((n, g) => n + g.count, 0);
+  const lines = groups.map((g) => `<li><a href="${base}/recruiter-jobs/${g.jobId}/applicants" style="color:#1B7F4B;font-weight:700;">${weeklyEscape(g.title)}</a> at ${weeklyEscape(g.company)}: ${g.count} new applicant${g.count === 1 ? '' : 's'}</li>`).join('');
+  const bodyHtml = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(recruiter.firstName))},</p>
+    <p style="margin:0 0 6px;">${total} new applicant${total === 1 ? '' : 's'} since the last summary. Everyone listed met every requirement.</p>
+    <ul style="margin:8px 0 0;padding-left:20px;">${lines}</ul>
+    ${weeklyButton(`${base}/recruiter-jobs`, 'Open my job postings')}`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: recruiter.email,
+    subject: `${total} new applicant${total === 1 ? '' : 's'} on PreCheckd`,
+    html: brandShell({ bodyHtml, preheader: `${total} new applicant${total === 1 ? '' : 's'}`, footerHtml: `You get this because you post jobs on PreCheckd. Turn it off with the checkbox on <a href="${base}/recruiter-jobs" style="color:#6B7B80;">My job postings</a>.` }),
+  });
+}
+
 module.exports = {
   brandedHtml,
   sendVerificationEmail,
@@ -649,6 +674,8 @@ module.exports = {
   sendVerificationNoticeEmail,
   sendEmployerVerificationEmail,
   sendWeeklyRecapEmail,
+  weeklyJobsSection,
+  sendApplicantDigestEmail,
   sendUnreadMessagesEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,

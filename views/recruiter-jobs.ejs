@@ -23,6 +23,11 @@
     <h1>My job postings</h1>
     <a class="rj-btn" href="/recruiter-jobs/new">Post a job</a>
   </div>
+  <form class="rj-digest" method="POST" action="/recruiter-jobs/digest" style="margin-bottom:1rem;color:#C7D1CF;font-size:0.9rem;">
+    <label><input type="checkbox" name="digest" value="on" <%= digestOn ? 'checked' : '' %> onchange="this.form.submit()"> Email me a daily summary of new applicants</label>
+    <noscript><button type="submit">Save</button></noscript>
+    <% if (digestSaved) { %><span style="color:#2ECC71;margin-left:0.6rem;">Saved.</span><% } %>
+  </form>
   <% if (postings.length === 0) { %>
     <div class="rj-empty">You have not posted a job yet. Pick the skills, set the requirements, and candidates who qualify can apply.</div>
   <% } %>

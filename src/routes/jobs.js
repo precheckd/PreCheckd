@@ -7,7 +7,7 @@ const JobPosting = require('../models/JobPosting');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const JobApplication = require('../models/JobApplication');
-const { ACTIVE, applyToJob, withdrawApplication } = require('../services/jobApplications');
+const { ACTIVE, HAS_APPLIED, STAGE_LABEL, applyToJob, withdrawApplication } = require('../services/jobApplications');
 const { notify } = require('../services/notifications');
 const { evaluate } = require('../services/applyGate');
 const { buildCandidateFacts } = require('../services/applyFacts');
@@ -69,7 +69,7 @@ async function loadForApply(req, res) {
   const candidate = await Candidate.findById(req.session.candidateId);
   if (!candidate) { res.redirect('/login'); return null; }
   const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
-  const alreadyApplied = Boolean(existing && ACTIVE.includes(existing.status));
+  const alreadyApplied = Boolean(existing && HAS_APPLIED.includes(existing.status));
   const gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
   return { posting, candidate, existing, gate, back };
 }
@@ -158,8 +158,9 @@ router.get('/:id/:slug?', async (req, res) => {
         if (candidate) {
           viewer.slug = candidate.slug;
           const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
-          const alreadyApplied = Boolean(existing && ACTIVE.includes(existing.status));
-          if (existing) application = { active: alreadyApplied, appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote };
+          const alreadyApplied = Boolean(existing && HAS_APPLIED.includes(existing.status));
+          if (existing) application = { active: alreadyApplied, status: existing.status, stageLabel: STAGE_LABEL[existing.status] || '', live: ACTIVE.includes(existing.status),
+            appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote, rejectionText: existing.rejectionText };
           gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
           if (req.session.returnTo === j.path) delete req.session.returnTo;
         }

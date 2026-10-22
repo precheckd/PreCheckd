@@ -11,22 +11,41 @@
   .ja-name { font-weight: 700; }
   .ja-meta { color: #C7D1CF; font-size: 0.85rem; }
   .ja-btn { background: #2ECC71; color: #10261C; border-radius: 6px; padding: 0.5rem 1rem; font-weight: 700; text-decoration: none; font-size: 0.9rem; white-space: nowrap; }
+  .ja-form { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .ja-form select, .ja-form button { background: #1F363C; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 6px; padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+  .ja-form button { background: #24404A; cursor: pointer; }
+  .ja-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .ja-err { background: #3A2B2B; border-left: 4px solid #FF8A8A; color: #FFD6D6; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
   .ja-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
 </style>
 <div class="ja-wrap"><div class="ja-inner">
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
   <h1>Applicants</h1>
-  <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Applying opens their full profile, video and resume to you.</p>
+  <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Their full profile, video and resume stay open to you until you decide not to move forward. The candidate sees only a short neutral reason.</p>
+  <% if (moved) { %><div class="ja-ok">Updated. The candidate has been told.</div><% } %>
+  <% if (error) { %><div class="ja-err"><%= error %></div><% } %>
   <% if (applicants.length === 0) { %>
     <div class="ja-empty">No applicants yet.</div>
   <% } %>
-  <% applicants.forEach(function(a) { const c = a.candidateId; %>
+  <% applicants.forEach(function(a) { const c = a.candidateId; const isLive = live.indexOf(a.status) !== -1; %>
     <div class="ja-card">
       <div>
         <div class="ja-name"><%= c.firstName %> <%= c.lastName %></div>
-        <div class="ja-meta">Applied <%= fmt(a.appliedAt) %> &middot; <%= a.status %></div>
+        <div class="ja-meta">Applied <%= fmt(a.appliedAt) %> &middot; <strong><%= stages[a.status] || a.status %></strong></div>
+        <% if (isLive) { %>
+        <form class="ja-form" method="POST" action="/recruiter-jobs/<%= posting._id %>/applicants/<%= a._id %>/stage">
+          <select name="stage" aria-label="Move to">
+            <% Object.keys(stages).forEach(function(k) { if (k !== a.status) { %><option value="<%= k %>"><%= k === 'rejected' ? 'Not moving forward' : stages[k] %></option><% } }); %>
+          </select>
+          <select name="reason" aria-label="Reason (needed for not moving forward)">
+            <option value="">Reason (for not moving forward)</option>
+            <% reasons.forEach(function(r) { %><option value="<%= r.code %>"><%= r.label %></option><% }); %>
+          </select>
+          <button type="submit">Move</button>
+        </form>
+        <% } %>
       </div>
-      <% if (a.connectionId) { %><a class="ja-btn" href="/recruiter-dashboard/requests/<%= a.connectionId %>/candidate">View profile</a><% } %>
+      <% if (a.connectionId && isLive) { %><a class="ja-btn" href="/recruiter-dashboard/requests/<%= a.connectionId %>/candidate">View profile</a><% } %>
     </div>
   <% }); %>
 </div></div>

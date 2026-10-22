@@ -5,6 +5,7 @@ const { startMessageDigestJob } = require('./src/jobs/messageDigestJob');
 const { startCertExpiryJob } = require('./src/jobs/certExpiryJob');
 const { startSkillRemindersJob } = require('./src/jobs/skillRemindersJob');
 const { startWeeklyEmailJob } = require('./src/jobs/weeklyEmailJob');
+const { startApplicantDigestJob } = require('./src/jobs/applicantDigestJob');
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,6 +18,7 @@ async function start() {
   startCertExpiryJob();
   startSkillRemindersJob();
   startWeeklyEmailJob();
+  startApplicantDigestJob();
 }
 
 start().catch((err) => {

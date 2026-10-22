@@ -10,9 +10,11 @@ const { buildLocation } = require('../services/postingLocation');
 const { recordMissingTitle } = require('../services/catalogRequests');
 const { docFromValue, formFromPosting, changedParts } = require('../services/postingEdit');
 const { titlesForSkills } = require('../content/jobTitles');
+const { sweepPostingLater } = require('../services/jobMatches');
 const { analyseEdit, applyImpact } = require('../services/postingImpact');
 const JobApplication = require('../models/JobApplication');
-const { ACTIVE } = require('../services/jobApplications');
+const { ACTIVE, HAS_APPLIED, STAGE_LABEL, moveStage } = require('../services/jobApplications');
+const { REJECTION_REASONS } = require('../content/rejectionReasons');
 const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
 const opt = require('../content/postingOptions');
@@ -67,7 +69,8 @@ router.get('/', async (req, res) => {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
     const postings = await JobPosting.find({ recruiterId: recruiter._id }).sort({ createdAt: -1 });
-    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, justPosted: req.query.posted === '1' });
+    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, justPosted: req.query.posted === '1',
+      digestOn: recruiter.applicantDigestOptOut !== true, digestSaved: req.query.digest === '1' });
   } catch (error) {
     console.error('Error loading recruiter postings:', error);
     res.status(500).send('Server error');
@@ -151,6 +154,7 @@ router.post('/new', async (req, res) => {
     }
 
     const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location) });
+    sweepPostingLater(posting);
     res.redirect(`/recruiter-jobs/${posting._id}?posted=1`);
   } catch (error) {
     console.error('Error creating job posting:', error);
@@ -269,6 +273,7 @@ router.post('/:id/edit', async (req, res) => {
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
     await applyImpact(posting, r.impact, r.parts);
+    sweepPostingLater(posting);
     const extra = r.impact.withdraw.length ? `&withdrawn=${r.impact.withdraw.length}` : '';
     res.redirect(`/recruiter-jobs/${posting._id}?saved=1${extra}`);
   } catch (error) {
@@ -282,13 +287,44 @@ router.get('/:id/applicants', async (req, res) => {
   try {
     const posting = await loadOwnPosting(req, res);
     if (!posting) return;
-    const apps = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } }).populate('candidateId');
+    const apps = await JobApplication.find({ jobId: posting._id, status: { $in: HAS_APPLIED } }).populate('candidateId');
     res.render('recruiter-job-applicants', {
       title: `Applicants | ${posting.title} | PreCheckd`, posting,
       applicants: apps.filter((a) => a.candidateId).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)),
+      stages: STAGE_LABEL, reasons: REJECTION_REASONS, live: ACTIVE, error: req.query.error || '', moved: req.query.moved || '',
     });
   } catch (error) {
     console.error('Error loading applicants:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/applicants/:appId/stage — move an applicant along the pipeline
+router.post('/:id/applicants/:appId/stage', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    const app = await JobApplication.findById(req.params.appId);
+    if (!app || String(app.jobId) !== String(posting._id)) return res.status(404).send('Not found');
+    const r = await moveStage(app, posting, String(req.body.stage || ''), { reason: req.body.reason });
+    const back = `/recruiter-jobs/${posting._id}/applicants`;
+    res.redirect(r.ok ? `${back}?moved=1` : `${back}?error=${encodeURIComponent(r.error)}`);
+  } catch (error) {
+    console.error('Error moving applicant:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/digest — turn the daily "new applicants" email on or off
+router.post('/digest', async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    if (!recruiter) return res.redirect('/login');
+    recruiter.applicantDigestOptOut = req.body.digest !== 'on';
+    await recruiter.save();
+    res.redirect('/recruiter-jobs?digest=1');
+  } catch (error) {
+    console.error('Error saving digest setting:', error);
     res.status(500).send('Server error');
   }
 });

@@ -520,4 +520,9 @@ candidateSchema.pre('save', function(next) {
 
 candidateSchema.index({ workAreas: '2dsphere' });
 
+// After any save, check (a little later, once per burst) whether the candidate now qualifies for open jobs.
+candidateSchema.post('save', function afterSave(doc) {
+  try { require('../services/jobMatches').scheduleSweep(doc._id); } catch (e) { /* never break a save */ }
+});
+
 module.exports = mongoose.model('Candidate', candidateSchema);

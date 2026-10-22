@@ -2,6 +2,7 @@
 // Public job pages: no address leaks, closed state, redirects, previews, job markup, blurred circles.
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
 process.env.SESSION_SECRET = 'test-secret';
+process.env.DISABLE_JOB_NOTICES = 'true';
 const assert = require('assert');
 const path = require('path');
 const http = require('http');

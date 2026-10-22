@@ -16,6 +16,10 @@ const jobApplicationSchema = new mongoose.Schema({
   withdrawnAt: { type: Date, default: null },
   withdrawnBy: { type: String, enum: [null, 'candidate', 'requirement_change'], default: null },
   withdrawnNote: { type: String, default: '', maxlength: 600 },
+  // pipeline
+  stageChangedAt: { type: Date, default: null },
+  rejectionReason: { type: String, default: null },   // code from content/rejectionReasons.js (recruiter-side)
+  rejectionText: { type: String, default: '' },        // the neutral sentence the candidate sees
 }, { timestamps: true });
 
 jobApplicationSchema.index({ jobId: 1, candidateId: 1 }, { unique: true });

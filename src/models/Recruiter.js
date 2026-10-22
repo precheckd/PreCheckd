@@ -68,6 +68,10 @@ const recruiterSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Daily "new applicants" email (services/applicantDigest.js). On by default; a switch on My job postings turns it off.
+  applicantDigestOptOut: { type: Boolean, default: false },
+  lastApplicantDigestAt: { type: Date, default: null },
+
   isActive: {
     type: Boolean,
     default: false

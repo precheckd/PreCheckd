@@ -47,7 +47,10 @@
       <% if (viewer.isOwner) { %><a class="jp-btn alt" href="/recruiter-jobs/<%= postingId %>">Manage this posting</a><% } %>
     <% } else if (application && application.active) { %>
       <% if (notice === 'applied') { %><div class="jp-ok">You applied. The recruiter can now see your full profile, video and resume, and you are connected.</div><% } else { %><p>You applied on <%= fmt(application.appliedAt) %>.</p><% } %>
+      <p><strong>Status: <%= application.stageLabel %></strong><% if (application.status === 'rejected' && application.rejectionText) { %><br><%= application.rejectionText %><% } %></p>
+      <% if (application.live) { %>
       <form method="POST" action="/jobs/<%= postingId %>/withdraw" onsubmit="return confirm('Withdraw your application? The recruiter will no longer see your full profile for this job.');"><button class="jp-btn alt" type="submit">Withdraw my application</button></form>
+      <% } %>
     <% } else if (gate && gate.canApply) { %>
       <% if (notice === 'withdrew') { %><div class="jp-ok">Your application was withdrawn.</div><% } %>
       <% if (application && application.withdrawnBy === 'requirement_change') { %><div class="jp-block">Your earlier application was withdrawn because the job's requirements changed. You now meet them, so you can apply again.</div><% } %>

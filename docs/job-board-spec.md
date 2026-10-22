@@ -225,3 +225,15 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 - **Return to the job:** "Sign up to apply" and "Log in" on a job page remember the job. Login sends a fully verified candidate straight back; anyone still setting up sees a "Go back to it" bar until they visit the job.
 - **Not built yet:** recruiter pipeline stages and rejection reasons, email versions of these notices (step 6), "blocked by recruiter" (there is no candidate-block feature yet, so the gate input is always false), membership check (billing).
 
+## 14. Pipeline stages and notices (step 6, built Oct 22)
+
+**Pipeline.** Fixed stages: applied, screening, interviewing, offer, hired, not moving forward (rejected). The recruiter moves an applicant on `/recruiter-jobs/<id>/applicants`; every move is a bell to the candidate and syncs to their Application Tracker (hired shows as offer with a "Hired through PreCheckd" note). Not moving forward needs one reason from a fixed list (position filled, other candidates, not the right fit, role on hold or changed, candidate stopped responding); the candidate sees only a neutral sentence ("The employer is moving forward with other candidates."), never the reason. Rejecting stops the shared profile access and keeps the connection. Hired and rejected are final in v1, and a rejected applicant cannot apply again.
+
+**"You qualify" bell.** Once per candidate per job, for fully verified candidates who are open to opportunities and meet every requirement (ready to apply). Triggers: a job is posted or edited; the candidate's own profile changes (a passed test, a verified degree or cert, an edit), checked about 20 seconds after a save and at most every 5 minutes. A candidate withdrawn by a requirement change is told again when they meet the new one. The first-time "you can now apply" notice is the same bell.
+
+**Monday recap email.** New section "Jobs you qualify for": every open job the candidate can apply to right now and has not applied to (up to 10), with links. A recap with only jobs still counts as worth sending.
+
+**Recruiter daily email.** Weekdays 8:00-10:59 ET, once per ~20 hours, only when there are new applicants: counts per posting with links, no candidate details. Checkbox on My job postings turns it off.
+
+**Not built / limits:** no email version of the bell notices (only the Monday list); the candidate-side sweep checks every verified candidate when a job is posted (fine at launch size, batch it if the candidate count grows past a few thousand); identity or phone verification done by webhook does not trigger a sweep by itself (the next profile save or the Monday email picks it up).
+

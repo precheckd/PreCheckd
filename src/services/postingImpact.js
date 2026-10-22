@@ -9,6 +9,7 @@ const { buildCandidateFacts } = require('./applyFacts');
 const { notify } = require('./notifications');
 const { withdrawApplication, activeApplicants } = require('./jobApplications');
 const Candidate = require('../models/Candidate');
+const JobNotice = require('../models/JobNotice');
 
 const REQUIREMENT = new Set(['skill', 'education', 'certification', 'clearance', 'shift', 'area', 'availability']);
 
@@ -39,6 +40,8 @@ async function applyImpact(posting, impact, parts, now = new Date()) {
   for (const { app, blockers } of impact.withdraw) {
     const why = blockers.map((b) => b.message.replace(/ Add it to your profile, or withdraw\.| Renew it and update your profile, or withdraw\.| or withdraw\.?$/g, '')).join(' ');
     await withdrawApplication(app, { by: 'requirement_change', note: why }, now);
+    // forget the earlier "you qualify" notice, so they are told again when they meet the new requirement
+    await JobNotice.deleteOne({ candidateId: app.candidateId, jobId: app.jobId });
     await notify('candidate', app.candidateId, 'job_withdrawn',
       `Your application for ${posting.title} was withdrawn because its requirements changed. See what to fix.`.slice(0, 200), url);
   }

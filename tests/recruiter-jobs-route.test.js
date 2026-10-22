@@ -2,6 +2,7 @@
 // Drives the recruiter job routes through a real Express app with the database layer stubbed (no MongoDB
 // here). Saved postings are built as real JobPosting documents and schema-validated.
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
+process.env.DISABLE_JOB_NOTICES = 'true';
 const assert = require('assert');
 const path = require('path');
 const http = require('http');
