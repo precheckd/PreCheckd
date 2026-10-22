@@ -5,6 +5,8 @@ const SavedRecruiter = require('../models/SavedRecruiter');
 const RelationshipNote = require('../models/RelationshipNote');
 const Recruiter = require('../models/Recruiter');
 const { sharedContactFor } = require('../utils/contactSharing');
+const connectionEnd = require('../services/connectionEnd');
+const { SURVEY_CONTACTED, SURVEY_RESPECTFUL } = require('../content/endReasons');
 
 const MAX_NOTE_LENGTH = 1000;
 
@@ -22,6 +24,13 @@ function requireLogin(req, res, next) {
 }
 
 router.use(requireLogin);
+
+// One-line banner after ending a connection (query flags set by POST /:id/end).
+router.use((req, res, next) => {
+  if (req.query.ended === '1') res.locals.flash = { text: 'Connection ended.' };
+  else if (req.query.endError) res.locals.flash = { error: true, text: String(req.query.endError).slice(0, 200) };
+  next();
+});
 
 // Where the contact-info request flow stands for this viewer on one
 // connection: 'requested_by_me', 'requested_of_me', or 'none'.
@@ -261,6 +270,58 @@ router.post('/note', async (req, res) => {
   } catch (error) {
     console.error('Error saving connection note:', error);
     res.status(500).json({ error: 'Something went wrong saving your note.' });
+  }
+});
+
+// POST /connections/:id/end — either side ends an accepted connection with a required reason.
+router.post('/:id/end', async (req, res) => {
+  try {
+    if (!/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(404).send('Not found');
+    const conn = await ConnectionRequest.findById(req.params.id);
+    const side = req.session.candidateId ? 'candidate' : 'recruiter';
+    const me = String(side === 'candidate' ? req.session.candidateId : req.session.recruiterId);
+    const mine = conn && String(side === 'candidate' ? conn.candidateId : conn.recruiterId) === me;
+    if (!mine) return res.status(404).send('Not found');
+    const r = await connectionEnd.endConnection(conn, side, { reason: req.body.reason, note: req.body.note });
+    res.redirect(r.ok ? '/connections?ended=1' : `/connections?endError=${encodeURIComponent(r.error)}`);
+  } catch (error) {
+    console.error('Error ending connection:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// The candidate's private 30-day survey about the recruiter.
+async function loadSurveyConnection(req, res) {
+  if (!req.session.candidateId || !/^[0-9a-f]{24}$/i.test(req.params.id)) { res.status(404).send('Not found'); return null; }
+  const conn = await ConnectionRequest.findById(req.params.id);
+  if (!conn || String(conn.candidateId) !== String(req.session.candidateId) || !conn.surveySentAt) { res.status(404).send('Not found'); return null; }
+  return conn;
+}
+const surveyLocals = (conn, extra) => ({ title: 'A quick question | PreCheckd', conn, contactedOptions: SURVEY_CONTACTED, respectfulOptions: SURVEY_RESPECTFUL, errors: {}, form: {}, done: false, ...extra });
+
+router.get('/:id/survey', async (req, res) => {
+  try {
+    const conn = await loadSurveyConnection(req, res);
+    if (!conn) return;
+    res.render('connection-survey', surveyLocals(conn, { done: !!conn.survey.answeredAt }));
+  } catch (error) {
+    console.error('Error loading survey:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:id/survey', async (req, res) => {
+  try {
+    const conn = await loadSurveyConnection(req, res);
+    if (!conn) return;
+    if (conn.survey.answeredAt) return res.render('connection-survey', surveyLocals(conn, { done: true }));
+    const { errors, value } = connectionEnd.validateSurvey(req.body);
+    if (Object.keys(errors).length) return res.status(400).render('connection-survey', surveyLocals(conn, { errors, form: req.body }));
+    await connectionEnd.saveSurvey(conn, value);
+    res.render('connection-survey', surveyLocals(conn, { done: true }));
+  } catch (error) {
+    console.error('Error saving survey:', error);
+    res.status(500).send('Server error');
   }
 });
 

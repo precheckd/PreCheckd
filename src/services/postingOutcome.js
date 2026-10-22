@@ -133,7 +133,7 @@ async function answerHireConfirmation(token, answer, { now = new Date(), alert }
   if (answer !== 'yes' && answer !== 'no') return { ...info, status: 'pending', needsAnswer: true };
   hire.status = answer === 'yes' ? 'confirmed' : 'denied';
   hire.respondedAt = now;
-  if (answer === 'no') posting.reviewFlag = 'hire_denied';
+  if (answer === 'no') { posting.reviewFlag = 'hire_denied'; posting.reviewClearedAt = null; }
   await posting.save();
   if (answer === 'no') {
     const tell = alert || require('./emailService').sendStaffAlertEmail;
@@ -151,6 +151,7 @@ async function flagRepost(posting, { now = new Date(), alert } = {}) {
     && p.outcome && p.outcome.kind === 'cancelled' && p.closedAt && now.getTime() - new Date(p.closedAt).getTime() <= 30 * DAY);
   if (!prior) return false;
   posting.reviewFlag = 'repost_after_cancel';
+  posting.reviewClearedAt = null;
   await posting.save();
   const tell = alert || require('./emailService').sendStaffAlertEmail;
   try {

@@ -36,6 +36,7 @@ JobPosting.findById = async (id) => saved.find((p) => String(p._id) === String(i
 JobPosting.distinct = async () => ['Acme Corp', 'ACME corp', 'Acme Labs'];
 JobApplication.find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 JobApplication.countDocuments = async () => 0;
+require('../src/models/ConnectionRequest').find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 const catalogWrites = [];
 CatalogRequest.updateOne = async (...args) => { catalogWrites.push(args); return {}; };
 Object.defineProperty(JobPosting.prototype, 'save', { value: async function () { return this; }, configurable: true, writable: true });

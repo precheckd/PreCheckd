@@ -14,6 +14,7 @@
 <div class="net-content">
   <div class="net-wrap">
     <h1>Connections</h1>
+    <% if (typeof flash !== 'undefined' && flash) { %><p style="background:#2A4750;border-left:4px solid <%= flash.error ? '#FF8A8A' : '#2ECC71' %>;padding:0.7rem 1rem;border-radius:6px;color:#F2F4F3;"><%= flash.text %></p><% } %>
     <div class="net-tabs">
       <a href="/connections?tab=connections" class="net-tab<%= tab === 'connections' ? ' is-on' : '' %>">Connections<% if (connectionCount > 0) { %><span class="net-pill"><%= connectionCount %></span><% } %></a>
       <% if (isCandidate) { %><a href="/connections?tab=saved" class="net-tab<%= tab === 'saved' ? ' is-on' : '' %>">Saved<% if (savedCount > 0) { %><span class="net-pill"><%= savedCount %></span><% } %></a><% } %>

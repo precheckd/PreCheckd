@@ -304,6 +304,11 @@ router.post('/:anonId/connect', async (req, res) => {
       return res.json({ success: true, alreadySent: true });
     }
 
+    // A candidate who ended a connection with this recruiter is not asked again.
+    if (await require('../services/connectionEnd').endedByCandidate(candidate._id, req.session.recruiterId)) {
+      return res.status(403).json({ error: 'You cannot send this person a request.' });
+    }
+
     await ConnectionRequest.create({
       candidateId: candidate._id,
       recruiterId: req.session.recruiterId,

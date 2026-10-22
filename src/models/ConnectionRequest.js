@@ -18,7 +18,7 @@ const connectionRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'declined'],
+    enum: ['pending', 'accepted', 'declined', 'ended'],
     default: 'pending'
   },
   // Who sent this request. Candidate-initiated is the original flow
@@ -42,6 +42,22 @@ const connectionRequestSchema = new mongoose.Schema({
   expiresAt: {
     type: Date,
     default: () => Date.now() + 30 * 24 * 60 * 60 * 1000
+  },
+
+  // Ending a connection (either side, with a required reason). Ended connections no longer pass any
+  // status === 'accepted' check, so messaging and shared access stop by themselves.
+  endedAt: { type: Date, default: null },
+  endedBy: { type: String, enum: ['candidate', 'recruiter', null], default: null },
+  endReason: { type: String, default: null },
+  endNote: { type: String, default: '', maxlength: 300 },
+
+  // The candidate's private ~30-day survey about the recruiter. Internal only; never shown to the recruiter.
+  surveySentAt: { type: Date, default: null },
+  survey: {
+    answeredAt: { type: Date, default: null },
+    contacted: { type: String, default: null },
+    respectful: { type: String, default: null },
+    note: { type: String, default: '' }
   },
 
   // Bundled video + resume access request — only meaningful once status

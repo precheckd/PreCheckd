@@ -98,6 +98,7 @@ const jobPostingSchema = new mongoose.Schema({
   closeRemindersSent: { type: [Number], default: [] },           // days-before reminders already sent (3, 1)
   lastOutcomeReminderAt: { type: Date, default: null },
   reviewFlag: { type: String, default: null },                    // staff attention: 'repost_after_cancel', 'hire_denied'
+  reviewClearedAt: { type: Date, default: null },
   outcome: {
     kind: { type: String, enum: [null, 'hired_precheckd', 'hired_elsewhere', 'not_filled', 'cancelled'], default: null },
     reason: { type: String, default: null },

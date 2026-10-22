@@ -139,6 +139,10 @@
     white-space: nowrap;
   }
 
+  .conn-end { display: inline-block; }
+  .conn-end summary { list-style: none; cursor: pointer; }
+  .conn-end-form { margin-top: 0.5rem; max-width: 320px; font-size: 0.85rem; }
+  .conn-end-form select, .conn-end-form input { display: block; width: 100%; box-sizing: border-box; margin: 0.35rem 0; padding: 0.4rem; }
   .conn-badge-connected {
     background: rgba(46, 204, 113, 0.15);
     color: #4ADE80;
@@ -368,6 +372,20 @@
                     <button type="submit" class="conn-btn">Request Full Access</button>
                   </form>
                 <% } %>
+              <% } %>
+              <% if (entry.connected && entry.requestId) { %>
+                <details class="conn-end">
+                  <summary class="conn-btn conn-btn-danger">End connection</summary>
+                  <form action="/connections/<%= entry.requestId %>/end" method="POST" class="conn-end-form">
+                    <p>Ending closes messaging and stops any shared access. They only see that the connection ended, never your reason.</p>
+                    <select name="reason" required>
+                      <option value="">Choose a reason</option>
+                      <% endReasons[isCandidate ? 'candidate' : 'recruiter'].forEach(function(r) { %><option value="<%= r.code %>"><%= r.label %></option><% }); %>
+                    </select>
+                    <input name="note" maxlength="300" placeholder="Optional note (needed for Other)">
+                    <button type="submit" class="conn-btn conn-btn-danger">End it</button>
+                  </form>
+                </details>
               <% } %>
               <% if (isCandidate && !entry.connected) { %>
                 <a class="conn-btn" href="/recruiter/<%= entry.slug %>">View &amp; connect</a>

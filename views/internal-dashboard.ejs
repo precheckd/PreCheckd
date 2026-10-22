@@ -159,6 +159,12 @@
       <span class="id-card-stat <%= catalogRequestCount > 0 ? 'id-stat-alert' : '' %>"><%= catalogRequestCount %> waiting</span>
     </a>
 
+    <a class="id-card" href="/hire-review">
+      <div class="id-card-title">Hire Review</div>
+      <div class="id-card-desc">Jobs where a reported hire was denied, a job was reposted after a cancellation, or a hire confirmation went unanswered.</div>
+      <span class="id-card-stat <%= hireReviewCount > 0 ? 'id-stat-alert' : '' %>"><%= hireReviewCount %> to review</span>
+    </a>
+
     <a class="id-card" href="/verification-cases">
       <div class="id-card-title">Verification Cases</div>
       <div class="id-card-desc">Employment and education checks that need a call, a contact or a reply. Open a case from a candidate's verify screen.</div>

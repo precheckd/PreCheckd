@@ -272,9 +272,11 @@ router.get('/', async (req, res) => {
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
+    const hireReviewCount = (await require('../services/hireReview').listHireReviews()).length;
 
     res.render('internal-dashboard', {
       integrityCount,
+      hireReviewCount,
       skillRequestCount,
       catalogRequestCount,
       verificationCount,
@@ -392,6 +394,26 @@ router.get('/skill-requests', async (req, res) => {
 // Things members typed that our fixed catalogs lack (certifications candidates saved, job titles recruiters
 // could not find), most-requested first. Adding an item = add a line to src/content/certCatalog.js or
 // src/content/jobTitles.js; "Mark added" here only clears it from the list.
+router.get('/hire-review', async (req, res) => {
+  try {
+    res.render('internal-hire-review', { rows: await require('../services/hireReview').listHireReviews() });
+  } catch (error) {
+    console.error('Error loading hire review:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/hire-review/:id/clear', async (req, res) => {
+  try {
+    if (!/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(404).send('Not found');
+    await require('../services/hireReview').clearFlag(req.params.id);
+    res.redirect('/hire-review');
+  } catch (error) {
+    console.error('Error clearing hire review flag:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 router.get('/catalog-requests', async (req, res) => {
   try {
     const CatalogRequest = require('../models/CatalogRequest');

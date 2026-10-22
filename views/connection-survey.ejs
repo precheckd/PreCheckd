@@ -1,0 +1,31 @@
+<style>
+  .sv-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .sv-inner { max-width: 560px; width: 100%; color: #F2F4F3; }
+  .sv-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; }
+  .sv-err { color: #FF8A8A; font-size: 0.85rem; }
+  .sv-opt { display: block; padding: 0.3rem 0; }
+  .sv-in { width: 100%; box-sizing: border-box; background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; border-radius: 6px; padding: 0.55rem; }
+  .sv-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; cursor: pointer; }
+  .sv-muted { color: #C7D1CF; font-size: 0.85rem; }
+</style>
+<div class="sv-wrap"><div class="sv-inner"><div class="sv-card">
+<% if (done) { %>
+  <h1>Thank you</h1><p>Your answers are recorded. They stay private and are never shown to the recruiter.</p>
+  <p><a href="/connections" style="color:#8FA6AC;">Back to connections</a></p>
+<% } else { %>
+  <h1>A quick question</h1>
+  <p class="sv-muted">Your answers are private. The recruiter never sees them. They help us keep PreCheckd honest.</p>
+  <form method="POST" action="/connections/<%= conn._id %>/survey">
+    <p><strong>Has this recruiter contacted you?</strong></p>
+    <% if (errors.contacted) { %><div class="sv-err"><%= errors.contacted %></div><% } %>
+    <% contactedOptions.forEach(function(o) { %><label class="sv-opt"><input type="radio" name="contacted" value="<%= o.code %>" <%= form.contacted === o.code ? 'checked' : '' %>> <%= o.label %></label><% }); %>
+    <p><strong>Were they respectful and professional?</strong></p>
+    <% if (errors.respectful) { %><div class="sv-err"><%= errors.respectful %></div><% } %>
+    <% respectfulOptions.forEach(function(o) { %><label class="sv-opt"><input type="radio" name="respectful" value="<%= o.code %>" <%= form.respectful === o.code ? 'checked' : '' %>> <%= o.label %></label><% }); %>
+    <p><strong>Anything concerning? (optional)</strong></p>
+    <input class="sv-in" name="note" maxlength="300" value="<%= form.note || '' %>">
+    <% if (errors.note) { %><div class="sv-err"><%= errors.note %></div><% } %>
+    <p style="margin-top:1rem;"><button class="sv-btn" type="submit">Send</button></p>
+  </form>
+<% } %>
+</div></div></div>

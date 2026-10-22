@@ -66,6 +66,23 @@
     <div class="jd-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
   </div>
 
+  <% if (posting.status === 'open') { %>
+  <div class="jd-card"><h2>Share this job</h2>
+    <% if (sent === '1') { %><div class="jd-ok">Sent.</div><% } %>
+    <% if (sendError) { %><p style="color:#FF8A8A;"><%= sendError %></p><% } %>
+    <p>Anyone can open this link. Only candidates who meet every requirement can apply.</p>
+    <input readonly value="<%= shareUrl %>" onclick="this.select()" style="width:100%;box-sizing:border-box;background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.55rem;">
+    <% if (shareable.length) { %>
+      <form method="POST" action="/recruiter-jobs/<%= posting._id %>/send" style="margin-top:0.8rem;">
+        <select name="connectionId" required style="background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.5rem;">
+          <option value="">Send to a connection...</option>
+          <% shareable.forEach(function(c) { %><option value="<%= c._id %>"><%= c.candidateId.firstName %> <%= c.candidateId.lastName %></option><% }); %>
+        </select>
+        <button class="jd-edit" type="submit" style="border:0;cursor:pointer;margin:0 0 0 0.4rem;">Send</button>
+      </form>
+    <% } %>
+  </div>
+  <% } %>
   <% if (posting.editedAt) { %><p class="jd-std">Last edited <%= new Date(posting.editedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) %> (<%= posting.edits[posting.edits.length - 1].parts.join(', ') %>).</p><% } %>
   <a class="jd-edit" href="/recruiter-jobs/<%= posting._id %>/applicants">Applicants (<%= applicantCount %>)</a>
   <% if (posting.status === 'open') { %>

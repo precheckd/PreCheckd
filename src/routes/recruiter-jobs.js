@@ -19,6 +19,9 @@ const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
 const { validateOutcome, recordOutcome, flagRepost } = require('../services/postingOutcome');
 const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS } = require('../content/outcomeReasons');
+const ConnectionRequest = require('../models/ConnectionRequest');
+const conversation = require('../utils/conversation');
+const publicJob = require('../services/publicJob');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
 
@@ -340,6 +343,10 @@ router.get('/:id', async (req, res) => {
     res.render('recruiter-job-detail', {
       title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', outcomeDone: req.query.outcome === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
       applicantCount: await JobApplication.countDocuments({ jobId: posting._id, status: { $in: ACTIVE } }),
+      shareUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`, sent: req.query.sent || '', sendError: req.query.sendError || '',
+      shareable: posting.status === 'open'
+        ? (await ConnectionRequest.find({ recruiterId: req.session.recruiterId, status: 'accepted' }).populate('candidateId')).filter((c) => c.candidateId)
+        : [],
       options: { arrangements: opt.ARRANGEMENTS, employmentTypes: opt.EMPLOYMENT_TYPES, travel: opt.TRAVEL, shifts: opt.SHIFT_OPTIONS,
         payBasis: opt.PAY_BASIS, benefits: opt.BENEFITS, education: opt.EDUCATION_LEVELS, clearance: opt.CLEARANCE_OPTIONS },
     });
@@ -385,6 +392,25 @@ router.post('/:id/outcome', async (req, res) => {
     res.redirect(`/recruiter-jobs/${posting._id}?outcome=1`);
   } catch (error) {
     console.error('Error recording outcome:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/send — send this job's public link to one of your connections as an ordinary message.
+router.post('/:id/send', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    const back = `/recruiter-jobs/${posting._id}`;
+    if (posting.status !== 'open') return res.redirect(`${back}?sendError=${encodeURIComponent('This job is closed.')}`);
+    const ctx = await conversation.loadConversationContext({ type: 'recruiter', id: String(req.session.recruiterId) }, String(req.body.connectionId || ''));
+    if (!ctx) return res.redirect(`${back}?sendError=${encodeURIComponent('Pick one of your connections.')}`);
+    const url = `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`;
+    const r = await conversation.sendThreadMessage(ctx, `I thought you might be interested in this job: ${posting.title} at ${posting.hiringCompany}. ${url}`);
+    if (r.error) return res.redirect(`${back}?sendError=${encodeURIComponent(r.error)}`);
+    res.redirect(`${back}?sent=1`);
+  } catch (error) {
+    console.error('Error sending job to a connection:', error);
     res.status(500).send('Server error');
   }
 });
