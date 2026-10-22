@@ -151,3 +151,17 @@ Depends on billing (later): the paying-member check, posting credits, plan limit
 - Automatic recruiter response-time stat.
 - Preset certification groups (for example government-approved cyber cert lists).
 - Optional confidential-client option if agencies push back.
+
+---
+
+## 8. Engine notes (step 1, built Oct 22)
+
+`src/services/applyGate.js` is a pure function with 26 tests (`node tests/apply-gate.test.js`). It is not wired to any screen yet. Choices made while building it that Kent has not explicitly confirmed:
+
+- **On-site and hybrid jobs** are checked against the candidate's Work Areas the same way Remote in Area is (a candidate with no Work Areas drawn is asked to add them). Remote jobs skip the area check.
+- **Shifts:** a posting marked "flexible" has no shift requirement; a candidate who ticked "flexible" satisfies any shift.
+- **Availability:** a candidate with no available-from date is not blocked, even when the posting's start date is firm.
+- **Account state** (verified, membership) is reported as blockers but ignored by `qualifies()`, which is for the "jobs you now qualify for" notices. Membership is not checked until billing exists.
+- **Seniority labels** (what to call a posting that is not entry level) are not defined yet; only `isEntryLevel` exists.
+- Every blocker ends with a `withdraw` action, and the engine returns all blockers at once, not just the first.
+- The engine reads **real** skill levels (hidden skills count). The adapter that builds those facts, the geo check for Work Areas, and the certification and education catalogs come in step 2.
