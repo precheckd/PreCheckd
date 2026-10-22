@@ -4,63 +4,61 @@
 //
 // id:     stable key (never change once used on a posting)
 // title:  what candidates see
-// skills: the skill keys the title covers. A key only matters once a test exists for that skill (keys are
-//         the ones in the skill catalog, e.g. 'linux', 'agile', 'cloud'); a title can list skills we have
-//         not built tests for yet.
+// skills: skill keys the title covers. SKILL KEYS ARE CODERBYTE'S SKILL NAMES, lowercased with dashes
+//         ('Active Directory' -> 'active-directory', 'Power BI' -> 'power-bi', 'C#' -> 'c-sharp').
+//         Source: the Technology/skill list in the CoderByte test builder (Oct 22, 2026). A key only matters
+//         once a test exists for that skill; a title can list skills we have not built tests for yet.
 
 const TITLES = [
   // Support and IT operations
-  { id: 'help-desk-technician', title: 'Help Desk Technician', skills: ['customer-support', 'windows', 'networking', 'ticketing'] },
-  { id: 'it-support-specialist', title: 'IT Support Specialist', skills: ['customer-support', 'windows', 'linux', 'networking', 'ticketing'] },
-  { id: 'desktop-support-engineer', title: 'Desktop Support Engineer', skills: ['windows', 'networking', 'customer-support', 'ticketing'] },
-  { id: 'product-support-engineer', title: 'Product Support Engineer', skills: ['customer-support', 'linux', 'networking', 'security', 'sql', 'ticketing', 'cloud'] },
-  { id: 'technical-support-engineer', title: 'Technical Support Engineer', skills: ['customer-support', 'linux', 'windows', 'networking', 'cloud', 'sql', 'ticketing'] },
-  { id: 'systems-administrator', title: 'Systems Administrator', skills: ['linux', 'windows', 'networking', 'cloud', 'security', 'scripting'] },
-  { id: 'linux-administrator', title: 'Linux Administrator', skills: ['linux', 'scripting', 'networking', 'security', 'cloud'] },
-  { id: 'windows-administrator', title: 'Windows Administrator', skills: ['windows', 'networking', 'security', 'scripting'] },
-  { id: 'network-administrator', title: 'Network Administrator', skills: ['networking', 'security', 'linux', 'windows'] },
-  { id: 'network-engineer', title: 'Network Engineer', skills: ['networking', 'security', 'cloud', 'scripting'] },
+  { id: 'help-desk-technician', title: 'Help Desk Technician', skills: ['customer-support', 'active-directory', 'network', 'jira', 'servicenow', 'powershell', 'problem-solving'] },
+  { id: 'it-support-specialist', title: 'IT Support Specialist', skills: ['customer-support', 'active-directory', 'linux', 'network', 'jira', 'servicenow', 'powershell', 'problem-solving'] },
+  { id: 'desktop-support-engineer', title: 'Desktop Support Engineer', skills: ['active-directory', 'powershell', 'network', 'customer-support', 'jira', 'servicenow', 'problem-solving'] },
+  { id: 'product-support-engineer', title: 'Product Support Engineer', skills: ['customer-support', 'linux', 'network', 'security', 'sql', 'jira', 'servicenow', 'cloud', 'problem-solving'] },
+  { id: 'technical-support-engineer', title: 'Technical Support Engineer', skills: ['customer-support', 'linux', 'active-directory', 'network', 'cloud', 'sql', 'jira', 'servicenow', 'powershell'] },
+  { id: 'systems-administrator', title: 'Systems Administrator', skills: ['linux', 'active-directory', 'network', 'cloud', 'security', 'powershell', 'python'] },
+  { id: 'linux-administrator', title: 'Linux Administrator', skills: ['linux', 'unix', 'ubuntu', 'red-hat', 'python', 'network', 'security', 'cloud'] },
+  { id: 'windows-administrator', title: 'Windows Administrator', skills: ['active-directory', 'powershell', 'network', 'security'] },
+  { id: 'network-administrator', title: 'Network Administrator', skills: ['network', 'security', 'linux', 'active-directory'] },
+  { id: 'network-engineer', title: 'Network Engineer', skills: ['network', 'security', 'cloud', 'python', 'powershell'] },
 
   // Cloud and DevOps
-  { id: 'cloud-engineer', title: 'Cloud Engineer', skills: ['cloud', 'linux', 'networking', 'security', 'scripting', 'devops'] },
-  { id: 'cloud-support-engineer', title: 'Cloud Support Engineer', skills: ['cloud', 'linux', 'customer-support', 'networking', 'ticketing'] },
-  { id: 'cloud-architect', title: 'Cloud Architect', skills: ['cloud', 'networking', 'security', 'devops', 'linux'] },
-  { id: 'devops-engineer', title: 'DevOps Engineer', skills: ['devops', 'cloud', 'linux', 'scripting', 'agile', 'security'] },
-  { id: 'site-reliability-engineer', title: 'Site Reliability Engineer', skills: ['devops', 'cloud', 'linux', 'scripting', 'networking'] },
+  { id: 'cloud-engineer', title: 'Cloud Engineer', skills: ['cloud', 'aws', 'azure', 'gcp', 'linux', 'network', 'security', 'python', 'docker', 'terraform'] },
+  { id: 'cloud-support-engineer', title: 'Cloud Support Engineer', skills: ['cloud', 'aws', 'azure', 'gcp', 'linux', 'customer-support', 'network', 'jira', 'servicenow'] },
+  { id: 'cloud-architect', title: 'Cloud Architect', skills: ['cloud', 'aws', 'azure', 'gcp', 'network', 'security', 'terraform', 'linux', 'system-design'] },
+  { id: 'devops-engineer', title: 'DevOps Engineer', skills: ['cloud', 'aws', 'azure', 'gcp', 'linux', 'python', 'docker', 'kubernetes', 'terraform', 'ansible', 'jenkins', 'ci', 'agile', 'security'] },
+  { id: 'site-reliability-engineer', title: 'Site Reliability Engineer', skills: ['cloud', 'aws', 'linux', 'python', 'docker', 'kubernetes', 'terraform', 'network'] },
 
   // Security
-  { id: 'security-analyst', title: 'Security Analyst', skills: ['security', 'networking', 'linux', 'windows', 'scripting'] },
-  { id: 'soc-analyst', title: 'SOC Analyst', skills: ['security', 'networking', 'linux', 'windows', 'ticketing'] },
-  { id: 'cybersecurity-engineer', title: 'Cybersecurity Engineer', skills: ['security', 'cloud', 'networking', 'linux', 'scripting'] },
-  { id: 'security-administrator', title: 'Security Administrator', skills: ['security', 'windows', 'linux', 'networking', 'cloud'] },
-  { id: 'grc-analyst', title: 'GRC Analyst', skills: ['security', 'compliance', 'risk'] },
-  { id: 'penetration-tester', title: 'Penetration Tester', skills: ['security', 'networking', 'linux', 'scripting'] },
-  { id: 'incident-responder', title: 'Incident Responder', skills: ['security', 'linux', 'windows', 'networking', 'scripting'] },
+  { id: 'security-analyst', title: 'Security Analyst', skills: ['security', 'cybersecurity', 'network', 'linux', 'active-directory', 'python'] },
+  { id: 'soc-analyst', title: 'SOC Analyst', skills: ['security', 'cybersecurity', 'network', 'linux', 'active-directory', 'mitre', 'jira', 'servicenow'] },
+  { id: 'cybersecurity-engineer', title: 'Cybersecurity Engineer', skills: ['cybersecurity', 'security', 'cloud', 'network', 'linux', 'python'] },
+  { id: 'security-administrator', title: 'Security Administrator', skills: ['security', 'cybersecurity', 'active-directory', 'linux', 'network', 'cloud'] },
+  { id: 'grc-analyst', title: 'GRC Analyst', skills: ['security', 'cybersecurity', 'compliance', 'soc-2'] },
+  { id: 'penetration-tester', title: 'Penetration Tester', skills: ['security', 'cybersecurity', 'owasp', 'network', 'linux', 'python'] },
+  { id: 'incident-responder', title: 'Incident Responder', skills: ['security', 'cybersecurity', 'mitre', 'linux', 'active-directory', 'network', 'python'] },
 
   // Software and data
-  { id: 'software-engineer', title: 'Software Engineer', skills: ['python', 'javascript', 'java', 'sql', 'git', 'agile', 'cloud', 'testing'] },
-  { id: 'front-end-developer', title: 'Front-End Developer', skills: ['javascript', 'html-css', 'git', 'testing', 'agile'] },
-  { id: 'back-end-developer', title: 'Back-End Developer', skills: ['python', 'javascript', 'java', 'sql', 'git', 'cloud', 'testing', 'agile'] },
-  { id: 'full-stack-developer', title: 'Full-Stack Developer', skills: ['javascript', 'html-css', 'python', 'java', 'sql', 'git', 'cloud', 'testing', 'agile'] },
-  { id: 'qa-engineer', title: 'QA Engineer', skills: ['testing', 'sql', 'scripting', 'agile', 'git'] },
-  { id: 'database-administrator', title: 'Database Administrator', skills: ['sql', 'linux', 'windows', 'cloud', 'security', 'scripting'] },
-  { id: 'data-analyst', title: 'Data Analyst', skills: ['sql', 'python', 'excel', 'data-visualization'] },
-  { id: 'data-engineer', title: 'Data Engineer', skills: ['sql', 'python', 'cloud', 'scripting', 'git'] },
+  { id: 'software-engineer', title: 'Software Engineer', skills: ['python', 'javascript', 'java', 'typescript', 'sql', 'git', 'agile', 'cloud', 'qa', 'algorithms', 'data-structures'] },
+  { id: 'front-end-developer', title: 'Front-End Developer', skills: ['javascript', 'typescript', 'html', 'css', 'react', 'git', 'qa', 'agile'] },
+  { id: 'back-end-developer', title: 'Back-End Developer', skills: ['python', 'javascript', 'java', 'sql', 'git', 'cloud', 'qa', 'agile', 'rest'] },
+  { id: 'full-stack-developer', title: 'Full-Stack Developer', skills: ['javascript', 'typescript', 'html', 'css', 'react', 'python', 'java', 'sql', 'git', 'cloud', 'qa', 'agile', 'rest'] },
+  { id: 'qa-engineer', title: 'QA Engineer', skills: ['qa', 'manual', 'selenium', 'cypress', 'playwright', 'sql', 'python', 'agile', 'git'] },
+  { id: 'database-administrator', title: 'Database Administrator', skills: ['sql', 'mysql', 'postgresql', 't-sql', 'oracle', 'linux', 'cloud', 'security'] },
+  { id: 'data-analyst', title: 'Data Analyst', skills: ['sql', 'python', 'excel', 'spreadsheet', 'tableau', 'power-bi', 'looker', 'statistics'] },
+  { id: 'data-engineer', title: 'Data Engineer', skills: ['sql', 'python', 'cloud', 'git', 'etl', 'spark'] },
 
   // Project and delivery
-  { id: 'project-manager', title: 'Project Manager', skills: ['project-management', 'agile', 'scrum', 'communication'] },
-  { id: 'it-project-manager', title: 'IT Project Manager', skills: ['project-management', 'agile', 'scrum', 'cloud', 'security'] },
-  { id: 'scrum-master', title: 'Scrum Master', skills: ['scrum', 'agile', 'project-management', 'communication'] },
-  { id: 'agile-coach', title: 'Agile Coach', skills: ['agile', 'scrum', 'communication'] },
-  { id: 'business-analyst', title: 'Business Analyst', skills: ['business-analysis', 'sql', 'agile', 'excel', 'communication'] },
-  { id: 'product-owner', title: 'Product Owner', skills: ['agile', 'scrum', 'business-analysis', 'communication'] },
-  { id: 'technical-program-manager', title: 'Technical Program Manager', skills: ['project-management', 'agile', 'cloud', 'communication'] },
+  { id: 'scrum-master', title: 'Scrum Master', skills: ['agile', 'jira', 'english-proficiency'] },
+  { id: 'agile-coach', title: 'Agile Coach', skills: ['agile', 'english-proficiency'] },
+  { id: 'business-analyst', title: 'Business Analyst', skills: ['analyst', 'sql', 'agile', 'excel', 'jira', 'english-proficiency'] },
+  { id: 'product-owner', title: 'Product Owner', skills: ['agile', 'analyst', 'jira', 'english-proficiency'] },
 
   // Customer-facing technical roles
-  { id: 'solutions-engineer', title: 'Solutions Engineer', skills: ['cloud', 'networking', 'security', 'sql', 'communication'] },
-  { id: 'technical-account-manager', title: 'Technical Account Manager', skills: ['customer-support', 'cloud', 'security', 'communication', 'ticketing'] },
-  { id: 'implementation-specialist', title: 'Implementation Specialist', skills: ['customer-support', 'sql', 'project-management', 'communication'] },
-  { id: 'customer-success-manager', title: 'Customer Success Manager', skills: ['customer-support', 'communication', 'ticketing'] },
+  { id: 'solutions-engineer', title: 'Solutions Engineer', skills: ['cloud', 'network', 'security', 'sql', 'english-proficiency'] },
+  { id: 'technical-account-manager', title: 'Technical Account Manager', skills: ['customer-support', 'customer-success', 'cloud', 'security', 'english-proficiency', 'jira'] },
+  { id: 'implementation-specialist', title: 'Implementation Specialist', skills: ['customer-support', 'sql', 'english-proficiency'] },
+  { id: 'customer-success-manager', title: 'Customer Success Manager', skills: ['customer-success', 'customer-support', 'english-proficiency'] },
 ];
 
 const BY_ID = new Map(TITLES.map((t) => [t.id, t]));
