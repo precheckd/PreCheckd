@@ -217,11 +217,11 @@ t('dates: close date must be 1 to 45 days out; start not before close', () => {
 });
 
 // description and scan
-t('description: summary length, 3 to 8 responsibilities, bullets stripped', () => {
+t('description: summary length, 3 to 15 responsibilities, bullets stripped', () => {
   only({ summary: 'Too short.' }, 'summary');
-  only({ summary: 'x'.repeat(1001) }, 'summary');
+  only({ summary: 'x'.repeat(2001) }, 'summary');
   only({ responsibilities: 'One\nTwo' }, 'responsibilities');
-  only({ responsibilities: Array.from({ length: 9 }, (_, i) => `Responsibility number ${i + 1}`).join('\n') }, 'responsibilities');
+  only({ responsibilities: Array.from({ length: 16 }, (_, i) => `Responsibility number ${i + 1}`).join('\n') }, 'responsibilities');
   const { value } = run({ responsibilities: '- Operate cloud infrastructure\n* Improve deploy pipelines\n1. Respond to incidents\n\n' });
   assert.deepStrictEqual(value.responsibilities, ['Operate cloud infrastructure', 'Improve deploy pipelines', 'Respond to incidents']);
 });

@@ -61,8 +61,8 @@ const LIMITS = {
   maxCloseDays: 45,       // applications-close date: at most about 45 days out
   maxStartDays: 365,
   payWidth: 1.25,         // base pay max may be at most 25% above min
-  summaryMin: 50, summaryMax: 1000,
-  respMin: 3, respMax: 8, respLineMin: 5, respLineMax: 300,
+  summaryMin: 50, summaryMax: 2000,
+  respMin: 3, respMax: 15, respLineMin: 5, respLineMax: 300,
   shortLine: 160,
   noteMax: 80,
 };
