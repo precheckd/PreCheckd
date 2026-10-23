@@ -41,13 +41,11 @@ router.get('/', async (req, res) => {
       rows.forEach((r) => { r.j.fit = fit.get(r.j.id); });
       const count = (st) => rows.filter((r) => r.j.fit.status === st).length;
       const counts = { fit: count('fit'), applied: count('applied'), blocked: count('blocked'), area: rows.filter((r) => r.j.fit.inArea).length, all: rows.length };
-      let view = ['all', 'area'].includes(req.query.view) ? req.query.view : 'fit';
-      const fallback = view === 'fit' && counts.fit + counts.applied === 0 && rows.length > 0;
-      if (fallback) view = 'all';
+      const view = ['all', 'area'].includes(req.query.view) ? req.query.view : 'fit';
       if (view === 'fit') rows = rows.filter((r) => r.j.fit.status !== 'blocked');
       else if (view === 'area') rows = rows.filter((r) => r.j.fit.inArea);
       if (view !== 'fit') rows.sort((a, b) => ({ fit: 0, applied: 1, blocked: 2 })[a.j.fit.status] - ({ fit: 0, applied: 1, blocked: 2 })[b.j.fit.status]);
-      viewer = { view, counts, fallback };
+      viewer = { view, counts };
     }
     const jobs = rows.map((r) => r.j);
     res.render('jobs-list', {

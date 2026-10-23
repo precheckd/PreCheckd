@@ -27,7 +27,6 @@
   .jl-badge.applied { background: #24404A; color: #C7D1CF; border: 1px solid #4A6F7B; }
   .jl-card.is-blocked .jl-title, .jl-card.is-blocked .jl-sub, .jl-card.is-blocked .jl-skills { opacity: 0.72; }
   .jl-why { color: #E0B341; font-size: 0.82rem; margin-top: 0.4rem; }
-  .jl-fallback { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; }
   .jl-note { color: #8FA6AC; font-size: 0.8rem; margin-top: 0.5rem; }
 </style>
 <div class="jl-wrap"><div class="jl-inner">
@@ -44,7 +43,6 @@
   </form>
   <% if (viewer) {
        var tabHref = function(v) { var u = '/jobs?view=' + v + (q ? '&q=' + encodeURIComponent(q) : '') + (arrangement ? '&arrangement=' + arrangement : ''); return u; }; %>
-    <% if (viewer.fallback) { %><div class="jl-fallback">None of the open jobs match your profile yet, so here is everything that is open. Each one shows what you would need.</div><% } %>
   <% } %>
   <div class="jl-bar">
     <% if (viewer) { %>
@@ -56,7 +54,7 @@
     <% } else { %><div></div><% } %>
   </div>
   <% if (jobs.length === 0) { %>
-    <div class="jl-empty"><%= totalOpen === 0 ? 'No jobs are open right now. Check back soon.' : (viewer && viewer.view === 'area' ? 'No open jobs fall inside your Work Areas yet. Remote jobs are listed under Jobs for you and All open jobs.' : 'No open jobs match that search.') %></div>
+    <div class="jl-empty"><%= totalOpen === 0 ? 'No jobs are open right now. Check back soon.' : (viewer && viewer.view === 'fit' && !q && !arrangement ? 'None of the open jobs match your profile yet. Open the All open jobs tab to see what each one needs.' : viewer && viewer.view === 'area' ? 'No open jobs fall inside your Work Areas yet. Remote jobs are listed under Jobs for you and All open jobs.' : 'No open jobs match that search.') %></div>
   <% } else { %>
   <div class="jl-cards">
       <% jobs.forEach(function(j) { %>

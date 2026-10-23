@@ -206,7 +206,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok((await (await get('/jobs?view=area')).text()).includes('No open jobs fall inside your Work Areas yet'));
     postings.splice(postings.indexOf(entry), 1);
     html = await (await get('/jobs')).text();
-    assert.ok(html.includes('None of the open jobs match your profile yet') && html.includes('To apply:'));
+    assert.ok(html.includes('None of the open jobs match your profile yet') && html.includes('Jobs for you (0)') && !html.includes('To apply:'));
     session = {}; candidate = null;
   });
 
