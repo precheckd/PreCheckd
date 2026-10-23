@@ -683,8 +683,30 @@ async function sendOutcomeReminderEmail(recruiter, posting, { kind, daysLeft }) 
   });
 }
 
+// Craigslist-style confirmation when a recruiter posts a job: the keepsake email with the
+// way back in to change or close the posting.
+async function sendJobPostedEmail(recruiter, posting, { publicUrl }) {
+  const base = process.env.APP_BASE_URL;
+  const manageUrl = `${base}/recruiter-jobs/${posting._id}`;
+  const day = (d) => new Date(d).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+  const bodyHtml = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(recruiter.firstName))},</p>
+    <p style="margin:0 0 14px;">Your job is live on PreCheckd.</p>
+    <p style="margin:0 0 14px;"><strong>${weeklyEscape(posting.title)}</strong>${posting.hiringCompany ? ` at ${weeklyEscape(posting.hiringCompany)}` : ''}<br>
+    Applications close: ${weeklyEscape(day(posting.closeDate))}<br>
+    In-seat start: ${weeklyEscape(day(posting.startDate))}</p>
+    ${weeklyButton(manageUrl, 'Manage or edit this job')}
+    <p style="margin:14px 0 14px;">Keep this email. The button takes you back in to see applicants, change the posting or close it (you will be asked to log in first). Share the posting: <a href="${publicUrl}" style="color:#2ECC71;">${weeklyEscape(publicUrl)}</a></p>
+    <p style="margin:0;color:#6B7B80;font-size:13px;">When applications close you will be asked how the job ended: hired, not filled or cancelled. We email you 3 days and 1 day before.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>', to: recruiter.email,
+    subject: `Your job is live: ${posting.title}`,
+    html: brandShell({ bodyHtml, preheader: 'Keep this email to manage your posting', footerHtml: 'You get this because you posted a job on PreCheckd.' }),
+  });
+}
+
 module.exports = {
   brandedHtml,
+  sendJobPostedEmail,
   sendVerificationEmail,
   sendFraudClaimInviteEmail,
   sendFraudReportNoticeEmail,

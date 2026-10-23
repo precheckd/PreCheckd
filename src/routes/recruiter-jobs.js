@@ -24,11 +24,19 @@ const conversation = require('../utils/conversation');
 const outreach = require('../services/outreach');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const publicJob = require('../services/publicJob');
+const { sendJobPostedEmail } = require('../services/emailService');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
 
 function requireRecruiterLogin(req, res, next) {
-  if (!req.session.recruiterId) return res.redirect('/login');
+  if (!req.session.recruiterId) {
+    // Remember a posting page so the link in the confirmation email lands there after login.
+    if (req.method === 'GET') {
+      const path = req.originalUrl.split('?')[0];
+      if (require('./auth').safeRecruiterJobPath(path)) req.session.recruiterReturnTo = path;
+    }
+    return res.redirect('/login');
+  }
   next();
 }
 router.use(requireRecruiterLogin);
@@ -163,6 +171,7 @@ router.post('/new', async (req, res) => {
     const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location) });
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
+    sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
     res.redirect(`/recruiter-jobs/${posting._id}?posted=1`);
   } catch (error) {
     console.error('Error creating job posting:', error);

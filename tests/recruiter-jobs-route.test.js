@@ -3,6 +3,8 @@
 // here). Saved postings are built as real JobPosting documents and schema-validated.
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
 process.env.DISABLE_JOB_NOTICES = 'true';
+process.env.MOCK_EMAIL = 'true';
+process.env.APP_BASE_URL = process.env.APP_BASE_URL || 'https://example.test';
 const assert = require('assert');
 const path = require('path');
 const http = require('http');

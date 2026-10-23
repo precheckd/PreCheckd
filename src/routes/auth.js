@@ -5,6 +5,10 @@ const router = express.Router();
 function safeJobPath(p) {
   return typeof p === 'string' && /^\/jobs\/[a-f0-9]{24}(\/[a-z0-9-]*)?$/.test(p) ? p : null;
 }
+// A recruiter's own posting pages (the link in the "your job is live" email).
+function safeRecruiterJobPath(p) {
+  return typeof p === 'string' && /^\/recruiter-jobs\/[a-f0-9]{24}(\/(edit|applicants|outcome))?$/.test(p) ? p : null;
+}
 const bcrypt = require('bcryptjs');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
@@ -57,12 +61,15 @@ router.post('/login', async (req, res) => {
 
       delete req.session.candidateId;
       req.session.recruiterId = recruiter._id.toString();
+      const recruiterReturnTo = safeRecruiterJobPath(req.session.recruiterReturnTo);
+      delete req.session.recruiterReturnTo;
 
       return res.json({
         success: true,
         accountType: 'recruiter',
         accountTier: recruiter.accountTier,
-        slug: recruiter.slug
+        slug: recruiter.slug,
+        returnTo: recruiterReturnTo
       });
     }
 
@@ -224,3 +231,4 @@ router.get('/logout', (req, res) => {
 
 module.exports = router;
 module.exports.safeJobPath = safeJobPath;
+module.exports.safeRecruiterJobPath = safeRecruiterJobPath;
