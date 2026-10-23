@@ -35,16 +35,18 @@ function fixHref(b, slug) {
 }
 
 // postings: Mongoose JobPosting docs. appliedIds: Set of job ids the candidate already applied to.
-// Returns Map(jobId -> { status: 'fit' | 'applied' | 'blocked', reasons: [] })
+// Returns Map(jobId -> { status: 'fit' | 'applied' | 'blocked', reasons: [], inArea: boolean })
 async function classify(candidate, postings, appliedIds, now = Date.now()) {
   const skills = await loadSkillFacts(candidate._id, now);
   const out = new Map();
   for (const p of postings) {
     const id = String(p._id);
-    if (appliedIds.has(id)) { out.set(id, { status: 'applied', reasons: [] }); continue; }
     const shape = p.toGateShape();
     const gate = evaluate(toFacts(candidate, { skills, posting: shape }), shape, now);
-    if (gate.canApply) { out.set(id, { status: 'fit', reasons: [] }); continue; }
+    // "In my work area": a job with a place (not plain remote) that falls inside the candidate's Work Areas.
+    const inArea = shape.arrangement !== 'remote' && !gate.blockers.some((b) => b.criterion === 'area');
+    if (appliedIds.has(id)) { out.set(id, { status: 'applied', reasons: [], inArea }); continue; }
+    if (gate.canApply) { out.set(id, { status: 'fit', reasons: [], inArea }); continue; }
     const seen = new Set();
     const reasons = [];
     for (const b of gate.blockers) {
@@ -53,7 +55,7 @@ async function classify(candidate, postings, appliedIds, now = Date.now()) {
       seen.add(text);
       reasons.push({ text, href: fixHref(b, candidate.slug) });
     }
-    out.set(id, { status: 'blocked', reasons });
+    out.set(id, { status: 'blocked', reasons, inArea });
   }
   return out;
 }

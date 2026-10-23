@@ -144,13 +144,11 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual((await get('/jobs/507f1f77bcf86cd7994399ff/x')).status, 404);
   });
 
-  await t('the list shows only open jobs, searches, and puts only blurred circles on the map', async () => {
+  await t('the list shows only open jobs, searches, and and never leaks the address or map point', async () => {
     const html = await (await get('/jobs')).text();
     assert.ok(html.includes('Cloud Engineer') && html.includes('Remote Role'));
     assert.ok(!html.includes('Old Role') && !html.includes('Late Role') && !html.includes('Removed Role'));
     assert.ok(!html.includes('Private Lane') && !html.includes('-71.0589') && !html.includes('42.3601') && !html.includes('SECRET-LABEL'));
-    const pins = JSON.parse(html.match(/id="jl-pins">([\s\S]*?)<\/script>/)[1]);
-    assert.strictEqual(pins.length, 1); // the remote job has no place to pin
     const bySearch = await (await get('/jobs?q=remote+role')).text();
     assert.ok(bySearch.includes('Remote Role') && !bySearch.includes('<div class="jl-title">Cloud Engineer'));
     const byArr = await (await get('/jobs?arrangement=onsite')).text();
@@ -203,8 +201,9 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     html = await (await get('/jobs?view=all')).text();
     if (process.env.DUMP_LIST) require('fs').writeFileSync(process.env.DUMP_LIST, html);
     assert.ok(html.includes('To apply:') && html.includes('Needs Intermediate Linux') && html.includes('Cloud Engineer'));
-    assert.ok(html.includes('href="/candidate/cam-doe/skills"') && html.includes('jl-mapbtn'));
+    assert.ok(html.includes('href="/candidate/cam-doe/skills"') && html.includes('In my work area (0)'));
     assert.ok(html.indexOf('Entry Remote Role') < html.indexOf('Cloud Engineer'));
+    assert.ok((await (await get('/jobs?view=area')).text()).includes('No open jobs fall inside your Work Areas yet'));
     postings.splice(postings.indexOf(entry), 1);
     html = await (await get('/jobs')).text();
     assert.ok(html.includes('None of the open jobs match your profile yet') && html.includes('To apply:'));

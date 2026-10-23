@@ -40,12 +40,13 @@ router.get('/', async (req, res) => {
       const fit = await classify(candidate, rows.map((r) => r.p), applied);
       rows.forEach((r) => { r.j.fit = fit.get(r.j.id); });
       const count = (st) => rows.filter((r) => r.j.fit.status === st).length;
-      const counts = { fit: count('fit'), applied: count('applied'), blocked: count('blocked'), all: rows.length };
-      let view = req.query.view === 'all' ? 'all' : 'fit';
+      const counts = { fit: count('fit'), applied: count('applied'), blocked: count('blocked'), area: rows.filter((r) => r.j.fit.inArea).length, all: rows.length };
+      let view = ['all', 'area'].includes(req.query.view) ? req.query.view : 'fit';
       const fallback = view === 'fit' && counts.fit + counts.applied === 0 && rows.length > 0;
       if (fallback) view = 'all';
       if (view === 'fit') rows = rows.filter((r) => r.j.fit.status !== 'blocked');
-      else rows.sort((a, b) => ({ fit: 0, applied: 1, blocked: 2 })[a.j.fit.status] - ({ fit: 0, applied: 1, blocked: 2 })[b.j.fit.status]);
+      else if (view === 'area') rows = rows.filter((r) => r.j.fit.inArea);
+      if (view !== 'fit') rows.sort((a, b) => ({ fit: 0, applied: 1, blocked: 2 })[a.j.fit.status] - ({ fit: 0, applied: 1, blocked: 2 })[b.j.fit.status]);
       viewer = { view, counts, fallback };
     }
     const jobs = rows.map((r) => r.j);
@@ -54,7 +55,6 @@ router.get('/', async (req, res) => {
       metaDescription: 'Jobs where every applicant has a verified identity, tested skills and verified credentials.',
       canonicalUrl: pub.BASE_URL() + '/jobs',
       jobs, q, arrangement, totalOpen: all.length, viewer, ...helpers,
-      pins: jobs.filter((j) => j.circle).map((j) => ({ id: j.id, path: j.path, title: j.title, company: j.hiringCompany, circle: j.circle })),
     });
   } catch (error) {
     console.error('Error loading jobs:', error);
