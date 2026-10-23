@@ -404,7 +404,12 @@
               const navDisplayName = typeof navName !== 'undefined' ? navName : '';
             %>
             <a href="<%= navHomeHref %>" class="nav-btn-outline<%= navPath === navHomeHref ? ' is-active' : '' %>">Home</a>
-            <a href="/jobs" class="nav-btn-outline<%= navOn('/jobs') %>">Jobs</a>
+            <% if (navLoggedInCandidate) { %>
+              <a href="/jobs" class="nav-btn-outline<%= navOn('/jobs') %>">Jobs</a>
+            <% } else { %>
+              <a href="/recruiter-jobs/new" class="nav-btn-outline<%= navOn('/recruiter-jobs/new') %>">+ Post Job</a>
+              <a href="/recruiter-jobs" class="nav-btn-outline<%= (navPath === '/recruiter-jobs' || (navPath.startsWith('/recruiter-jobs/') && !navPath.startsWith('/recruiter-jobs/new'))) ? ' is-active' : '' %>">My Jobs</a>
+            <% } %>
             <a href="/mail" class="nav-btn-outline<%= navOn('/mail') %>">Inbox<%- navMailBadge %></a>
             <a href="/connections" class="nav-btn-outline<%= navOn('/connections') %>">Connections<%- navBadge(navPendingRequestCount) %></a>
             <% if (navLoggedInCandidate) { %>
