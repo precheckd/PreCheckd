@@ -1,20 +1,32 @@
 <%
   const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
   const statusLabel = { open: 'Open', awaiting_outcome: 'Awaiting outcome', closed: 'Closed', removed: 'Removed' };
+  const outcomeLabel = { hired_precheckd: 'Hired through PreCheckd', hired_elsewhere: 'Hired elsewhere', not_filled: 'Not filled', cancelled: 'Cancelled' };
 %>
 <style>
   .rj-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
-  .rj-inner { max-width: 820px; width: 100%; }
+  .rj-inner { max-width: 1000px; width: 100%; }
   .rj-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
   .rj-top h1 { font-size: 1.75rem; color: #F2F4F3; margin: 0; }
   .rj-btn { background: #2ECC71; color: #10261C; border-radius: 6px; padding: 0.7rem 1.3rem; font-weight: 700; text-decoration: none; font-size: 0.95rem; }
-  .rj-card { display: block; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.1rem 1.3rem; margin-bottom: 0.8rem; text-decoration: none; color: #F2F4F3; }
-  .rj-card:hover { border-color: #2ECC71; }
-  .rj-title { font-weight: 700; font-size: 1.05rem; }
-  .rj-sub { color: #C7D1CF; font-size: 0.88rem; margin-top: 0.25rem; }
-  .rj-nick { color: #8FA6AC; font-size: 0.8rem; }
-  .rj-status { float: right; font-size: 0.78rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: #24404A; border: 1px solid #4A6F7B; }
+  .rj-tablewrap { overflow-x: auto; }
+  .rj-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; overflow: hidden; }
+  .rj-table th { text-align: left; padding: 0.7rem 1rem; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: #8FA6AC; background: #24404A; border-bottom: 1px solid #3B5860; white-space: nowrap; }
+  .rj-table th.is-sortable { cursor: pointer; user-select: none; color: #C7D1CF; }
+  .rj-table th.is-sortable:hover { color: #F2F4F3; }
+  .rj-table th .rj-arrow { color: #2ECC71; margin-left: 0.3rem; }
+  .rj-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #34505A; vertical-align: top; color: #F2F4F3; font-size: 0.92rem; }
+  .rj-table tr:last-child td { border-bottom: 0; }
+  .rj-table tbody tr { cursor: pointer; }
+  .rj-table tbody tr:hover td { background: #2F4F59; }
+  .rj-table a.rj-open { color: inherit; text-decoration: none; }
+  .rj-nickcell { font-weight: 700; min-width: 9rem; }
+  .rj-none { color: #6F8A91; font-weight: 400; }
+  .rj-title { font-weight: 600; }
+  .rj-sub { color: #C7D1CF; font-size: 0.85rem; margin-top: 0.2rem; }
+  .rj-status { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: #24404A; border: 1px solid #4A6F7B; white-space: nowrap; }
   .rj-status.is-open { color: #2ECC71; border-color: #2ECC71; }
+  .rj-outcome { color: #8FA6AC; font-size: 0.78rem; margin-top: 0.3rem; }
   .rj-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
   .rj-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
 </style>
@@ -31,12 +43,75 @@
   <% if (postings.length === 0) { %>
     <div class="rj-empty">You have not posted a job yet. Pick the skills, set the requirements, and candidates who qualify can apply.</div>
   <% } %>
-  <% postings.forEach(function(p) { %>
-    <a class="rj-card" href="/recruiter-jobs/<%= p._id %>">
-      <span class="rj-status <%= p.status === 'open' ? 'is-open' : '' %>"><%= statusLabel[p.status] %></span>
-      <div class="rj-title"><%= p.title %> <span class="rj-sub">&middot; <%= p.seniorityLabel %></span></div>
-      <div class="rj-sub"><%= p.hiringCompany %> &middot; <%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %> &middot; closes <%= fmt(p.closeDate) %></div>
-      <% if (p.nickname) { %><div class="rj-nick">Your label: <%= p.nickname %></div><% } %>
-    </a>
-  <% }); %>
+  <% if (postings.length > 0) { %>
+  <div class="rj-tablewrap">
+  <table class="rj-table" id="rj-table">
+    <thead><tr>
+      <th class="is-sortable" data-key="nick" aria-sort="none">Nickname<span class="rj-arrow"></span></th>
+      <th>Job</th>
+      <th class="is-sortable" data-key="close" aria-sort="none">Applications close<span class="rj-arrow"></span></th>
+      <th class="is-sortable" data-key="status" aria-sort="none">Status<span class="rj-arrow"></span></th>
+    </tr></thead>
+    <tbody>
+    <% postings.forEach(function(p, i) { %>
+      <tr data-href="/recruiter-jobs/<%= p._id %>" data-i="<%= i %>"
+          data-nick="<%= (p.nickname || '').toLowerCase() %>" data-close="<%= new Date(p.closeDate).getTime() %>"
+          data-status="<%= ['open', 'awaiting_outcome', 'closed', 'removed'].indexOf(p.status) %>">
+        <td class="rj-nickcell"><a class="rj-open" href="/recruiter-jobs/<%= p._id %>"><% if (p.nickname) { %><%= p.nickname %><% } else { %><span class="rj-none">No nickname</span><% } %></a></td>
+        <td>
+          <div class="rj-title"><%= p.title %> <span class="rj-sub">&middot; <%= p.seniorityLabel %></span></div>
+          <div class="rj-sub"><%= p.hiringCompany %> &middot; <%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %></div>
+        </td>
+        <td><%= fmt(p.closeDate) %></td>
+        <td>
+          <span class="rj-status <%= p.status === 'open' ? 'is-open' : '' %>"><%= statusLabel[p.status] %></span>
+          <% if (p.status === 'closed' && p.outcome && p.outcome.kind && outcomeLabel[p.outcome.kind]) { %><div class="rj-outcome"><%= outcomeLabel[p.outcome.kind] %></div><% } %>
+        </td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table>
+  </div>
+  <script>
+  (function () {
+    var table = document.getElementById('rj-table');
+    if (!table) return;
+    var body = table.tBodies[0];
+    var heads = table.querySelectorAll('th.is-sortable');
+    var state = { key: null, dir: 1 };
+    function val(tr, key) {
+      var v = tr.getAttribute('data-' + key);
+      return key === 'nick' ? v : Number(v);
+    }
+    function sortBy(key) {
+      state.dir = state.key === key ? -state.dir : 1;
+      state.key = key;
+      var rows = Array.prototype.slice.call(body.rows);
+      rows.sort(function (a, b) {
+        var x = val(a, key), y = val(b, key);
+        if (key === 'nick') {
+          if (x === '' && y !== '') return 1;   // jobs without a nickname always last
+          if (y === '' && x !== '') return -1;
+          if (x === y) return Number(a.getAttribute('data-i')) - Number(b.getAttribute('data-i'));
+          return (x < y ? -1 : 1) * state.dir;
+        }
+        if (x === y) return Number(a.getAttribute('data-i')) - Number(b.getAttribute('data-i'));
+        return (x - y) * state.dir;
+      });
+      rows.forEach(function (r) { body.appendChild(r); });
+      heads.forEach(function (h) {
+        var on = h.getAttribute('data-key') === key;
+        h.setAttribute('aria-sort', on ? (state.dir === 1 ? 'ascending' : 'descending') : 'none');
+        h.querySelector('.rj-arrow').textContent = on ? (state.dir === 1 ? '\u25B2' : '\u25BC') : '';
+      });
+    }
+    heads.forEach(function (h) { h.addEventListener('click', function () { sortBy(h.getAttribute('data-key')); }); });
+    body.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      var tr = e.target.closest('tr');
+      if (tr && tr.getAttribute('data-href')) window.location.href = tr.getAttribute('data-href');
+    });
+  })();
+  </script>
+  <% } %>
 </div></div>
