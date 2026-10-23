@@ -61,6 +61,7 @@ const jobPostingSchema = new mongoose.Schema({
   baseMax: { type: Number, required: true, min: 0 },
   commissionOnly: { type: Boolean, default: false },                // base pay is 0
   payBasis: { type: [String], default: [] },
+  payCheck: { type: { soc: String, year: String, bandLow: Number, bandHigh: Number, position: { type: String, enum: ['below', 'within', 'above'] } }, default: null, _id: false }, // BLS comparison at posting time, for our own tracking
   commission: {
     minAnticipated: { type: Number, default: null },
     average: { type: Number, default: null },

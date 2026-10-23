@@ -90,6 +90,8 @@ const validForm = (over = {}) => ({
     assert.strictEqual(res.status, 200);
     assert.ok(html.includes('Post a job') && html.includes('<option value="linux"') && html.includes('name="skills[0][key]"'));
     assert.ok(html.includes('CompTIA Security+') && html.includes('Remote in Area'));
+    assert.ok(html.includes('id="jp-paytip"') && html.includes('window.PAY_BENCH') && html.includes('"devops-engineer"'));
+    if (process.env.DUMP_FORM) require('fs').writeFileSync(process.env.DUMP_FORM, html);
   });
 
   await t('GET /titles offers titles that cover every picked skill', async () => {

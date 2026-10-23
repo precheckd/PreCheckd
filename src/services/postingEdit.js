@@ -14,7 +14,7 @@ function docFromValue(value, location) {
     address: value.address, areaRule: location.areaRule || undefined, areaLabel: location.areaLabel,
     displayCity: location.displayCity, displayState: location.displayState,
     relocation: value.relocation, travel: value.travel, shift: value.shift,
-    basePayType: value.basePayType, baseMin: value.baseMin, baseMax: value.baseMax, commissionOnly: value.commissionOnly,
+    basePayType: value.basePayType, baseMin: value.baseMin, baseMax: value.baseMax, commissionOnly: value.commissionOnly, payCheck: value.payCheck,
     payBasis: value.payBasis, commission: value.commission, bonus: value.bonus, equity: value.equity, tips: value.tips,
     benefits: value.benefits, benefitsOther: value.benefitsOther, noBenefits: value.noBenefits,
     goodFaithAt: value.goodFaithAt, commissionAckAt: value.commissionAckAt,

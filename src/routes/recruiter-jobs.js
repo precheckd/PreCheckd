@@ -70,7 +70,7 @@ function formLocals(extra) {
     shiftOptions: opt.SHIFT_OPTIONS.filter((s) => true), payBasisOptions: opt.PAY_BASIS, benefitOptions: opt.BENEFITS,
     minLevels: opt.MIN_LEVELS, educationLevels: opt.EDUCATION_LEVELS, clearanceOptions: opt.CLEARANCE_OPTIONS,
     certOptions: CATALOG.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)),
-    states: US_STATES, limits: opt.LIMITS, standard,
+    states: US_STATES, limits: opt.LIMITS, standard, payBench: require('../content/payBenchmarks').clientTable(),
     isEdit: false, withdrawPrompt: 0, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
     ...extra,
   };

@@ -135,4 +135,34 @@
   function updateCount() { count.textContent = summary.value.length; }
   summary.addEventListener('input', updateCount);
   updateCount();
+
+  // ---- pay suggestion (BLS) ----
+  const tip = $('jp-paytip');
+  const bench = window.PAY_BENCH;
+  if (tip && bench) {
+    const RANK = { Foundational: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
+    const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Lead / Principal'];
+    const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+    function levelNow() {
+      let top = 0;
+      form.querySelectorAll('select[name$="[minLevel]"]').forEach((s) => { top = Math.max(top, RANK[s.value] || 0); });
+      return LEVELS[top];
+    }
+    function showTip() {
+      const t = form.querySelector('input[name="titleId"]:checked');
+      const type = (form.querySelector('[name="basePayType"]') || {}).value;
+      const comm = $('jp-comm-only');
+      const band = t && bench.bands[t.value] && bench.bands[t.value][levelNow()];
+      if (!band || (comm && comm.checked)) { tip.hidden = true; return; }
+      const hourly = type === 'hourly';
+      const f = (n) => hourly ? '$' + (Math.round(n / 2080 * 2) / 2).toFixed(2) + '/hr' : money(n) + '/yr';
+      const range = band.high === null ? f(band.low) + ' and up' : f(band.low) + ' to ' + f(band.high);
+      tip.innerHTML = '<strong>Typical pay for this role: ' + range + '</strong> <span>(' + levelNow() + ' ' + band.occupation + ')</span>' +
+        '<small>A suggestion to help you attract good candidates. Based on ' + bench.source + '. You set the pay.</small>';
+      tip.hidden = false;
+    }
+    form.addEventListener('change', showTip);
+    new MutationObserver(showTip).observe($('jp-titles') || form, { childList: true, subtree: true });
+    showTip();
+  }
 })();

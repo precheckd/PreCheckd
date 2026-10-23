@@ -37,6 +37,8 @@
   .jp-attest { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.9rem 0; font-size: 0.88rem; line-height: 1.45; }
   .jp-attest-title { color: #F3C97A; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.3rem; }
   .jp-attest .jp-check { color: #FFF4D0; margin: 0.6rem 0 0; font-weight: 600; }
+  .jp-paytip { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.6rem 0; font-size: 0.9rem; line-height: 1.45; }
+  .jp-paytip small { display: block; color: #9CCDB1; margin-top: 0.3rem; }
   .jp-warn { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.6rem 0 0.9rem; font-size: 0.88rem; line-height: 1.45; }
   .jp-titles label { display: flex; gap: 0.55rem; align-items: center; padding: 0.55rem 0.7rem; border: 1px solid #3B5860; border-radius: 6px; margin-bottom: 0.4rem; color: #F2F4F3; cursor: pointer; font-size: 0.92rem; }
   .jp-titles input { accent-color: #2ECC71; }
@@ -222,6 +224,7 @@
         <input type="text" name="baseMin" inputmode="decimal" placeholder="Base pay minimum" value="<%= val('baseMin') %>" aria-label="Base pay minimum">
         <input type="text" name="baseMax" inputmode="decimal" placeholder="Base pay maximum" value="<%= val('baseMax') %>" aria-label="Base pay maximum">
       </div>
+      <div class="jp-paytip" id="jp-paytip" hidden></div>
       <% ['basePayType', 'baseRange'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
       <label class="jp-check" style="margin-top:0.2rem;"><input type="checkbox" name="commissionOnly" id="jp-comm-only" value="on" <%= on('commissionOnly') ? 'checked' : '' %>> This is a commission-only job (base pay is $0)</label>
 
@@ -361,4 +364,5 @@
     <button type="submit" class="jp-btn"><%= submitLabel %></button>
   </form>
 </div></div>
+<script>window.PAY_BENCH = <%- JSON.stringify(payBench || null).replace(/</g, "\\u003c") %>;</script>
 <script src="/js/job-form.js"></script>

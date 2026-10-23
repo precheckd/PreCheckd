@@ -12,6 +12,7 @@ const { catalogIdFor, byId: certById, CATALOG } = require('../content/certCatalo
 const { STATE_CODES } = require('../utils/geo');
 const { scanFields } = require('../utils/textScan');
 const opt = require('../content/postingOptions');
+const payBench = require('../content/payBenchmarks');
 
 const DAY = 86400000;
 const codes = (list) => list.map((x) => x.code);
@@ -181,6 +182,15 @@ function validatePosting(body, ctx) {
     else if (v.baseMin < lo || v.baseMax > hi) err('baseRange', `Base pay should be between $${lo.toLocaleString('en-US')} and $${hi.toLocaleString('en-US')} ${v.basePayType === 'hourly' ? 'an hour' : 'a year'}. If the job is commission only, tick that box instead.`);
     else if (v.baseMax < v.baseMin) err('baseRange', 'The maximum cannot be below the minimum.');
     else if (v.baseMax > v.baseMin * opt.LIMITS.payWidth + 1e-9) err('baseRange', 'The maximum can be at most 25% above the minimum. Narrow the range, or explain big swings through commission below.');
+  }
+  // Record how the pay compares with the BLS suggestion (a note for us, never blocks the post).
+  v.payCheck = null;
+  if (!v.commissionOnly && v.titleId && !errors.baseRange && v.baseMin > 0 && v.baseMax >= v.baseMin) {
+    const band = payBench.bandFor(v.titleId, v.seniorityLabel);
+    if (band) {
+      const mult = v.basePayType === 'hourly' ? 2080 : 1;
+      v.payCheck = { soc: band.soc, year: band.year, bandLow: band.low, bandHigh: band.high, position: payBench.positionOf(band, v.baseMin * mult, v.baseMax * mult) };
+    }
   }
   v.payBasis = [...new Set(asArray(b.payBasis).map((p) => text(p, 20)).filter((p) => codes(opt.PAY_BASIS).includes(p)))];
   if (!v.payBasis.length) err('payBasis', 'Say what the pay range is based on.');
