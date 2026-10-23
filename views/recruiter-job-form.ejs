@@ -340,7 +340,7 @@
         <span class="jp-count"><span id="jp-summary-count">0</span> / <%= limits.summaryMax %></span>
       </label>
       <% if (errors.summary) { %><div class="jp-err"><%= errors.summary %></div><% } %>
-      <label class="jp-field">Responsibilities <span class="jp-muted">(<%= limits.respMin %> to <%= limits.respMax %>, one per line)</span>
+      <label class="jp-field">Responsibilities <span class="jp-muted">(paste or type, one per line, up to <%= limits.respTotalMax %> characters)</span>
         <textarea name="responsibilities"><%= val('responsibilities') %></textarea>
       </label>
       <% if (errors.responsibilities) { %><div class="jp-err"><%= errors.responsibilities %></div><% } %>

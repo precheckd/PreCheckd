@@ -62,7 +62,7 @@ const LIMITS = {
   maxStartDays: 365,
   payWidth: 1.25,         // base pay max may be at most 25% above min
   summaryMin: 50, summaryMax: 2000,
-  respMin: 3, respMax: 15, respLineMin: 5, respLineMax: 300,
+  respTotalMin: 20, respTotalMax: 2000,
   shortLine: 160,
   noteMax: 80,
 };

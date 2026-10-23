@@ -259,11 +259,9 @@ function validatePosting(body, ctx) {
   else if (v.summary.length > opt.LIMITS.summaryMax) err('summary', `Keep the role summary under ${opt.LIMITS.summaryMax} characters.`);
   v.responsibilities = String(Array.isArray(b.responsibilities) ? b.responsibilities.join('\n') : b.responsibilities || '')
     .split(/\n+/).map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').replace(/\s+/g, ' ').trim()).filter(Boolean);
-  if (v.responsibilities.length < opt.LIMITS.respMin || v.responsibilities.length > opt.LIMITS.respMax) {
-    err('responsibilities', `List ${opt.LIMITS.respMin} to ${opt.LIMITS.respMax} responsibilities, one per line.`);
-  } else if (v.responsibilities.some((l) => l.length < opt.LIMITS.respLineMin || l.length > opt.LIMITS.respLineMax)) {
-    err('responsibilities', `Each responsibility should be ${opt.LIMITS.respLineMin} to ${opt.LIMITS.respLineMax} characters.`);
-  }
+  const respChars = v.responsibilities.join('\n').length;
+  if (respChars < opt.LIMITS.respTotalMin) err('responsibilities', 'Add the main responsibilities of the role. Paste them in if you already have them.');
+  else if (respChars > opt.LIMITS.respTotalMax) err('responsibilities', `Keep responsibilities under ${opt.LIMITS.respTotalMax} characters.`);
 
   // Free-text scan on every field the recruiter writes
   const scanned = scanFields({
