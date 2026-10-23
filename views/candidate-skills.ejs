@@ -30,20 +30,23 @@
   .sk-xp-bar { height: 10px; background: #1F363C; border-radius: 999px; overflow: hidden; margin-bottom: 0.3rem; }
   .sk-xp-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2ECC71, #4CC2A6); border-radius: 999px; transition: width 0.4s; }
   .sk-tag { background: #1F363C; color: #C7D1CF; border-radius: 4px; padding: 0.15rem 0.55rem; font-size: 0.8rem; }
-  .sk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; align-items: start; }
   .sk-grid .sk-card { margin-bottom: 0; padding: 1.1rem 1.25rem; }
-  .sk-skillhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .sk-skillhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
   .sk-big { font-size: 1.1rem; }
-  .sk-skillright { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
-  .sk-rungs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
-  .sk-rung { background: #1F363C; border-radius: 6px; padding: 0.6rem 0.7rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .sk-rung { background: #1F363C; border-radius: 6px; padding: 0.5rem 0.7rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+  .sk-rung form { margin: 0; }
+  .sk-more2 { margin-top: 0.7rem; border-top: 1px solid #3B5860; padding-top: 0.6rem; }
+  .sk-more2 summary { cursor: pointer; color: #4ADE80; font-size: 0.85rem; font-weight: 600; list-style: none; }
+  .sk-more2 summary::-webkit-details-marker { display: none; }
+  .sk-more2 summary::before { content: '\25B8'; display: inline-block; margin-right: 0.35rem; transition: transform 0.15s; }
+  .sk-more2[open] summary::before { transform: rotate(90deg); }
   .sk-rungname { color: #F2F4F3; font-weight: 600; font-size: 0.9rem; }
-  .sk-rungstat { min-height: 1.3rem; }
-  .sk-btn.sm { padding: 0.35rem 0.6rem; font-size: 0.8rem; width: 100%; }
+  .sk-btn.sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; white-space: nowrap; }
   .sk-visbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
   .sk-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; }
   .sk-pair .sk-card { margin-bottom: 0; }
-  @media (max-width: 520px) { .sk-grid { grid-template-columns: 1fr; } .sk-rungs { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .sk-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="sk-content">
@@ -102,38 +105,41 @@
     <h2 class="sk-h2">Your skills</h2>
     <p class="sk-meta" style="margin-bottom:0.9rem;">Tick Show on the skills recruiters can see. They see how many skills you've been tested on and how many you're showing, never the hidden ones, and a hidden skill can move you into the partial-match section of their searches.</p>
     <div class="sk-grid">
-      <% ladders.forEach((g) => { const s = curByKey.get(g.key); %>
+      <% ladders.forEach((g) => { const s = curByKey.get(g.key);
+           const nextRung = g.rungs.find((r) => !r.passed);
+           const canStart = nextRung && !nextRung.locked && !nextRung.retakeOn && !nextRung.held; %>
       <div class="sk-card sk-skill">
         <div class="sk-skillhead">
-          <div>
-            <div class="sk-name sk-big"><%= g.label %></div>
-            <% if (s) { %><%- include('partials/skill-meter', { sk: Object.assign({}, s, { compact: true }) }) %><% } %>
-          </div>
-          <div class="sk-skillright">
-            <span class="sk-level"><%= g.level || 'Not started' %></span>
-            <% if (s && s.stale) { %><span class="sk-stale">Needs retake</span><% } %>
-            <% if (s && s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else if (s) { %><span class="sk-meta">Not shown yet</span><% } %>
-          </div>
+          <div class="sk-name sk-big"><%= g.label %></div>
+          <% if (s && s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else if (s) { %><span class="sk-meta">Not shown yet</span><% } %>
         </div>
+        <div><span class="sk-level"><%= g.level || 'Not started' %></span><% if (s && s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
+        <% if (s) { %><%- include('partials/skill-meter', { sk: Object.assign({}, s, { compact: true }) }) %><% } %>
         <% if (g.progress) { %>
-          <div class="sk-xp" style="margin:0.5rem 0 0.7rem;">
-            <div class="sk-xp-bar" role="img" aria-label="Progress to <%= g.progress.next %>"><span style="width: <%= Math.round(g.progress.fill * 100) %>%"></span></div>
-            <div class="sk-meta"><strong>To <%= g.progress.next %>:</strong> <% if (!g.progress.started) { %>take the <%= tierLabel[g.progress.tier] %> test to start the bar<% } else if (g.progress.right >= g.progress.needed) { %>level reached<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> correct answers needed<% } %></div>
-          </div>
+          <div class="sk-xp-bar" role="img" aria-label="Progress to <%= g.progress.next %>"><span style="width: <%= Math.round(g.progress.fill * 100) %>%"></span></div>
+          <div class="sk-meta"><strong>To <%= g.progress.next %>:</strong> <% if (!g.progress.started) { %>take the <%= tierLabel[g.progress.tier] %> test<% } else if (g.progress.right >= g.progress.needed) { %>level reached<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> right needed<% } %></div>
         <% } else if (g.topLevel) { %>
-          <div class="sk-xp" style="margin:0.5rem 0 0.7rem;"><div class="sk-xp-bar"><span style="width: 100%"></span></div><div class="sk-meta">Top level reached</div></div>
+          <div class="sk-xp-bar"><span style="width: 100%"></span></div><div class="sk-meta">Top level reached</div>
         <% } %>
-        <div class="sk-rungs">
+        <% if (canStart) { %>
+          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin-top:0.6rem;">
+            <button class="sk-btn sm" type="submit"><%= nextRung.open ? 'Continue ' : 'Start ' %><%= nextRung.tierName %></button>
+          </form>
+        <% } %>
+        <details class="sk-more2">
+          <summary>Details</summary>
           <% g.rungs.forEach((r, i) => { %>
           <div class="sk-rung">
-            <div class="sk-rungname"><%= r.tierName %></div>
-            <div class="sk-meta sk-rungstat">
-              <% if (r.held) { %>In review
-              <% } else if (r.rejected) { %>Not published
-              <% } else if (r.locked) { %>Pass <%= g.rungs[i - 1].tierName %> first
-              <% } else if (r.passed) { %><span style="color:#4ADE80;">Passed &#10003;</span> <%= r.result.right %>/<%= r.result.total %>
-              <% } else if (r.result) { %><%= r.result.right %>/<%= r.result.total %> &middot; not passed
-              <% } else { %>Ready<% } %>
+            <div>
+              <div class="sk-rungname"><%= r.tierName %></div>
+              <div class="sk-meta">
+                <% if (r.held) { %>In review
+                <% } else if (r.rejected) { %>Not published<%= r.retakeOn ? ', retry ' + shortDate(r.retakeOn) : '' %>
+                <% } else if (r.locked) { %>Pass <%= g.rungs[i - 1].tierName %> first
+                <% } else if (r.passed) { %><span style="color:#4ADE80;">Passed &#10003;</span> <%= r.result.right %>/<%= r.result.total %>
+                <% } else if (r.result) { %><%= r.result.right %>/<%= r.result.total %> &middot; not passed
+                <% } else { %>Ready<% } %>
+              </div>
             </div>
             <% if (r.locked) { %>
               <button class="sk-btn sm" disabled>Locked</button>
@@ -146,23 +152,18 @@
             <% } %>
           </div>
           <% }) %>
-        </div>
+        </details>
       </div>
       <% }) %>
       <% others.forEach((s) => { %>
       <div class="sk-card sk-skill">
         <div class="sk-skillhead">
-          <div>
-            <div class="sk-name sk-big"><%= s.label %></div>
-            <%- include('partials/skill-meter', { sk: s }) %>
-            <div class="sk-meta">Taken <%= shortDate(s.takenAt) %>, <%= s.takenAt.getFullYear() %></div>
-          </div>
-          <div class="sk-skillright">
-            <span class="sk-level"><%= s.level %></span>
-            <% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %>
-            <% if (s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else { %><span class="sk-meta">Not shown yet</span><% } %>
-          </div>
+          <div class="sk-name sk-big"><%= s.label %></div>
+          <% if (s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else { %><span class="sk-meta">Not shown yet</span><% } %>
         </div>
+        <div><span class="sk-level"><%= s.level %></span><% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
+        <%- include('partials/skill-meter', { sk: s }) %>
+        <div class="sk-meta">Taken <%= shortDate(s.takenAt) %>, <%= s.takenAt.getFullYear() %></div>
       </div>
       <% }) %>
     </div>
