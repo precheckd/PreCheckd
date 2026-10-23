@@ -157,7 +157,7 @@
       const hourly = type === 'hourly';
       const f = (n) => hourly ? '$' + (Math.round(n / 2080 * 2) / 2).toFixed(2) + '/hr' : money(n) + '/yr';
       const range = band.high === null ? f(band.low) + ' and up' : f(band.low) + ' to ' + f(band.high);
-      tip.innerHTML = '<strong>Typical pay for this role: ' + range + '</strong> <span>(' + levelNow() + ' ' + band.occupation + ')</span>' +
+      tip.innerHTML = '<strong>Typical pay for this role: ' + range + '</strong> <span>(' + levelNow() + '; closest BLS occupation: ' + band.occupation + ')</span>' +
         '<small>A suggestion to help you attract good candidates. Based on ' + bench.source + '. You set the pay.</small>';
       tip.hidden = false;
     }
