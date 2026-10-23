@@ -201,7 +201,9 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(html.includes('Jobs for you (1)') && html.includes('All open jobs (') && html.includes('You qualify'));
     assert.ok(html.includes('Entry Remote Role') && !html.includes('Cloud Engineer</div>'));
     html = await (await get('/jobs?view=all')).text();
+    if (process.env.DUMP_LIST) require('fs').writeFileSync(process.env.DUMP_LIST, html);
     assert.ok(html.includes('To apply:') && html.includes('Needs Intermediate Linux') && html.includes('Cloud Engineer'));
+    assert.ok(html.includes('href="/candidate/cam-doe/skills"') && html.includes('jl-mapbtn'));
     assert.ok(html.indexOf('Entry Remote Role') < html.indexOf('Cloud Engineer'));
     postings.splice(postings.indexOf(entry), 1);
     html = await (await get('/jobs')).text();

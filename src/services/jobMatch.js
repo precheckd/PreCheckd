@@ -24,6 +24,16 @@ function shortReason(b, posting) {
   }
 }
 
+// Where each kind of fix lives on the candidate's profile (same places the job page links to).
+const SECTION_PATH = { education: '/edit', certifications: '/edit', clearance: '/job-preferences', shifts: '/job-preferences', availability: '/job-preferences', workAreas: '/work-areas' };
+function fixHref(b, slug) {
+  if (!slug) return null;
+  const a = (b.actions || []).find((x) => x.kind === 'start_track' || x.kind === 'edit_profile');
+  if (!a) return null;
+  if (a.kind === 'start_track') return `/candidate/${slug}/skills`;
+  return a.section === 'verification' ? `/candidate/${slug}` : `/candidate/${slug}${SECTION_PATH[a.section] || '/edit'}`;
+}
+
 // postings: Mongoose JobPosting docs. appliedIds: Set of job ids the candidate already applied to.
 // Returns Map(jobId -> { status: 'fit' | 'applied' | 'blocked', reasons: [] })
 async function classify(candidate, postings, appliedIds, now = Date.now()) {
@@ -35,10 +45,17 @@ async function classify(candidate, postings, appliedIds, now = Date.now()) {
     const shape = p.toGateShape();
     const gate = evaluate(toFacts(candidate, { skills, posting: shape }), shape, now);
     if (gate.canApply) { out.set(id, { status: 'fit', reasons: [] }); continue; }
-    const reasons = [...new Set(gate.blockers.map((b) => shortReason(b, shape)))];
+    const seen = new Set();
+    const reasons = [];
+    for (const b of gate.blockers) {
+      const text = shortReason(b, shape);
+      if (seen.has(text)) continue;
+      seen.add(text);
+      reasons.push({ text, href: fixHref(b, candidate.slug) });
+    }
     out.set(id, { status: 'blocked', reasons });
   }
   return out;
 }
 
-module.exports = { classify, shortReason };
+module.exports = { classify, shortReason, fixHref };
