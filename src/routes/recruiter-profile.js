@@ -65,6 +65,7 @@ router.get('/:slug', async (req, res) => {
     res.render('recruiter-profile', {
       recruiter: recruiter,
       isOwner: isOwner,
+      emailSent: isOwner ? req.query.emailSent : undefined,
       viewCounts: viewCounts,
       pane: pane,
       title: `${recruiter.firstName} ${recruiter.lastName} - Verified Recruiter | PreCheckd`

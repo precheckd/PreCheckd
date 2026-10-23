@@ -331,6 +331,32 @@ router.get('/verify-email', async (req, res) => {
   }
 });
 
+// Resend the email-verification link to the signed-in recruiter (from their own profile).
+// New token each time; at most one send per minute per session.
+router.post('/resend-email', async (req, res) => {
+  try {
+    if (!req.session.recruiterId) return res.redirect('/login');
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    if (!recruiter) return res.redirect('/login');
+    const back = `/recruiter/${recruiter.slug}`;
+    if (recruiter.emailVerifiedAt) return res.redirect(back);
+    if (req.session.lastEmailResend && Date.now() - req.session.lastEmailResend < 60 * 1000) {
+      return res.redirect(`${back}?emailSent=wait`);
+    }
+    req.session.lastEmailResend = Date.now();
+    recruiter.emailVerificationToken = generateVerificationToken();
+    recruiter.emailVerificationExpires = Date.now() + 48 * 60 * 60 * 1000;
+    await recruiter.save();
+    sendVerificationEmail(recruiter.email, recruiter.firstName, recruiter.emailVerificationToken).catch((e) => {
+      console.error('Failed to resend verification email:', e);
+    });
+    res.redirect(`${back}?emailSent=1`);
+  } catch (error) {
+    console.error('Error resending verification email:', error);
+    res.status(500).send('Could not resend the verification email. Please try again.');
+  }
+});
+
 // Create Stripe Identity Session (REAL - actual Stripe integration with logging)
 router.post('/create-identity-session', async (req, res) => {
   try {

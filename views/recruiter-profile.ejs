@@ -541,6 +541,11 @@
                   <span class="verification-date">Verified <%= recruiter.emailVerifiedAt.toLocaleDateString('en-US', dateOpts) %></span>
                 <% } else { %>
                   <span class="verification-date" style="color: <%= PENDING_COLOR %>; font-weight: 600;">PENDING VERIFICATION</span>
+                  <% if (isOwner) { %>
+                    <% if (typeof emailSent !== 'undefined' && emailSent === '1') { %><div style="color:#4ADE80;font-size:0.85rem;margin-top:0.4rem;">Sent. Check your inbox (and spam). The link works for 48 hours.</div>
+                    <% } else if (typeof emailSent !== 'undefined' && emailSent === 'wait') { %><div style="color:#F3C97A;font-size:0.85rem;margin-top:0.4rem;">Just sent one. Give it a minute before asking again.</div><% } %>
+                    <form method="POST" action="/api/founding-recruiter/resend-email" style="margin-top:0.5rem;"><button type="submit" style="background:#4CC2A6;color:#12292F;border:0;border-radius:6px;padding:0.4rem 0.8rem;font-weight:700;cursor:pointer;font-size:0.85rem;">Resend verification email</button></form>
+                  <% } %>
                 <% } %>
               </div>
             </div>
