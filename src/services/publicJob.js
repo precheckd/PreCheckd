@@ -59,7 +59,7 @@ function publicShape(p) {
     skills: (p.skills || []).map((s) => ({ key: s.key, label: s.label, minLevel: s.minLevel })),
     certGroups: (p.certGroups || []).map((g) => g.certs.map((c) => c.label)),
     startDate: p.startDate, startFirm: p.startFirm, closeDate: p.closeDate,
-    summary: p.summary, responsibilities: p.responsibilities, team: p.team, growth: p.growth,
+    summary: p.summary, responsibilities: p.responsibilities,
     createdAt: p.createdAt, editedAt: p.editedAt, status: p.status, circle,
     payLine: payText(p),
   };

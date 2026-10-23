@@ -87,8 +87,6 @@ const jobPostingSchema = new mongoose.Schema({
   // Description
   summary: { type: String, required: true },
   responsibilities: { type: [String], default: [] },
-  team: { type: String, default: '' },
-  growth: { type: String, default: '' },
 
   closedAt: { type: Date, default: null },
 

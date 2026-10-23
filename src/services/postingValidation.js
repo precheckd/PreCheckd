@@ -264,12 +264,10 @@ function validatePosting(body, ctx) {
   } else if (v.responsibilities.some((l) => l.length < opt.LIMITS.respLineMin || l.length > opt.LIMITS.respLineMax)) {
     err('responsibilities', `Each responsibility should be ${opt.LIMITS.respLineMin} to ${opt.LIMITS.respLineMax} characters.`);
   }
-  v.team = text(b.team, opt.LIMITS.shortLine);
-  v.growth = text(b.growth, opt.LIMITS.shortLine);
 
   // Free-text scan on every field the recruiter writes
   const scanned = scanFields({
-    summary: v.summary, responsibilities: v.responsibilities, team: v.team, growth: v.growth,
+    summary: v.summary, responsibilities: v.responsibilities,
     contractLength: v.contractLength, benefitsOther: v.benefitsOther,
     bonusNote: v.bonus.note, equityNote: v.equity.note, tipsNote: v.tips.note,
   });

@@ -61,8 +61,6 @@
   <div class="jd-card"><h2>Description</h2>
     <p><%= posting.summary %></p>
     <ul><% posting.responsibilities.forEach(function(r) { %><li><%= r %></li><% }); %></ul>
-    <% if (posting.team) { %><p>Team: <%= posting.team %></p><% } %>
-    <% if (posting.growth) { %><p>Growth: <%= posting.growth %></p><% } %>
     <div class="jd-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
   </div>
 

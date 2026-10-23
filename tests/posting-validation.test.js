@@ -20,7 +20,6 @@ const good = (over = {}) => ({
   closeDate: '2026-11-15', startDate: '2026-12-07', startFirm: 'on', requirementsAttested: 'on', outcomeAck: 'on',
   summary: 'Run and improve our cloud platform with a small, friendly team that ships every week.',
   responsibilities: 'Operate cloud infrastructure\nImprove deploy pipelines\nRespond to incidents',
-  team: 'Reports to the head of platform', growth: 'Path to lead engineer',
   ...over,
 });
 const run = (over, c = ctx) => validatePosting(good(over), c);
@@ -229,8 +228,8 @@ t('description: summary length, 3 to 8 responsibilities, bullets stripped', () =
 t('the free-text scan blocks contact details, years, citizens only and age wording in every text field', () => {
   assert.match(only({ summary: 'Email jobs@acme.com to apply. ' + 'x'.repeat(60) }, 'summary'), /Email addresses/);
   assert.match(only({ responsibilities: 'Run servers\nCall 555-123-4567 today\nShip fast' }, 'responsibilities'), /Phone numbers/);
-  assert.match(only({ team: '5+ years of experience with Linux' }, 'team'), /Years of experience/);
-  assert.match(only({ growth: 'US citizens only' }, 'growth'), /authorized to work/);
+  assert.match(only({ summary: '5+ years of experience with Linux ' + 'x'.repeat(60) }, 'summary'), /Years of experience/);
+  assert.match(only({ summary: 'US citizens only ' + 'x'.repeat(60) }, 'summary'), /authorized to work/);
   assert.match(only({ summary: 'A young, digital native team that ' + 'x'.repeat(60) }, 'summary'), /age, gender or nationality/);
   assert.match(only({ bonusOffered: 'on', bonusNote: 'text me on whatsapp' }, 'bonus'), /contact you elsewhere/);
   only({ benefits: [], benefitsOther: 'see www.perks.com' }, 'benefits');

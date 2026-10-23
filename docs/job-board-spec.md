@@ -56,8 +56,6 @@ No blind or confidential-client postings. Dropped fields: department, job functi
 ### Description
 - Role summary: required, short paragraph with a character limit.
 - Responsibilities: required, 3 to 8 bullets.
-- Team and who it reports to: optional short line.
-- Growth path: optional short line.
 - No day-to-day or about-the-company fields.
 - Standing lines on every posting (written by PreCheckd, not editable): equal-opportunity statement; accommodation line (ask the recruiter or PreCheckd support); "This employer may require a background check and/or drug test as part of the hiring process."
 - **Text scan on every free-text field.** Blocks, with the reason shown: phone numbers, emails, links, "message me on WhatsApp/Telegram"; "X+ years of experience"; "US citizens only"; wording that signals age, gender, or nationality preferences (for example "young," "digital native," "recent graduate," "native English speaker," "he/she").

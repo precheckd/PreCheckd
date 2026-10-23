@@ -101,8 +101,6 @@
   <div class="jp-card"><h2>Description</h2>
     <p><%= j.summary %></p>
     <ul><% j.responsibilities.forEach(function(r) { %><li><%= r %></li><% }); %></ul>
-    <% if (j.team) { %><p>Team: <%= j.team %></p><% } %>
-    <% if (j.growth) { %><p>Growth: <%= j.growth %></p><% } %>
     <div class="jp-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
   </div>
 

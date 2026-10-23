@@ -20,7 +20,7 @@ function docFromValue(value, location) {
     goodFaithAt: value.goodFaithAt, commissionAckAt: value.commissionAckAt,
     education: value.education, certGroups: value.certGroups, clearance: value.clearance,
     startDate: value.startDate, startFirm: value.startFirm, closeDate: value.closeDate, requirementsAttestedAt: value.requirementsAttestedAt, outcomeAckAt: value.outcomeAckAt,
-    summary: value.summary, responsibilities: value.responsibilities, team: value.team, growth: value.growth,
+    summary: value.summary, responsibilities: value.responsibilities,
   };
 }
 
@@ -59,7 +59,7 @@ function formFromPosting(p) {
     education: o.education || '', certGroups: groups, clearance: o.clearance || '',
     closeDate: nyDay(o.closeDate), startDate: new Date(o.startDate).toISOString().slice(0, 10), startFirm: yes(o.startFirm),
     requirementsAttested: yes(o.requirementsAttestedAt), outcomeAck: yes(o.outcomeAckAt),
-    summary: o.summary, responsibilities: (o.responsibilities || []).join('\n'), team: o.team || '', growth: o.growth || '',
+    summary: o.summary, responsibilities: (o.responsibilities || []).join('\n'),
   };
   Object.keys(f).forEach((k) => { if (f[k] === undefined) delete f[k]; });
   return f;
@@ -75,7 +75,7 @@ const PARTS = {
   pay: ['basePayType', 'baseMin', 'baseMax', 'commissionOnly', 'payBasis', 'commission', 'bonus', 'equity', 'tips', 'benefits', 'benefitsOther', 'noBenefits'],
   requirements: ['education', 'certGroups', 'clearance', 'startFirm'],
   dates: ['startDate', 'closeDate'],
-  description: ['summary', 'responsibilities', 'team', 'growth'],
+  description: ['summary', 'responsibilities'],
 };
 
 // Comparable form of a value: dates as ISO strings, empty things dropped.

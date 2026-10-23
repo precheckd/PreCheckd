@@ -34,6 +34,9 @@
   .jp-err { color: #FF8A8A; font-size: 0.85rem; margin: 0.25rem 0 0.6rem; }
   .jp-errbox { background: #3A2020; color: #FF8A8A; padding: 0.9rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; border-left: 4px solid #E53E3E; font-size: 0.9rem; }
   .jp-errbox ul { margin: 0.4rem 0 0 1.1rem; padding: 0; }
+  .jp-attest { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.9rem 0; font-size: 0.88rem; line-height: 1.45; }
+  .jp-attest-title { color: #F3C97A; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .jp-attest .jp-check { color: #FFF4D0; margin: 0.6rem 0 0; font-weight: 600; }
   .jp-warn { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.85rem 1rem; border-radius: 6px; margin: 0.6rem 0 0.9rem; font-size: 0.88rem; line-height: 1.45; }
   .jp-titles label { display: flex; gap: 0.55rem; align-items: center; padding: 0.55rem 0.7rem; border: 1px solid #3B5860; border-radius: 6px; margin-bottom: 0.4rem; color: #F2F4F3; cursor: pointer; font-size: 0.92rem; }
   .jp-titles input { accent-color: #2ECC71; }
@@ -210,7 +213,6 @@
     <div class="jp-card">
       <h2>5. Pay</h2>
       <p class="jp-hint">Required on every posting. The most the range can be above the minimum is 25%.</p>
-      <label class="jp-check"><input type="checkbox" name="commissionOnly" id="jp-comm-only" value="on" <%= on('commissionOnly') ? 'checked' : '' %>> This is a commission-only job (base pay is $0)</label>
       <div class="jp-row" id="jp-base-row">
         <select name="basePayType" class="jp-narrow" aria-label="Base pay type">
           <option value="">Pay type</option>
@@ -221,6 +223,7 @@
         <input type="text" name="baseMax" inputmode="decimal" placeholder="Base pay maximum" value="<%= val('baseMax') %>" aria-label="Base pay maximum">
       </div>
       <% ['basePayType', 'baseRange'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+      <label class="jp-check" style="margin-top:0.2rem;"><input type="checkbox" name="commissionOnly" id="jp-comm-only" value="on" <%= on('commissionOnly') ? 'checked' : '' %>> This is a commission-only job (base pay is $0)</label>
 
       <span class="jp-label">What the base pay range is based on (pick any)</span>
       <div class="jp-grid">
@@ -258,7 +261,11 @@
       </div>
       <% if (errors.benefits) { %><div class="jp-err"><%= errors.benefits %></div><% } %>
 
-      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="goodFaith" value="on" <%= on('goodFaith') ? 'checked' : '' %>> This pay is what I actually expect to pay for this role.</label>
+      <div class="jp-attest">
+        <div class="jp-attest-title">Confirm before posting</div>
+        <div>You are attesting that the pay shown is what you genuinely expect to pay for this role. Postings with false pay information are removed, and your and the company's posting privileges may be suspended.</div>
+        <label class="jp-check"><input type="checkbox" name="goodFaith" value="on" <%= on('goodFaith') ? 'checked' : '' %>> I confirm this pay is what I actually expect to pay for this role.</label>
+      </div>
       <% if (errors.goodFaith) { %><div class="jp-err"><%= errors.goodFaith %></div><% } %>
     </div>
 
@@ -310,9 +317,17 @@
       <% ['closeDate', 'startDate'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
       <label class="jp-check"><input type="checkbox" name="startFirm" value="on" <%= on('startFirm') ? 'checked' : '' %>> The start date is firm. Candidates who cannot start by then are stopped before applying.</label>
 
-      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="requirementsAttested" value="on" <%= on('requirementsAttested') ? 'checked' : '' %>> I confirm these requirements are genuinely required for this job and lawful.</label>
+      <div class="jp-attest">
+        <div class="jp-attest-title">Confirm before posting</div>
+        <div>You are attesting that every requirement above is genuinely needed to do this job and lawful. Candidates who don't meet a requirement are stopped before applying.</div>
+        <label class="jp-check"><input type="checkbox" name="requirementsAttested" value="on" <%= on('requirementsAttested') ? 'checked' : '' %>> I confirm these requirements are genuinely required for this job and lawful.</label>
+      </div>
       <% if (errors.requirementsAttested) { %><div class="jp-err"><%= errors.requirementsAttested %></div><% } %>
-      <label class="jp-check" style="margin-top:0.9rem;"><input type="checkbox" name="outcomeAck" value="on" <%= on('outcomeAck') ? 'checked' : '' %>> I understand that when applications close I must record how this job ended (hired, not filled, or cancelled, with a reason). Until I do, my account is paused.</label>
+      <div class="jp-attest">
+        <div class="jp-attest-title">Confirm before posting</div>
+        <div>When applications close you must record how this job ended. Your account is paused until you do.</div>
+        <label class="jp-check"><input type="checkbox" name="outcomeAck" value="on" <%= on('outcomeAck') ? 'checked' : '' %>> I understand this: I must record how the job ended (hired, not filled, or cancelled, with a reason).</label>
+      </div>
       <% if (errors.outcomeAck) { %><div class="jp-err"><%= errors.outcomeAck %></div><% } %>
     </div>
 
@@ -329,14 +344,6 @@
         <textarea name="responsibilities"><%= val('responsibilities') %></textarea>
       </label>
       <% if (errors.responsibilities) { %><div class="jp-err"><%= errors.responsibilities %></div><% } %>
-      <label class="jp-field">Team and who it reports to <span class="jp-muted">(optional)</span>
-        <input type="text" name="team" maxlength="<%= limits.shortLine %>" value="<%= val('team') %>">
-      </label>
-      <% if (errors.team) { %><div class="jp-err"><%= errors.team %></div><% } %>
-      <label class="jp-field">Growth path <span class="jp-muted">(optional)</span>
-        <input type="text" name="growth" maxlength="<%= limits.shortLine %>" value="<%= val('growth') %>">
-      </label>
-      <% if (errors.growth) { %><div class="jp-err"><%= errors.growth %></div><% } %>
       <div class="jp-standard">
         <p><strong>Added to every posting automatically:</strong></p>
         <p><%= standard.EEO %></p>
