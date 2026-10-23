@@ -38,7 +38,7 @@ async function analyseEdit(oldGate, newGate, now = Date.now()) {
 async function applyImpact(posting, impact, parts, now = new Date()) {
   const url = `/jobs/${posting._id}`;
   for (const { app, blockers } of impact.withdraw) {
-    const why = blockers.map((b) => b.message.replace(/ Add it to your profile, or withdraw\.| Renew it and update your profile, or withdraw\.| or withdraw\.?$/g, '')).join(' ');
+    const why = blockers.map((b) => b.message).join(' ');
     await withdrawApplication(app, { by: 'requirement_change', note: why }, now);
     // forget the earlier "you qualify" notice, so they are told again when they meet the new requirement
     await JobNotice.deleteOne({ candidateId: app.candidateId, jobId: app.jobId });

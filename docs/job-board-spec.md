@@ -92,7 +92,7 @@ No blind or confidential-client postings. Dropped fields: department, job functi
 
 A candidate who is not a member yet goes through sign-up and verification first, then returns to the job.
 
-**Messages (one per failing criterion, always "fix it or withdraw"):**
+**Messages (one per failing criterion; the Apply button is hidden until every one is fixed, so there is nothing to withdraw, and each ends with "apply for this position again"):**
 - Skill level missing: "This job requires an Intermediate skill score for Linux which you do not currently possess. Would you like this skill certification track sent to you?" Yes starts the skill ladder track; the skill goes on their profile whether or not they get the job.
 - Retake lock (60 days): the retake date, not the track offer.
 - Result older than 12 months: "needs a retake."
