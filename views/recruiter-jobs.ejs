@@ -22,6 +22,7 @@
   .rj-table a.rj-open { color: inherit; text-decoration: none; }
   .rj-nickcell { font-weight: 700; min-width: 9rem; }
   .rj-none { color: #6F8A91; font-weight: 400; }
+  .rj-companycell { min-width: 9rem; }
   .rj-title { font-weight: 600; }
   .rj-sub { color: #C7D1CF; font-size: 0.85rem; margin-top: 0.2rem; }
   .rj-status { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: #24404A; border: 1px solid #4A6F7B; white-space: nowrap; }
@@ -48,6 +49,7 @@
   <table class="rj-table" id="rj-table">
     <thead><tr>
       <th class="is-sortable" data-key="nick" aria-sort="none">Nickname<span class="rj-arrow"></span></th>
+      <th class="is-sortable" data-key="company" aria-sort="none">Company<span class="rj-arrow"></span></th>
       <th>Job</th>
       <th class="is-sortable" data-key="close" aria-sort="none">Applications close<span class="rj-arrow"></span></th>
       <th class="is-sortable" data-key="status" aria-sort="none">Status<span class="rj-arrow"></span></th>
@@ -55,12 +57,13 @@
     <tbody>
     <% postings.forEach(function(p, i) { %>
       <tr data-href="/recruiter-jobs/<%= p._id %>" data-i="<%= i %>"
-          data-nick="<%= (p.nickname || '').toLowerCase() %>" data-close="<%= new Date(p.closeDate).getTime() %>"
+          data-nick="<%= (p.nickname || '').toLowerCase() %>" data-company="<%= (p.hiringCompany || '').toLowerCase() %>" data-close="<%= new Date(p.closeDate).getTime() %>"
           data-status="<%= ['open', 'awaiting_outcome', 'closed', 'removed'].indexOf(p.status) %>">
         <td class="rj-nickcell"><a class="rj-open" href="/recruiter-jobs/<%= p._id %>"><% if (p.nickname) { %><%= p.nickname %><% } else { %><span class="rj-none">No nickname</span><% } %></a></td>
+        <td class="rj-companycell"><%= p.hiringCompany %></td>
         <td>
           <div class="rj-title"><%= p.title %> <span class="rj-sub">&middot; <%= p.seniorityLabel %></span></div>
-          <div class="rj-sub"><%= p.hiringCompany %> &middot; <%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %></div>
+          <div class="rj-sub"><%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %></div>
         </td>
         <td><%= fmt(p.closeDate) %></td>
         <td>
@@ -81,7 +84,7 @@
     var state = { key: null, dir: 1 };
     function val(tr, key) {
       var v = tr.getAttribute('data-' + key);
-      return key === 'nick' ? v : Number(v);
+      return (key === 'nick' || key === 'company') ? v : Number(v);
     }
     function sortBy(key) {
       state.dir = state.key === key ? -state.dir : 1;
@@ -89,8 +92,8 @@
       var rows = Array.prototype.slice.call(body.rows);
       rows.sort(function (a, b) {
         var x = val(a, key), y = val(b, key);
-        if (key === 'nick') {
-          if (x === '' && y !== '') return 1;   // jobs without a nickname always last
+        if (key === 'nick' || key === 'company') {
+          if (x === '' && y !== '') return 1;   // blank values always last
           if (y === '' && x !== '') return -1;
           if (x === y) return Number(a.getAttribute('data-i')) - Number(b.getAttribute('data-i'));
           return (x < y ? -1 : 1) * state.dir;
