@@ -14,7 +14,7 @@
 <% if (sk.level === 'Provisional') { %>
   <div class="skm-detail">Not enough questions to set a level yet</div>
 <% } %>
-<% if (t) { %>
+<% if (t && !sk.compact) { %>
 <details class="skm-more">
   <summary>See by difficulty</summary>
   <% rows.forEach(function(r) { %>
