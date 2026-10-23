@@ -704,8 +704,48 @@ async function sendJobPostedEmail(recruiter, posting, { publicUrl }) {
   });
 }
 
+const jobDay = (d) => new Date(d).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+const jobHead = (posting) => `<strong>${weeklyEscape(posting.title)}</strong>${posting.hiringCompany ? ` at ${weeklyEscape(posting.hiringCompany)}` : ''}`;
+
+// Record-keeping copy of an edit: what changed and who was affected. Never names candidates.
+async function sendJobEditedEmail(recruiter, posting, { parts, withdrawn = 0, notified = 0 }) {
+  const manageUrl = `${process.env.APP_BASE_URL}/recruiter-jobs/${posting._id}`;
+  const bodyHtml = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(recruiter.firstName))},</p>
+    <p style="margin:0 0 14px;">You changed ${jobHead(posting)} on ${weeklyEscape(jobDay(new Date()))}.</p>
+    <p style="margin:0 0 14px;">What changed: <strong>${weeklyEscape((parts || []).join(', ') || 'details')}</strong><br>
+    Applications close: ${weeklyEscape(jobDay(posting.closeDate))}<br>
+    In-seat start: ${weeklyEscape(jobDay(posting.startDate))}</p>
+    <p style="margin:0 0 14px;">Applicants: ${notified} told about the update${withdrawn ? `, ${withdrawn} withdrawn because they no longer meet a changed requirement` : ''}.</p>
+    ${weeklyButton(manageUrl, 'Open the job')}
+    <p style="margin:14px 0 0;color:#6B7B80;font-size:13px;">Keep this email for your records. If you did not make this change, contact support right away.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>', to: recruiter.email,
+    subject: `Job updated: ${posting.title}`,
+    html: brandShell({ bodyHtml, preheader: 'A record of your change', footerHtml: 'You get this because you edited a job on PreCheckd.' }),
+  });
+}
+
+// Record-keeping copy of how a job ended.
+async function sendJobClosedEmail(recruiter, posting, { outcomeLabel, reasonLabel, reasonNote, applicants = 0, hired = 0, closedOut = 0 }) {
+  const manageUrl = `${process.env.APP_BASE_URL}/recruiter-jobs/${posting._id}`;
+  const bodyHtml = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(recruiter.firstName))},</p>
+    <p style="margin:0 0 14px;">You closed ${jobHead(posting)} on ${weeklyEscape(jobDay(new Date()))}.</p>
+    <p style="margin:0 0 14px;">Outcome: <strong>${weeklyEscape(outcomeLabel || '')}</strong>${reasonLabel ? `<br>Reason: ${weeklyEscape(reasonLabel)}${reasonNote ? ` (${weeklyEscape(reasonNote)})` : ''}` : ''}<br>
+    Posted: ${weeklyEscape(jobDay(posting.createdAt || new Date()))}<br>
+    Applicants: ${applicants}${hired ? `, hired through PreCheckd: ${hired}` : ''}${closedOut ? `, told the position closed: ${closedOut}` : ''}</p>
+    ${weeklyButton(manageUrl, 'View the job')}
+    <p style="margin:14px 0 0;color:#6B7B80;font-size:13px;">Keep this email for your records.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>', to: recruiter.email,
+    subject: `Job closed: ${posting.title}`,
+    html: brandShell({ bodyHtml, preheader: 'A record of how the job ended', footerHtml: 'You get this because you closed a job on PreCheckd.' }),
+  });
+}
+
 module.exports = {
   brandedHtml,
+  sendJobEditedEmail,
+  sendJobClosedEmail,
   sendJobPostedEmail,
   sendVerificationEmail,
   sendFraudClaimInviteEmail,

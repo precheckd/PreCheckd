@@ -24,7 +24,7 @@ const conversation = require('../utils/conversation');
 const outreach = require('../services/outreach');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const publicJob = require('../services/publicJob');
-const { sendJobPostedEmail } = require('../services/emailService');
+const { sendJobPostedEmail, sendJobEditedEmail, sendJobClosedEmail } = require('../services/emailService');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
 
@@ -291,6 +291,8 @@ router.post('/:id/edit', async (req, res) => {
     await posting.save();
     await applyImpact(posting, r.impact, r.parts);
     sweepPostingLater(posting);
+    sendJobEditedEmail(recruiter, posting, { parts: r.parts, withdrawn: r.impact.withdraw.length, notified: r.impact.keep.length })
+      .catch((e) => console.error('Job edited email failed:', e.message));
     const extra = r.impact.withdraw.length ? `&withdrawn=${r.impact.withdraw.length}` : '';
     res.redirect(`/recruiter-jobs/${posting._id}?saved=1${extra}`);
   } catch (error) {
@@ -399,7 +401,18 @@ router.post('/:id/outcome', async (req, res) => {
     if (Object.keys(errors).length) {
       return res.status(400).render('recruiter-job-outcome', await outcomeLocals(posting, { errors, form: req.body }));
     }
-    await recordOutcome(posting, value);
+    const result = await recordOutcome(posting, value);
+    try {
+      const recruiter = await Recruiter.findById(req.session.recruiterId);
+      const label = (list, code) => ((list.find((x) => x.code === code) || {}).label) || null;
+      const reasonList = value.kind === 'cancelled' ? CANCEL_REASONS : NOT_FILLED_REASONS;
+      if (recruiter) {
+        sendJobClosedEmail(recruiter, posting, {
+          outcomeLabel: label(OUTCOME_KINDS, value.kind), reasonLabel: value.reason ? label(reasonList, value.reason) : null, reasonNote: value.reasonNote || '',
+          applicants: await JobApplication.countDocuments({ jobId: posting._id }), hired: value.kind === 'hired_precheckd' ? result.hired : 0, closedOut: result.closedOut,
+        }).catch((e) => console.error('Job closed email failed:', e.message));
+      }
+    } catch (e) { console.error('Job closed email failed:', e.message); }
     res.redirect(`/recruiter-jobs/${posting._id}?outcome=1`);
   } catch (error) {
     console.error('Error recording outcome:', error);
