@@ -9,7 +9,11 @@
   });
 %>
 <div class="skm-bar" aria-label="<%= sk.level %>">
-  <% for (let i = 1; i <= 4; i++) { %><span class="<%= i <= idx ? 'on' : '' %>"></span><% } %>
+  <% const pf = Math.max(0, Math.min(1, sk.progressFill || 0)); %>
+  <% for (let i = 1; i <= 4; i++) { %>
+    <% if (i === idx + 1 && pf > 0) { %><span><i style="width: <%= Math.round(pf * 100) %>%"></i></span>
+    <% } else { %><span class="<%= i <= idx ? 'on' : '' %>"></span><% } %>
+  <% } %>
 </div>
 <% if (sk.level === 'Provisional') { %>
   <div class="skm-detail">Not enough questions to set a level yet</div>

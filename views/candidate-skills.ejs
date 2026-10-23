@@ -114,12 +114,11 @@
           <% if (s && s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else if (s) { %><span class="sk-meta">Not shown yet</span><% } %>
         </div>
         <div><span class="sk-level"><%= g.level || 'Not started' %></span><% if (s && s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
-        <% if (s) { %><%- include('partials/skill-meter', { sk: Object.assign({}, s, { compact: true }) }) %><% } %>
+        <% if (s) { %><%- include('partials/skill-meter', { sk: Object.assign({}, s, { compact: true, progressFill: g.progress ? g.progress.fill : 0 }) }) %><% } %>
         <% if (g.progress) { %>
-          <div class="sk-xp-bar" role="img" aria-label="Progress to <%= g.progress.next %>"><span style="width: <%= Math.round(g.progress.fill * 100) %>%"></span></div>
           <div class="sk-meta"><strong>To <%= g.progress.next %>:</strong> <% if (!g.progress.started) { %>take the <%= tierLabel[g.progress.tier] %> test<% } else if (g.progress.right >= g.progress.needed) { %>level reached<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> right needed<% } %></div>
         <% } else if (g.topLevel) { %>
-          <div class="sk-xp-bar"><span style="width: 100%"></span></div><div class="sk-meta">Top level reached</div>
+          <div class="sk-meta">Top level reached</div>
         <% } %>
         <% if (canStart) { %>
           <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin-top:0.6rem;">
@@ -261,8 +260,10 @@
   </div>
 </div>
 <style>
-  .skm-bar { display: flex; gap: 4px; margin: 0.45rem 0 0.35rem; width: 220px; }
+  .skm-bar { display: flex; gap: 4px; margin: 0.45rem 0 0.35rem; width: 100%; }
   .skm-bar span { flex: 1; height: 7px; border-radius: 999px; background: #1F363C; }
   .skm-bar span.on { background: #4CC2A6; }
+  .skm-bar span { overflow: hidden; }
+  .skm-bar span i { display: block; height: 100%; background: #4CC2A6; border-radius: 999px; }
   .skm-detail { color: #C7D1CF; font-size: 0.82rem; }
 </style>
