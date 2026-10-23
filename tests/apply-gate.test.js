@@ -64,8 +64,8 @@ t('skill missing offers the track, with the exact wording from the spec', () => 
   const r = ev(cand({ skills: [] }), post());
   assert.deepStrictEqual(codes(r), ['skill_missing']);
   assert.strictEqual(r.blockers[0].message,
-    'This job requires an Intermediate skill score for Linux which you do not currently possess. Would you like this skill certification track sent to you?');
-  assert.deepStrictEqual(r.blockers[0].actions, [{ kind: 'start_track', skillKey: 'linux' }, { kind: 'withdraw' }]);
+    'This job requires an Intermediate skill score for Linux which you do not currently possess. Take the skill test, and then apply for this position again.');
+  assert.deepStrictEqual(r.blockers[0].actions, [{ kind: 'start_track', skillKey: 'linux' }]);
 });
 
 t('skill below the minimum names the current level', () => {
@@ -93,8 +93,8 @@ t('stale result (over 12 months) needs a retake', () => {
 t('retake lock shows the retake date instead of the track offer', () => {
   const r = ev(cand({ skills: [{ key: 'linux', level: 'Foundational', takenAt: ago(20), nextAttemptAt: ahead(40) }] }), post());
   assert.deepStrictEqual(codes(r), ['skill_locked']);
-  assert.ok(/You can retake the test on [A-Z][a-z]+ \d+, \d{4}\./.test(r.blockers[0].message));
-  assert.deepStrictEqual(r.blockers[0].actions, [{ kind: 'withdraw' }]);
+  assert.ok(/You can retake the test on [A-Z][a-z]+ \d+, \d{4}, and then apply for this position again\./.test(r.blockers[0].message));
+  assert.deepStrictEqual(r.blockers[0].actions, []);
   // a stale result that is also locked says so
   const s = ev(cand({ skills: [{ key: 'linux', level: 'Advanced', takenAt: ago(400), nextAttemptAt: ahead(5) }] }), post());
   assert.deepStrictEqual(codes(s), ['skill_locked']);
@@ -103,7 +103,7 @@ t('retake lock shows the retake date instead of the track offer', () => {
 t('a result under integrity review says being reviewed, no reason', () => {
   const r = ev(cand({ skills: [{ key: 'linux', level: 'Foundational', takenAt: ago(5), reviewing: true }] }), post());
   assert.deepStrictEqual(codes(r), ['skill_reviewing']);
-  assert.ok(!/cheat|integrity|ai/i.test(r.blockers[0].message));
+  assert.ok(!/cheat|integrity|\bai\b/i.test(r.blockers[0].message));
 });
 
 t('entry level: no minimum means no skill blocker, even with no skills', () => {
@@ -134,7 +134,7 @@ t('education reported but not yet verified says it is being verified', () => {
   const r = ev(cand({ education: { verifiedLevel: 0, pendingLevel: 3 } }), post());
   assert.deepStrictEqual(codes(r), ['education_pending']);
   assert.ok(r.blockers[0].message.includes('being verified'));
-  assert.deepStrictEqual(r.blockers[0].actions, [{ kind: 'withdraw' }]);
+  assert.deepStrictEqual(r.blockers[0].actions, []);
 });
 
 t('certification groups: OR inside a group, AND across groups', () => {
@@ -145,7 +145,7 @@ t('certification groups: OR inside a group, AND across groups', () => {
   const r = ev(cand(), two);
   assert.deepStrictEqual(codes(r), ['cert_missing']);
   assert.strictEqual(r.blockers[0].group, 1);
-  assert.strictEqual(r.blockers[0].message, 'This job requires AWS Cloud Practitioner. You do not have it verified. Add it to your profile, or withdraw.');
+  assert.strictEqual(r.blockers[0].message, 'This job requires AWS Cloud Practitioner. You do not have it verified. Add it to your profile, and then apply for this position again.');
   assert.strictEqual(ev(cand({ certs: [
     { catalogId: 'secplus', verified: true }, { catalogId: 'awsccp', verified: true }] }), two).canApply, true);
 });
@@ -153,7 +153,7 @@ t('certification groups: OR inside a group, AND across groups', () => {
 t('certification missing lists every option', () => {
   const r = ev(cand({ certs: [] }), post());
   assert.strictEqual(r.blockers[0].message,
-    'This job requires one of: Security+ or CISSP. You do not have any of these verified. Add one to your profile, or withdraw.');
+    'This job requires one of: Security+ or CISSP. You do not have any of these verified. Add one to your profile, and then apply for this position again.');
 });
 
 t('certification: no automatic equivalence, unverified and expired have their own messages', () => {
@@ -216,13 +216,14 @@ t('availability blocks only when the start date is firm and the candidate is lat
   assert.strictEqual(ev(cand({ availableFrom: null }), post({ startFirm: true })).canApply, true);
 });
 
-t('every blocker ends with a withdraw action and has a message', () => {
+t('no blocker offers withdraw, and every fixable one tells the person to apply for this position again', () => {
   const r = ev(cand({ skills: [], education: {}, certs: [], clearance: null, shifts: [], areaMatch: false, availableFrom: ahead(90) }),
     post({ shift: 'overnight', startFirm: true }));
   assert.ok(r.blockers.length >= 7);
   for (const b of r.blockers) {
     assert.ok(b.message && b.message.length > 10);
-    assert.deepStrictEqual(b.actions[b.actions.length - 1], { kind: 'withdraw' });
+    assert.ok(!b.actions.some((a) => a.kind === 'withdraw') && !/withdraw/i.test(b.message));
+    assert.ok(/apply for this position again/.test(b.message), b.message);
   }
 });
 

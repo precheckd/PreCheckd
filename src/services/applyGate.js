@@ -4,7 +4,8 @@
 // Adapters elsewhere turn a Candidate and a Posting into the shapes below (see docs/job-board-spec.md).
 //
 // Kent's rule: if an applicant does not meet a criterion, stop the application, say why, and offer two
-// choices: fix it (an action) or withdraw. So every blocker carries `actions` ending in { kind: 'withdraw' }.
+// the fix (an action link, where there is one) and then apply for the position again. The apply button never
+// shows while a blocker exists, so there is nothing to withdraw.
 //
 // ---------------------------------------------------------------------------------------------------
 // INPUT SHAPES
@@ -47,8 +48,6 @@ const SHIFT_LABELS = { daytime: 'standard daytime', evenings: 'evenings', overni
 const STALE_MS = 365 * 86400000;
 const DAY = 86400000;
 
-const withdraw = { kind: 'withdraw' };
-
 function levelIndex(name) { return SKILL_LEVELS.indexOf(name); }
 function article(word) { return /^[aeiou]/i.test(word) ? 'an' : 'a'; }
 // Moments in time (a retake date) show in New York time; calendar days stored as UTC midnight
@@ -84,29 +83,29 @@ function skillBlocker(req, candidate, now) {
   const phrase = `${article(req.minLevel)} ${req.minLevel} skill score for ${label}`;
   if (have && have.reviewing) {
     return { ...base, code: 'skill_reviewing',
-      message: `Your ${label} result is being reviewed. We will let you know as soon as it is done.`,
-      actions: [withdraw] };
+      message: `Your ${label} result is being reviewed. We will let you know as soon as it is done, and then you can apply for this position again.`,
+      actions: [] };
   }
   if (have && haveIdx >= need && stale) {
     const when = have.nextAttemptAt && new Date(have.nextAttemptAt).getTime() > now;
     if (when) {
       return { ...base, code: 'skill_locked', retakeOn: new Date(have.nextAttemptAt),
-        message: `This job requires ${phrase}. Your ${label} result is more than 12 months old and needs a retake. You can retake it on ${fmtDate(have.nextAttemptAt)}.`,
-        actions: [withdraw] };
+        message: `This job requires ${phrase}. Your ${label} result is more than 12 months old and needs a retake. You can retake it on ${fmtDate(have.nextAttemptAt)}, and then apply for this position again.`,
+        actions: [] };
     }
     return { ...base, code: 'skill_stale',
-      message: `This job requires ${phrase}. Your ${label} result is more than 12 months old and needs a retake. Would you like the test sent to you?`,
-      actions: [{ kind: 'start_track', skillKey: req.key }, withdraw] };
+      message: `This job requires ${phrase}. Your ${label} result is more than 12 months old and needs a retake. Retake it, and then apply for this position again.`,
+      actions: [{ kind: 'start_track', skillKey: req.key }] };
   }
   if (have && have.nextAttemptAt && new Date(have.nextAttemptAt).getTime() > now) {
     return { ...base, code: 'skill_locked', retakeOn: new Date(have.nextAttemptAt),
-      message: `This job requires ${phrase}. You can retake the test on ${fmtDate(have.nextAttemptAt)}.`,
-      actions: [withdraw] };
+      message: `This job requires ${phrase}. You can retake the test on ${fmtDate(have.nextAttemptAt)}, and then apply for this position again.`,
+      actions: [] };
   }
   const youAre = have && haveIdx >= 1 ? ` Your current level is ${have.level}.` : '';
   return { ...base, code: have ? 'skill_below' : 'skill_missing',
-    message: `This job requires ${phrase} which you do not currently possess.${youAre} Would you like this skill certification track sent to you?`,
-    actions: [{ kind: 'start_track', skillKey: req.key }, withdraw] };
+    message: `This job requires ${phrase} which you do not currently possess.${youAre} Take the skill test, and then apply for this position again.`,
+    actions: [{ kind: 'start_track', skillKey: req.key }] };
 }
 
 function educationBlocker(posting, candidate) {
@@ -117,12 +116,12 @@ function educationBlocker(posting, candidate) {
   const label = EDUCATION_LEVELS[need];
   if ((ed.pendingLevel || 0) >= need) {
     return { criterion: 'education', code: 'education_pending',
-      message: `This job requires a ${label} or higher. Yours is being verified. We will notify you the moment it is done, and then you can apply.`,
-      actions: [withdraw] };
+      message: `This job requires a ${label} or higher. Yours is being verified. We will notify you the moment it is done, and then you can apply for this position again.`,
+      actions: [] };
   }
   return { criterion: 'education', code: 'education_missing',
-    message: `This job requires a ${label} or higher, and we do not have one verified on your profile. Add and verify it on your profile, or withdraw.`,
-    actions: [{ kind: 'edit_profile', section: 'education' }, withdraw] };
+    message: `This job requires a ${label} or higher, and we do not have one verified on your profile. Add and verify it on your profile, and then apply for this position again.`,
+    actions: [{ kind: 'edit_profile', section: 'education' }] };
 }
 
 function certBlockers(posting, candidate, now) {
@@ -142,20 +141,20 @@ function certBlockers(posting, candidate, now) {
     if (expired) {
       const l = expired.label || (group.find((c) => c.catalogId === expired.catalogId) || {}).label || expired.catalogId;
       out.push({ ...base, code: 'cert_expired',
-        message: `This job requires one of: ${options}. Your ${l} expired on ${fmtDay(expired.expiresAt)}. Renew it and update your profile, or withdraw.`,
-        actions: [{ kind: 'edit_profile', section: 'certifications' }, withdraw] });
+        message: `This job requires one of: ${options}. Your ${l} expired on ${fmtDay(expired.expiresAt)}. Renew it and update your profile, and then apply for this position again.`,
+        actions: [{ kind: 'edit_profile', section: 'certifications' }] });
     } else if (unverified) {
       const l = unverified.label || (group.find((c) => c.catalogId === unverified.catalogId) || {}).label || unverified.catalogId;
       out.push({ ...base, code: 'cert_unverified',
-        message: `This job requires one of: ${options}. Your ${l} is not verified yet. We will let you know when it is, and then you can apply.`,
-        actions: [withdraw] });
+        message: `This job requires one of: ${options}. Your ${l} is not verified yet. We will let you know when it is, and then you can apply for this position again.`,
+        actions: [] });
     } else {
       const many = labels.length > 1;
       out.push({ ...base, code: 'cert_missing',
         message: many
-          ? `This job requires one of: ${options}. You do not have any of these verified. Add one to your profile, or withdraw.`
-          : `This job requires ${options}. You do not have it verified. Add it to your profile, or withdraw.`,
-        actions: [{ kind: 'edit_profile', section: 'certifications' }, withdraw] });
+          ? `This job requires one of: ${options}. You do not have any of these verified. Add one to your profile, and then apply for this position again.`
+          : `This job requires ${options}. You do not have it verified. Add it to your profile, and then apply for this position again.`,
+        actions: [{ kind: 'edit_profile', section: 'certifications' }] });
     }
   });
   return out;
@@ -166,8 +165,8 @@ function clearanceBlocker(posting, candidate) {
   if (!need) return null;
   if ((candidate.clearance || 0) >= need) return null;
   return { criterion: 'clearance', code: 'clearance_missing',
-    message: `This job requires ${CLEARANCE_LEVELS[need]} clearance and your profile does not list it. If you hold it, update your profile and apply again, or withdraw.`,
-    actions: [{ kind: 'edit_profile', section: 'clearance' }, withdraw] };
+    message: `This job requires ${CLEARANCE_LEVELS[need]} clearance and your profile does not list it. If you hold it, update your profile and apply for this position again.`,
+    actions: [{ kind: 'edit_profile', section: 'clearance' }] };
 }
 
 function shiftBlocker(posting, candidate) {
@@ -177,8 +176,8 @@ function shiftBlocker(posting, candidate) {
   if (mine.includes(need) || mine.includes('flexible')) return null; // a candidate who ticked flexible can work any
   const label = SHIFT_LABELS[need] || need;
   return { criterion: 'shift', code: 'shift_missing',
-    message: `You have not selected to work the hours of this job (${label}). If you do want to work ${label} hours, update your profile and apply again, or withdraw.`,
-    actions: [{ kind: 'edit_profile', section: 'shifts' }, withdraw] };
+    message: `You have not selected to work the hours of this job (${label}). If you do want to work ${label} hours, update your profile and apply for this position again.`,
+    actions: [{ kind: 'edit_profile', section: 'shifts' }] };
 }
 
 function areaBlocker(posting, candidate) {
@@ -187,17 +186,17 @@ function areaBlocker(posting, candidate) {
   if (candidate.areaMatch === true) return null;
   if (candidate.areaMatch == null) {
     return { criterion: 'area', code: 'area_unset',
-      message: 'This job needs a location match and you have not set your Work Areas yet. Add them on your profile, or withdraw.',
-      actions: [{ kind: 'edit_profile', section: 'workAreas' }, withdraw] };
+      message: 'This job needs a location match and you have not set your Work Areas yet. Add them on your profile, and then apply for this position again.',
+      actions: [{ kind: 'edit_profile', section: 'workAreas' }] };
   }
   if (arr === 'remote_in_area') {
     return { criterion: 'area', code: 'area_outside',
-      message: `This remote job is limited to ${posting.areaLabel || 'a specific area'}, and your Work Areas do not include it. If you would work from there, update your Work Areas and apply again, or withdraw.`,
-      actions: [{ kind: 'edit_profile', section: 'workAreas' }, withdraw] };
+      message: `This remote job is limited to ${posting.areaLabel || 'a specific area'}, and your Work Areas do not include it. If you would work from there, update your Work Areas and apply for this position again.`,
+      actions: [{ kind: 'edit_profile', section: 'workAreas' }] };
   }
   return { criterion: 'area', code: 'area_outside',
-    message: 'This job is outside your Work Areas. If you would consider it, update your Work Areas and apply again, or withdraw.',
-    actions: [{ kind: 'edit_profile', section: 'workAreas' }, withdraw] };
+    message: 'This job is outside your Work Areas. If you would consider it, update your Work Areas and apply for this position again.',
+    actions: [{ kind: 'edit_profile', section: 'workAreas' }] };
 }
 
 function availabilityBlocker(posting, candidate) {
@@ -205,8 +204,8 @@ function availabilityBlocker(posting, candidate) {
   if (!candidate.availableFrom) return null; // not set: not later than the start date, so not blocked
   if (new Date(candidate.availableFrom).getTime() <= new Date(posting.startDate).getTime()) return null;
   return { criterion: 'availability', code: 'availability_late',
-    message: `This job starts on ${fmtDay(posting.startDate)} and the start date is firm. Your profile says you are available from ${fmtDay(candidate.availableFrom)}. If that has changed, update your availability and apply again, or withdraw.`,
-    actions: [{ kind: 'edit_profile', section: 'availability' }, withdraw] };
+    message: `This job starts on ${fmtDay(posting.startDate)} and the start date is firm. Your profile says you are available from ${fmtDay(candidate.availableFrom)}. If that has changed, update your availability and apply for this position again.`,
+    actions: [{ kind: 'edit_profile', section: 'availability' }] };
 }
 
 // Returns { canApply, closed, blockers[] }. Blockers are ordered: account state first, then the
@@ -229,13 +228,13 @@ function evaluate(candidate, posting, now = Date.now()) {
   const v = candidate.verified || {};
   if (!(v.email && v.phone && v.identity)) {
     blockers.push({ criterion: 'account', code: 'not_verified',
-      message: 'Finish verifying your account (email, phone and identity) before you apply.',
-      actions: [{ kind: 'edit_profile', section: 'verification' }, withdraw] });
+      message: 'Finish verifying your account (email, phone and identity), and then apply for this position again.',
+      actions: [{ kind: 'edit_profile', section: 'verification' }] });
   }
   if (candidate.membershipActive === false) {
     blockers.push({ criterion: 'account', code: 'membership_inactive',
-      message: 'Your membership is not active. Renew it to apply.',
-      actions: [{ kind: 'billing' }, withdraw] });
+      message: 'Your membership is not active. Renew it, and then apply for this position again.',
+      actions: [{ kind: 'billing' }] });
   }
 
   for (const req of posting.skills || []) {
