@@ -72,6 +72,14 @@
     <% if (sendError) { %><p style="color:#FF8A8A;"><%= sendError %></p><% } %>
     <p>Anyone can open this link. Only candidates who meet every requirement can apply.</p>
     <input readonly value="<%= shareUrl %>" onclick="this.select()" style="width:100%;box-sizing:border-box;background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.55rem;">
+    <form method="POST" action="/recruiter-jobs/<%= posting._id %>/email" style="margin-top:0.8rem;">
+      <% if (emailed === '1') { %><div class="jd-ok">Email sent.</div><% } %>
+      <% if (emailError) { %><p style="color:#FF8A8A;"><%= emailError %></p><% } %>
+      <p class="jd-std">Email this job to someone who is not on PreCheckd yet. It goes out from your PreCheckd address with your verified badge, and counts toward your outreach limit.</p>
+      <input name="toName" maxlength="40" placeholder="First name" style="background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.5rem;">
+      <input name="toEmail" type="email" required placeholder="Email address" style="background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.5rem;">
+      <button class="jd-edit" type="submit" style="border:0;cursor:pointer;margin:0 0 0 0.4rem;">Email it</button>
+    </form>
     <% if (shareable.length) { %>
       <form method="POST" action="/recruiter-jobs/<%= posting._id %>/send" style="margin-top:0.8rem;">
         <select name="connectionId" required style="background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.5rem;">

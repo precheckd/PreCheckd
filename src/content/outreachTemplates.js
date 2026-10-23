@@ -11,6 +11,16 @@ const TEMPLATES = {
     intro: ({ first, recruiter, company, role }) =>
       `Hi ${first},\n\nI'm ${recruiter}${company ? ` at ${company}` : ''}. I'm hiring for a ${role} and thought your background could be a fit.`
   },
+  // Used only from a recruiter's own open posting (routes/recruiter-jobs.js supplies the link); never offered on the
+  // general compose form.
+  job: {
+    label: 'A job posted on PreCheckd',
+    needsRole: true,
+    needsJob: true,
+    subject: ({ recruiter, role }) => `${recruiter} is hiring: ${role}`,
+    intro: ({ first, recruiter, company, role, jobUrl }) =>
+      `Hi ${first},\n\nI'm ${recruiter}${company ? ` at ${company}` : ''}. I'm hiring for a ${role} and posted it on PreCheckd: ${jobUrl}\n\nOnly verified candidates who meet every requirement can apply, so you will see right away whether it fits.`
+  },
   intro: {
     label: 'A short introduction',
     needsRole: false,

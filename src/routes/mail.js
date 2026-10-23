@@ -382,7 +382,7 @@ async function renderCompose(req, res, { error = null, sent = false, form = {}, 
     enabled: outreach.enabled(),
     verified: outreach.isFullyVerified(recruiter),
     quota, error, sent, form, trackerGuess: null,
-    templates: Object.entries(outreach.TEMPLATES).map(([key, t]) => ({ key, label: t.label, needsRole: t.needsRole })),
+    templates: Object.entries(outreach.TEMPLATES).filter(([, t]) => !t.needsJob).map(([key, t]) => ({ key, label: t.label, needsRole: t.needsRole })),
     maxNote: outreach.MAX_NOTE_CHARS
   });
 }

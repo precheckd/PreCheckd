@@ -11,6 +11,8 @@ const { scanText } = require('../utils/textScan');
 
 const DAY = 86400000;
 const SURVEY_AFTER_DAYS = 30;
+const EARLY_SURVEY_AFTER_DAYS = 3; // days after a recruiter ends an early connection
+const EARLY_END_WITHIN_DAYS = 14; // what counts as early
 
 function clean(note) { return String(note || '').replace(/\s+/g, ' ').trim().slice(0, 300); }
 function noteProblem(note) { const hits = note ? scanText(note) : []; return hits.length ? hits[0].message : null; }
@@ -67,8 +69,12 @@ async function endedByCandidate(candidateId, recruiterId) {
 async function sendDueSurveys({ now = new Date() } = {}) {
   const cutoff = new Date(now.getTime() - SURVEY_AFTER_DAYS * DAY);
   const due = await ConnectionRequest.find({ status: 'accepted', surveySentAt: null, respondedAt: { $lt: cutoff } });
+  // A recruiter who ends a connection soon after it began is asked about a few days later, not 30 days after the start.
+  const earlyCut = new Date(now.getTime() - EARLY_SURVEY_AFTER_DAYS * DAY);
+  const early = (await ConnectionRequest.find({ status: 'ended', endedBy: 'recruiter', surveySentAt: null, endedAt: { $lt: earlyCut } }))
+    .filter((c) => c.respondedAt && new Date(c.endedAt).getTime() - new Date(c.respondedAt).getTime() <= EARLY_END_WITHIN_DAYS * DAY);
   let sent = 0;
-  for (const c of due) {
+  for (const c of [...due, ...early]) {
     c.surveySentAt = now;
     await c.save();
     const rec = await Recruiter.findById(c.recruiterId);

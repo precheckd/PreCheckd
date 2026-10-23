@@ -4,6 +4,9 @@ process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
 process.env.SESSION_SECRET = 'test-secret';
 process.env.DISABLE_JOB_NOTICES = 'true'; // sweeps are called directly below; the automatic triggers stay off
 process.env.APP_BASE_URL = 'https://precheckd.test';
+process.env.OUTREACH_ENABLED = 'true';
+process.env.MOCK_EMAIL = 'true';
+process.env.OUTREACH_POSTAL_ADDRESS = '1 Test St, Testville';
 const assert = require('assert');
 const path = require('path');
 const http = require('http');
@@ -28,6 +31,10 @@ const outcome = require('../src/services/postingOutcome');
 const ce = require('../src/services/connectionEnd');
 const hireReview = require('../src/services/hireReview');
 const Message = require('../src/models/Message');
+const OutreachMessage = require('../src/models/OutreachMessage');
+const OutreachBlock = require('../src/models/OutreachBlock');
+const Suppression = require('../src/models/Suppression');
+const MailAlias = require('../src/models/MailAlias');
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }
@@ -254,6 +261,56 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(await hireReview.clearFlag(repost._id), true);
     assert.ok(!(await hireReview.listHireReviews()).some((r) => r.title === 'Repost'));
     void stale;
+  });
+
+  await t('an early recruiter ending gets a survey a few days later; a late ending does not', async () => {
+    const earlyC = newConn(makeCandidate('Kit'), { respondedAt: new Date(Date.now() - 10 * day) });
+    const lateC = newConn(makeCandidate('Lou'), { respondedAt: new Date(Date.now() - 60 * day) });
+    await ce.endConnection(earlyC, 'recruiter', { reason: 'not_a_fit' }, { now: new Date(Date.now() - 4 * day) });
+    await ce.endConnection(lateC, 'recruiter', { reason: 'not_a_fit' }, { now: new Date(Date.now() - 4 * day) });
+    ConnectionRequest.find = (f) => Promise.resolve(conns.filter((x) => matches(x, f)));
+    const freshEnd = newConn(makeCandidate('Mo'), { respondedAt: new Date(Date.now() - 5 * day) });
+    await ce.endConnection(freshEnd, 'recruiter', { reason: 'not_a_fit' });
+    const before = notes.length;
+    await ce.sendDueSurveys();
+    assert.ok(earlyC.surveySentAt instanceof Date, 'ended 4 days ago, 6 days after it began');
+    assert.strictEqual(lateC.surveySentAt, null, 'ended long after it began');
+    assert.strictEqual(freshEnd.surveySentAt, null, 'ended just now');
+    assert.ok(notes.slice(before).some((x) => String(x.ownerId) === String(earlyC.candidateId)));
+  });
+
+  await t('a job can be emailed to a non-member through the outreach rules, with the posting link', async () => {
+    const outbox = [];
+    const origLog = console.log; console.log = (...a) => { if (String(a[0]).startsWith('[MOCK EMAIL]')) outbox.push(a.join(' ')); else origLog(...a); };
+    const sent = [];
+    OutreachMessage.find = async () => []; OutreachMessage.findOne = async (f) => sent.find((m) => m.toEmail === f.toEmail && m.status === 'sent') || null;
+    OutreachMessage.countDocuments = async () => sent.filter((m) => m.status === 'sent').length;
+    OutreachMessage.create = async (d) => { const m = { ...d, save: async function () { return this; } }; sent.push(m); return m; };
+    OutreachBlock.findOne = async () => null; Suppression.findOne = async () => null;
+    MailAlias.findOne = async () => ({ alias: 'pat-lee' });
+    Recruiter.findById = () => withSelect({ ...recruiterDoc, company: 'Acme Staffing', slug: 'pat-lee' });
+    const open = makePosting({ title: 'Network Engineer' });
+    asOwner();
+    let res = await post(`/recruiter-jobs/${open._id}/email`, { toEmail: 'new.person@example.org', toName: 'Sam Rivers' });
+    assert.ok(res.headers.get('location').endsWith('?emailed=1'), res.headers.get('location'));
+    assert.strictEqual(sent.length, 1);
+    assert.strictEqual(sent[0].templateKey, 'job');
+    assert.strictEqual(sent[0].role, 'Network Engineer');
+    assert.ok(outbox.length === 1 && outbox[0].includes('new.person@example.org'));
+    // the same address again is refused (one per address per 30 days)
+    res = await post(`/recruiter-jobs/${open._id}/email`, { toEmail: 'new.person@example.org' });
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('already emailed'));
+    // a closed job cannot be emailed
+    const closed = makePosting({ status: 'closed' });
+    res = await post(`/recruiter-jobs/${closed._id}/email`, { toEmail: 'other@example.org' });
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('closed'));
+    // the body carries the posting link; the general compose form cannot use this template without a posting
+    const outreach = require('../src/services/outreach');
+    const mail = outreach.buildEmail({ recruiter: { firstName: 'Pat', lastName: 'Lee', slug: 'pat-lee', company: 'Acme' }, template: outreach.TEMPLATES.job, first: 'Sam', role: 'Network Engineer', note: '', messageId: 'abc', jobUrl: 'https://precheckd.test/jobs/1/x' });
+    assert.ok(mail.text.includes('https://precheckd.test/jobs/1/x') && mail.text.includes('Verified by PreCheckd'));
+    const direct = await outreach.sendOutreach({ recruiter: { ...recruiterDoc }, alias: { alias: 'pat-lee' }, input: { toEmail: 'x@example.org', templateKey: 'job', role: 'Network Engineer', note: '' } });
+    assert.strictEqual(direct.error, 'template');
+    console.log = origLog;
   });
 
   server.close();

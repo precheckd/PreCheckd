@@ -21,6 +21,8 @@ const { validateOutcome, recordOutcome, flagRepost } = require('../services/post
 const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS } = require('../content/outcomeReasons');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const conversation = require('../utils/conversation');
+const outreach = require('../services/outreach');
+const { ensureMailAlias } = require('../utils/mailAlias');
 const publicJob = require('../services/publicJob');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
@@ -343,7 +345,7 @@ router.get('/:id', async (req, res) => {
     res.render('recruiter-job-detail', {
       title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', outcomeDone: req.query.outcome === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
       applicantCount: await JobApplication.countDocuments({ jobId: posting._id, status: { $in: ACTIVE } }),
-      shareUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`, sent: req.query.sent || '', sendError: req.query.sendError || '',
+      shareUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`, sent: req.query.sent || '', sendError: req.query.sendError || '', emailed: req.query.emailed || '', emailError: req.query.emailError || '',
       shareable: posting.status === 'open'
         ? (await ConnectionRequest.find({ recruiterId: req.session.recruiterId, status: 'accepted' }).populate('candidateId')).filter((c) => c.candidateId)
         : [],
@@ -411,6 +413,31 @@ router.post('/:id/send', async (req, res) => {
     res.redirect(`${back}?sent=1`);
   } catch (error) {
     console.error('Error sending job to a connection:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/email — email this job's public link to someone who is not on PreCheckd yet. Uses the
+// outreach rules (verified recruiters only, caps, one email per address per 30 days, do-not-contact list).
+router.post('/:id/email', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    const back = `/recruiter-jobs/${posting._id}`;
+    const fail = (msg) => res.redirect(`${back}?emailError=${encodeURIComponent(msg)}`);
+    if (posting.status !== 'open') return fail('This job is closed.');
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    if (!recruiter) return res.redirect('/login');
+    let alias = null;
+    try { alias = await ensureMailAlias('recruiter', recruiter); } catch (e) { alias = null; }
+    const result = await outreach.sendOutreach({ recruiter, alias, input: {
+      toEmail: String(req.body.toEmail || '').slice(0, 254), toName: String(req.body.toName || '').slice(0, 40),
+      templateKey: 'job', role: posting.title, note: '', jobUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`,
+    } });
+    if (result.error) return fail(result.message || outreach.OUTREACH_ERRORS[result.error] || 'Something went wrong.');
+    res.redirect(`${back}?emailed=1`);
+  } catch (error) {
+    console.error('Error emailing job:', error);
     res.status(500).send('Server error');
   }
 });

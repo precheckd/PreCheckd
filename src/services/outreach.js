@@ -70,10 +70,10 @@ async function quotaFor(recruiterId) {
 
 // --- The email itself -------------------------------------------------------
 
-function buildEmail({ recruiter, template, first, role, note, messageId }) {
+function buildEmail({ recruiter, template, first, role, note, messageId, jobUrl }) {
   const name = oneLine([recruiter.firstName, recruiter.lastName].filter(Boolean).join(' '), 60);
   const company = companyOf(recruiter);
-  const intro = template.intro({ first, recruiter: name, company, role });
+  const intro = template.intro({ first, recruiter: name, company, role, jobUrl });
   const choiceUrl = outreachChoiceUrl(messageId);
   const profile = profileUrl(recruiter);
   const postal = postalAddress();
@@ -133,6 +133,7 @@ async function sendOutreach({ recruiter, alias, input }) {
 
   const template = TEMPLATES[input.templateKey];
   if (!template) return { error: 'template' };
+  if (template.needsJob && !input.jobUrl) return { error: 'template' }; // job emails only come from a posting page
 
   const toEmail = String(input.toEmail || '').trim().toLowerCase();
   if (toEmail.length > 254 || !EMAIL_RE.test(toEmail)) return { error: 'bad_email' };
@@ -174,7 +175,7 @@ async function sendOutreach({ recruiter, alias, input }) {
     role, note, subject, status: 'failed'
   });
 
-  const mail = buildEmail({ recruiter, template, first, role, note, messageId: doc._id });
+  const mail = buildEmail({ recruiter, template, first, role, note, messageId: doc._id, jobUrl: input.jobUrl });
   const fromAddress = addressFor('recruiter', alias.alias);
   const displayName = `${safeDisplayName(recruiterName, alias.alias)} via PreCheckd`;
 
