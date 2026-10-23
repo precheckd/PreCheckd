@@ -42,6 +42,7 @@ JobPosting.findById = async (id) => postings.find((p) => String(p._id) === Strin
 Recruiter.findById = async () => ({ firstName: 'Pat', lastName: 'Lee', slug: 'pat-lee', isActive: true, isSuspended: false });
 const SkillResult = require('../src/models/SkillResult');
 require('../src/models/JobApplication').findOne = async () => null;
+require('../src/models/JobApplication').find = async () => [];
 SkillResult.find = () => ({ select: async () => [] });
 require('../src/services/skills').currentSkills = async () => [];
 let candidate = null;
@@ -186,6 +187,26 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(!html.includes('Sign up to apply'));
     session = {};
     candidate = null;
+  });
+
+  await t('the job list: visitors see everything, candidates see what they qualify for first', async () => {
+    const entry = make({ arrangement: 'remote', address: '', areaRule: undefined, displayCity: '', displayState: '', areaLabel: '', title: 'Entry Remote Role', titleId: 'help-desk-technician', education: undefined, certGroups: [], skills: [{ key: 'linux', label: 'Linux', minLevel: null }] });
+    postings.push(entry);
+    let html = await (await get('/jobs')).text();
+    assert.ok(html.includes('Entry Remote Role') && html.includes('Remote Role') && html.includes('Cloud Engineer') && !html.includes('Jobs for you'));
+    candidate = new Candidate({ firstName: 'Cam', lastName: 'Doe', slug: 'cam-doe', email: 'c@example.com', phone: '+15555550100',
+      emailVerifiedAt: new Date(), isPhoneVerified: true, isIdentityVerified: true, shifts: ['daytime'] });
+    session = { candidateId: String(candidate._id) };
+    html = await (await get('/jobs')).text();
+    assert.ok(html.includes('Jobs for you (1)') && html.includes('All open jobs (') && html.includes('You qualify'));
+    assert.ok(html.includes('Entry Remote Role') && !html.includes('Cloud Engineer</div>'));
+    html = await (await get('/jobs?view=all')).text();
+    assert.ok(html.includes('To apply:') && html.includes('Needs Intermediate Linux') && html.includes('Cloud Engineer'));
+    assert.ok(html.indexOf('Entry Remote Role') < html.indexOf('Cloud Engineer'));
+    postings.splice(postings.indexOf(entry), 1);
+    html = await (await get('/jobs')).text();
+    assert.ok(html.includes('None of the open jobs match your profile yet') && html.includes('To apply:'));
+    session = {}; candidate = null;
   });
 
   await t('the sitemap lists open jobs only', async () => {

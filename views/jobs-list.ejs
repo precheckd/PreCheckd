@@ -17,12 +17,22 @@
   .jl-skills { color: #8FA6AC; font-size: 0.82rem; margin-top: 0.35rem; }
   #jl-map { height: 520px; border-radius: 8px; border: 1px solid #3B5860; position: sticky; top: 90px; }
   .jl-empty { color: #C7D1CF; background: #2A4750; border: 1px dashed #4A6F7B; border-radius: 8px; padding: 2rem; text-align: center; }
+  .jl-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .jl-tab { background: #2A4750; border: 1px solid #3B5860; color: #C7D1CF; border-radius: 999px; padding: 0.4rem 1rem; text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+  .jl-tab.is-on { background: #2ECC71; border-color: #2ECC71; color: #10261C; }
+  .jl-badge { display: inline-block; font-size: 0.75rem; font-weight: 700; border-radius: 999px; padding: 0.1rem 0.6rem; margin-left: 0.5rem; vertical-align: middle; }
+  .jl-badge.fit { background: #1E3B2C; color: #2ECC71; border: 1px solid #2ECC71; }
+  .jl-badge.applied { background: #24404A; color: #C7D1CF; border: 1px solid #4A6F7B; }
+  .jl-card.is-blocked { opacity: 0.72; }
+  .jl-why { color: #E0B341; font-size: 0.82rem; margin-top: 0.4rem; }
+  .jl-fallback { background: #3A3320; border-left: 4px solid #E0B341; color: #F2E3B3; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; }
   .jl-note { color: #8FA6AC; font-size: 0.8rem; margin-top: 0.5rem; }
 </style>
 <div class="jl-wrap"><div class="jl-inner">
   <h1>Open jobs</h1>
   <p class="jl-lead">Every applicant here has a verified identity, tested skills and verified credentials. <%= totalOpen %> open <%= totalOpen === 1 ? 'job' : 'jobs' %>.</p>
   <form class="jl-filter" method="get" action="/jobs">
+    <% if (viewer) { %><input type="hidden" name="view" value="<%= viewer.view %>"><% } %>
     <input type="search" name="q" value="<%= q %>" maxlength="100" placeholder="Title, company, skill or place" aria-label="Search jobs">
     <select name="arrangement" aria-label="Work arrangement">
       <option value="">Any arrangement</option>
@@ -30,17 +40,26 @@
     </select>
     <button type="submit">Search</button>
   </form>
+  <% if (viewer) {
+       var tabHref = function(v) { var u = '/jobs?view=' + v + (q ? '&q=' + encodeURIComponent(q) : '') + (arrangement ? '&arrangement=' + arrangement : ''); return u; }; %>
+    <% if (viewer.fallback) { %><div class="jl-fallback">None of the open jobs match your profile yet, so here is everything that is open. Each one shows what you would need.</div><% } %>
+    <div class="jl-tabs">
+      <a class="jl-tab <%= viewer.view === 'fit' ? 'is-on' : '' %>" href="<%= tabHref('fit') %>">Jobs for you (<%= viewer.counts.fit + viewer.counts.applied %>)</a>
+      <a class="jl-tab <%= viewer.view === 'all' ? 'is-on' : '' %>" href="<%= tabHref('all') %>">All open jobs (<%= viewer.counts.all %>)</a>
+    </div>
+  <% } %>
   <% if (jobs.length === 0) { %>
     <div class="jl-empty"><%= totalOpen === 0 ? 'No jobs are open right now. Check back soon.' : 'No open jobs match that search.' %></div>
   <% } else { %>
   <div class="jl-grid">
     <div>
       <% jobs.forEach(function(j) { %>
-        <a class="jl-card" href="<%= j.path %>">
-          <div class="jl-title"><%= j.title %></div>
+        <a class="jl-card <%= j.fit && j.fit.status === 'blocked' ? 'is-blocked' : '' %>" href="<%= j.path %>">
+          <div class="jl-title"><%= j.title %><% if (j.fit && j.fit.status === 'fit') { %><span class="jl-badge fit">You qualify</span><% } else if (j.fit && j.fit.status === 'applied') { %><span class="jl-badge applied">Applied</span><% } %></div>
           <div class="jl-sub"><%= j.hiringCompany %> &middot; <%= j.location %></div>
           <div class="jl-sub"><%= j.payLine %> &middot; <%= j.seniorityLabel %></div>
           <div class="jl-skills"><%= j.skills.map(function(s) { return s.label + (s.minLevel ? ' (' + s.minLevel + ')' : ''); }).join(' · ') %></div>
+          <% if (j.fit && j.fit.status === 'blocked') { %><div class="jl-why">To apply: <%= j.fit.reasons.join(' · ') %></div><% } %>
         </a>
       <% }); %>
     </div>

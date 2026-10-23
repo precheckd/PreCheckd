@@ -11,6 +11,7 @@ const { ACTIVE, HAS_APPLIED, STAGE_LABEL, applyToJob, withdrawApplication } = re
 const { notify } = require('../services/notifications');
 const { evaluate } = require('../services/applyGate');
 const { buildCandidateFacts } = require('../services/applyFacts');
+const { classify } = require('../services/jobMatch');
 const pub = require('../services/publicJob');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
@@ -26,13 +27,33 @@ router.get('/', async (req, res) => {
     const q = String(req.query.q || '').trim().slice(0, 100).toLowerCase();
     const arrangement = opt.ARRANGEMENTS.some((a) => a.code === req.query.arrangement) ? req.query.arrangement : '';
     const all = (await JobPosting.find({ status: 'open' }).sort({ createdAt: -1 })).filter((p) => pub.isOpenNow(p, now));
-    const jobs = all.map(pub.publicShape).filter((j) => (!arrangement || j.arrangement === arrangement)
-      && (!q || [j.title, j.hiringCompany, j.location, ...j.skills.map((s) => s.label)].join(' ').toLowerCase().includes(q)));
+    const matches = (j) => (!arrangement || j.arrangement === arrangement)
+      && (!q || [j.title, j.hiringCompany, j.location, ...j.skills.map((s) => s.label)].join(' ').toLowerCase().includes(q));
+    let rows = all.map((p) => ({ p, j: pub.publicShape(p) })).filter((r) => matches(r.j));
+
+    // A signed-in candidate sees the jobs they can apply to first; everyone else sees every open job.
+    const candidate = req.session && req.session.candidateId && mongoose.isValidObjectId(req.session.candidateId)
+      ? await Candidate.findById(req.session.candidateId) : null;
+    let viewer = null;
+    if (candidate) {
+      const applied = new Set((await JobApplication.find({ candidateId: candidate._id, jobId: { $in: rows.map((r) => r.p._id) }, status: { $in: HAS_APPLIED } })).map((a) => String(a.jobId)));
+      const fit = await classify(candidate, rows.map((r) => r.p), applied);
+      rows.forEach((r) => { r.j.fit = fit.get(r.j.id); });
+      const count = (st) => rows.filter((r) => r.j.fit.status === st).length;
+      const counts = { fit: count('fit'), applied: count('applied'), blocked: count('blocked'), all: rows.length };
+      let view = req.query.view === 'all' ? 'all' : 'fit';
+      const fallback = view === 'fit' && counts.fit + counts.applied === 0 && rows.length > 0;
+      if (fallback) view = 'all';
+      if (view === 'fit') rows = rows.filter((r) => r.j.fit.status !== 'blocked');
+      else rows.sort((a, b) => ({ fit: 0, applied: 1, blocked: 2 })[a.j.fit.status] - ({ fit: 0, applied: 1, blocked: 2 })[b.j.fit.status]);
+      viewer = { view, counts, fallback };
+    }
+    const jobs = rows.map((r) => r.j);
     res.render('jobs-list', {
       pageTitle: 'Open jobs | PreCheckd',
       metaDescription: 'Jobs where every applicant has a verified identity, tested skills and verified credentials.',
       canonicalUrl: pub.BASE_URL() + '/jobs',
-      jobs, q, arrangement, totalOpen: all.length, ...helpers,
+      jobs, q, arrangement, totalOpen: all.length, viewer, ...helpers,
       pins: jobs.filter((j) => j.circle).map((j) => ({ id: j.id, path: j.path, title: j.title, company: j.hiringCompany, circle: j.circle })),
     });
   } catch (error) {
