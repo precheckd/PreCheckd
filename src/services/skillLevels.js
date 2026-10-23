@@ -53,7 +53,10 @@ function weightedSkill(answers, difficultyById, ratingKeys, opts = {}) {
   const keys = new Set(ratingKeys);
   const seen = new Set();
   const qs = answers.filter((a) => {
-    if (seen.has(a.id) || !(a.tags || []).some((t) => keys.has(t))) return false;
+    if (seen.has(a.id)) return false;
+    // A ladder test covers one skill, so every question counts even when CoderByte reports no tags
+    // (custom questions come back untagged).
+    if (!opts.allQuestions && !(a.tags || []).some((t) => keys.has(t))) return false;
     seen.add(a.id);
     return true;
   });
