@@ -24,6 +24,9 @@ connectDatabase()
       if (r.status === 'completed') {
         console.log(`  overall=${r.overallScore}  minutes=${r.timeTakenMinutes}  cheating=${r.cheatingFlag}`);
         console.log('  skills: ' + r.skills.map((s) => `${s.label} ${s.score} (${s.level}${s.weighted ? ', weighted' : ''})`).join(' | '));
+        const tagCounts = {};
+        for (const a of r.answers || []) for (const t of (a.tags && a.tags.length ? a.tags : ['(none)'])) tagCounts[t] = (tagCounts[t] || 0) + 1;
+        console.log('  question tags: ' + (Object.entries(tagCounts).map(([t, n]) => `${t} x${n}`).join(', ') || 'none stored'));
       }
       if (r.lastError) console.log(`  lastError: ${r.lastError}`);
     }
