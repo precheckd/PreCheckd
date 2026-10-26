@@ -77,7 +77,7 @@
           </select>
           <select name="skills[<%= i %>][minLevel]" aria-label="Minimum level for skill <%= i + 1 %>">
             <option value="">No minimum level</option>
-            <% minLevels.forEach(function(l) { %><option value="<%= l %>" <%= sk(i, 'minLevel') === l ? 'selected' : '' %>>At least <%= l %></option><% }); %>
+            <% minLevels.forEach(function(l) { %><option value="<%= l %>" <%= sk(i, 'minLevel') === l ? 'selected' : '' %>>At least <%= levelName(l) %></option><% }); %>
           </select>
         </div>
       <% } %>

@@ -5,11 +5,12 @@ const Candidate = require('../models/Candidate');
 const SkillRequest = require('../models/SkillRequest');
 const coderbyte = require('./coderbyte');
 const { deliver } = require('./skillNotifications');
-const { levelFromTiers, tierPassed, scoreFromTiers, nextLevelProgress, TIER_ORDER, TIER_NAMES } = require('./skillLevels');
+const { levelFromTiers, tierPassed, scoreFromTiers, nextLevelProgress, isGrandmaster, TIER_ORDER, LADDER_ORDER, TIER_NAMES, EXPERT_RETAKE_DAYS } = require('./skillLevels');
 
 const RETAKE_DAYS = 60;
 const STALE_DAYS = 365;
 const DAY = 86400000;
+const retakeDays = (tier) => (tier === 'expert' ? EXPERT_RETAKE_DAYS : RETAKE_DAYS);
 const SHOWABLE = new Set(['Foundational', 'Intermediate', 'Advanced', 'Expert']);
 
 const isTitle = (a) => !!a && a.kind === 'title';
@@ -37,7 +38,7 @@ async function currentSkills(candidateId) {
       if (!x) continue;
       const entry = ladder.get(s.key) || { key: s.key, label: s.label, byTier: {} };
       const prev = entry.byTier[asm.tier];
-      if (!(prev && r.completedAt.getTime() - prev.takenAt.getTime() < RETAKE_DAYS * DAY)) {
+      if (!(prev && r.completedAt.getTime() - prev.takenAt.getTime() < retakeDays(asm.tier) * DAY)) {
         entry.byTier[asm.tier] = { right: x.right, total: x.total, takenAt: r.completedAt };
       }
       ladder.set(s.key, entry);
@@ -53,15 +54,15 @@ async function currentSkills(candidateId) {
   }
   for (const e of ladder.values()) {
     const tiers = {};
-    for (const n of TIER_ORDER) if (e.byTier[n]) tiers[n] = { right: e.byTier[n].right, total: e.byTier[n].total };
+    for (const n of LADDER_ORDER) if (e.byTier[n]) tiers[n] = { right: e.byTier[n].right, total: e.byTier[n].total };
     const level = levelFromTiers(tiers, { ladder: true });
     // Freshness follows the rung that earned the level (Basic, Intermediate, or Advanced), not the newest attempt.
-    const earning = { Foundational: 'easy', Intermediate: 'medium', Advanced: 'hard', Expert: 'hard' }[level];
-    const stamps = TIER_ORDER.filter((n) => e.byTier[n]).map((n) => e.byTier[n].takenAt.getTime());
+    const earning = { Foundational: 'easy', Intermediate: 'medium', Advanced: 'hard', Expert: 'expert' }[level];
+    const stamps = LADDER_ORDER.filter((n) => e.byTier[n]).map((n) => e.byTier[n].takenAt.getTime());
     const takenAt = new Date(earning && e.byTier[earning] ? e.byTier[earning].takenAt : Math.max(...stamps));
     const prev = out.get(e.key);
     if (prev && prev.takenAt.getTime() > takenAt.getTime()) continue; // a newer combined-test result wins
-    out.set(e.key, { key: e.key, label: e.label, level, score: scoreFromTiers(tiers), weighted: true, tiers, ladder: true,
+    out.set(e.key, { key: e.key, label: e.label, level, grandmaster: level === 'Expert' && isGrandmaster(tiers.expert), score: scoreFromTiers(tiers), weighted: true, tiers, ladder: true,
       takenAt, stale: Date.now() - takenAt.getTime() > STALE_DAYS * DAY });
   }
   return [...out.values()];
@@ -84,11 +85,12 @@ function buildLadders(cards, current) {
   return [...groups.values()].map((g) => {
     const cur = byKey.get(g.key);
     const tiers = (cur && cur.tiers) || {};
-    g.rungs.sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier));
+    g.rungs.sort((x, y) => LADDER_ORDER.indexOf(x.tier) - LADDER_ORDER.indexOf(y.tier));
     g.rungs.forEach((r, i) => {
-      r.passed = tierPassed(tiers[r.tier]);
+      r.passed = r.tier === 'expert' ? (cur && cur.level === 'Expert') : tierPassed(tiers[r.tier]);
       const below = g.rungs[i - 1];
-      r.locked = !!below && !tierPassed(tiers[below.tier]);
+      // The Expert exam opens once the candidate is at Advanced or above; the other rungs open when the one below is passed.
+      r.locked = r.tier === 'expert' ? !(cur && ['Advanced', 'Expert'].includes(cur.level)) : (!!below && !tierPassed(tiers[below.tier]));
       r.result = tiers[r.tier] || null;
     });
     g.level = cur ? cur.level : null;
@@ -96,6 +98,7 @@ function buildLadders(cards, current) {
     const prog = nextLevelProgress(g.level, tiers);
     g.progress = prog && g.rungs.some((r) => r.tier === prog.tier) ? prog : null;
     g.topLevel = g.level === 'Expert';
+    g.grandmaster = !!(cur && cur.grandmaster);
     return g;
   });
 }
@@ -146,7 +149,7 @@ async function recruiterView(candidate, opts = {}) {
   const hidden = new Set(candidate.hiddenSkillKeys || []);
   // Developing and Provisional results are never shown to recruiters; they still count as tested.
   const shown = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
-    .map((s) => ({ key: s.key, label: s.label, level: s.level, needsRetake: s.stale,
+    .map((s) => ({ key: s.key, label: s.label, level: s.level, grandmaster: !!s.grandmaster, needsRetake: s.stale,
       tiers: candidate.showSkillBreakdown && s.tiers ? s.tiers : null }));
   let titles = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
     .map(({ result, resultId, showOnProfile, ...t }) => t);
@@ -194,7 +197,7 @@ async function nextAllowed(candidateId, assessment) {
     lockUntil = Math.min(...keys.map((k) => {
       const last = counted.filter((r) => (r.skills || []).some((s) => s.key === k && s.score != null) && r.completedAt)
         .reduce((m, r) => Math.max(m, r.completedAt.getTime()), 0);
-      return last ? last + RETAKE_DAYS * DAY : 0;
+      return last ? last + retakeDays(assessment.tier) * DAY : 0;
     }));
   }
   const until = Math.max(lockUntil, cooldown);
@@ -205,7 +208,11 @@ async function nextAllowed(candidateId, assessment) {
 async function startAttempt(candidate, assessmentId) {
   const assessment = await SkillAssessment.findOne({ assessmentId, active: true });
   if (!assessment) { const e = new Error('Assessment not available'); e.code = 'not_found'; throw e; }
-  if (assessment.tier && assessment.tier !== 'easy') {
+  if (assessment.tier === 'expert') {
+    // The Expert exam opens at Advanced.
+    const cur = (await currentSkills(candidate._id)).find((s) => s.key === ((assessment.skills || [])[0] || {}).key);
+    if (!cur || !['Advanced', 'Expert'].includes(cur.level)) { const e = new Error('Reach Advanced first'); e.code = 'locked'; throw e; }
+  } else if (assessment.tier && assessment.tier !== 'easy') {
     // Each rung opens once the one below it is passed.
     const below = TIER_ORDER[TIER_ORDER.indexOf(assessment.tier) - 1];
     const cur = (await currentSkills(candidate._id)).find((s) => s.key === ((assessment.skills || [])[0] || {}).key);
@@ -227,7 +234,7 @@ async function refreshSkillSummary(candidate) {
   const all = await currentSkills(candidate._id);
   const hidden = new Set(candidate.hiddenSkillKeys || []);
   candidate.skillSummary = all.filter((s) => !hidden.has(s.key) && SHOWABLE.has(s.level))
-    .map((s) => ({ key: s.key, label: s.label, level: s.level, levelIndex: LEVEL_ORDER.indexOf(s.level) + 1, takenAt: s.takenAt }));
+    .map((s) => ({ key: s.key, label: s.label, level: s.level, grandmaster: !!s.grandmaster, levelIndex: LEVEL_ORDER.indexOf(s.level) + 1, takenAt: s.takenAt }));
   candidate.titleSummary = (await titleResults(candidate._id)).filter((t) => t.showOnProfile)
     .map((t) => ({ assessmentId: t.assessmentId, name: t.name, score: t.score, right: t.right, total: t.total, takenAt: t.takenAt }));
   await candidate.save();

@@ -273,7 +273,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
   });
 
   // ===== recruiter daily email =====
-  const monday9 = new Date('2026-10-26T13:00:00Z'); // Monday 9:00 ET
+  const monday9 = new Date('2026-12-07T14:00:00Z'); // Monday 9:00 ET (kept in the future so the test does not depend on today's date)
   const sunday9 = new Date('2026-10-25T13:00:00Z');
   const digestJob = makePosting({ title: 'Digest Job' });
   const f1 = makeCandidate('Fay'); const f2 = makeCandidate('Flo');

@@ -41,6 +41,12 @@
   .sk-more2 summary::-webkit-details-marker { display: none; }
   .sk-more2 summary::before { content: '\25B8'; display: inline-block; margin-right: 0.35rem; transition: transform 0.15s; }
   .sk-more2[open] summary::before { transform: rotate(90deg); }
+  .sk-level.master { background: #3A3320; color: #F5C542; border-color: #C9A227; }
+  .sk-level.gm { background: linear-gradient(90deg, #F5C542, #E8A317); color: #2B2100; border-color: #F5C542; }
+  .sk-rung.gold { background: linear-gradient(135deg, #3A3320, #2B2614); border: 1px solid #C9A227; }
+  .sk-rung.gold .sk-rungname { color: #F5C542; }
+  .sk-btn.gold { background: #F5C542; color: #2B2100; border-color: #F5C542; }
+  .skm-bar.gold span.on { background: #F5C542; }
   .sk-rungname { color: #F2F4F3; font-weight: 600; font-size: 0.9rem; }
   .sk-btn.sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; white-space: nowrap; }
   .sk-visbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -53,7 +59,7 @@
   <div class="sk-container">
     <a href="/candidate/<%= candidate.slug %>/edit" class="sk-back">&larr; Back to your profile</a>
     <h1>Skills &amp; Tests</h1>
-    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Expert. Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts. <a href="/skills-explained" style="color:#4ADE80;">How levels work</a></p>
+    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Master (and Grandmaster for a perfect Expert exam). Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts. <a href="/skills-explained" style="color:#4ADE80;">How levels work</a></p>
 
     <% if (finished && processing) { %>
       <div class="sk-banner ok">Thanks, you're done. We're pulling in your results now. This page refreshes on its own and usually takes a few seconds.</div>
@@ -100,7 +106,7 @@
        const curByKey = new Map(current.map((s) => [s.key, s]));
        const others = current.filter((s) => !ladderKeys.has(s.key));
        const shortDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       const tierLabel = { easy: 'Basic', medium: 'Intermediate', hard: 'Advanced' }; %>
+       const tierLabel = { easy: 'Basic', medium: 'Intermediate', hard: 'Advanced', expert: 'Expert exam' }; %>
     <% if (current.length || ladders.length) { %>
     <h2 class="sk-h2">Your skills</h2>
     <p class="sk-meta" style="margin-bottom:0.9rem;">Tick Show on the skills recruiters can see. They see how many skills you've been tested on and how many you're showing, never the hidden ones, and a hidden skill can move you into the partial-match section of their searches.</p>
@@ -113,29 +119,29 @@
           <div class="sk-name sk-big"><%= g.label %></div>
           <% if (s && s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else if (s) { %><span class="sk-meta">Not shown yet</span><% } %>
         </div>
-        <div><span class="sk-level"><%= g.level || 'Not started' %></span><% if (s && s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
+        <div><span class="sk-level <%= g.level === 'Expert' ? (g.grandmaster ? 'gm' : 'master') : '' %>"><%= g.level ? levelName(g.level, g.grandmaster) : 'Not started' %></span><% if (s && s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
         <% if (s) { %><%- include('partials/skill-meter', { sk: Object.assign({}, s, { compact: true, progressFill: g.progress ? g.progress.fill : 0 }) }) %><% } %>
         <% if (g.progress) { %>
-          <div class="sk-meta"><strong>To <%= g.progress.next %>:</strong> <% if (!g.progress.started) { %>take the <%= tierLabel[g.progress.tier] %> test<% } else if (g.progress.right >= g.progress.needed) { %>level reached<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> right needed<% } %></div>
+          <div class="sk-meta"><strong>To <%= levelName(g.progress.next) %>:</strong> <% if (!g.progress.started) { %>take the <%= tierLabel[g.progress.tier] %><%= g.progress.tier === 'expert' ? '' : ' test' %><% } else if (g.progress.right >= g.progress.needed) { %>level reached<% } else { %><%= g.progress.right %> of <%= g.progress.needed %> right needed<% } %></div>
         <% } else if (g.topLevel) { %>
           <div class="sk-meta">Top level reached</div>
         <% } %>
         <% if (canStart) { %>
           <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin-top:0.6rem;">
-            <button class="sk-btn sm" type="submit"><%= nextRung.open ? 'Continue ' : 'Start ' %><%= nextRung.tierName %></button>
+            <button class="sk-btn sm <%= nextRung.tier === 'expert' ? 'gold' : '' %>" type="submit"><%= nextRung.open ? 'Continue ' : 'Start ' %><%= nextRung.tierName %></button>
           </form>
         <% } %>
         <details class="sk-more2">
           <summary>Details</summary>
           <% g.rungs.forEach((r, i) => { %>
-          <div class="sk-rung">
+          <div class="sk-rung <%= r.tier === 'expert' ? 'gold' : '' %>">
             <div>
               <div class="sk-rungname"><%= r.tierName %></div>
               <div class="sk-meta">
                 <% if (r.held) { %>In review
                 <% } else if (r.rejected) { %>Not published<%= r.retakeOn ? ', retry ' + shortDate(r.retakeOn) : '' %>
-                <% } else if (r.locked) { %>Pass <%= g.rungs[i - 1].tierName %> first
-                <% } else if (r.passed) { %><span style="color:#4ADE80;">Passed &#10003;</span> <%= r.result.right %>/<%= r.result.total %>
+                <% } else if (r.locked) { %><%= r.tier === 'expert' ? 'Reach Advanced first' : 'Pass ' + g.rungs[i - 1].tierName + ' first' %>
+                <% } else if (r.passed) { %><span style="color:#4ADE80;">Passed &#10003;</span> <%= r.result.right %>/<%= r.result.total %><%= r.tier === 'expert' && r.result.right === r.result.total ? ' · perfect' : '' %>
                 <% } else if (r.result) { %><%= r.result.right %>/<%= r.result.total %> &middot; not passed
                 <% } else { %>Ready<% } %>
               </div>
@@ -146,7 +152,7 @@
               <button class="sk-btn sm" disabled>Retake <%= shortDate(r.retakeOn) %></button>
             <% } else { %>
               <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= r.assessment.assessmentId %>">
-                <button class="sk-btn sm" type="submit"><%= r.open ? 'Continue' : (r.passed || r.result ? 'Retake' : 'Start') %></button>
+                <button class="sk-btn sm <%= r.tier === 'expert' ? 'gold' : '' %>" type="submit"><%= r.open ? 'Continue' : (r.passed || r.result ? 'Retake' : 'Start') %></button>
               </form>
             <% } %>
           </div>
@@ -160,7 +166,7 @@
           <div class="sk-name sk-big"><%= s.label %></div>
           <% if (s.showable) { %><label class="sk-show"><input type="checkbox" name="shown" value="<%= s.key %>" form="vis-form" <%= s.shown ? 'checked' : '' %>> Show</label><% } else { %><span class="sk-meta">Not shown yet</span><% } %>
         </div>
-        <div><span class="sk-level"><%= s.level %></span><% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
+        <div><span class="sk-level <%= s.level === 'Expert' ? (s.grandmaster ? 'gm' : 'master') : '' %>"><%= levelName(s.level, s.grandmaster) %></span><% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
         <%- include('partials/skill-meter', { sk: s }) %>
         <div class="sk-meta">Taken <%= shortDate(s.takenAt) %>, <%= s.takenAt.getFullYear() %></div>
       </div>

@@ -51,7 +51,7 @@
 
   <div class="jd-card"><h2>Requirements</h2>
     <ul>
-      <% posting.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + s.minLevel : 'no minimum level' %></li><% }); %>
+      <% posting.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + levelName(s.minLevel) : 'no minimum level' %></li><% }); %>
       <% if (posting.education) { %><li>Education: <%= lbl(options.education, posting.education) %> or higher (verified)</li><% } %>
       <% posting.certGroups.forEach(function(g, i) { %><li>Certification: one of <%= g.certs.map((c) => c.label).join(', ') %> (verified, current)</li><% }); %>
       <% if (posting.clearance) { %><li>Clearance: <%= lbl(options.clearance, posting.clearance) %> or higher (reported by the candidate)</li><% } %>

@@ -33,7 +33,7 @@ const skillAssessmentSchema = new mongoose.Schema({
   kind: { type: String, enum: ['skill', 'title'], default: 'skill' },
   // Set on a 'skill' assessment that is one rung of a skill's ladder (Basic, Intermediate, Advanced): all of
   // its questions are this tier and it covers one skill. Null for a combined test.
-  tier: { type: String, enum: ['easy', 'medium', 'hard'], default: null },
+  tier: { type: String, enum: ['easy', 'medium', 'hard', 'expert'], default: null },
   publicUrl: { type: String, required: true },                  // CoderByte public_url; the invite API turns this into private links
   skills: { type: [skillSchema], default: [] },
   questions: { type: [questionSchema], default: [] },

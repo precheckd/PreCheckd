@@ -317,7 +317,7 @@ const candidateSchema = new mongoose.Schema({
   // from takenAt at search time because it changes with the calendar, not with an event.
   skillSummary: {
     type: [{
-      key: String, label: String, level: String, levelIndex: Number, takenAt: Date, _id: false
+      key: String, label: String, level: String, grandmaster: Boolean, levelIndex: Number, takenAt: Date, _id: false
     }],
     default: []
   },

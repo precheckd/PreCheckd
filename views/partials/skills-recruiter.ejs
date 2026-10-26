@@ -3,6 +3,7 @@
   .skv-label { color: #8FA6AC; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; font-size: 0.72rem; margin: 1.5rem 0 0.6rem; }
   .skv-chip { display: inline-flex; align-items: center; gap: 0.45rem; background: #1F363C; border: 1px solid #3B5860; border-radius: 999px; padding: 0.3rem 0.8rem; margin: 0 0.4rem 0.4rem 0; color: #F2F4F3; font-size: 0.88rem; }
   .skv-chip b { color: #4CC2A6; font-weight: 700; }
+  .skv-chip b.gm { color: #F5C542; }
   .skv-chip em { color: #F3C97A; font-style: normal; font-size: 0.75rem; }
   .skv-title { color: #F2F4F3; margin-bottom: 0.6rem; }
   .skv-score { color: #4CC2A6; font-weight: 700; margin-left: 0.4rem; }
@@ -17,7 +18,7 @@
 <div class="skv-label">Verified Skills</div>
 <div>
   <% skillsView.shown.forEach(function(s) { %>
-    <span class="skv-chip"><%= s.label %> <b><%= s.level %></b><% if (s.needsRetake) { %> <em>needs retake</em><% } %></span>
+    <span class="skv-chip"><%= s.label %> <b class="<%= s.grandmaster ? 'gm' : '' %>"><%= levelName(s.level, s.grandmaster) %></b><% if (s.needsRetake) { %> <em>needs retake</em><% } %></span>
   <% }); %>
 </div>
 <% const withTiers = skillsView.shown.filter(function(s) { return s.tiers; }); %>

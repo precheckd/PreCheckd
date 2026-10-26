@@ -40,6 +40,7 @@
 //   startDate:       Date | null    startFirm: boolean
 // ---------------------------------------------------------------------------------------------------
 
+const { levelName } = require('../utils/levelName');
 const SKILL_LEVELS = ['Developing', 'Foundational', 'Intermediate', 'Advanced', 'Expert'];
 const EDUCATION_LEVELS = [null, 'High school or GED', 'Associate degree', "Bachelor's degree", "Master's degree", 'Doctorate'];
 const CLEARANCE_LEVELS = [null, 'Public Trust', 'Secret', 'Top Secret', 'TS/SCI'];
@@ -80,7 +81,7 @@ function skillBlocker(req, candidate, now) {
 
   if (have && haveIdx >= need && !stale) return null; // met
 
-  const phrase = `${article(req.minLevel)} ${req.minLevel} skill score for ${label}`;
+  const phrase = `${article(levelName(req.minLevel))} ${levelName(req.minLevel)} skill score for ${label}`;
   if (have && have.reviewing) {
     return { ...base, code: 'skill_reviewing',
       message: `Your ${label} result is being reviewed. We will let you know as soon as it is done, and then you can apply for this position again.`,
@@ -102,7 +103,7 @@ function skillBlocker(req, candidate, now) {
       message: `This job requires ${phrase}. You can retake the test on ${fmtDate(have.nextAttemptAt)}, and then apply for this position again.`,
       actions: [] };
   }
-  const youAre = have && haveIdx >= 1 ? ` Your current level is ${have.level}.` : '';
+  const youAre = have && haveIdx >= 1 ? ` Your current level is ${levelName(have.level)}.` : '';
   return { ...base, code: have ? 'skill_below' : 'skill_missing',
     message: `This job requires ${phrase} which you do not currently possess.${youAre} Take the skill test, and then apply for this position again.`,
     actions: [{ kind: 'start_track', skillKey: req.key }] };

@@ -18,7 +18,7 @@ const skillScoreSchema = new mongoose.Schema({
   label: { type: String, required: true },
   score: { type: Number, default: null },    // difficulty-weighted when `weighted`, else CoderByte's plain percent; null if no data
   weighted: { type: Boolean, default: false },
-  level: { type: String, default: null },    // Foundational / Intermediate / Advanced / Expert
+  level: { type: String, default: null },    // Foundational / Intermediate / Advanced / Expert (shown as Master)
   tiers: { type: mongoose.Schema.Types.Mixed, default: null } // { easy:{right,total}, medium:{...}, hard:{...} } when weighted
 }, { _id: false });
 

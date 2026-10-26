@@ -62,7 +62,7 @@
           <div class="jl-title"><a href="<%= j.path %>"><%= j.title %></a><% if (j.fit && j.fit.status === 'fit') { %><span class="jl-badge fit">You qualify</span><% } else if (j.fit && j.fit.status === 'applied') { %><span class="jl-badge applied">Applied</span><% } %></div>
           <div class="jl-sub"><%= j.hiringCompany %> &middot; <%= j.location %></div>
           <div class="jl-sub"><%= j.payLine %> &middot; <%= j.seniorityLabel %></div>
-          <div class="jl-skills"><%= j.skills.map(function(s) { return s.label + (s.minLevel ? ' (' + s.minLevel + ')' : ''); }).join(' · ') %></div>
+          <div class="jl-skills"><%= j.skills.map(function(s) { return s.label + (s.minLevel ? ' (' + levelName(s.minLevel) + ')' : ''); }).join(' · ') %></div>
           <% if (j.fit && j.fit.status === 'blocked') { %><div class="jl-why">To apply: <% j.fit.reasons.forEach(function(r, i) { %><%= i ? ' · ' : '' %><% if (r.href) { %><a class="jl-fix" href="<%= r.href %>"><%= r.text %></a><% } else { %><%= r.text %><% } %><% }); %></div><% } %>
         </div>
       <% }); %>

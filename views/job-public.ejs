@@ -91,7 +91,7 @@
 
   <div class="jp-card"><h2>Requirements</h2>
     <ul>
-      <% j.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + s.minLevel : 'no minimum level' %></li><% }); %>
+      <% j.skills.forEach(function(s) { %><li><%= s.label %>: <%= s.minLevel ? 'at least ' + levelName(s.minLevel) : 'no minimum level' %></li><% }); %>
       <% if (j.education) { %><li>Education: <%= lbl(options.education, j.education) %> or higher (verified)</li><% } %>
       <% j.certGroups.forEach(function(g) { %><li>Certification: one of <%= g.join(', ') %> (verified, current)</li><% }); %>
       <% if (j.clearance) { %><li>Clearance: <%= lbl(options.clearance, j.clearance) %> or higher (reported by the candidate)</li><% } %>

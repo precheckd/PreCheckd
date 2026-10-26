@@ -197,14 +197,14 @@ router.get('/', async (req, res) => {
       candidatesForView.forEach((v) => {
         const doc = docByAnon.get(v.anonId);
         const summary = (doc && doc.skillSummary) || [];
-        v.skillChips = summary.map((s) => ({ label: s.label, level: s.level, stale: Date.now() - new Date(s.takenAt).getTime() > STALE_MS }));
+        v.skillChips = summary.map((s) => ({ label: s.label, level: s.level, grandmaster: !!s.grandmaster, stale: Date.now() - new Date(s.takenAt).getTime() > STALE_MS }));
         v.titleChips = ((doc && doc.titleSummary) || []).map((t) => ({
           name: t.name, score: t.score, right: t.right, total: t.total, stale: Date.now() - new Date(t.takenAt).getTime() > STALE_MS
         }));
         const ev = evalByAnon.get(v.anonId);
         if (ev) {
           v.skillSection = ev.full ? 'full' : 'partial';
-          v.skillMatch = ev.per.map((p, i) => ({ label: labelOf.get(requirements[i].key), min: requirements[i].minLevel, status: p.status, level: p.level || null }));
+          v.skillMatch = ev.per.map((p, i) => ({ label: labelOf.get(requirements[i].key), min: requirements[i].minLevel, status: p.status, level: p.level || null, grandmaster: !!p.grandmaster }));
         }
       });
     }

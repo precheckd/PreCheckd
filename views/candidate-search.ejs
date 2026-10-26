@@ -422,7 +422,7 @@
             <% skillOptions.forEach(function(o) { %><option value="<%= o.key %>" <%= r && r.key === o.key ? 'selected' : '' %>><%= o.label %></option><% }); %>
           </select>
           <select name="skillLevel" style="flex:1;min-width:160px;">
-            <% levels.forEach(function(l) { %><option value="<%= l %>" <%= r && r.minLevel === l ? 'selected' : '' %>>at least <%= l %></option><% }); %>
+            <% levels.forEach(function(l) { %><option value="<%= l %>" <%= r && r.minLevel === l ? 'selected' : '' %>>at least <%= levelName(l) %></option><% }); %>
           </select>
         </div>
       <% } %>
@@ -571,9 +571,9 @@
               <span class="card-section-label">Skill match</span>
               <% candidate.skillMatch.forEach(function(m) { %>
                 <div style="font-size:0.85rem;">
-                  <% if (m.status === 'met') { %><span style="color:#4ADE80;">&#10003;</span> <%= m.label %> <strong><%= m.level %></strong>
-                  <% } else if (m.status === 'stale') { %><span style="color:#F3C97A;">&#9888;</span> <%= m.label %> <strong><%= m.level %></strong> <em>(needs retake)</em>
-                  <% } else if (m.status === 'below') { %><span style="color:#8FA6AC;">&ndash;</span> <%= m.label %> <strong><%= m.level %></strong> <em>(below <%= m.min %>)</em>
+                  <% if (m.status === 'met') { %><span style="color:#4ADE80;">&#10003;</span> <%= m.label %> <strong><%= levelName(m.level, m.grandmaster) %></strong>
+                  <% } else if (m.status === 'stale') { %><span style="color:#F3C97A;">&#9888;</span> <%= m.label %> <strong><%= levelName(m.level, m.grandmaster) %></strong> <em>(needs retake)</em>
+                  <% } else if (m.status === 'below') { %><span style="color:#8FA6AC;">&ndash;</span> <%= m.label %> <strong><%= levelName(m.level, m.grandmaster) %></strong> <em>(below <%= levelName(m.min) %>)</em>
                   <% } else { %><span style="color:#8FA6AC;">&ndash;</span> <%= m.label %> <em>not shown</em><% } %>
                 </div>
               <% }); %>
@@ -581,7 +581,7 @@
           <% } else if (candidate.skillChips && candidate.skillChips.length) { %>
             <div class="card-certs">
               <span class="card-section-label">Verified Skills</span>
-              <%= candidate.skillChips.map(function(c) { return c.label + ' ' + c.level + (c.stale ? ' (needs retake)' : ''); }).join(', ') %>
+              <%= candidate.skillChips.map(function(c) { return c.label + ' ' + levelName(c.level, c.grandmaster) + (c.stale ? ' (needs retake)' : ''); }).join(', ') %>
             </div>
           <% } %>
 

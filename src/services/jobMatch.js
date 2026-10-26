@@ -1,5 +1,6 @@
 // Sorts the open jobs for a signed-in candidate into "you qualify" and "not yet", using the same apply gate
 // that decides whether they can apply, so the list and the apply button never disagree.
+const { levelName } = require('../utils/levelName');
 const { evaluate } = require('./applyGate');
 const { toFacts, loadSkillFacts } = require('./applyFacts');
 
@@ -8,7 +9,7 @@ function shortReason(b, posting) {
   const req = (posting.skills || []).find((s) => s.key === b.skillKey);
   const skill = req ? (req.label || req.key) : 'a skill';
   switch (b.code) {
-    case 'skill_missing': case 'skill_below': return `Needs ${req && req.minLevel ? req.minLevel + ' ' : ''}${skill}`;
+    case 'skill_missing': case 'skill_below': return `Needs ${req && req.minLevel ? levelName(req.minLevel) + ' ' : ''}${skill}`;
     case 'skill_stale': case 'skill_locked': return `Retake ${skill}`;
     case 'skill_reviewing': return `${skill} result in review`;
     case 'education_missing': case 'education_pending': return 'Needs a verified degree';

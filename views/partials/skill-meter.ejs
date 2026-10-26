@@ -8,7 +8,7 @@
       assessed: x.total >= 2, passed: x.total >= 2 && x.right / x.total >= (typeof SKILL_PASS_RATIO !== 'undefined' ? SKILL_PASS_RATIO : 0.8) - 1e-9 };
   });
 %>
-<div class="skm-bar" aria-label="<%= sk.level %>">
+<div class="skm-bar <%= idx >= 4 ? 'gold' : '' %>" aria-label="<%= levelName(sk.level, sk.grandmaster) %>">
   <% const pf = Math.max(0, Math.min(1, sk.progressFill || 0)); %>
   <% for (let i = 1; i <= 4; i++) { %>
     <% if (i === idx + 1 && pf > 0) { %><span><i style="width: <%= Math.round(pf * 100) %>%"></i></span>

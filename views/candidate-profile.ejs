@@ -34,6 +34,7 @@
   .skm-bar { display: flex; gap: 4px; margin: 0.5rem 0 0.38rem; }
   .skm-bar span { flex: 1; height: 7.5px; border-radius: 999px; background: #1F363C; }
   .skm-bar span.on { background: #2ECC71; }
+  .skm-bar.gold span.on { background: #F5C542; }
   .skm-detail { color: #C7D1CF; font-size: 0.98rem; margin-bottom: 0.2rem; }
   .skp-bar { height: 7.5px; background: #1F363C; border-radius: 999px; margin: 0.5rem 0 0.38rem; overflow: hidden; }
   .skp-bar span { display: block; height: 100%; background: #2ECC71; border-radius: 999px; }
@@ -445,7 +446,7 @@
       <% if (mySkills && mySkills.length) { %>
         <% mySkills.forEach(function(sk) { %>
           <div class="skp-row">
-            <div class="skp-top"><span class="skp-name"><%= sk.label %></span><span class="skp-level"><%= sk.level %></span></div>
+            <div class="skp-top"><span class="skp-name"><%= sk.label %></span><span class="skp-level"><%= levelName(sk.level, sk.grandmaster) %></span></div>
             <%- include('partials/skill-meter', { sk: sk }) %>
             <div class="skp-sub"><%= ['Developing', 'Provisional'].includes(sk.level) ? 'Not shown to recruiters yet' : (sk.shown ? 'Shown to recruiters' : 'Hidden from recruiters') %><%= sk.stale ? ' · needs retake' : '' %></div>
           </div>

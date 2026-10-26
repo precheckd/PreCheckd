@@ -253,7 +253,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(job.skills[0].minLevel, 'Expert');
     assert.strictEqual(apps[0].status, 'withdrawn');
     assert.strictEqual(apps[0].withdrawnBy, 'requirement_change');
-    assert.ok(apps[0].withdrawnNote.includes('Expert'), apps[0].withdrawnNote);
+    assert.ok(apps[0].withdrawnNote.includes('Master'), apps[0].withdrawnNote);
     assert.strictEqual(conns[0].fullAccessStatus, 'none');
     assert.strictEqual(trackers[0].status, 'withdrawn');
     const sent = notes.slice(before).filter((x) => x.ownerType === 'candidate');

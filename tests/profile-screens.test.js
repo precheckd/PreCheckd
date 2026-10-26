@@ -2,6 +2,7 @@
 // Renders the screens changed in Job Board step 2 with sample data, and checks the education merge
 // rules (a changed level must reset verification).
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test'; // route files load the email service
+require('../src/utils/levelName');
 const assert = require('assert');
 const path = require('path');
 const ejs = require('ejs');

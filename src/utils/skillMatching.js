@@ -31,9 +31,9 @@ function evaluate(summary, requirements, now = Date.now()) {
   const per = requirements.map((req) => {
     const s = (summary || []).find((x) => x.key === req.key);
     if (!s) return { key: req.key, status: 'missing' };
-    if (s.levelIndex < LEVELS.indexOf(req.minLevel) + 1) return { key: req.key, status: 'below', level: s.level, levelIndex: s.levelIndex };
+    if (s.levelIndex < LEVELS.indexOf(req.minLevel) + 1) return { key: req.key, status: 'below', level: s.level, grandmaster: !!s.grandmaster, levelIndex: s.levelIndex };
     const stale = now - new Date(s.takenAt).getTime() > STALE_MS;
-    return { key: req.key, status: stale ? 'stale' : 'met', level: s.level, levelIndex: s.levelIndex };
+    return { key: req.key, status: stale ? 'stale' : 'met', level: s.level, grandmaster: !!s.grandmaster, levelIndex: s.levelIndex };
   });
   const met = per.filter((p) => p.status === 'met').length;
   const stale = per.filter((p) => p.status === 'stale').length;
