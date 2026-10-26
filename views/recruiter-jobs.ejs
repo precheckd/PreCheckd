@@ -21,6 +21,8 @@
   .rj-table tbody tr:hover td { background: #2F4F59; }
   .rj-table a.rj-open { color: inherit; text-decoration: none; }
   .rj-nickcell { font-weight: 700; min-width: 9rem; }
+  .rj-apps { color: #2ECC71; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .rj-apps:hover { text-decoration: underline; }
   .rj-none { color: #6F8A91; font-weight: 400; }
   .rj-companycell { min-width: 9rem; }
   .rj-title { font-weight: 600; }
@@ -51,13 +53,14 @@
       <th class="is-sortable" data-key="nick" aria-sort="none">Nickname<span class="rj-arrow"></span></th>
       <th class="is-sortable" data-key="company" aria-sort="none">Company<span class="rj-arrow"></span></th>
       <th>Details</th>
+      <th class="is-sortable" data-key="apps" aria-sort="none">Applicants<span class="rj-arrow"></span></th>
       <th class="is-sortable" data-key="close" aria-sort="none">Applications close<span class="rj-arrow"></span></th>
       <th class="is-sortable" data-key="status" aria-sort="none">Status<span class="rj-arrow"></span></th>
     </tr></thead>
     <tbody>
     <% postings.forEach(function(p, i) { %>
       <tr data-href="/recruiter-jobs/<%= p._id %>" data-i="<%= i %>"
-          data-nick="<%= (p.nickname || '').toLowerCase() %>" data-company="<%= (p.hiringCompany || '').toLowerCase() %>" data-close="<%= new Date(p.closeDate).getTime() %>"
+          data-nick="<%= (p.nickname || '').toLowerCase() %>" data-company="<%= (p.hiringCompany || '').toLowerCase() %>" data-close="<%= new Date(p.closeDate).getTime() %>" data-apps="<%= applicantCounts[String(p._id)] || 0 %>"
           data-status="<%= ['open', 'awaiting_outcome', 'closed', 'removed'].indexOf(p.status) %>">
         <td class="rj-nickcell"><a class="rj-open" href="/recruiter-jobs/<%= p._id %>"><% if (p.nickname) { %><%= p.nickname %><% } else { %><span class="rj-none">No nickname</span><% } %></a></td>
         <td class="rj-companycell"><%= p.hiringCompany %></td>
@@ -65,6 +68,7 @@
           <div class="rj-title"><%= p.title %> <span class="rj-sub">&middot; <%= p.seniorityLabel %></span></div>
           <div class="rj-sub"><%= p.displayCity ? p.displayCity + ', ' + p.displayState : (p.areaLabel || 'Remote') %></div>
         </td>
+        <td><% const n = applicantCounts[String(p._id)] || 0; %><% if (n > 0) { %><a class="rj-apps" href="/recruiter-jobs/<%= p._id %>/applicants"><%= n %> applicant<%= n === 1 ? '' : 's' %></a><% } else { %><span class="rj-none">None yet</span><% } %></td>
         <td><%= fmt(p.closeDate) %></td>
         <td>
           <span class="rj-status <%= p.status === 'open' ? 'is-open' : '' %>"><%= statusLabel[p.status] %></span>

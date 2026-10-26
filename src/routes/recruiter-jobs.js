@@ -84,7 +84,12 @@ router.get('/', async (req, res) => {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
     const postings = await JobPosting.find({ recruiterId: recruiter._id }).sort({ createdAt: -1 });
-    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, justPosted: req.query.posted === '1',
+    // Active applicants per posting (still in play), for the Applicants column.
+    const { ACTIVE } = require('../services/jobApplications');
+    const apps = await JobApplication.find({ jobId: { $in: postings.map((p) => p._id) }, status: { $in: ACTIVE } });
+    const applicantCounts = {};
+    for (const a of apps) { const k = String(a.jobId); applicantCounts[k] = (applicantCounts[k] || 0) + 1; }
+    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, justPosted: req.query.posted === '1',
       digestOn: recruiter.applicantDigestOptOut !== true, digestSaved: req.query.digest === '1' });
   } catch (error) {
     console.error('Error loading recruiter postings:', error);
