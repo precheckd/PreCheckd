@@ -47,7 +47,10 @@
     .cprofile-main { width: 100%; }
   }
 
+  .cprofile-edit-btn { position: absolute; top: 1rem; right: 1rem; background: #2ECC71; color: #1F363C; font-weight: 700; font-size: 0.9rem; padding: 0.5rem 1.1rem; border-radius: 6px; text-decoration: none; }
+  .cprofile-edit-btn:hover { background: #4ADE80; }
   .cprofile-header {
+    position: relative;
     max-width: 900px;
     margin: 0 auto 2rem;
     background: #2A4750;
@@ -474,6 +477,7 @@
   <div class="cprofile-main">
 
   <div class="cprofile-header">
+    <a class="cprofile-edit-btn" href="/candidate/<%= candidate.slug %>/edit">Edit profile</a>
     <% if (candidate.profilePhotoUrl) { %>
       <div class="cprofile-photo">
         <img src="<%= candidate.profilePhotoUrl %>" alt="<%= candidate.firstName %> <%= candidate.lastName %>">
