@@ -4,6 +4,8 @@ const express = require('express');
 const router = express.Router();
 const Recruiter = require('../models/Recruiter');
 const JobPosting = require('../models/JobPosting');
+const JobDraft = require('../models/JobDraft');
+const MAX_DRAFTS = 10;
 const SkillAssessment = require('../models/SkillAssessment');
 const { validatePosting } = require('../services/postingValidation');
 const { buildLocation } = require('../services/postingLocation');
@@ -71,7 +73,7 @@ function formLocals(extra) {
     minLevels: opt.MIN_LEVELS, educationLevels: opt.EDUCATION_LEVELS, clearanceOptions: opt.CLEARANCE_OPTIONS,
     certOptions: CATALOG.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)),
     states: US_STATES, limits: opt.LIMITS, standard, payBench: require('../content/payBenchmarks').clientTable(),
-    isEdit: false, withdrawPrompt: 0, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
+    isEdit: false, withdrawPrompt: 0, draftId: '', startStep: 0, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
     ...extra,
   };
 }
@@ -89,7 +91,8 @@ router.get('/', async (req, res) => {
     const apps = await JobApplication.find({ jobId: { $in: postings.map((p) => p._id) }, status: { $in: ACTIVE } });
     const applicantCounts = {};
     for (const a of apps) { const k = String(a.jobId); applicantCounts[k] = (applicantCounts[k] || 0) + 1; }
-    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, justPosted: req.query.posted === '1',
+    const drafts = await JobDraft.find({ recruiterId: recruiter._id }).sort({ updatedAt: -1 });
+    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, drafts, justPosted: req.query.posted === '1',
       digestOn: recruiter.applicantDigestOptOut !== true, digestSaved: req.query.digest === '1' });
   } catch (error) {
     console.error('Error loading recruiter postings:', error);
@@ -140,9 +143,61 @@ router.get('/new', async (req, res) => {
   try {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
-    res.render('recruiter-job-form', formLocals({ errors: {}, form: {}, skillChoices: await skillOptions(), titleChoices: [] }));
+    let draft = null;
+    if (req.query.draft && /^[a-f0-9]{24}$/i.test(String(req.query.draft))) {
+      draft = await JobDraft.findOne({ _id: req.query.draft, recruiterId: recruiter._id });
+    }
+    const form = draft ? draft.form || {} : {};
+    const pickedKeys = formList(form.skills).map((x) => x && x.key).filter(Boolean);
+    res.render('recruiter-job-form', formLocals({
+      errors: {}, form, skillChoices: await skillOptions(),
+      titleChoices: pickedKeys.length ? titlesForSkills(pickedKeys).map((t) => ({ id: t.id, title: t.title })) : [],
+      draftId: draft ? String(draft._id) : '', startStep: draft ? draft.step || 0 : 0,
+    }));
   } catch (error) {
     console.error('Error loading job form:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/draft — save the form as typed so far (called when the recruiter moves to another page)
+router.post('/draft', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const { _draftId, _step, ...form } = req.body || {};
+    const picked = formList(form.skills).map((x) => x && x.key).filter(Boolean);
+    if (!picked.length && !String(form.hiringCompany || '').trim()) return res.json({ ok: true, id: null });
+    const step = Math.max(0, Math.min(20, parseInt(_step, 10) || 0));
+    const label = String(form.nickname || form.hiringCompany || (form.titleId ? String(form.titleId).replace(/-/g, ' ') : '') || 'Untitled').slice(0, 80);
+    let draft = null;
+    if (_draftId && /^[a-f0-9]{24}$/i.test(String(_draftId))) draft = await JobDraft.findOne({ _id: _draftId, recruiterId: recruiter._id });
+    if (draft) {
+      draft.form = form; draft.step = step; draft.label = label; draft.updatedAt = new Date();
+      draft.markModified('form');
+      await draft.save();
+    } else {
+      if ((await JobDraft.countDocuments({ recruiterId: recruiter._id })) >= MAX_DRAFTS) {
+        return res.status(409).json({ ok: false, error: `You can keep up to ${MAX_DRAFTS} drafts. Delete one from My job postings first.` });
+      }
+      draft = await JobDraft.create({ recruiterId: recruiter._id, form, step, label });
+    }
+    res.json({ ok: true, id: String(draft._id) });
+  } catch (error) {
+    console.error('Error saving job draft:', error);
+    res.status(500).json({ ok: false });
+  }
+});
+
+// POST /recruiter-jobs/draft/:id/delete
+router.post('/draft/:id/delete', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    if (/^[a-f0-9]{24}$/i.test(String(req.params.id))) await JobDraft.deleteOne({ _id: req.params.id, recruiterId: recruiter._id });
+    res.redirect('/recruiter-jobs');
+  } catch (error) {
+    console.error('Error deleting draft:', error);
     res.status(500).send('Server error');
   }
 });
@@ -170,13 +225,17 @@ router.post('/new', async (req, res) => {
       const pickedKeys = value.skills.map((s) => s.key);
       return res.status(400).render('recruiter-job-form', formLocals({
         errors, form: req.body, skillChoices, titleChoices: titlesForSkills(pickedKeys).map((t) => ({ id: t.id, title: t.title })),
+        draftId: String(req.body._draftId || '').replace(/[^a-f0-9]/gi, '').slice(0, 24),
       }));
     }
 
     const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location) });
+    if (/^[a-f0-9]{24}$/i.test(String(req.body._draftId || ''))) {
+      try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
+    }
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
-    sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
+    sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
     res.redirect(`/recruiter-jobs/${posting._id}?posted=1`);
   } catch (error) {
     console.error('Error creating job posting:', error);

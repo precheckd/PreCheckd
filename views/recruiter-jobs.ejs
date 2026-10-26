@@ -23,6 +23,10 @@
   .rj-nickcell { font-weight: 700; min-width: 9rem; }
   .rj-apps { color: #2ECC71; font-weight: 700; text-decoration: none; white-space: nowrap; }
   .rj-apps:hover { text-decoration: underline; }
+  .rj-drafts { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 1.25rem; color: #F2F4F3; }
+  .rj-draft { display: flex; gap: 0.8rem; align-items: center; padding: 0.45rem 0; border-top: 1px solid #34505A; margin-top: 0.45rem; }
+  .rj-draft a { color: #2ECC71; font-weight: 700; text-decoration: none; }
+  .rj-draft-del { background: none; border: 0; color: #FF8A8A; cursor: pointer; font-size: 0.85rem; }
   .rj-none { color: #6F8A91; font-weight: 400; }
   .rj-companycell { min-width: 9rem; }
   .rj-title { font-weight: 600; }
@@ -43,6 +47,18 @@
     <noscript><button type="submit">Save</button></noscript>
     <% if (digestSaved) { %><span style="color:#2ECC71;margin-left:0.6rem;">Saved.</span><% } %>
   </form>
+  <% if (typeof drafts !== 'undefined' && drafts.length) { %>
+  <div class="rj-drafts">
+    <strong>Your drafts</strong>
+    <% drafts.forEach(function(d) { %>
+      <div class="rj-draft">
+        <a href="/recruiter-jobs/new?draft=<%= d._id %>"><%= d.label || 'Untitled' %></a>
+        <span class="rj-sub">last saved <%= fmt(d.updatedAt) %></span>
+        <form method="POST" action="/recruiter-jobs/draft/<%= d._id %>/delete" style="display:inline;margin-left:auto;" onsubmit="return confirm('Delete this draft?');"><button type="submit" class="rj-draft-del">Delete</button></form>
+      </div>
+    <% }); %>
+  </div>
+  <% } %>
   <% if (postings.length === 0) { %>
     <div class="rj-empty">You have not posted a job yet. Pick the skills, set the requirements, and candidates who qualify can apply.</div>
   <% } %>

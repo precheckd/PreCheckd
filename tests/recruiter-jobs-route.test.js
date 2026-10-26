@@ -36,6 +36,14 @@ JobPosting.create = async (doc) => {
 JobPosting.find = () => { const p = Promise.resolve(saved.slice()); p.sort = async () => saved.slice(); return p; };
 JobPosting.findById = async (id) => saved.find((p) => String(p._id) === String(id)) || null;
 JobPosting.distinct = async () => ['Acme Corp', 'ACME corp', 'Acme Labs'];
+const JobDraft = require('../src/models/JobDraft');
+const drafts = [];
+JobDraft.find = () => { const p = Promise.resolve(drafts.slice()); p.sort = async () => drafts.slice(); return p; };
+JobDraft.findOne = async (q) => drafts.find((d) => String(d._id) === String(q._id) && String(d.recruiterId) === String(q.recruiterId)) || null;
+JobDraft.countDocuments = async () => drafts.length;
+JobDraft.create = async (doc) => { const d = new JobDraft(doc); drafts.push(d); return d; };
+JobDraft.deleteOne = async (q) => { const i = drafts.findIndex((d) => String(d._id) === String(q._id)); if (i >= 0) drafts.splice(i, 1); return {}; };
+Object.defineProperty(JobDraft.prototype, 'save', { value: async function () { return this; }, configurable: true, writable: true });
 JobApplication.find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 JobApplication.countDocuments = async () => 0;
 require('../src/models/ConnectionRequest').find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
@@ -321,6 +329,75 @@ const validForm = (over = {}) => ({
       assert.strictEqual((await post('/recruiter-jobs/new', validForm())).status, 403);
     }
     recruiter = original;
+  });
+
+  await t('the posted email carries a real public link, not code', async () => {
+    const logs = [];
+    const orig = console.log; console.log = (...a) => { logs.push(a.join(' ')); };
+    await post('/recruiter-jobs/new', validForm());
+    await new Promise((r) => setTimeout(r, 50));
+    console.log = orig;
+    const mail = logs.join('\n');
+    assert.ok(mail.includes('Your job is live') || mail.includes('Share the posting'));
+    assert.ok(!mail.includes('=>') && /Share the posting: <a href="https:\/\/precheckd\.com\/jobs\//.test(mail), mail.slice(mail.indexOf('Share the posting'), mail.indexOf('Share the posting') + 200));
+  });
+
+  await t('the form is a wizard: every section is a step, with a review page', async () => {
+    const html = await (await get('/recruiter-jobs/new')).text();
+    assert.strictEqual((html.match(/class="jp-card jp-step"/g) || []).length, 8);
+    assert.ok(html.includes('id="jp-nav"') && html.includes('/js/job-wizard.js') && html.includes('data-draft-url="/recruiter-jobs/draft"'));
+    assert.ok(html.indexOf('/js/job-wizard.js') < html.indexOf('/js/job-form.js'));
+  });
+
+  await t('a draft is created on the first page that has something, then updated, listed and resumed', async () => {
+    assert.deepStrictEqual(await (await post('/recruiter-jobs/draft', { _step: '1' })).json(), { ok: true, id: null });
+    assert.strictEqual(drafts.length, 0);
+    const a = await (await post('/recruiter-jobs/draft', { _step: '1', skills: [{ key: 'linux', minLevel: 'Intermediate' }], hiringCompany: 'Acme Corp' })).json();
+    assert.ok(a.ok && a.id && drafts.length === 1);
+    const b = await (await post('/recruiter-jobs/draft', { _draftId: a.id, _step: '3', skills: [{ key: 'linux', minLevel: 'Intermediate' }], hiringCompany: 'Acme Corp', nickname: 'Cloud hire' })).json();
+    assert.strictEqual(b.id, a.id);
+    assert.strictEqual(drafts.length, 1);
+    assert.strictEqual(drafts[0].step, 3);
+    assert.strictEqual(drafts[0].label, 'Cloud hire');
+    const list = await (await get('/recruiter-jobs')).text();
+    assert.ok(list.includes('Your drafts') && list.includes('Cloud hire') && list.includes(`/recruiter-jobs/new?draft=${a.id}`));
+    const resumed = await (await get(`/recruiter-jobs/new?draft=${a.id}`)).text();
+    assert.ok(resumed.includes('value="Acme Corp"') && resumed.includes('data-start="3"') && resumed.includes(`name="_draftId" value="${a.id}"`));
+  });
+
+  await t("someone else's draft id opens a blank form and cannot be overwritten", async () => {
+    const other = '507f1f77bcf86cd799439099';
+    drafts[0].recruiterId = other;
+    const html = await (await get(`/recruiter-jobs/new?draft=${drafts[0]._id}`)).text();
+    assert.ok(!html.includes('value="Acme Corp"'));
+    const r = await (await post('/recruiter-jobs/draft', { _draftId: String(drafts[0]._id), _step: '2', hiringCompany: 'Hijack' })).json();
+    assert.ok(r.ok && drafts.length === 2 && drafts[0].form.hiringCompany === 'Acme Corp');
+    drafts.splice(1, 1);
+    drafts[0].recruiterId = '507f1f77bcf86cd799439011';
+  });
+
+  await t('posting the job removes its draft; a draft can be deleted', async () => {
+    const id = String(drafts[0]._id);
+    const res = await post('/recruiter-jobs/new', { ...validForm(), _draftId: id });
+    assert.strictEqual(res.status, 302);
+    assert.strictEqual(drafts.length, 0);
+    const d = await (await post('/recruiter-jobs/draft', { _step: '0', hiringCompany: 'Zed' })).json();
+    assert.strictEqual(drafts.length, 1);
+    assert.strictEqual((await post(`/recruiter-jobs/draft/${d.id}/delete`, {})).status, 302);
+    assert.strictEqual(drafts.length, 0);
+  });
+
+  await t('a failed post keeps the draft id and the draft limit is 10', async () => {
+    const d = await (await post('/recruiter-jobs/draft', { _step: '0', hiringCompany: 'Keep' })).json();
+    const bad = await post('/recruiter-jobs/new', { ...validForm({ hiringCompany: '' }), _draftId: d.id });
+    assert.strictEqual(bad.status, 400);
+    assert.ok((await bad.text()).includes(`name="_draftId" value="${d.id}"`));
+    assert.strictEqual(drafts.length, 1);
+    for (let i = 0; i < 9; i++) await post('/recruiter-jobs/draft', { _step: '0', hiringCompany: 'D' + i });
+    assert.strictEqual(drafts.length, 10);
+    const over = await post('/recruiter-jobs/draft', { _step: '0', hiringCompany: 'Eleven' });
+    assert.strictEqual(over.status, 409);
+    drafts.length = 0;
   });
 
   server.close();
