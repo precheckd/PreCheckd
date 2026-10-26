@@ -322,6 +322,11 @@ const candidateSchema = new mongoose.Schema({
     default: []
   },
 
+  // Skills whose level the candidate chose to make public at /achievements/:slug/:key (opt-in, one by one),
+  // and how many visits arrived through a shared link (?ref=share), owner visits excluded.
+  sharedSkills: { type: [String], default: [] },
+  achievementVisits: { type: Number, default: 0 },
+
   // Job-title test results the candidate chose to show recruiters (exact score, so recruiters can
   // filter on it). Kept in sync by refreshSkillSummary; staleness is computed from takenAt at search time.
   titleSummary: {

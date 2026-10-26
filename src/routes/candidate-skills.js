@@ -6,6 +6,7 @@ const SkillResult = require('../models/SkillResult');
 const skills = require('../services/skills');
 const SkillRequest = require('../models/SkillRequest');
 const testRequests = require('../services/testRequests');
+const ach = require('../services/achievements');
 
 // CoderByte's "post assessment redirect URL" points here. The candidate's session cookie is
 // what identifies them (CoderByte passes nothing we need), so a logged-out visitor goes to login.
@@ -68,7 +69,15 @@ router.get('/:slug/skills', async (req, res) => {
       titles,
       testRequests: await testRequests.pendingFor(candidate),
       requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
-      current: current.map((s) => ({ ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level) })),
+      current: current.map((s) => {
+        const shared = (candidate.sharedSkills || []).includes(s.key) && ach.SHAREABLE.has(s.level);
+        const v = shared ? ach.publicView(candidate, s.key) : null;
+        const url = ach.urlFor(candidate, s.key);
+        return { ...s, shown: !hidden.has(s.key), showable: skills.SHOWABLE.has(s.level),
+          shareable: ach.SHAREABLE.has(s.level), shared: !!v, shareUrl: url,
+          links: v ? ach.shareLinks(v, url) : null, liProfile: v ? ach.linkedinProfileLink(v, url) : null };
+      }),
+      achievementVisits: candidate.achievementVisits || 0,
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
       notice: req.query.notice || null,
       title: 'Skills | PreCheckd'
@@ -135,6 +144,20 @@ router.post('/:slug/skills/visibility', async (req, res) => {
     res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
   } catch (e) {
     console.error('Error saving skill visibility:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+// Opt in or out of sharing one skill level publicly. Nothing is posted anywhere by us.
+router.post('/:slug/skills/share', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    const key = String(req.body.key || '').slice(0, 80);
+    await ach.setShared(candidate, key, req.body.on === '1');
+    res.redirect(`/candidate/${candidate.slug}/skills#share-${encodeURIComponent(key)}`);
+  } catch (e) {
+    console.error('Error saving share choice:', e);
     res.status(500).send('Server error');
   }
 });

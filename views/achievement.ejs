@@ -1,0 +1,21 @@
+<style>
+  .ach-wrap { flex: 1; min-height: 70vh; background: #1F363C; padding: 3rem 1.5rem; display: flex; justify-content: center; align-items: flex-start; }
+  .ach-card { width: 100%; max-width: 640px; background: #263F46; border: 1px solid #3A5560; border-radius: 14px; padding: 2rem 1.75rem; text-align: center; }
+  .ach-img { width: 100%; border-radius: 10px; margin-bottom: 1.5rem; display: block; }
+  .ach-card h1 { font-size: 1.5rem; color: #F2F4F3; margin-bottom: 0.5rem; line-height: 1.3; }
+  .ach-sub { color: #B8C4C2; font-size: 0.95rem; line-height: 1.55; margin-bottom: 1rem; }
+  .ach-stale { display: inline-block; background: #3A3320; color: #F5C542; border: 1px solid #C9A227; border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.8rem; margin-bottom: 1rem; }
+  .ach-cta { display: inline-block; background: #4ADE80; color: #0F2A1A; font-weight: 700; padding: 0.7rem 1.4rem; border-radius: 8px; text-decoration: none; margin-top: 0.5rem; }
+  .ach-foot { color: #8FA3A0; font-size: 0.8rem; margin-top: 1.25rem; }
+</style>
+<div class="ach-wrap">
+  <div class="ach-card">
+    <img class="ach-img" src="/img/share/<%= v.card %>.png" alt="<%= v.level %> badge">
+    <h1><%= v.name %> earned <%= v.level %> in <%= v.skill %></h1>
+    <p class="ach-sub">Verified skill assessment taken on PreCheckd<% if (v.takenAt) { %>, <%= new Date(v.takenAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %><% } %>.
+    PreCheckd verifies identity first, so this result belongs to a real person.</p>
+    <% if (v.stale) { %><div class="ach-stale">Result is over a year old and needs a retake</div><br><% } %>
+    <a class="ach-cta" href="/?ref=achievement">See how PreCheckd works</a>
+    <p class="ach-foot">PreCheckd &middot; verified recruiters and candidates</p>
+  </div>
+</div>

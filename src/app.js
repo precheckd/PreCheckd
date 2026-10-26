@@ -234,6 +234,7 @@ app.get('/founding-recruiter', (req, res) => {
 });
 
 app.use('/verify', require('./routes/verify'));
+app.use('/achievements', require('./routes/achievements'));
 app.use('/email', require('./routes/email-preferences'));
 app.use('/recruiter', recruiterProfileRoutes);
 app.use('/candidate', candidateProfileRoutes);

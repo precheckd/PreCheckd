@@ -1,0 +1,21 @@
+<div class="sk-share" id="share-<%= s.key %>">
+  <% if (!s.shared) { %>
+    <form method="POST" action="/candidate/<%= candidate.slug %>/skills/share">
+      <input type="hidden" name="key" value="<%= s.key %>"><input type="hidden" name="on" value="1">
+      <button class="sb" type="submit">Share this achievement</button>
+      <span class="sk-meta">Optional. Creates a public page with your first name and last initial.</span>
+    </form>
+  <% } else { %>
+    <div class="sk-meta" style="margin-bottom:0.2rem;"><strong>Shared.</strong> Your page: <a href="<%= s.shareUrl %>" style="color:#4ADE80;">view it</a>. Each button opens that site's own share window; nothing posts until you confirm there.</div>
+    <a class="sb" target="_blank" rel="noopener" href="<%= s.links.linkedin %>">LinkedIn</a>
+    <a class="sb" target="_blank" rel="noopener" href="<%= s.links.x %>">X</a>
+    <a class="sb" target="_blank" rel="noopener" href="<%= s.links.facebook %>">Facebook</a>
+    <a class="sb" href="<%= s.links.email %>">Email</a>
+    <button class="sb" type="button" data-copy="<%= s.links.copy %>" onclick="navigator.clipboard.writeText(this.dataset.copy).then(()=>{this.textContent='Copied'})">Copy link</button>
+    <a class="sb" target="_blank" rel="noopener" href="<%= s.liProfile %>">Add to LinkedIn profile</a>
+    <form method="POST" action="/candidate/<%= candidate.slug %>/skills/share" style="display:inline;">
+      <input type="hidden" name="key" value="<%= s.key %>"><input type="hidden" name="on" value="0">
+      <button class="sb" type="submit">Stop sharing</button>
+    </form>
+  <% } %>
+</div>

@@ -47,6 +47,9 @@
   .sk-rung.gold .sk-rungname { color: #F5C542; }
   .sk-btn.gold { background: #F5C542; color: #2B2100; border-color: #F5C542; }
   .skm-bar.gold span.on { background: #F5C542; }
+  .sk-share { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid #3A5560; font-size: 0.85rem; }
+  .sk-share a.sb, .sk-share button.sb { display: inline-block; background: #1F363C; color: #F2F4F3; border: 1px solid #3A5560; border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.8rem; text-decoration: none; cursor: pointer; margin: 0.2rem 0.2rem 0 0; font-family: inherit; }
+  .sk-share a.sb:hover, .sk-share button.sb:hover { border-color: #4ADE80; }
   .sk-rungname { color: #F2F4F3; font-weight: 600; font-size: 0.9rem; }
   .sk-btn.sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; white-space: nowrap; }
   .sk-visbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -109,6 +112,7 @@
        const tierLabel = { easy: 'Basic', medium: 'Intermediate', hard: 'Advanced', expert: 'Expert exam' }; %>
     <% if (current.length || ladders.length) { %>
     <h2 class="sk-h2">Your skills</h2>
+    <% if (achievementVisits > 0) { %><p class="sk-meta" style="margin-bottom:0.5rem;"><%= achievementVisits %> visit<%= achievementVisits === 1 ? '' : 's' %> so far from your shared achievements.</p><% } %>
     <p class="sk-meta" style="margin-bottom:0.9rem;">Tick Show on the skills recruiters can see. They see how many skills you've been tested on and how many you're showing, never the hidden ones, and a hidden skill can move you into the partial-match section of their searches.</p>
     <div class="sk-grid">
       <% ladders.forEach((g) => { const s = curByKey.get(g.key);
@@ -126,6 +130,7 @@
         <% } else if (g.topLevel) { %>
           <div class="sk-meta">Top level reached</div>
         <% } %>
+        <% if (s && s.shareable) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
         <% if (canStart) { %>
           <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin-top:0.6rem;">
             <button class="sk-btn sm <%= nextRung.tier === 'expert' ? 'gold' : '' %>" type="submit"><%= nextRung.open ? 'Continue ' : 'Start ' %><%= nextRung.tierName %></button>
@@ -169,6 +174,7 @@
         <div><span class="sk-level <%= s.level === 'Expert' ? (s.grandmaster ? 'gm' : 'master') : '' %>"><%= levelName(s.level, s.grandmaster) %></span><% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
         <%- include('partials/skill-meter', { sk: s }) %>
         <div class="sk-meta">Taken <%= shortDate(s.takenAt) %>, <%= s.takenAt.getFullYear() %></div>
+        <% if (s.shareable) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
       </div>
       <% }) %>
     </div>
