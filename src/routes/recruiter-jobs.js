@@ -91,7 +91,9 @@ router.get('/', async (req, res) => {
     const apps = await JobApplication.find({ jobId: { $in: postings.map((p) => p._id) }, status: { $in: ACTIVE } });
     const applicantCounts = {};
     for (const a of apps) { const k = String(a.jobId); applicantCounts[k] = (applicantCounts[k] || 0) + 1; }
-    const drafts = await JobDraft.find({ recruiterId: recruiter._id }).sort({ updatedAt: -1 });
+    // Drafts are a convenience: if they cannot be loaded the list of postings must still show.
+    let drafts = [];
+    try { drafts = await JobDraft.find({ recruiterId: recruiter._id }).sort({ updatedAt: -1 }); } catch (e) { console.error('Could not load drafts:', e.message); }
     res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, drafts, justPosted: req.query.posted === '1',
       digestOn: recruiter.applicantDigestOptOut !== true, digestSaved: req.query.digest === '1' });
   } catch (error) {

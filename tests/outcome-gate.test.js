@@ -12,6 +12,8 @@ const expressLayouts = require('express-ejs-layouts');
 const qs = require('qs');
 
 const JobPosting = require('../src/models/JobPosting');
+const JobDraft = require('../src/models/JobDraft');
+JobDraft.find = () => { const p = Promise.resolve([]); p.sort = async () => []; return p; };
 const JobApplication = require('../src/models/JobApplication');
 const JobNotice = require('../src/models/JobNotice');
 const ConnectionRequest = require('../src/models/ConnectionRequest');
