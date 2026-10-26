@@ -35,7 +35,11 @@ async function sendEmail(rawParams) {
     return { mock: true };
   }
 
-  return resend.emails.send(params);
+  const result = await resend.emails.send(params);
+  // Resend reports most failures (bad key, unverified domain, blocked address) as { error } instead of throwing,
+  // so without this line a failed send is invisible. Log who and what, never the body.
+  if (result && result.error) console.error(`[EMAIL FAILED] To: ${params.to} | Subject: ${params.subject} | ${result.error.name || ''} ${result.error.message || ''}`);
+  return result;
 }
 
 function generateVerificationToken() {
