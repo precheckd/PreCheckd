@@ -207,6 +207,25 @@
         gap: 0.4rem 1.25rem;
       }
     }
+
+    /* Wide screens: video on the left, the two paths stacked on the right, so everything fits on one screen. */
+    @media (min-width: 981px) {
+      main { padding: 2rem 1.5rem; }
+      .hero-title { font-size: 2.4rem; margin-bottom: 0.5rem; }
+      .hero-subtitle { margin-bottom: 1.5rem; }
+      .ticker { margin: 0 auto 1.5rem; }
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.5rem; align-items: stretch; text-align: left; }
+      .hero-grid .hero-video { max-width: none; margin: 0; align-self: center; }
+      .hero-grid .path-container { display: flex; flex-direction: column; gap: 1rem; margin-top: 0; }
+      .hero-grid .path-card { flex: 1; padding: 1.1rem 1.4rem; }
+      .hero-grid .path-icon { width: 30px; height: 30px; margin-bottom: 0.4rem; }
+      .hero-grid .path-title { font-size: 1.3rem; margin-bottom: 0.35rem; }
+      .hero-grid .path-description { font-size: 0.9rem; line-height: 1.45; margin-bottom: 0.7rem; }
+      .hero-grid .path-benefits { display: flex; flex-wrap: wrap; gap: 0.1rem 1rem; margin-bottom: 0.8rem; }
+      .hero-grid .benefit-item { margin-bottom: 0; font-size: 0.82rem; }
+      .hero-grid .benefit-icon { font-size: 1rem; margin-right: 0.35rem; }
+      .hero-grid .btn-large { padding: 0.55rem 1.2rem; font-size: 0.95rem; align-self: flex-start; }
+    }
   </style>
 
   <div class="hero-container">
@@ -222,6 +241,7 @@
       </div>
     <% } %>
 
+    <div class="hero-grid">
     <div class="hero-video">
       <video id="hero-video" controls preload="metadata" playsinline poster="/img/home-video-poster.png" aria-label="What PreCheckd is, in 75 seconds">
         <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/precheckd-intro.mp4.mp4" type="video/mp4">
@@ -290,5 +310,6 @@
         </div>
         <button class="btn btn-primary btn-large">Get Started</button>
       </a>
+    </div>
     </div>
   </div>
