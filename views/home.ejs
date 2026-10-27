@@ -216,9 +216,10 @@
       .ticker { margin: 0 auto 1.5rem; }
       .hero-container { max-width: 1400px; }
       .hero-grid { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 1.5rem; align-items: stretch; text-align: left; }
-      /* The video fills the same height as the two stacked cards (a few percent of the picture may be trimmed). */
-      .hero-grid .hero-video { max-width: none; margin: 0; align-self: stretch; display: flex; }
-      .hero-grid .hero-video video { height: 100%; aspect-ratio: auto; object-fit: cover; }
+      /* The video box is as tall as the two stacked cards. The picture is never cropped: any spare space
+         above and below is filled with the video's own background colors. */
+      .hero-grid .hero-video { max-width: none; margin: 0; align-self: stretch; display: flex; border-radius: 12px; overflow: hidden; border: 1px solid #3B5860; background: linear-gradient(to right, #1a2f35, #1f3d3d); }
+      .hero-grid .hero-video video { height: 100%; aspect-ratio: auto; object-fit: contain; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
       .hero-grid .path-container { display: flex; flex-direction: column; gap: 1rem; margin-top: 0; }
       .hero-grid .path-card { flex: 1; padding: 1.1rem 1.4rem; }
       .hero-grid .path-icon { width: 30px; height: 30px; margin-bottom: 0.4rem; }
