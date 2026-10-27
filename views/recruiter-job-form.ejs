@@ -313,8 +313,10 @@
       </label>
       <% if (errors.education) { %><div class="jp-err"><%= errors.education %></div><% } %>
 
-      <span class="jp-label">Certifications (optional)</span>
-      <p class="jp-muted" style="margin-top:0;">Up to 3 groups. A candidate needs at least ONE certification from EACH group. The job accepts exactly what you list, nothing is treated as equivalent.</p>
+      <% const certCount = groups.reduce(function(n, g) { return n + g.filter(Boolean).length; }, 0); %>
+      <details class="jp-cert-details" <%= (certCount > 0 || errors.certGroups) ? 'open' : '' %> style="margin:0 0 0.8rem;">
+      <summary style="cursor:pointer;font-weight:600;padding:0.4rem 0;">Certifications (optional)<% if (certCount > 0) { %> <span class="jp-muted">&mdash; <%= certCount %> selected</span><% } %></summary>
+      <p class="jp-muted" style="margin-top:0.3rem;">Up to 3 groups. A candidate needs at least ONE certification from EACH group. The job accepts exactly what you list, nothing is treated as equivalent.</p>
       <% for (let g = 0; g < 3; g++) { const gv = groups[g] || []; %>
         <fieldset style="border:1px solid #3B5860;border-radius:6px;padding:0.7rem;margin:0 0 0.6rem;">
           <legend class="jp-muted" style="padding:0 0.4rem;">Group <%= g + 1 %> &mdash; any one of these</legend>
@@ -329,6 +331,7 @@
         </fieldset>
       <% } %>
       <% if (errors.certGroups) { %><div class="jp-err"><%= errors.certGroups %></div><% } %>
+      </details>
 
       <label class="jp-field">Security clearance
         <select name="clearance"><option value="">None required</option>
