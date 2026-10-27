@@ -45,7 +45,7 @@
 
     .hero-video { max-width: 880px; margin: 0 auto 2.5rem; position: relative; }
     .hero-video-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; padding: 0; border-radius: 12px; }
-    .hero-video-play span { width: 84px; height: 84px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.45); transition: transform 0.15s; }
+    .hero-video-play span { position: absolute; left: calc(25% - 42px); top: calc(72% - 42px); width: 84px; height: 84px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.45); transition: transform 0.15s; }
     .hero-video-play:hover span, .hero-video-play:focus-visible span { transform: scale(1.08); }
     .hero-video-play svg { margin-left: 5px; }
     .hero-video.is-playing .hero-video-play { display: none; }
