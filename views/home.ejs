@@ -43,6 +43,9 @@
       line-height: 1.6;
     }
 
+    .hero-video { max-width: 880px; margin: 0 auto 2.5rem; }
+    .hero-video video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #0E1B1E; border: 1px solid #3B5860; box-shadow: 0 4px 16px rgba(0,0,0,0.35); display: block; }
+
     .path-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -213,6 +216,13 @@
         <% }); %>
       </div>
     <% } %>
+
+    <div class="hero-video">
+      <video controls preload="metadata" playsinline aria-label="What PreCheckd is, in 75 seconds">
+        <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/precheckd-intro.mp4.mp4" type="video/mp4">
+        Your browser can't play this video.
+      </video>
+    </div>
 
     <div class="path-container">
       <!-- Recruiter Path -->
