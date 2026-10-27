@@ -214,8 +214,11 @@
       .hero-title { font-size: 2.4rem; margin-bottom: 0.5rem; }
       .hero-subtitle { margin-bottom: 1.5rem; }
       .ticker { margin: 0 auto 1.5rem; }
-      .hero-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.5rem; align-items: stretch; text-align: left; }
-      .hero-grid .hero-video { max-width: none; margin: 0; align-self: center; }
+      .hero-container { max-width: 1400px; }
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 1.5rem; align-items: stretch; text-align: left; }
+      /* The video fills the same height as the two stacked cards (a few percent of the picture may be trimmed). */
+      .hero-grid .hero-video { max-width: none; margin: 0; align-self: stretch; display: flex; }
+      .hero-grid .hero-video video { height: 100%; aspect-ratio: auto; object-fit: cover; }
       .hero-grid .path-container { display: flex; flex-direction: column; gap: 1rem; margin-top: 0; }
       .hero-grid .path-card { flex: 1; padding: 1.1rem 1.4rem; }
       .hero-grid .path-icon { width: 30px; height: 30px; margin-bottom: 0.4rem; }
