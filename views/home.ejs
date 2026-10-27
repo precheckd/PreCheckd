@@ -43,7 +43,12 @@
       line-height: 1.6;
     }
 
-    .hero-video { max-width: 880px; margin: 0 auto 2.5rem; }
+    .hero-video { max-width: 880px; margin: 0 auto 2.5rem; position: relative; }
+    .hero-video-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; padding: 0; border-radius: 12px; }
+    .hero-video-play span { width: 84px; height: 84px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.45); transition: transform 0.15s; }
+    .hero-video-play:hover span, .hero-video-play:focus-visible span { transform: scale(1.08); }
+    .hero-video-play svg { margin-left: 5px; }
+    .hero-video.is-playing .hero-video-play { display: none; }
     .hero-video video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #0E1B1E; border: 1px solid #3B5860; box-shadow: 0 4px 16px rgba(0,0,0,0.35); display: block; }
 
     .path-container {
@@ -218,11 +223,24 @@
     <% } %>
 
     <div class="hero-video">
-      <video controls preload="metadata" playsinline aria-label="What PreCheckd is, in 75 seconds">
+      <video id="hero-video" controls preload="metadata" playsinline poster="/img/home-video-poster.png" aria-label="What PreCheckd is, in 75 seconds">
         <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/precheckd-intro.mp4.mp4" type="video/mp4">
         Your browser can't play this video.
       </video>
+      <button type="button" class="hero-video-play" id="hero-video-play" aria-label="Play the video">
+        <span><svg width="34" height="34" viewBox="0 0 24 24" fill="#10261C"><path d="M8 5v14l11-7z"/></svg></span>
+      </button>
     </div>
+    <script>
+      (function () {
+        var v = document.getElementById('hero-video'), b = document.getElementById('hero-video-play');
+        if (!v || !b) return;
+        var box = v.parentNode;
+        b.addEventListener('click', function () { v.play(); });
+        v.addEventListener('play', function () { box.classList.add('is-playing'); });
+        v.addEventListener('ended', function () { box.classList.remove('is-playing'); });
+      })();
+    </script>
 
     <div class="path-container">
       <!-- Recruiter Path -->
