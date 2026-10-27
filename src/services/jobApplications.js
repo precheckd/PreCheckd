@@ -122,7 +122,12 @@ async function moveStage(app, posting, stage, { reason } = {}, now = new Date())
   const what = stage === 'rejected' ? `Update on ${posting.title}: ${rejection.candidateText}`
     : stage === 'hired' ? `Congratulations! You were hired for ${posting.title} at ${posting.hiringCompany}.`
     : `Your application for ${posting.title} moved to ${STAGE_LABEL[stage]}.`;
-  await notify('candidate', app.candidateId, 'job_stage', what.slice(0, 200), `/jobs/${posting._id}`);
+  let link = `/jobs/${posting._id}`;
+  if (stage === 'hired') {
+    // The bell takes a hired candidate to the optional "share your news" page.
+    try { const c = await require('../models/Candidate').findById(app.candidateId); if (c && c.slug) link = `/candidate/${c.slug}/share-hire/${app._id}`; } catch (e) { /* the job link still works */ }
+  }
+  await notify('candidate', app.candidateId, 'job_stage', what.slice(0, 200), link);
   return { ok: true };
 }
 

@@ -326,6 +326,12 @@ const candidateSchema = new mongoose.Schema({
   // and how many visits arrived through a shared link (?ref=share), owner visits excluded.
   sharedSkills: { type: [String], default: [] },
   achievementVisits: { type: Number, default: 0 },
+  // "I got a job" shares (opt-in, one per hire). The company name and hashtag are included only if the
+  // candidate chose them; otherwise the public page says only that they were hired through PreCheckd.
+  sharedHires: {
+    type: [{ applicationId: mongoose.Schema.Types.ObjectId, company: { type: String, default: '', maxlength: 100 }, hashtag: { type: String, default: '', maxlength: 31 }, at: Date, _id: false }],
+    default: []
+  },
 
   // Job-title test results the candidate chose to show recruiters (exact score, so recruiters can
   // filter on it). Kept in sync by refreshSkillSummary; staleness is computed from takenAt at search time.

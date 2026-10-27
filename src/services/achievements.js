@@ -66,4 +66,42 @@ async function setShared(candidate, key, on) {
   return true;
 }
 
-module.exports = { publicView, shareLinks, linkedinProfileLink, setShared, urlFor, baseUrl, cardFile, SHAREABLE };
+// ---- "I got a job" shares ----
+function cleanHashtag(raw) {
+  const t = String(raw || '').replace(/^#+/, '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 30);
+  return t ? '#' + t : '';
+}
+function hireUrlFor(candidate, appId) { return `${baseUrl()}/achievements/${candidate.slug}/hire/${appId}`; }
+
+function hireView(candidate, appId, now = Date.now()) {
+  const h = (candidate && candidate.sharedHires || []).find((x) => String(x.applicationId) === String(appId));
+  if (!h) return null;
+  const last = (candidate.lastName || '').trim().charAt(0).toUpperCase();
+  const name = last ? `${candidate.firstName} ${last}.` : candidate.firstName;
+  return {
+    kind: 'hire', name, company: h.company || '', hashtag: h.hashtag || '', takenAt: h.at, card: 'hired', stale: false,
+    headline: `${name} got a new job${h.company ? ' at ' + h.company : ''}, hired through PreCheckd`
+  };
+}
+
+function hireShareLinks(v, url) {
+  const text = `I got a new job${v.company ? ' at ' + v.company : ''}, hired through PreCheckd.${v.hashtag ? ' ' + v.hashtag : ''}`;
+  const u = encodeURIComponent(`${url}?ref=share`);
+  return {
+    text,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
+    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${u}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
+    email: `mailto:?subject=${encodeURIComponent('I got a new job')}&body=${encodeURIComponent(`${text}\n\n${url}?ref=share`)}`,
+    copy: `${url}?ref=share`
+  };
+}
+
+async function setHireShare(candidate, appId, { on, includeCompany, company, hashtag }) {
+  const list = (candidate.sharedHires || []).filter((x) => String(x.applicationId) !== String(appId));
+  if (on) list.push({ applicationId: appId, company: includeCompany ? String(company || '').trim().slice(0, 100) : '', hashtag: cleanHashtag(hashtag), at: new Date() });
+  candidate.sharedHires = list;
+  await candidate.save();
+}
+
+module.exports = { cleanHashtag, hireUrlFor, hireView, hireShareLinks, setHireShare, publicView, shareLinks, linkedinProfileLink, setShared, urlFor, baseUrl, cardFile, SHAREABLE };

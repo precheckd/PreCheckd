@@ -10,10 +10,16 @@
 </style>
 <div class="ach-wrap">
   <div class="ach-card">
-    <img class="ach-img" src="/img/share/<%= v.card %>.png" alt="<%= v.level %> badge">
+    <img class="ach-img" src="/img/share/<%= v.card %>.png" alt="PreCheckd badge">
+    <% if (v.kind === 'hire') { %>
+    <h1><%= v.name %> got a new job<% if (v.company) { %> at <%= v.company %><% } %></h1>
+    <p class="ach-sub">Hired through PreCheckd<% if (v.takenAt) { %>, <%= new Date(v.takenAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %><% } %>.
+    PreCheckd verifies recruiters and candidates before they talk, so a real person met a real recruiter.</p>
+    <% } else { %>
     <h1><%= v.name %> earned <%= v.level %> in <%= v.skill %></h1>
     <p class="ach-sub">Verified skill assessment taken on PreCheckd<% if (v.takenAt) { %>, <%= new Date(v.takenAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %><% } %>.
     PreCheckd verifies identity first, so this result belongs to a real person.</p>
+    <% } %>
     <% if (v.stale) { %><div class="ach-stale">Result is over a year old and needs a retake</div><br><% } %>
     <a class="ach-cta" href="/?ref=achievement">See how PreCheckd works</a>
     <p class="ach-foot">PreCheckd &middot; verified recruiters and candidates</p>

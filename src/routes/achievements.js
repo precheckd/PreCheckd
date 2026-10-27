@@ -27,4 +27,25 @@ router.get('/:slug/:key', async (req, res) => {
   }
 });
 
+// Public page for a shared "I got a job" announcement. Shows the company only if the candidate chose to.
+router.get('/:slug/hire/:appId', async (req, res) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(String(req.params.appId))) return res.status(404).render('error', { title: 'Not found', message: 'This announcement is not being shared.' });
+    const candidate = await Candidate.findOne({ slug: req.params.slug });
+    const v = ach.hireView(candidate, req.params.appId);
+    if (!v) return res.status(404).render('error', { title: 'Not found', message: 'This announcement is not being shared.' });
+    const owner = req.session.candidateId && req.session.candidateId === candidate._id.toString();
+    if (req.query.ref === 'share' && !owner) Candidate.updateOne({ _id: candidate._id }, { $inc: { achievementVisits: 1 } }).catch(() => {});
+    const url = ach.hireUrlFor(candidate, req.params.appId);
+    res.set('X-Robots-Tag', 'noindex');
+    res.render('achievement', {
+      v, url, pageTitle: v.headline, metaDescription: `${v.headline}. PreCheckd verifies recruiters and candidates.`, canonicalUrl: url,
+      headExtra: `<meta property="og:image" content="${ach.baseUrl()}/img/share/hired.png"><meta name="twitter:card" content="summary_large_image">`
+    });
+  } catch (e) {
+    console.error('Error loading hire share page:', e);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

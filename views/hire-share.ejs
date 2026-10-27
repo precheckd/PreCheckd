@@ -1,0 +1,53 @@
+<style>
+  .hs-wrap { flex: 1; padding: 2.5rem 1.5rem 4rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .hs-inner { max-width: 640px; width: 100%; color: #F2F4F3; }
+  .hs-inner h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .hs-lead { color: #C7D1CF; line-height: 1.55; margin-bottom: 1.25rem; }
+  .hs-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.4rem; margin-bottom: 1.25rem; }
+  .hs-card h2 { font-size: 1.05rem; margin: 0 0 0.7rem; }
+  .hs-radio { display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.6rem; cursor: pointer; color: #E8EBEA; }
+  .hs-radio input { margin-top: 0.25rem; accent-color: #2ECC71; }
+  .hs-field { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.9rem; color: #E8EBEA; font-weight: 500; font-size: 0.92rem; }
+  .hs-field input { padding: 0.65rem; border: 1px solid #4A6F7B; border-radius: 6px; background: #24404A; color: #F2F4F3; font-size: 0.95rem; max-width: 320px; }
+  .hs-muted { color: #8FA6AC; font-size: 0.85rem; }
+  .hs-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 1rem; }
+  .hs-ghost { background: transparent; color: #FF8A8A; border: 1px solid #FF8A8A; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; font-size: 0.85rem; }
+  .hs-share a, .hs-share button.sb { display: inline-block; background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none; cursor: pointer; margin: 0.25rem 0.25rem 0 0; font-family: inherit; }
+  .hs-caption { width: 100%; box-sizing: border-box; background: #24404A; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 6px; padding: 0.7rem; font-family: inherit; font-size: 0.92rem; min-height: 70px; margin-top: 0.4rem; }
+  .hs-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+</style>
+<div class="hs-wrap"><div class="hs-inner">
+  <a href="/candidate/<%= candidate.slug %>" style="color:#8FA6AC;font-size:0.9rem;text-decoration:none;">&larr; Back to your profile</a>
+  <h1>Congratulations on the new job!</h1>
+  <p class="hs-lead">Want to tell people? It's completely optional. Nothing is public unless you save below, and nothing posts anywhere automatically: each button opens that site's own share window and you confirm there.</p>
+  <% if (saved) { %><div class="hs-ok"><%= shared ? 'Saved. Your announcement page is live.' : 'Saved.' %></div><% } %>
+
+  <form method="POST" action="/candidate/<%= candidate.slug %>/share-hire/<%= appId %>" class="hs-card">
+    <h2>What should it say?</h2>
+    <label class="hs-radio"><input type="radio" name="companyMode" value="none" <%= !(v && v.company) ? 'checked' : '' %>><span>Just say I got a new job through PreCheckd <span class="hs-muted">(no company name)</span></span></label>
+    <label class="hs-radio"><input type="radio" name="companyMode" value="company" <%= (v && v.company) ? 'checked' : '' %>><span>Mention the company: <strong><%= company %></strong></span></label>
+    <label class="hs-field">Hashtag (optional)
+      <input type="text" name="hashtag" maxlength="31" placeholder="e.g. <%= company ? '#' + company.replace(/[^A-Za-z0-9]/g, '').slice(0, 20) : '#NewJob' %>" value="<%= v ? v.hashtag : '' %>">
+    </label>
+    <input type="hidden" name="on" value="1">
+    <button class="hs-btn" type="submit"><%= shared ? 'Update' : 'Create my announcement' %></button>
+  </form>
+
+  <% if (shared) { %>
+  <div class="hs-card hs-share">
+    <h2>Share it</h2>
+    <a target="_blank" rel="noopener" href="<%= links.linkedin %>">LinkedIn</a>
+    <a target="_blank" rel="noopener" href="<%= links.x %>">X</a>
+    <a target="_blank" rel="noopener" href="<%= links.facebook %>">Facebook</a>
+    <a href="<%= links.email %>">Email</a>
+    <button class="sb" type="button" data-copy="<%= links.copy %>" onclick="navigator.clipboard.writeText(this.dataset.copy).then(()=>{this.textContent='Link copied'})">Copy link</button>
+    <p class="hs-muted" style="margin-top:0.9rem;">LinkedIn doesn't let us fill in your post for you, so copy this text and paste it there with the link:</p>
+    <textarea class="hs-caption" readonly id="hs-caption"><%= links.text %></textarea>
+    <button class="sb" type="button" onclick="navigator.clipboard.writeText(document.getElementById('hs-caption').value).then(()=>{this.textContent='Text copied'})">Copy text</button>
+    <p class="hs-muted" style="margin-top:0.9rem;">Your page: <a style="color:#4ADE80;" href="<%= url %>">view it</a>. It shows your first name and last initial.</p>
+    <form method="POST" action="/candidate/<%= candidate.slug %>/share-hire/<%= appId %>" style="margin-top:0.9rem;">
+      <input type="hidden" name="on" value="0"><button class="hs-ghost" type="submit">Stop sharing and take the page down</button>
+    </form>
+  </div>
+  <% } %>
+</div></div>

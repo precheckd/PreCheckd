@@ -77,5 +77,42 @@ const mk = (extra = {}, summary) => new Candidate({
     const fs = require('fs');
     for (const k of ['foundational', 'intermediate', 'advanced', 'master', 'grandmaster']) assert.ok(fs.existsSync(path.join(__dirname, '..', 'public/img/share', k + '.png')), k);
   });
+  await t('hashtags are cleaned to letters, numbers and underscore', async () => {
+    assert.strictEqual(ach.cleanHashtag('#Acme Corp!'), '#AcmeCorp');
+    assert.strictEqual(ach.cleanHashtag('##new_job'), '#new_job');
+    assert.strictEqual(ach.cleanHashtag('   '), '');
+    assert.strictEqual(ach.cleanHashtag('x'.repeat(50)).length, 31);
+  });
+  await t('a hire share says only "new job through PreCheckd" unless the candidate chose the company', async () => {
+    const c = mk(); c.save = async () => {};
+    const appId = '507f1f77bcf86cd799439055';
+    await ach.setHireShare(c, appId, { on: true, includeCompany: false, company: 'Acme Corp', hashtag: '#NewJob' });
+    let v = ach.hireView(c, appId);
+    assert.strictEqual(v.company, '');
+    assert.strictEqual(v.hashtag, '#NewJob');
+    assert.ok(v.headline.includes('Kent M. got a new job, hired through PreCheckd') && !v.headline.includes('Acme') && !v.headline.includes('Mayer'));
+    await ach.setHireShare(c, appId, { on: true, includeCompany: true, company: 'Acme Corp', hashtag: '' });
+    v = ach.hireView(c, appId);
+    assert.strictEqual(v.company, 'Acme Corp');
+    assert.ok(v.headline.includes('at Acme Corp'));
+    const l = ach.hireShareLinks(v, ach.hireUrlFor(c, appId));
+    assert.ok(l.text.includes('Acme Corp') && decodeURIComponent(l.x).includes('Acme Corp'));
+    assert.ok(l.copy.endsWith(`/achievements/kent-mayer/hire/${appId}?ref=share`));
+    await ach.setHireShare(c, appId, { on: false });
+    assert.strictEqual(ach.hireView(c, appId), null);
+    assert.strictEqual(ach.hireView(c, '507f1f77bcf86cd799439066'), null);
+  });
+  await t('the hire setup page and the public announcement render', async () => {
+    const c = mk(); c.save = async () => {};
+    const appId = '507f1f77bcf86cd799439055';
+    const blank = await ejs.renderFile(path.join(views, 'hire-share.ejs'), { candidate: c, appId, jobTitle: 'DevOps Engineer', company: 'Acme Corp', shared: false, v: null, url: '', links: null, saved: false });
+    assert.ok(blank.includes('value="none" checked') && blank.includes('Mention the company') && blank.includes('Create my announcement') && !blank.includes('Stop sharing'));
+    await ach.setHireShare(c, appId, { on: true, includeCompany: true, company: 'Acme Corp', hashtag: 'AcmeLife' });
+    const v = ach.hireView(c, appId); const url = ach.hireUrlFor(c, appId);
+    const on = await ejs.renderFile(path.join(views, 'hire-share.ejs'), { candidate: c, appId, jobTitle: 'DevOps Engineer', company: 'Acme Corp', shared: true, v, url, links: ach.hireShareLinks(v, url), saved: true });
+    assert.ok(on.includes('value="company" checked') && on.includes('#AcmeLife') && on.includes('LinkedIn') && on.includes('Stop sharing'));
+    const page = await ejs.renderFile(path.join(views, 'achievement.ejs'), { v, url });
+    assert.ok(page.includes('Kent M. got a new job at Acme Corp') && page.includes('/img/share/hired.png') && !page.includes('Mayer'));
+  });
   console.log(`\n${n} achievement tests passed`);
 })().catch((e) => { console.error('FAIL', e); process.exit(1); });
