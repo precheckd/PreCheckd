@@ -363,6 +363,150 @@ const SEED = [
     name: 'Customer Success: Expert',
     tier: 'expert',
     skills: [{ key: 'customer-success', label: 'Customer Success', ratingKeys: ['Customer Success'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-h7g8qwk',
+    name: 'ServiceNow: Basic',
+    tier: 'easy',
+    skills: [{ key: 'servicenow', label: 'ServiceNow', ratingKeys: ['ServiceNow'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-2n5ljnf',
+    name: 'ServiceNow: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'servicenow', label: 'ServiceNow', ratingKeys: ['ServiceNow'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7zi6ftr',
+    name: 'ServiceNow: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'servicenow', label: 'ServiceNow', ratingKeys: ['ServiceNow'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wevlgty',
+    name: 'ServiceNow: Expert',
+    tier: 'expert',
+    skills: [{ key: 'servicenow', label: 'ServiceNow', ratingKeys: ['ServiceNow'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kxlezb8',
+    name: 'Cybersecurity: Basic',
+    tier: 'easy',
+    skills: [{ key: 'cybersecurity', label: 'Cybersecurity', ratingKeys: ['Cybersecurity'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xra2lrg',
+    name: 'Cybersecurity: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'cybersecurity', label: 'Cybersecurity', ratingKeys: ['Cybersecurity'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-eppxb4p',
+    name: 'Cybersecurity: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'cybersecurity', label: 'Cybersecurity', ratingKeys: ['Cybersecurity'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-inc3j1t',
+    name: 'Cybersecurity: Expert',
+    tier: 'expert',
+    skills: [{ key: 'cybersecurity', label: 'Cybersecurity', ratingKeys: ['Cybersecurity'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-olzmjvf',
+    name: 'Git: Basic',
+    tier: 'easy',
+    skills: [{ key: 'git', label: 'Git', ratingKeys: ['Git'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cjm8y7t',
+    name: 'Git: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'git', label: 'Git', ratingKeys: ['Git'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-uvugn2e',
+    name: 'Git: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'git', label: 'Git', ratingKeys: ['Git'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7keogsr',
+    name: 'Git: Expert',
+    tier: 'expert',
+    skills: [{ key: 'git', label: 'Git', ratingKeys: ['Git'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0gy5wgt',
+    name: 'QA: Basic',
+    tier: 'easy',
+    skills: [{ key: 'qa', label: 'QA', ratingKeys: ['QA'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hfgbjng',
+    name: 'QA: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'qa', label: 'QA', ratingKeys: ['QA'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5vkutnf',
+    name: 'QA: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'qa', label: 'QA', ratingKeys: ['QA'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-13mhar9',
+    name: 'QA: Expert',
+    tier: 'expert',
+    skills: [{ key: 'qa', label: 'QA', ratingKeys: ['QA'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ub0iqre',
+    name: 'Azure: Basic',
+    tier: 'easy',
+    skills: [{ key: 'azure', label: 'Azure', ratingKeys: ['Azure'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mzzg8bo',
+    name: 'Azure: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'azure', label: 'Azure', ratingKeys: ['Azure'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0y3swlq',
+    name: 'Azure: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'azure', label: 'Azure', ratingKeys: ['Azure'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-8qmk8mc',
+    name: 'Azure: Expert',
+    tier: 'expert',
+    skills: [{ key: 'azure', label: 'Azure', ratingKeys: ['Azure'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y7yhnlp',
+    name: 'AWS: Basic',
+    tier: 'easy',
+    skills: [{ key: 'aws', label: 'AWS', ratingKeys: ['AWS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1hvjxop',
+    name: 'AWS: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'aws', label: 'AWS', ratingKeys: ['AWS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-khkzhdv',
+    name: 'AWS: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'aws', label: 'AWS', ratingKeys: ['AWS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d0n8swf',
+    name: 'AWS: Expert',
+    tier: 'expert',
+    skills: [{ key: 'aws', label: 'AWS', ratingKeys: ['AWS'] }]
   }
 ];
 
