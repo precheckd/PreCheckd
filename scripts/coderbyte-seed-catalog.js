@@ -267,6 +267,102 @@ const SEED = [
     name: 'Active Directory: Expert',
     tier: 'expert',
     skills: [{ key: 'active-directory', label: 'Active Directory', ratingKeys: ['Active Directory'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p7inui2',
+    name: 'Customer Support: Basic',
+    tier: 'easy',
+    skills: [{ key: 'customer-support', label: 'Customer Support', ratingKeys: ['Customer Support'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d2zmjk1',
+    name: 'Customer Support: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'customer-support', label: 'Customer Support', ratingKeys: ['Customer Support'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kwzkunl',
+    name: 'Customer Support: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'customer-support', label: 'Customer Support', ratingKeys: ['Customer Support'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5dbhtcr',
+    name: 'Customer Support: Expert',
+    tier: 'expert',
+    skills: [{ key: 'customer-support', label: 'Customer Support', ratingKeys: ['Customer Support'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ektbofg',
+    name: 'English Proficiency: Basic',
+    tier: 'easy',
+    skills: [{ key: 'english-proficiency', label: 'English Proficiency', ratingKeys: ['English Proficiency'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ejh159m',
+    name: 'English Proficiency: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'english-proficiency', label: 'English Proficiency', ratingKeys: ['English Proficiency'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y14zzyy',
+    name: 'English Proficiency: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'english-proficiency', label: 'English Proficiency', ratingKeys: ['English Proficiency'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-31uhja1',
+    name: 'English Proficiency: Expert',
+    tier: 'expert',
+    skills: [{ key: 'english-proficiency', label: 'English Proficiency', ratingKeys: ['English Proficiency'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-2okifvd',
+    name: 'Problem Solving: Basic',
+    tier: 'easy',
+    skills: [{ key: 'problem-solving', label: 'Problem Solving', ratingKeys: ['Problem Solving'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-upwq853',
+    name: 'Problem Solving: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'problem-solving', label: 'Problem Solving', ratingKeys: ['Problem Solving'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-dlh4z51',
+    name: 'Problem Solving: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'problem-solving', label: 'Problem Solving', ratingKeys: ['Problem Solving'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-flcfhi7',
+    name: 'Problem Solving: Expert',
+    tier: 'expert',
+    skills: [{ key: 'problem-solving', label: 'Problem Solving', ratingKeys: ['Problem Solving'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cw8vo4k',
+    name: 'Customer Success: Basic',
+    tier: 'easy',
+    skills: [{ key: 'customer-success', label: 'Customer Success', ratingKeys: ['Customer Success'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-2blrjtu',
+    name: 'Customer Success: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'customer-success', label: 'Customer Success', ratingKeys: ['Customer Success'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-w2fvml2',
+    name: 'Customer Success: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'customer-success', label: 'Customer Success', ratingKeys: ['Customer Success'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ohq8qgu',
+    name: 'Customer Success: Expert',
+    tier: 'expert',
+    skills: [{ key: 'customer-success', label: 'Customer Success', ratingKeys: ['Customer Success'] }]
   }
 ];
 
