@@ -154,7 +154,7 @@
   <div class="q-grid">
     <%
       const questions = [
-        ['What is PreCheckd?', 'Verified recruiters, verified candidates, no fake jobs.'],
+        ['What is PreCheckd?', 'Verified recruiters, verified candidates, no fake jobs.', 'ask-what-is-precheckd'],
         ['How does verification work?', 'What we check, how long it takes, and what you get.'],
         ['What does it cost?', 'The verification fee and the membership, in plain numbers.'],
         ['How do the skill tests work?', 'Levels, timing, and how passing unlocks the next one.'],
@@ -167,11 +167,18 @@
     %>
     <% questions.forEach(function (q, i) { %>
       <div class="q-card">
+        <% if (q[2]) { %>
+          <video class="ask-video" controls preload="none" playsinline poster="/img/<%= q[2] %>-poster.png" aria-label="<%= q[0] %>">
+            <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/<%= q[2] %>.mp4" type="video/mp4">
+            Your browser can't play this video.
+          </video>
+        <% } else { %>
         <div class="ph video-box">
           <span class="ph-label">Synthesia video <%= i + 1 %></span>
           <div class="video-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#10261A"><path d="M6 4l14 8-14 8z"/></svg></div>
           <span class="video-time">about 0:45</span>
         </div>
+        <% } %>
         <h3 class="q-title"><%= q[0] %></h3>
         <p class="q-text"><%= q[1] %></p>
       </div>
