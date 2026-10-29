@@ -1,6 +1,6 @@
 # PreCheckd assistant: facts and rules (v1, Oct 29, 2026)
 
-This file is the ONLY source the site assistant may answer from. Lines marked [CONFIRM] need Kent's okay before launch. Pricing has a CURRENT block and a LAUNCH block: only the block marked ACTIVE is used.
+This file is the ONLY source the site assistant may answer from. Kent confirmed the facts in this file on Oct 29, 2026. Pricing has a CURRENT block and a LAUNCH block: only the block marked ACTIVE is used.
 
 ## 1. Rules for the assistant
 
@@ -24,17 +24,17 @@ PreCheckd is a hiring site for technical and IT roles where both recruiters and 
 Who can join:
 - You must be at least 18 years old.
 - Recruiters must be based in the United States and have a US phone number.
-- Candidates: [CONFIRM: any US-only rule for candidates?]
+- Candidates: for now, only US government-issued IDs can be verified.
 
 ## 3. Candidate verification
 
 - Steps: confirm your email, confirm your phone number by text message, then complete an identity check.
 - The identity check uses a government-issued photo ID and a live selfie, processed by our verification partner, Stripe Identity.
-- Recruiters do not see your ID documents. [CONFIRM]
-- Time: usually a few minutes. If a check needs extra review it can take longer. [CONFIRM]
+- Recruiters do not see your ID documents.
+- Time: usually a few minutes. If a check needs extra review it can take longer.
 - If your phone or ID check gets stuck, email hello@precheckd.com.
-- Staff can also verify jobs and degrees you list by contacting the employer or school. We do not publish an employer or school name on the public verification page. [CONFIRM how a candidate requests this]
-- A public verification page is optional and shows first name and last initial only. [CONFIRM: does a candidate get a "verified" badge?]
+- Jobs and degrees: candidates do not have to request this. When a work or education entry is added to a profile, it goes into our verification process. We first try to verify it ourselves with the employer or school, which takes about a week. If that doesn't work, we open a case with the candidate to ask for their help, such as documents. We do not publish an employer or school name on the public verification page.
+- After completing the ID check you are a verified member. A public verification page is optional and shows first name and last initial only.
 
 ## 4. Recruiter verification
 
@@ -87,7 +87,6 @@ Who can join:
 ## 8. Safety
 
 - The Safety Center (/safety) lets members check a sender, report a scam, and see their past reports.
-- Anyone who reports a scam gets a thank-you discount code. [CONFIRM: mention this?]
 - Never send money or sensitive information to someone you have not independently confirmed.
 
 ## 9. Pricing
@@ -97,7 +96,7 @@ Who can join:
 - For anything else on pricing, say plans are coming and point to hello@precheckd.com.
 
 ### LAUNCH (NOT ACTIVE until billing goes live; swap this in then)
-- Candidates: a one-time verification fee of $79, then a membership of $15 per month or $120 per year. A card is required at signup. The verification fee is non-refundable once the ID check runs. Early candidates may have the verification fee waived; check the signup page. [CONFIRM $79 is final]
+- Candidates: a one-time verification fee of $79, then a membership of $15 per month or $120 per year. A card is required at signup. The verification fee is non-refundable once the ID check runs. Early candidates may have the verification fee waived; check the signup page.
 - Recruiters: no setup fee. Membership is $59 per month or $499 per year, including 5 open job postings at a time and 3 test credits per month.
 - Extra open job slots: $10 per slot per month for 1 to 5 extra, $8 each for 6 to 10, $6 each for 11 or more.
 - Extra test credits: $39 for 3.
@@ -107,4 +106,4 @@ Who can join:
 ## 10. Contact
 
 - Email hello@precheckd.com for questions, account help, deletion requests, and anything not covered here.
-- Support is by email only. [CONFIRM]
+- Support is by email only, answered during normal business hours.
