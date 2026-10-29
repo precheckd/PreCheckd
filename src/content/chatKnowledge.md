@@ -80,7 +80,7 @@ Who can join:
 - You can end a connection at any time.
 - We never sell your information and do not share it with third parties for marketing.
 - Messages sent through PreCheckd are stored and automatically scanned for spam, scams, and malware.
-- Service providers: Stripe (ID verification and payments), AWS (text messages and file storage), MongoDB Atlas (database), Resend (email), Render (hosting), CoderByte (tests), Google Analytics. Credly only if you link it.
+- Service providers: Stripe (ID verification and payments), AWS (text messages and file storage), MongoDB Atlas (database), Resend (email), Render (hosting), CoderByte (tests), Anthropic (AI, for resume reading and this assistant), Google Analytics. Credly only if you link it. Questions typed into this assistant are stored by PreCheckd for up to 90 days to improve it, so do not type personal or sensitive information.
 - You can ask for account deletion by emailing hello@precheckd.com. Some limited records may be kept for security, fraud prevention, or legal reasons.
 - Full details are in the Privacy Policy (/privacy) and Terms (/terms).
 

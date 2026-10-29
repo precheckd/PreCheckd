@@ -271,11 +271,13 @@ router.get('/', async (req, res) => {
     const catalogRequestCount = (await require('../models/CatalogRequest').aggregate([{ $match: { status: 'requested' } }, { $group: { _id: { k: '$kind', n: '$key' } } }])).length;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
+    const chatGapCount = await require('../models/ChatLog').countDocuments({ noAnswer: true, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } });
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
     const hireReviewCount = (await require('../services/hireReview').listHireReviews()).length;
 
     res.render('internal-dashboard', {
       integrityCount,
+      chatGapCount,
       hireReviewCount,
       skillRequestCount,
       catalogRequestCount,
@@ -443,6 +445,30 @@ router.post('/catalog-requests/status', async (req, res) => {
     res.redirect('/catalog-requests');
   } catch (error) {
     console.error('Error updating catalog requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// What visitors asked the /ask assistant, newest first, with today's spend.
+router.get('/chat-logs', async (req, res) => {
+  try {
+    const ChatLog = require('../models/ChatLog');
+    const { DAILY_CAP_USD } = require('../services/chatAssistant');
+    const onlyGaps = req.query.gaps === '1';
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [rows, spend, total] = await Promise.all([
+      ChatLog.find(onlyGaps ? { $or: [{ noAnswer: true }, { failed: true }] } : {}).sort({ createdAt: -1 }).limit(300).lean(),
+      ChatLog.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: null, cost: { $sum: '$costUsd' }, n: { $sum: 1 } } }]),
+      ChatLog.countDocuments({}),
+    ]);
+    res.render('internal-chat-logs', {
+      rows, onlyGaps, total,
+      spent24h: spend[0] ? spend[0].cost : 0,
+      count24h: spend[0] ? spend[0].n : 0,
+      cap: DAILY_CAP_USD,
+    });
+  } catch (error) {
+    console.error('Error loading chat logs:', error);
     res.status(500).send('Server error');
   }
 });

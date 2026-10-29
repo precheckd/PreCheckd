@@ -256,6 +256,7 @@ const foundingRecruiterRoutes = require('./routes/founding-recruiter');
 app.use('/api/founding-recruiter', foundingRecruiterRoutes);
 app.use('/api/candidate', candidateRoutes);
 app.use('/api/email-checker', emailCheckerRoutes);
+app.use('/api/ask-chat', require('./routes/ask-chat'));
 app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/recruiter-jobs', require('./routes/recruiter-jobs'));

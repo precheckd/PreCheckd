@@ -51,17 +51,22 @@
     .chat-name { color: #F2F4F3; font-weight: 600; line-height: 1.2; }
     .chat-status { color: #C7D1CF; font-size: 0.8rem; }
     .chat-ai-badge { margin-left: auto; border: 1px solid #4ADE80; color: #4ADE80; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; letter-spacing: 0.05em; }
-    .chat-body { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative; }
+    .chat-body { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative; overflow-y: auto; max-height: 420px; }
     .bubble { max-width: 85%; padding: 0.7rem 0.95rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.5; }
+    .bubble { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .bubble-bot a { color: #4ADE80; }
     .bubble-bot { background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; align-self: flex-start; border-bottom-left-radius: 4px; }
     .bubble-user { background: #2ECC71; color: #10261A; align-self: flex-end; border-bottom-right-radius: 4px; }
     .chat-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
-    .chip { background: transparent; border: 1px solid #4ADE80; color: #4ADE80; border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.85rem; cursor: default; }
+    .chip { background: transparent; border: 1px solid #4ADE80; color: #4ADE80; border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
+    .chip:hover { background: rgba(74, 222, 128, 0.12); }
     .chat-foot { border-top: 1px solid #3B5860; padding: 0.9rem 1.25rem 1rem; background: #1F363C; }
     .chat-input-row { display: flex; gap: 0.5rem; }
     .chat-input { flex: 1; background: #2A4750; border: 1px solid #3B5860; color: #F2F4F3; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.95rem; }
     .chat-input::placeholder { color: #8FA3A0; }
-    .chat-send { background: #2ECC71; color: #10261A; border: 0; border-radius: 8px; padding: 0 1.1rem; font-weight: 600; opacity: 0.6; }
+    .chat-send { background: #2ECC71; color: #10261A; border: 0; border-radius: 8px; padding: 0 1.1rem; font-weight: 600; cursor: pointer; }
+    .chat-send:disabled { opacity: 0.5; cursor: default; }
+    .bubble-typing { color: #8FA3A0; font-style: italic; }
     .chat-disclaimer { color: #8FA3A0; font-size: 0.75rem; line-height: 1.4; margin-top: 0.6rem; }
 
     /* Question videos */
@@ -95,7 +100,7 @@
     }
   </style>
 
-  <div class="ask-preview-note"><strong>Layout draft.</strong> Dashed green blocks are placeholders: the chat box becomes the live assistant, and each video tile becomes a Synthesia clip.</div>
+  <div class="ask-preview-note"><strong>Layout draft.</strong> The chat is live. Dashed green blocks are placeholders that become Synthesia clips.</div>
 
   <div class="ask-hero">
     <p class="ask-eyebrow">Ask PreCheckd</p>
@@ -116,9 +121,8 @@
     </div>
 
     <!-- RIGHT: the live text chat -->
-    <div class="ask-card chat-panel ph">
-      <span class="ph-label">Chatbot goes here</span>
-      <div class="chat-head" style="padding-top:2.6rem;">
+    <div class="ask-card chat-panel" id="chat">
+      <div class="chat-head">
         <div class="chat-avatar">P</div>
         <div>
           <div class="chat-name">PreCheckd Assistant</div>
@@ -126,22 +130,20 @@
         </div>
         <span class="chat-ai-badge">AI</span>
       </div>
-      <div class="chat-body">
+      <div class="chat-body" id="chatBody" aria-live="polite">
         <div class="bubble bubble-bot">Hi! I'm PreCheckd's AI assistant. Ask me how verification works, what the skill tests are, how pricing works, or anything else about the site.</div>
-        <div class="bubble bubble-user">How do the skill levels work?</div>
-        <div class="bubble bubble-bot">(Sample answer here: each skill has a ladder of tests, and passing a level unlocks the next one.)</div>
-        <div class="chat-chips">
-          <span class="chip">What does it cost?</span>
-          <span class="chip">Who sees my info?</span>
-          <span class="chip">How do I apply to jobs?</span>
+        <div class="chat-chips" id="chatChips">
+          <button type="button" class="chip">What does it cost?</button>
+          <button type="button" class="chip">Who can see my information?</button>
+          <button type="button" class="chip">How do I apply to jobs?</button>
         </div>
       </div>
       <div class="chat-foot">
-        <div class="chat-input-row">
-          <input class="chat-input" type="text" placeholder="Type your question..." disabled aria-label="Type your question">
-          <button class="chat-send" type="button" disabled>Send</button>
-        </div>
-        <p class="chat-disclaimer">AI assistant. It answers from PreCheckd's published information and can't see your account. It can make mistakes, so check anything important with our team.</p>
+        <form class="chat-input-row" id="chatForm" autocomplete="off">
+          <input class="chat-input" id="chatInput" type="text" maxlength="500" placeholder="Type your question..." aria-label="Type your question">
+          <button class="chat-send" id="chatSend" type="submit">Send</button>
+        </form>
+        <p class="chat-disclaimer">AI assistant. It answers from PreCheckd's published information and can't see your account. It can make mistakes, so check anything important with our team. Chats are saved to improve the assistant, so please don't share personal or sensitive details.</p>
       </div>
     </div>
   </div>
@@ -184,3 +186,79 @@
       <a href="/recruiter-landing" class="btn btn-secondary btn-large">I'm a recruiter</a>
     </div>
   </div>
+
+  <script>
+    (function () {
+      var body = document.getElementById('chatBody');
+      var form = document.getElementById('chatForm');
+      var input = document.getElementById('chatInput');
+      var send = document.getElementById('chatSend');
+      var chips = document.getElementById('chatChips');
+      var history = [];
+      var busy = false;
+      var convId = 'c' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      var LINKS = /(hello@precheckd\.com|\/(?:skills-explained|privacy|terms|safety|candidate-signup|recruiter-landing|jobs|ask)\b)/g;
+
+      function addBubble(text, who) {
+        var el = document.createElement('div');
+        el.className = 'bubble ' + (who === 'user' ? 'bubble-user' : 'bubble-bot');
+        if (who === 'user') {
+          el.textContent = text;
+        } else {
+          text.split(LINKS).forEach(function (part, i) {
+            if (i % 2 === 1) {
+              var a = document.createElement('a');
+              a.textContent = part;
+              a.href = part.indexOf('@') > -1 ? 'mailto:' + part : part;
+              el.appendChild(a);
+            } else if (part) {
+              el.appendChild(document.createTextNode(part));
+            }
+          });
+        }
+        body.appendChild(el);
+        body.scrollTop = body.scrollHeight;
+        return el;
+      }
+
+      function ask(question) {
+        question = (question || '').trim();
+        if (!question || busy) return;
+        busy = true;
+        send.disabled = true;
+        if (chips) { chips.remove(); chips = null; }
+        addBubble(question, 'user');
+        history.push({ role: 'user', content: question });
+        input.value = '';
+        var typing = addBubble('Typing...', 'bot');
+        typing.classList.add('bubble-typing');
+
+        fetch('/api/ask-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId: convId, messages: history.slice(-11) })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, reply: j.reply }; });
+        }).catch(function () {
+          return { ok: false, reply: null };
+        }).then(function (res) {
+          typing.remove();
+          var reply = res.reply || "Sorry, something went wrong. Please try again, or email hello@precheckd.com.";
+          addBubble(reply, 'bot');
+          if (res.ok) {
+            history.push({ role: 'assistant', content: reply });
+          } else {
+            history.pop();
+          }
+          busy = false;
+          send.disabled = false;
+          input.focus();
+        });
+      }
+
+      form.addEventListener('submit', function (e) { e.preventDefault(); ask(input.value); });
+      chips.querySelectorAll('.chip').forEach(function (c) {
+        c.addEventListener('click', function () { ask(c.textContent); });
+      });
+    })();
+  </script>

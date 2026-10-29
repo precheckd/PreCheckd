@@ -13,7 +13,8 @@
     "fix-name-case": "node scripts/fix-name-case.js",
     "assign-mail-aliases": "node scripts/assign-mail-aliases.js",
     "mail-alias": "node scripts/mail-alias.js",
-    "seed-demo-mail": "node scripts/seed-demo-mail.js"
+    "seed-demo-mail": "node scripts/seed-demo-mail.js",
+    "test-chat": "node scripts/test-chat.js"
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1131.0",

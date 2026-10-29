@@ -159,6 +159,12 @@
       <span class="id-card-stat <%= catalogRequestCount > 0 ? 'id-stat-alert' : '' %>"><%= catalogRequestCount %> waiting</span>
     </a>
 
+    <a class="id-card" href="/chat-logs">
+      <div class="id-card-title">Assistant Chats</div>
+      <div class="id-card-desc">What visitors asked the /ask assistant, today's spend against the daily cap, and questions it could not answer (gaps in the facts file).</div>
+      <span class="id-card-stat"><%= chatGapCount %> unanswered this week</span>
+    </a>
+
     <a class="id-card" href="/hire-review">
       <div class="id-card-title">Hire Review</div>
       <div class="id-card-desc">Jobs where a reported hire was denied, a job was reposted after a cancellation, or a hire confirmation went unanswered.</div>
