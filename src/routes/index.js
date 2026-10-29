@@ -33,6 +33,12 @@ router.get('/recruiter-search', async (req, res) => {
   }
 });
 
+// Chatbot landing page (layout draft). The chat box and the question videos are
+// placeholders for now. noindex until the real chat and Synthesia clips are in.
+router.get('/ask', (req, res) => {
+  res.render('ask', { pageTitle: 'PreCheckd - Ask Us Anything', robotsMeta: 'noindex' });
+});
+
 router.get('/candidate-landing', (req, res) => {
   res.render('candidate-landing', { pageTitle: 'PreCheckd - For Job Seekers' });
 });

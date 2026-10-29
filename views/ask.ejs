@@ -1,0 +1,186 @@
+<%# page title: PreCheckd - Ask Us Anything. LAYOUT DRAFT: the dashed blocks are placeholders. The chat box becomes the live AI assistant; each video tile becomes a Synthesia clip hosted in the precheckd-marketing S3 bucket. %>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #1F363C;
+      min-height: 100vh;
+    }
+    main { padding: 3rem 1.5rem 4rem; max-width: 1200px; margin: 0 auto; }
+
+    .ask-preview-note {
+      background: #3B5860; color: #F2F4F3; border-radius: 8px; padding: 0.6rem 1rem;
+      font-size: 0.85rem; text-align: center; margin-bottom: 2rem;
+    }
+    .ask-preview-note strong { color: #4ADE80; }
+
+    .ask-hero { text-align: center; margin-bottom: 2.5rem; }
+    .ask-eyebrow { color: #4ADE80; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .ask-title { font-size: 2.5rem; font-weight: 700; color: #F2F4F3; margin-bottom: 1rem; line-height: 1.2; }
+    .ask-subtitle { font-size: 1.2rem; color: #C7D1CF; line-height: 1.6; max-width: 680px; margin: 0 auto; }
+
+    /* Placeholder look: dashed outline plus a label, so it is obvious what goes where. */
+    .ph { border: 2px dashed #4ADE80; border-radius: 12px; background: rgba(74, 222, 128, 0.06); position: relative; }
+    .ph-label {
+      position: absolute; top: 0.6rem; left: 0.6rem; background: #4ADE80; color: #1F363C;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.2rem 0.5rem; border-radius: 4px; z-index: 2;
+    }
+
+    /* Top section: greeter video on the left, chat on the right. Chat comes first on phones. */
+    .ask-top { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch; margin-bottom: 4rem; }
+    .ask-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
+    .ask-card h2 { font-size: 1.25rem; color: #F2F4F3; margin-bottom: 0.25rem; }
+    .ask-card .ask-card-sub { color: #C7D1CF; font-size: 0.95rem; margin-bottom: 1rem; }
+
+    .video-box { aspect-ratio: 16 / 9; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1rem; color: #C7D1CF; }
+    .video-play {
+      width: 64px; height: 64px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4); margin-bottom: 0.75rem;
+    }
+    .video-play svg { margin-left: 4px; }
+    .video-box .video-note { font-size: 0.85rem; line-height: 1.4; max-width: 260px; }
+
+    .ask-greeter .btn { margin-top: 1.25rem; }
+
+    /* Chat panel */
+    .chat-panel { display: flex; flex-direction: column; padding: 0; overflow: hidden; min-height: 460px; }
+    .chat-head { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; border-bottom: 1px solid #3B5860; background: #1F363C; }
+    .chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2ECC71; color: #1F363C; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chat-name { color: #F2F4F3; font-weight: 600; line-height: 1.2; }
+    .chat-status { color: #C7D1CF; font-size: 0.8rem; }
+    .chat-ai-badge { margin-left: auto; border: 1px solid #4ADE80; color: #4ADE80; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; letter-spacing: 0.05em; }
+    .chat-body { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative; }
+    .bubble { max-width: 85%; padding: 0.7rem 0.95rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.5; }
+    .bubble-bot { background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .bubble-user { background: #2ECC71; color: #10261A; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+    .chip { background: transparent; border: 1px solid #4ADE80; color: #4ADE80; border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.85rem; cursor: default; }
+    .chat-foot { border-top: 1px solid #3B5860; padding: 0.9rem 1.25rem 1rem; background: #1F363C; }
+    .chat-input-row { display: flex; gap: 0.5rem; }
+    .chat-input { flex: 1; background: #2A4750; border: 1px solid #3B5860; color: #F2F4F3; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.95rem; }
+    .chat-input::placeholder { color: #8FA3A0; }
+    .chat-send { background: #2ECC71; color: #10261A; border: 0; border-radius: 8px; padding: 0 1.1rem; font-weight: 600; opacity: 0.6; }
+    .chat-disclaimer { color: #8FA3A0; font-size: 0.75rem; line-height: 1.4; margin-top: 0.6rem; }
+
+    /* Question videos */
+    .ask-section-title { font-size: 2rem; font-weight: 700; color: #F2F4F3; text-align: center; margin-bottom: 0.5rem; }
+    .ask-section-sub { color: #C7D1CF; text-align: center; margin: 0 auto 2rem; max-width: 620px; line-height: 1.6; }
+    .q-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 4rem; }
+    .q-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 0.85rem; }
+    .q-card .video-box { padding-top: 2rem; }
+    .q-card .video-play { width: 48px; height: 48px; margin-bottom: 0.4rem; }
+    .q-card .video-time { font-size: 0.8rem; }
+    .q-title { color: #F2F4F3; font-size: 1.05rem; font-weight: 600; line-height: 1.35; }
+    .q-text { color: #C7D1CF; font-size: 0.9rem; line-height: 1.5; margin-top: -0.4rem; }
+
+    .ask-final { background: #2A4750; border: 1px solid #3B5860; border-radius: 12px; padding: 3rem 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); max-width: 640px; margin: 0 auto; text-align: center; }
+    .ask-final h2 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.75rem; }
+    .ask-final p { color: #C7D1CF; line-height: 1.6; margin-bottom: 1.75rem; }
+    .ask-final .btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+
+    @media (max-width: 900px) {
+      .q-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      main { padding: 2rem 1rem 3rem; }
+      .ask-title { font-size: 1.75rem; }
+      .ask-subtitle { font-size: 1rem; }
+      .ask-section-title { font-size: 1.5rem; }
+      .ask-top { grid-template-columns: 1fr; margin-bottom: 3rem; }
+      .chat-panel { order: -1; min-height: 420px; }
+      .q-grid { grid-template-columns: 1fr; }
+      .ask-final { padding: 2rem 1.5rem; }
+    }
+  </style>
+
+  <div class="ask-preview-note"><strong>Layout draft.</strong> Dashed green blocks are placeholders: the chat box becomes the live assistant, and each video tile becomes a Synthesia clip.</div>
+
+  <div class="ask-hero">
+    <p class="ask-eyebrow">Ask PreCheckd</p>
+    <h1 class="ask-title">Got questions? Get straight answers.</h1>
+    <p class="ask-subtitle">Ask our AI assistant anything about PreCheckd, or watch a short video answer to the questions people ask most.</p>
+  </div>
+
+  <div class="ask-top">
+    <!-- LEFT: greeter video (optional welcome clip, Synthesia avatar) -->
+    <div class="ask-card ask-greeter">
+      <h2>Meet your guide</h2>
+      <p class="ask-card-sub">A quick hello and what PreCheckd is, in under a minute.</p>
+      <div class="ph video-box">
+        <span class="ph-label">Synthesia video: welcome</span>
+        <div class="video-play"><svg width="22" height="22" viewBox="0 0 24 24" fill="#10261A"><path d="M6 4l14 8-14 8z"/></svg></div>
+        <p class="video-note">Avatar greets the visitor and points to the chat or the question videos below. 16:9, about 45 seconds.</p>
+      </div>
+      <a href="/candidate-signup" class="btn btn-primary btn-large">Get Verified</a>
+    </div>
+
+    <!-- RIGHT: the live text chat -->
+    <div class="ask-card chat-panel ph">
+      <span class="ph-label">Chatbot goes here</span>
+      <div class="chat-head" style="padding-top:2.6rem;">
+        <div class="chat-avatar">P</div>
+        <div>
+          <div class="chat-name">PreCheckd Assistant</div>
+          <div class="chat-status">Answers from PreCheckd's own information</div>
+        </div>
+        <span class="chat-ai-badge">AI</span>
+      </div>
+      <div class="chat-body">
+        <div class="bubble bubble-bot">Hi! I'm PreCheckd's AI assistant. Ask me how verification works, what the skill tests are, how pricing works, or anything else about the site.</div>
+        <div class="bubble bubble-user">How do the skill levels work?</div>
+        <div class="bubble bubble-bot">(Sample answer here: each skill has a ladder of tests, and passing a level unlocks the next one.)</div>
+        <div class="chat-chips">
+          <span class="chip">What does it cost?</span>
+          <span class="chip">Who sees my info?</span>
+          <span class="chip">How do I apply to jobs?</span>
+        </div>
+      </div>
+      <div class="chat-foot">
+        <div class="chat-input-row">
+          <input class="chat-input" type="text" placeholder="Type your question..." disabled aria-label="Type your question">
+          <button class="chat-send" type="button" disabled>Send</button>
+        </div>
+        <p class="chat-disclaimer">AI assistant. It answers from PreCheckd's published information and can't see your account. It can make mistakes, so check anything important with our team.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="ask-section-title">The most-asked questions, answered on video</h2>
+  <p class="ask-section-sub">Short answers, about a minute each. Tap any question to watch.</p>
+
+  <div class="q-grid">
+    <%
+      const questions = [
+        ['What is PreCheckd?', 'Verified recruiters, verified candidates, no fake jobs.'],
+        ['How does verification work?', 'What we check, how long it takes, and what you get.'],
+        ['What does it cost?', 'The verification fee and the membership, in plain numbers.'],
+        ['How do the skill tests work?', 'Levels, timing, and how passing unlocks the next one.'],
+        ['Who can see my information?', 'What recruiters see, and what stays private until you say so.'],
+        ['What do the skill levels mean?', 'From Foundational to Master and Grandmaster.'],
+        ['How do I apply to a job?', 'What you need before the Apply button turns on.'],
+        ["I'm a recruiter. What do I get?", 'Verified applicants, postings, and test credits.'],
+        ['What if I fail a test?', 'Retakes, waiting periods, and how to prepare.']
+      ];
+    %>
+    <% questions.forEach(function (q, i) { %>
+      <div class="q-card">
+        <div class="ph video-box">
+          <span class="ph-label">Synthesia video <%= i + 1 %></span>
+          <div class="video-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#10261A"><path d="M6 4l14 8-14 8z"/></svg></div>
+          <span class="video-time">about 0:45</span>
+        </div>
+        <h3 class="q-title"><%= q[0] %></h3>
+        <p class="q-text"><%= q[1] %></p>
+      </div>
+    <% }); %>
+  </div>
+
+  <div class="ask-final">
+    <h2>Ready when you are.</h2>
+    <p>Get verified once, and show every recruiter proof instead of claims.</p>
+    <div class="btn-row">
+      <a href="/candidate-signup" class="btn btn-primary btn-large">Get Verified</a>
+      <a href="/recruiter-landing" class="btn btn-secondary btn-large">I'm a recruiter</a>
+    </div>
+  </div>
