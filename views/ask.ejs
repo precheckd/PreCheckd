@@ -154,8 +154,8 @@
   <div class="q-grid">
     <%
       const questions = [
-        ['What is PreCheckd?', 'Verified recruiters, verified candidates, no fake jobs.', 'ask-what-is-precheckd'],
-        ['How does verification work?', 'What we check, how long it takes, and what you get.'],
+        ['What is PreCheckd?', 'Verified recruiters, verified candidates, no fake jobs.', 'ask-what-is-precheckd', true],
+        ['How does verification work?', 'What we check, how long it takes, and what you get.', 'ask-how-verification-works', false],
         ['What does it cost?', 'The verification fee and the membership, in plain numbers.'],
         ['How do the skill tests work?', 'Levels, timing, and how passing unlocks the next one.'],
         ['Who can see my information?', 'What recruiters see, and what stays private until you say so.'],
@@ -168,8 +168,8 @@
     <% questions.forEach(function (q, i) { %>
       <div class="q-card">
         <% if (q[2]) { %>
-          <video class="ask-video" controls preload="none" playsinline poster="/img/<%= q[2] %>-poster.png" aria-label="<%= q[0] %>">
-            <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/<%= q[2] %>.mp4" type="video/mp4">
+          <video class="ask-video" controls preload="<%= q[3] ? 'none' : 'metadata' %>" playsinline <% if (q[3]) { %>poster="/img/<%= q[2] %>-poster.png"<% } %> aria-label="<%= q[0] %>">
+            <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/<%= q[2] %>.mp4<%= q[3] ? '' : '#t=0.1' %>" type="video/mp4">
             Your browser can't play this video.
           </video>
         <% } else { %>
