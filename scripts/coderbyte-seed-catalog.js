@@ -507,6 +507,246 @@ const SEED = [
     name: 'AWS: Expert',
     tier: 'expert',
     skills: [{ key: 'aws', label: 'AWS', ratingKeys: ['AWS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-9u8uyl9',
+    name: 'Docker: Basic',
+    tier: 'easy',
+    skills: [{ key: 'docker', label: 'Docker', ratingKeys: ['Docker'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d2ncx94',
+    name: 'Docker: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'docker', label: 'Docker', ratingKeys: ['Docker'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-dnj63xa',
+    name: 'Docker: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'docker', label: 'Docker', ratingKeys: ['Docker'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0vlcvd3',
+    name: 'Docker: Expert',
+    tier: 'expert',
+    skills: [{ key: 'docker', label: 'Docker', ratingKeys: ['Docker'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-23d9m10',
+    name: 'Excel: Basic',
+    tier: 'easy',
+    skills: [{ key: 'excel', label: 'Excel', ratingKeys: ['Excel'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xxydmr4',
+    name: 'Excel: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'excel', label: 'Excel', ratingKeys: ['Excel'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hgt955r',
+    name: 'Excel: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'excel', label: 'Excel', ratingKeys: ['Excel'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-fqhyi7u',
+    name: 'Excel: Expert',
+    tier: 'expert',
+    skills: [{ key: 'excel', label: 'Excel', ratingKeys: ['Excel'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-s5tp7ys',
+    name: 'GCP: Basic',
+    tier: 'easy',
+    skills: [{ key: 'gcp', label: 'GCP', ratingKeys: ['GCP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-x3o55tt',
+    name: 'GCP: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'gcp', label: 'GCP', ratingKeys: ['GCP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-v3o11uj',
+    name: 'GCP: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'gcp', label: 'GCP', ratingKeys: ['GCP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1lr9a5n',
+    name: 'GCP: Expert',
+    tier: 'expert',
+    skills: [{ key: 'gcp', label: 'GCP', ratingKeys: ['GCP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7ugdcb9',
+    name: 'Java: Basic',
+    tier: 'easy',
+    skills: [{ key: 'java', label: 'Java', ratingKeys: ['Java'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7xj8tbz',
+    name: 'Java: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'java', label: 'Java', ratingKeys: ['Java'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xowurx4',
+    name: 'Java: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'java', label: 'Java', ratingKeys: ['Java'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cte6sz0',
+    name: 'Java: Expert',
+    tier: 'expert',
+    skills: [{ key: 'java', label: 'Java', ratingKeys: ['Java'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hie13ht',
+    name: 'JavaScript: Basic',
+    tier: 'easy',
+    skills: [{ key: 'javascript', label: 'JavaScript', ratingKeys: ['JavaScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jxier3q',
+    name: 'JavaScript: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'javascript', label: 'JavaScript', ratingKeys: ['JavaScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p880mip',
+    name: 'JavaScript: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'javascript', label: 'JavaScript', ratingKeys: ['JavaScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-fanvykh',
+    name: 'JavaScript: Expert',
+    tier: 'expert',
+    skills: [{ key: 'javascript', label: 'JavaScript', ratingKeys: ['JavaScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-6sv6ucl',
+    name: 'Kubernetes: Basic',
+    tier: 'easy',
+    skills: [{ key: 'kubernetes', label: 'Kubernetes', ratingKeys: ['Kubernetes'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-uvaj4do',
+    name: 'Kubernetes: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'kubernetes', label: 'Kubernetes', ratingKeys: ['Kubernetes'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-u4mnrig',
+    name: 'Kubernetes: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'kubernetes', label: 'Kubernetes', ratingKeys: ['Kubernetes'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-704qixy',
+    name: 'Kubernetes: Expert',
+    tier: 'expert',
+    skills: [{ key: 'kubernetes', label: 'Kubernetes', ratingKeys: ['Kubernetes'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0pvyj4a',
+    name: 'React: Basic',
+    tier: 'easy',
+    skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-t356ddo',
+    name: 'React: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y9fy4pb',
+    name: 'React: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5nnuwjp',
+    name: 'React: Expert',
+    tier: 'expert',
+    skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-keeg51j',
+    name: 'REST: Basic',
+    tier: 'easy',
+    skills: [{ key: 'rest', label: 'REST', ratingKeys: ['REST'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-qajvadp',
+    name: 'REST: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'rest', label: 'REST', ratingKeys: ['REST'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7r4eb23',
+    name: 'REST: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'rest', label: 'REST', ratingKeys: ['REST'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-e46c83z',
+    name: 'REST: Expert',
+    tier: 'expert',
+    skills: [{ key: 'rest', label: 'REST', ratingKeys: ['REST'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jhb6igi',
+    name: 'Terraform: Basic',
+    tier: 'easy',
+    skills: [{ key: 'terraform', label: 'Terraform', ratingKeys: ['Terraform'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0jn1eop',
+    name: 'Terraform: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'terraform', label: 'Terraform', ratingKeys: ['Terraform'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jt77gai',
+    name: 'Terraform: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'terraform', label: 'Terraform', ratingKeys: ['Terraform'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ycwqfvj',
+    name: 'Terraform: Expert',
+    tier: 'expert',
+    skills: [{ key: 'terraform', label: 'Terraform', ratingKeys: ['Terraform'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mrkbpnf',
+    name: 'TypeScript: Basic',
+    tier: 'easy',
+    skills: [{ key: 'typescript', label: 'TypeScript', ratingKeys: ['TypeScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0l0q0id',
+    name: 'TypeScript: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'typescript', label: 'TypeScript', ratingKeys: ['TypeScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-32xawx9',
+    name: 'TypeScript: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'typescript', label: 'TypeScript', ratingKeys: ['TypeScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-a5kd17i',
+    name: 'TypeScript: Expert',
+    tier: 'expert',
+    skills: [{ key: 'typescript', label: 'TypeScript', ratingKeys: ['TypeScript'] }]
   }
 ];
 
