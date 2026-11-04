@@ -3,7 +3,7 @@
 const JobPosting = require('../models/JobPosting');
 const Recruiter = require('../models/Recruiter');
 const { notify } = require('./notifications');
-const { closeExpired } = require('./postingOutcome');
+const { closeExpired, autoCloseAbandoned } = require('./postingOutcome');
 const { easternParts } = require('./weeklyEmails');
 
 const DAY = 86400000;
@@ -11,6 +11,7 @@ const inWindow = (now) => { const h = easternParts(now).hour; return h >= 8 && h
 
 async function runOutcomeReminders({ now = new Date(), send } = {}) {
   await closeExpired({ now });
+  await autoCloseAbandoned({ now });
   if (!inWindow(now)) return { sent: 0, outsideWindow: true };
   const deliver = send || require('./emailService').sendOutcomeReminderEmail;
   let sent = 0;

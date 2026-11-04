@@ -29,5 +29,9 @@ const CLOSURE_TEXT = {
   hired_elsewhere: 'The position has been filled.',
   not_filled: 'The employer did not fill this position.',
   cancelled: 'The position was cancelled.',
+  // The recruiter never answered: the job was closed for them after the grace period.
+  no_outcome: 'This job passed its close date and the recruiter did not report an outcome. No one is listed as hired through PreCheckd. We keep a record of every job like this to watch for ghost jobs.',
 };
-module.exports = { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS, CLOSURE_TEXT };
+// How long a recruiter has after the close date before an unanswered job is closed for them.
+const NO_OUTCOME_GRACE_DAYS = 14;
+module.exports = { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS, CLOSURE_TEXT, NO_OUTCOME_GRACE_DAYS };

@@ -1,0 +1,14 @@
+<% if (application && application.status === 'rejected') { %>
+  <% if (notice === 'disputed' || application.disputed) { %>
+    <p class="jp-std">Thanks. We have flagged this for review.</p>
+  <% } else if (application.canDispute) { %>
+    <form method="POST" action="/jobs/<%= postingId %>/feedback-dispute" style="margin-top:0.6rem;">
+      <label class="jp-std" for="dispute-kind">Is this not true?</label>
+      <select id="dispute-kind" name="kind" required style="background:#1F363C;color:#F2F4F3;border:1px solid #3B5860;border-radius:6px;padding:0.4rem;margin:0 0.4rem;">
+        <option value="">Choose one</option>
+        <% disputeKinds.forEach(function (k) { %><option value="<%= k.code %>"><%= k.label %></option><% }); %>
+      </select>
+      <button class="jp-btn alt" type="submit" style="padding:0.4rem 0.9rem;">Report this</button>
+    </form>
+  <% } %>
+<% } %>

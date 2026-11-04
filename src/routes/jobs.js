@@ -11,6 +11,12 @@ const { ACTIVE, HAS_APPLIED, STAGE_LABEL, applyToJob, withdrawApplication } = re
 const { notify } = require('../services/notifications');
 const { evaluate } = require('../services/applyGate');
 const applicantQueue = require('../services/applicantQueue');
+const { REJECTION_REASONS } = require('../content/rejectionReasons');
+const DISPUTE_KINDS = [
+  { code: 'never_interviewed', label: 'I was never interviewed' },
+  { code: 'never_contacted', label: 'The recruiter never contacted me' },
+  { code: 'not_accurate', label: 'This does not describe what happened' },
+];
 const { buildCandidateFacts } = require('../services/applyFacts');
 const { classify } = require('../services/jobMatch');
 const pub = require('../services/publicJob');
@@ -141,6 +147,34 @@ router.post('/:id/withdraw', async (req, res) => {
   }
 });
 
+// POST /jobs/:id/feedback-dispute — the candidate says the area to work on they were given is not true. Staff review it.
+router.post('/:id/feedback-dispute', async (req, res) => {
+  try {
+    if (!req.session || !req.session.candidateId) return res.redirect('/login');
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).render('error', { title: 'Not found', message: 'We could not find that job.' });
+    const posting = await JobPosting.findById(req.params.id);
+    if (!posting) return res.status(404).render('error', { title: 'Not found', message: 'We could not find that job.' });
+    const back = pub.pathOf(posting);
+    const app = await JobApplication.findOne({ jobId: posting._id, candidateId: req.session.candidateId });
+    const kind = DISPUTE_KINDS.find((k) => k.code === String(req.body.kind || ''));
+    if (!app || app.status !== 'rejected' || app.feedbackDispute || !kind || !REJECTION_REASONS.some((r) => r.code === app.rejectionReason)) {
+      return res.redirect(back);
+    }
+    app.feedbackDispute = { at: new Date(), kind: kind.code };
+    await app.save();
+    try {
+      const total = await JobApplication.countDocuments({ recruiterId: app.recruiterId, 'feedbackDispute.at': { $ne: null } });
+      await require('../services/emailService').sendStaffAlertEmail({
+        subject: 'A candidate disputed their feedback', headline: 'A candidate says the feedback they were given is not true',
+        paragraphs: [`Posting ${posting._id} (${posting.title} at ${posting.hiringCompany}), recruiter ${app.recruiterId}. The recruiter picked "${app.rejectionReason}" and the candidate answered: "${kind.label}". This recruiter has ${total} disputed rejection${total === 1 ? '' : 's'} in total.`] });
+    } catch (e) { console.error('Dispute staff alert failed:', e.message); }
+    res.redirect(`${back}?disputed=1`);
+  } catch (error) {
+    console.error('Error saving feedback dispute:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET /jobs/sitemap.xml — open postings, for search engines (submit once in Google Search Console)
 router.get('/sitemap.xml', async (req, res) => {
   try {
@@ -172,7 +206,7 @@ router.get('/:id/:slug?', async (req, res) => {
     let viewer = { kind: 'guest' };
     let gate = null;
     let application = null;
-    if (open && req.session && req.session.candidateId) {
+    if (req.session && req.session.candidateId) {
       viewer = { kind: 'candidate' };
       try {
         const candidate = await Candidate.findById(req.session.candidateId);
@@ -181,9 +215,13 @@ router.get('/:id/:slug?', async (req, res) => {
           const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
           const alreadyApplied = Boolean(existing && HAS_APPLIED.includes(existing.status));
           if (existing) application = { active: alreadyApplied, status: existing.status, stageLabel: STAGE_LABEL[existing.status] || '', live: ACTIVE.includes(existing.status),
-            appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote, rejectionText: existing.rejectionText };
+            appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote, rejectionText: existing.rejectionText,
+            canDispute: existing.status === 'rejected' && REJECTION_REASONS.some((r) => r.code === existing.rejectionReason) && !existing.feedbackDispute,
+            disputed: Boolean(existing.feedbackDispute) };
+          if (open) {
           const shape = await applicantQueue.gateShape(posting);
           gate = evaluate(await buildCandidateFacts(candidate, { posting: shape, alreadyApplied }), shape);
+          }
           if (req.session.returnTo === j.path) delete req.session.returnTo;
         }
       } catch (e) { console.error('Error checking a candidate against a posting:', e); gate = null; }
@@ -198,7 +236,7 @@ router.get('/:id/:slug?', async (req, res) => {
       canonicalUrl: meta.canonical,
       robotsMeta: open ? '' : 'noindex',
       headExtra: open ? pub.jsonLdScript(pub.jobPostingJsonLd(j)) : '',
-      j, open, viewer, gate, application, notice: req.query.applied ? 'applied' : (req.query.withdrew ? 'withdrew' : ''), standard, ...helpers,
+      j, open, viewer, gate, application, notice: req.query.applied ? 'applied' : (req.query.withdrew ? 'withdrew' : (req.query.disputed ? 'disputed' : '')), disputeKinds: DISPUTE_KINDS, standard, ...helpers,
       poster: poster && poster.isActive !== false && !poster.isSuspended
         ? { name: [poster.firstName, poster.lastName].filter(Boolean).join(' '), slug: poster.slug } : null,
       postingId: String(posting._id),

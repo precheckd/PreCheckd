@@ -19,6 +19,8 @@ const jobApplicationSchema = new mongoose.Schema({
   // Set when this applicant takes the job's role test (the role-test feature fills it in). Until then it stays
   // null, and the "role-specific test" feedback area can't be chosen for them.
   roleTestResult: { type: { score: Number, takenAt: Date }, default: null, _id: false },
+  // The candidate says the area they were given is not true. Staff review it (routes/jobs.js).
+  feedbackDispute: { type: { at: Date, kind: String }, default: null, _id: false },
   // pipeline
   stageChangedAt: { type: Date, default: null },
   rejectionReason: { type: String, default: null },   // code from content/rejectionReasons.js (recruiter-side)

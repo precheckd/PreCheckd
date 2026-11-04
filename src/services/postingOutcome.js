@@ -9,7 +9,7 @@ const { ACTIVE, moveStage, releaseAccess } = require('./jobApplications');
 const { notify } = require('./notifications');
 const { isBlockedEmailDomain } = require('../utils/blockedEmailDomains');
 const { scanFields } = require('../utils/textScan');
-const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS, CLOSURE_TEXT } = require('../content/outcomeReasons');
+const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS, CLOSURE_TEXT, NO_OUTCOME_GRACE_DAYS } = require('../content/outcomeReasons');
 const { byCode, allowedFor } = require('../content/rejectionReasons');
 
 const DAY = 86400000;
@@ -180,4 +180,33 @@ async function flagRepost(posting, { now = new Date(), alert } = {}) {
   return true;
 }
 
-module.exports = { closeExpired, awaitingPostingFor, validateOutcome, recordOutcome, answerHireConfirmation, flagRepost, reasonList, hash };
+// A recruiter who ignores the outcome form for NO_OUTCOME_GRACE_DAYS after the close date: the job is closed for
+// them, every applicant still waiting is told plainly that no one is listed as hired and that it is logged, the
+// posting is flagged for staff, and the recruiter is told. Returns how many postings were closed.
+async function autoCloseAbandoned({ now = new Date(), alert } = {}) {
+  const cutoff = new Date(now.getTime() - NO_OUTCOME_GRACE_DAYS * DAY);
+  const stale = await JobPosting.find({ status: 'awaiting_outcome', awaitingOutcomeAt: { $lt: cutoff } });
+  let closed = 0;
+  for (const posting of stale) {
+    try {
+      const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } });
+      for (const app of live) await closeOutApplicant(app, posting, CLOSURE_TEXT.no_outcome, now);
+      posting.outcome = { kind: 'no_outcome', reason: null, reasonNote: '', recordedAt: now, hires: [] };
+      posting.status = 'closed';
+      posting.closedAt = now;
+      posting.reviewFlag = 'no_outcome';
+      posting.reviewClearedAt = null;
+      await posting.save();
+      await notify('recruiter', posting.recruiterId, 'job_no_outcome', `${posting.title} was closed without an outcome. The applicants were told, and it is on record.`.slice(0, 200), `/recruiter-jobs/${posting._id}`);
+      const tell = alert || require('./emailService').sendStaffAlertEmail;
+      try {
+        await tell({ subject: 'A job closed with no outcome', headline: 'A recruiter did not report an outcome',
+          paragraphs: [`Posting ${posting._id} (${posting.title} at ${posting.hiringCompany}) passed its close date ${NO_OUTCOME_GRACE_DAYS} days ago with no outcome. It was closed for the recruiter and ${live.length} applicant${live.length === 1 ? '' : 's'} told. Check this recruiter's other postings for ghost-job behavior.`] });
+      } catch (e) { console.error('Staff alert failed:', e.message); }
+      closed += 1;
+    } catch (e) { console.error('Auto-close failed for a posting:', e.message); }
+  }
+  return closed;
+}
+
+module.exports = { autoCloseAbandoned, closeExpired, awaitingPostingFor, validateOutcome, recordOutcome, answerHireConfirmation, flagRepost, reasonList, hash };

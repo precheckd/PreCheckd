@@ -2,6 +2,7 @@
 // Close date, the outcome gate, recording how a job ended, hire confirmation, reminders and the repost flag.
 process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 're_test';
 process.env.SESSION_SECRET = 'test-secret';
+process.env.MOCK_EMAIL = 'true'; // the staff alert email from a dispute is logged, never sent
 process.env.DISABLE_JOB_NOTICES = 'true'; // sweeps are called directly below; the automatic triggers stay off
 process.env.APP_BASE_URL = 'https://precheckd.test';
 const assert = require('assert');
@@ -242,6 +243,53 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(notes.slice(before).some((x) => String(x.ownerId) === String(bob._id) && x.title.includes('has closed')));
     asOwner();
     assert.strictEqual((await get('/recruiter-jobs')).status, 200, 'gate lifts once the outcome is recorded');
+  });
+
+  await t('a rejected candidate sees their area on the closed job page and can report it once', async () => {
+    asCandidate(bob);
+    const page = await (await get(pub.pathOf(job1), {})).text();
+    assert.ok(page.includes('This position is closed') && page.includes('Your application') && page.includes('Area to work on: skill level'), 'the closed page shows the area');
+    assert.ok(page.includes('Report this') && page.includes('I was never interviewed'));
+    const bad = await post(`/jobs/${job1._id}/feedback-dispute`, { kind: 'made-up' });
+    assert.strictEqual(bad.status, 302);
+    assert.ok(!bobApp.feedbackDispute, 'an unknown kind saves nothing');
+    await post(`/jobs/${job1._id}/feedback-dispute`, { kind: 'never_interviewed' });
+    assert.strictEqual(bobApp.feedbackDispute.kind, 'never_interviewed');
+    const again = await (await get(pub.pathOf(job1), {})).text();
+    assert.ok(again.includes('flagged this for review') && !again.includes('Report this'));
+    const first = bobApp.feedbackDispute.at;
+    await post(`/jobs/${job1._id}/feedback-dispute`, { kind: 'not_accurate' });
+    assert.strictEqual(bobApp.feedbackDispute.at, first, 'one report per application');
+  });
+
+  await t('only a rejected applicant can report, and not someone else\'s application', async () => {
+    asCandidate(ann);
+    await post(`/jobs/${job1._id}/feedback-dispute`, { kind: 'not_accurate' });
+    assert.ok(!annApp.feedbackDispute, 'the hired applicant has nothing to report');
+    asCandidate(makeCandidate('Eve'));
+    await post(`/jobs/${job1._id}/feedback-dispute`, { kind: 'not_accurate' });
+    assert.strictEqual(apps.filter((x) => x.feedbackDispute).length, 1);
+  });
+
+  await t('a job the recruiter never answers is closed after the grace period, applicants are told, and staff are alerted', async () => {
+    const stale = makePosting({ title: 'Ghost Role' });
+    const fay = makeCandidate('Fay'); const fayApp = await apply(fay, stale); // applied while it was open
+    Object.assign(stale, { status: 'awaiting_outcome', closeDate: new Date(Date.now() - 16 * day), awaitingOutcomeAt: new Date(Date.now() - 15 * day) });
+    const fresh = makePosting({ title: 'Recent Role', status: 'awaiting_outcome', closeDate: new Date(Date.now() - 5 * day) });
+    fresh.awaitingOutcomeAt = new Date(Date.now() - 5 * day);
+    let alerted = null;
+    const n = await outcome.autoCloseAbandoned({ alert: async (m) => { alerted = m; } });
+    assert.strictEqual(n, 1);
+    assert.strictEqual(stale.status, 'closed');
+    assert.strictEqual(stale.outcome.kind, 'no_outcome');
+    assert.strictEqual(stale.reviewFlag, 'no_outcome');
+    assert.strictEqual(fresh.status, 'awaiting_outcome', 'still inside the grace period');
+    assert.strictEqual(fayApp.status, 'rejected');
+    assert.ok(fayApp.rejectionText.includes('did not report an outcome') && fayApp.rejectionText.includes('No one is listed as hired') && fayApp.rejectionText.includes('ghost jobs'));
+    assert.ok(alerted && alerted.subject.includes('no outcome'));
+    assert.ok(notes.some((x) => x.ownerType === 'recruiter' && x.type === 'job_no_outcome'));
+    assert.ok(notesFor(fay).some((x) => x.title.includes('has closed')));
+    assert.strictEqual(await outcome.autoCloseAbandoned({ alert: async () => {} }), 0, 'nothing happens twice');
   });
 
   await t('cancelling needs a reason and tells applicants neutrally; the recruiter\'s other jobs are untouched', async () => {
