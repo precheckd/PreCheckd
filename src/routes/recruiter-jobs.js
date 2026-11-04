@@ -17,6 +17,7 @@ const { analyseEdit, applyImpact } = require('../services/postingImpact');
 const JobApplication = require('../models/JobApplication');
 const { ACTIVE, HAS_APPLIED, STAGE_LABEL, moveStage } = require('../services/jobApplications');
 const { REJECTION_REASONS, reasonsFor } = require('../content/rejectionReasons');
+const applicantQueue = require('../services/applicantQueue');
 const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
 const { validateOutcome, recordOutcome, flagRepost } = require('../services/postingOutcome');
@@ -377,6 +378,7 @@ router.get('/:id/applicants', async (req, res) => {
       title: `Applicants | ${posting.title} | PreCheckd`, posting,
       applicants: apps.filter((a) => a.candidateId).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)),
       stages: STAGE_LABEL, reasons: REJECTION_REASONS, live: ACTIVE, error: req.query.error || '', moved: req.query.moved || '',
+      queue: { waiting: await applicantQueue.waitingCount(posting._id), limit: applicantQueue.LIMIT },
     });
   } catch (error) {
     console.error('Error loading applicants:', error);

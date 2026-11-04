@@ -62,6 +62,17 @@ async function applyToJob(candidate, posting, now = new Date()) {
   await app.save();
 
   await notify('recruiter', posting.recruiterId, 'job_applicant', `New applicant for ${posting.title}`.slice(0, 200), `/recruiter-jobs/${posting._id}/applicants`);
+  // Warn the recruiter before the queue pauses the job, and tell them when it has.
+  try {
+    const q = require('./applicantQueue');
+    const waiting = await q.waitingCount(posting._id);
+    if (waiting === q.WARN_AT || waiting === q.LIMIT) {
+      const text = waiting >= q.LIMIT
+        ? `${posting.title} is paused: ${waiting} applicants are waiting on you. It opens again as you respond to them.`
+        : `${waiting} applicants for ${posting.title} are waiting on you. At ${q.LIMIT}, new applications pause.`;
+      await notify('recruiter', posting.recruiterId, 'job_queue', text.slice(0, 200), `/recruiter-jobs/${posting._id}/applicants`);
+    }
+  } catch (e) { console.error('Queue notice failed:', e.message); }
   return app;
 }
 

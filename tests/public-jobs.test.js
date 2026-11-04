@@ -43,6 +43,7 @@ Recruiter.findById = async () => ({ firstName: 'Pat', lastName: 'Lee', slug: 'pa
 const SkillResult = require('../src/models/SkillResult');
 require('../src/models/JobApplication').findOne = async () => null;
 require('../src/models/JobApplication').find = async () => [];
+require('../src/models/JobApplication').countDocuments = async () => 0;
 SkillResult.find = () => ({ select: async () => [] });
 require('../src/services/skills').currentSkills = async () => [];
 let candidate = null;

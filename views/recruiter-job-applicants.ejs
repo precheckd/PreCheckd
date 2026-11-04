@@ -22,6 +22,7 @@
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
   <h1>Applicants</h1>
   <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Their full profile, video and resume stay open to you until you decide not to move forward. The candidate sees the reason you pick, so choose the one that is true.</p>
+  <p class="ja-sub" style="margin-top:-0.4rem;"><strong><%= queue.waiting %> of <%= queue.limit %></strong> waiting on a decision. New applications pause at <%= queue.limit %>. Moving someone to Screening does not clear a place; interviewing, hiring or not moving forward does.</p>
   <% if (moved) { %><div class="ja-ok">Updated. The candidate has been told.</div><% } %>
   <% if (error) { %><div class="ja-err"><%= error %></div><% } %>
   <% if (applicants.length === 0) { %>

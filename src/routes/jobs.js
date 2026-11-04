@@ -10,6 +10,7 @@ const JobApplication = require('../models/JobApplication');
 const { ACTIVE, HAS_APPLIED, STAGE_LABEL, applyToJob, withdrawApplication } = require('../services/jobApplications');
 const { notify } = require('../services/notifications');
 const { evaluate } = require('../services/applyGate');
+const applicantQueue = require('../services/applicantQueue');
 const { buildCandidateFacts } = require('../services/applyFacts');
 const { classify } = require('../services/jobMatch');
 const pub = require('../services/publicJob');
@@ -89,7 +90,8 @@ async function loadForApply(req, res) {
   if (!candidate) { res.redirect('/login'); return null; }
   const existing = await JobApplication.findOne({ jobId: posting._id, candidateId: candidate._id });
   const alreadyApplied = Boolean(existing && HAS_APPLIED.includes(existing.status));
-  const gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
+  const shape = await applicantQueue.gateShape(posting);
+  const gate = evaluate(await buildCandidateFacts(candidate, { posting: shape, alreadyApplied }), shape);
   return { posting, candidate, existing, gate, back };
 }
 
@@ -180,7 +182,8 @@ router.get('/:id/:slug?', async (req, res) => {
           const alreadyApplied = Boolean(existing && HAS_APPLIED.includes(existing.status));
           if (existing) application = { active: alreadyApplied, status: existing.status, stageLabel: STAGE_LABEL[existing.status] || '', live: ACTIVE.includes(existing.status),
             appliedAt: existing.appliedAt, withdrawnBy: existing.withdrawnBy, withdrawnNote: existing.withdrawnNote, rejectionText: existing.rejectionText };
-          gate = evaluate(await buildCandidateFacts(candidate, { posting: posting.toGateShape(), alreadyApplied }), posting.toGateShape());
+          const shape = await applicantQueue.gateShape(posting);
+          gate = evaluate(await buildCandidateFacts(candidate, { posting: shape, alreadyApplied }), shape);
           if (req.session.returnTo === j.path) delete req.session.returnTo;
         }
       } catch (e) { console.error('Error checking a candidate against a posting:', e); gate = null; }

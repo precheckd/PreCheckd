@@ -220,6 +220,13 @@ function evaluate(candidate, posting, now = Date.now()) {
       blockers: [{ criterion: 'posting', code: 'posting_closed', message: 'This position is closed.', actions: [] }] };
   }
 
+  // The recruiter has too many applicants waiting on a decision (services/applicantQueue.js).
+  if (posting.queueFull && !candidate.alreadyApplied) {
+    return { canApply: false, closed: false,
+      blockers: [{ criterion: 'posting', code: 'queue_full',
+        message: 'This job is paused while the recruiter reviews the applicants already waiting. Check back soon: it opens again as they respond.', actions: [] }] };
+  }
+
   if (candidate.alreadyApplied) {
     blockers.push({ criterion: 'posting', code: 'already_applied', message: 'You have already applied to this job.', actions: [] });
   }
