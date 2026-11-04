@@ -1,0 +1,76 @@
+<style>
+  .setup-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .setup-container { max-width: 700px; width: 100%; }
+  .setup-container h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.5rem; }
+  .setup-container p { color: #C7D1CF; font-size: 0.95rem; }
+  .setup-bar { height: 8px; background: #2B4A52; border-radius: 4px; margin: 1rem 0 1.5rem; overflow: hidden; }
+  .setup-bar span { display: block; height: 100%; background: #6fcf97; }
+  .setup-step { display: flex; align-items: center; gap: 1rem; background: #2B4A52; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+  .setup-step .mark { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #8aa5a1; flex: none; display: flex; align-items: center; justify-content: center; color: #1F363C; font-weight: 700; }
+  .setup-step.done .mark { background: #6fcf97; border-color: #6fcf97; }
+  .setup-step .txt { flex: 1; }
+  .setup-step .txt strong { color: #F2F4F3; display: block; }
+  .setup-step .txt span { color: #C7D1CF; font-size: 0.9rem; }
+  .setup-btn { display: inline-block; background: #6fcf97; color: #1F363C; font-weight: 700; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; border: 0; cursor: pointer; font-size: 0.95rem; }
+  .setup-btn.ghost { background: transparent; color: #9fd8cf; border: 1px solid #4a6b73; }
+  .setup-sharing { background: #2B4A52; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+  .setup-sharing label { color: #F2F4F3; display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.9rem; }
+  .setup-note { background: #2B4A52; border-left: 4px solid #e0b34a; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #F2F4F3; }
+  .setup-note a { color: #9fd8cf; font-weight: 600; }
+</style>
+
+<div class="setup-content">
+  <div class="setup-container">
+    <% const next = progress.steps.find(function (s) { return !s.done; }); %>
+    <% if (progress.complete) { %>
+      <h1>You're all set, <%= candidate.firstName %></h1>
+      <p>Your profile is ready. The next thing that makes it stand out is your verified skills: each test you pass shows recruiters a level you earned.</p>
+      <div class="setup-bar"><span style="width:100%"></span></div>
+      <p style="margin-bottom:1.25rem;">
+        <a class="setup-btn" href="/candidate/<%= candidate.slug %>/skills">Take your first skill tests</a>
+        <a class="setup-btn ghost" href="/candidate/<%= candidate.slug %>">Go to my page</a>
+      </p>
+    <% } else { %>
+      <h1>Set up your profile</h1>
+      <p>Four quick steps. You can leave and come back; we'll pick up where you stopped.</p>
+      <div class="setup-bar"><span style="width:<%= Math.round(progress.done / progress.total * 100) %>%"></span></div>
+    <% } %>
+
+    <% if (!identityDone) { %>
+      <div class="setup-note">Recruiters can't find you until your identity is verified (Government ID and a selfie). <a href="/candidate/<%= candidate.slug %>/verify-identity">Verify now</a></div>
+    <% } %>
+
+    <% progress.steps.forEach(function (s, i) { %>
+      <% if (s.key === 'sharing' && !s.done && (!next || next.key === 'sharing')) { %>
+        <form class="setup-sharing" id="sharing" method="POST" action="/candidate/<%= candidate.slug %>/setup/sharing">
+          <strong style="color:#F2F4F3;display:block;margin-bottom:0.6rem;"><%= i + 1 %>. <%= s.label %></strong>
+          <label>
+            <input type="checkbox" name="openToOpportunities" <%= candidate.openToOpportunities !== false ? 'checked' : '' %>>
+            <span>Let verified recruiters find me in search. Your name, employer and school stay hidden until you accept a connection.</span>
+          </label>
+          <button type="submit" class="setup-btn">Confirm</button>
+        </form>
+      <% } else { %>
+        <div class="setup-step <%= s.done ? 'done' : '' %>">
+          <div class="mark"><%= s.done ? '✓' : i + 1 %></div>
+          <div class="txt"><strong><%= s.label %></strong><span><%= s.blurb %></span></div>
+          <% if (s.key === 'sharing') { %>
+            <% if (!s.done) { %><span style="color:#8aa5a1;font-size:0.85rem;">After the steps above</span><% } else { %><a class="setup-btn ghost" href="#sharing" onclick="document.getElementById('sharing-redo').style.display='block';return false;">Change</a><% } %>
+          <% } else { %>
+            <a class="setup-btn <%= s.done ? 'ghost' : '' %>" href="/candidate/<%= candidate.slug %>/<%= s.page %>"><%= s.done ? 'Edit' : 'Start' %></a>
+          <% } %>
+        </div>
+      <% } %>
+    <% }); %>
+
+    <% if (progress.complete) { %>
+      <form id="sharing-redo" style="display:none" class="setup-sharing" method="POST" action="/candidate/<%= candidate.slug %>/setup/sharing">
+        <label>
+          <input type="checkbox" name="openToOpportunities" <%= candidate.openToOpportunities !== false ? 'checked' : '' %>>
+          <span>Let verified recruiters find me in search.</span>
+        </label>
+        <button type="submit" class="setup-btn">Save</button>
+      </form>
+    <% } %>
+  </div>
+</div>

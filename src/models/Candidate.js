@@ -289,6 +289,16 @@ const candidateSchema = new mongoose.Schema({
     default: false
   },
 
+  // Guided setup after signup (see utils/candidateOnboarding.js). `required` is
+  // switched on only for accounts created after this shipped, so existing
+  // candidates are never sent back through it. `completedAt` is stamped the first
+  // time every required step is done; the redirect to /setup stops then.
+  onboarding: {
+    required: { type: Boolean, default: false },
+    sharingConfirmedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null }
+  },
+
   // Whether this candidate shows up in recruiters' candidate search.
   // Defaults to on — a candidate who built a profile here is assumed to
   // want to be found, and a surprise opt-in step would just mean quieter

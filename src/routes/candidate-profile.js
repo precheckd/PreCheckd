@@ -5,6 +5,7 @@ const Candidate = require('../models/Candidate');
 const { getMissingMatchingRequirements } = require('../utils/candidateMatchingRequirements');
 const { getViewCounts } = require('../utils/viewTracker');
 const certExpiry = require('../utils/certExpiry');
+const { isOnboardingPending } = require('../utils/candidateOnboarding');
 
 function requireCandidateLogin(req, res, next) {
   if (!req.session.candidateId) {
@@ -46,6 +47,11 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
 
     if (candidate._id.toString() !== req.session.candidateId) {
       return res.status(403).send('You do not have permission to view this page.');
+    }
+
+    // New accounts go through the guided setup until its required steps are done.
+    if (isOnboardingPending(candidate)) {
+      return res.redirect(`/candidate/${candidate.slug}/setup`);
     }
 
     const viewCounts = await getViewCounts('candidate', candidate._id);

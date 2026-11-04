@@ -272,7 +272,8 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000,
-      resumeParsingStatus: req.file ? 'pending' : 'none'
+      resumeParsingStatus: req.file ? 'pending' : 'none',
+      onboarding: { required: true }
     });
 
     await candidate.save();

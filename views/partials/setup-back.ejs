@@ -1,0 +1,5 @@
+<% if (typeof candidate !== 'undefined' && candidate && candidate.onboarding && candidate.onboarding.required && !candidate.onboarding.completedAt) { %>
+<div style="background:#2B4A52;border:1px solid #4a6b73;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;color:#F2F4F3;font-size:0.95rem;">
+  You're setting up your profile. <a href="/candidate/<%= candidate.slug %>/setup" style="color:#9fd8cf;font-weight:600;">Back to setup</a>
+</div>
+<% } %>
