@@ -32,7 +32,7 @@ async function awaitingPostingFor(recruiterId) {
 function reasonList(kind) { return kind === 'cancelled' ? CANCEL_REASONS : NOT_FILLED_REASONS; }
 
 // body: { kind, hiredIds[], hireName, hireEmail, reason, reasonNote, reason_<applicantId> }. liveIds: ids of applicants
-// still in play. live (optional): [{ id, status }] for the same applicants; when given and the job was filled, every
+// still in play. live (optional): [{ id, status, roleTest }] for the same applicants; when given and the job was filled, every
 // applicant who was not hired needs an area to work on (the candidate sees it).
 function validateOutcome(body, { posting, liveIds, live }) {
   const errors = {}; const value = {};
@@ -68,7 +68,7 @@ function validateOutcome(body, { posting, liveIds, live }) {
     let missing = false;
     live.filter((a) => !hired.has(String(a.id))).forEach((a) => {
       const code = String(b[`reason_${a.id}`] || '');
-      if (allowedFor(byCode(code), a.status)) picks[String(a.id)] = code; else missing = true;
+      if (allowedFor(byCode(code), a.status, { roleTest: Boolean(a.roleTest) })) picks[String(a.id)] = code; else missing = true;
     });
     if (missing) errors.applicantReasons = 'Choose an area to work on for everyone who was not hired.';
     value.applicantReasons = picks;

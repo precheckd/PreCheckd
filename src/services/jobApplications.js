@@ -103,7 +103,7 @@ async function moveStage(app, posting, stage, { reason } = {}, now = new Date())
   if (stage === 'rejected') {
     rejection = byCode(reason);
     if (!rejection || rejection.legacy) return { ok: false, error: 'Choose an area for them to work on.' };
-    if (!allowedFor(rejection, app.status)) return { ok: false, error: 'That reason only fits someone you have screened or interviewed. Choose another.' };
+    if (!allowedFor(rejection, app.status, { roleTest: Boolean(app.roleTestResult) })) return { ok: false, error: 'That area does not fit this applicant (it needs an interview, a screening, or a role test they took). Choose another.' };
   }
   app.status = stage;
   app.stageChangedAt = now;

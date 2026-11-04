@@ -141,7 +141,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'not_a_fit' });
     assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose an area'), 'old reasons are not accepted');
     res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'interview' });
-    assert.ok(decodeURIComponent(res.headers.get('location')).includes('screened or interviewed'), 'interview feedback needs an interview');
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('does not fit this applicant'), 'interview feedback needs an interview');
     assert.strictEqual(bobApp.status, 'applied');
   });
 

@@ -16,6 +16,9 @@ const jobApplicationSchema = new mongoose.Schema({
   withdrawnAt: { type: Date, default: null },
   withdrawnBy: { type: String, enum: [null, 'candidate', 'requirement_change'], default: null },
   withdrawnNote: { type: String, default: '', maxlength: 600 },
+  // Set when this applicant takes the job's role test (the role-test feature fills it in). Until then it stays
+  // null, and the "role-specific test" feedback area can't be chosen for them.
+  roleTestResult: { type: { score: Number, takenAt: Date }, default: null, _id: false },
   // pipeline
   stageChangedAt: { type: Date, default: null },
   rejectionReason: { type: String, default: null },   // code from content/rejectionReasons.js (recruiter-side)

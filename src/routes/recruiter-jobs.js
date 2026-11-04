@@ -463,7 +463,7 @@ router.post('/:id/outcome', async (req, res) => {
     if (!posting) return;
     if (!['open', 'awaiting_outcome'].includes(posting.status)) return res.redirect(`/recruiter-jobs/${posting._id}`);
     const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } });
-    const { errors, value } = validateOutcome(req.body, { posting, liveIds: live.map((a) => String(a._id)), live: live.map((a) => ({ id: String(a._id), status: a.status })) });
+    const { errors, value } = validateOutcome(req.body, { posting, liveIds: live.map((a) => String(a._id)), live: live.map((a) => ({ id: String(a._id), status: a.status, roleTest: Boolean(a.roleTestResult) })) });
     if (Object.keys(errors).length) {
       return res.status(400).render('recruiter-job-outcome', await outcomeLocals(posting, { errors, form: req.body }));
     }

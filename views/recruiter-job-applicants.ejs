@@ -39,7 +39,7 @@
           </select>
           <select name="reason" aria-label="Area for them to work on (needed for not moving forward)">
             <option value="">Area to work on (for not moving forward)</option>
-            <% reasons.filter(function(r) { return !r.stages || r.stages.includes(a.status); }).forEach(function(r) { %><option value="<%= r.code %>"><%= r.label %></option><% }); %>
+            <% reasons.filter(function(r) { return (!r.stages || r.stages.includes(a.status)) && (!r.needsRoleTest || a.roleTestResult); }).forEach(function(r) { %><option value="<%= r.code %>"><%= r.label %></option><% }); %>
           </select>
           <button type="submit">Move</button>
         </form>

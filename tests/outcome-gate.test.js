@@ -198,6 +198,9 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     const ok = v({ ...hire, reason_a2: 'skill_depth', reason_a3: 'interview' });
     assert.deepStrictEqual(ok.errors, {});
     assert.deepStrictEqual(ok.value.applicantReasons, { a2: 'skill_depth', a3: 'interview' }, 'the hired person needs none');
+    assert.ok(v({ ...hire, reason_a2: 'role_test', reason_a3: 'interview' }).errors.applicantReasons, 'role-test area needs a role test result');
+    const withTest = outcome.validateOutcome({ ...hire, reason_a2: 'role_test', reason_a3: 'interview' }, { ...ctx, live: [{ id: 'a1', status: 'offer' }, { id: 'a2', status: 'applied', roleTest: true }, { id: 'a3', status: 'interviewing' }] });
+    assert.deepStrictEqual(withTest.errors, {}, 'accepted once they took the role test');
     assert.ok(v({ kind: 'hired_elsewhere', hireName: 'Jo Lee', hireEmail: 'jo@acme-corp.com' }).errors.applicantReasons, 'everyone needs one when hired elsewhere');
     assert.deepStrictEqual(v({ kind: 'cancelled', reason: 'budget' }).errors, {}, 'cancelled and not-filled jobs need no per-person area');
   });

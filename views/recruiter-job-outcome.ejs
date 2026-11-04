@@ -64,7 +64,7 @@
           <span><%= a.candidateId.firstName %> <%= a.candidateId.lastName %></span>
           <select class="oc-in" name="reason_<%= a._id %>" style="margin-top:0">
             <option value="">Choose one</option>
-            <% reasonsFor(a.status).forEach(function(r) { %><option value="<%= r.code %>" <%= form['reason_' + a._id] === r.code ? 'selected' : '' %>><%= r.label %></option><% }); %>
+            <% reasonsFor(a.status, { roleTest: Boolean(a.roleTestResult) }).forEach(function(r) { %><option value="<%= r.code %>" <%= form['reason_' + a._id] === r.code ? 'selected' : '' %>><%= r.label %></option><% }); %>
           </select>
         </div>
       <% }); %>
