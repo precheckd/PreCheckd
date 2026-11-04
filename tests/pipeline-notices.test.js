@@ -141,7 +141,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(bobApp.status, 'applied');
   });
 
-  await t('a rejection shows the candidate only the neutral sentence, stops the access, keeps the connection', async () => {
+  await t('a rejection shows the candidate the reason the recruiter picked, stops the access, keeps the connection', async () => {
     asOwner();
     const before = notes.length;
     await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'not_a_fit' });
@@ -151,11 +151,11 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(conn.fullAccessStatus, 'none');
     assert.strictEqual(conn.status, 'accepted');
     const bell = notes.slice(before).find((x) => x.ownerType === 'candidate');
-    assert.ok(bell.title.includes('moving forward with other candidates') && !bell.title.toLowerCase().includes('fit'));
+    assert.ok(bell.title.includes('not the right fit for the team or role'));
     asCandidate(bob);
     const html = await (await get(pub.pathOf(job))).text();
-    assert.ok(html.includes('Not moving forward') && html.includes('moving forward with other candidates'));
-    assert.ok(!html.includes('not_a_fit') && !html.includes('right fit for the team'));
+    assert.ok(html.includes('Not moving forward') && html.includes('not the right fit for the team or role'));
+    assert.ok(!html.includes('not_a_fit'));
     assert.ok(!html.includes('Withdraw my application') && !html.includes(`/jobs/${job._id}/apply"`));
   });
 

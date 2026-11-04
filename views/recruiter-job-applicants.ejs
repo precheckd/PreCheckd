@@ -21,7 +21,7 @@
 <div class="ja-wrap"><div class="ja-inner">
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
   <h1>Applicants</h1>
-  <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Their full profile, video and resume stay open to you until you decide not to move forward. The candidate sees only a short neutral reason.</p>
+  <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Their full profile, video and resume stay open to you until you decide not to move forward. The candidate sees the reason you pick, so choose the one that is true.</p>
   <% if (moved) { %><div class="ja-ok">Updated. The candidate has been told.</div><% } %>
   <% if (error) { %><div class="ja-err"><%= error %></div><% } %>
   <% if (applicants.length === 0) { %>

@@ -19,7 +19,7 @@ const jobApplicationSchema = new mongoose.Schema({
   // pipeline
   stageChangedAt: { type: Date, default: null },
   rejectionReason: { type: String, default: null },   // code from content/rejectionReasons.js (recruiter-side)
-  rejectionText: { type: String, default: '' },        // the neutral sentence the candidate sees
+  rejectionText: { type: String, default: '' },        // the reason sentence the candidate sees
 }, { timestamps: true });
 
 jobApplicationSchema.index({ jobId: 1, candidateId: 1 }, { unique: true });
