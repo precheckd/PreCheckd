@@ -9,6 +9,9 @@
   .oc-sub { margin: 0.4rem 0 0 1.6rem; display: none; }
   .oc-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; font-size: 1rem; cursor: pointer; }
   .oc-muted { color: #C7D1CF; font-size: 0.85rem; }
+  .oc-fb { display: none; margin-top: 1rem; border-top: 1px solid #3B5860; padding-top: 0.9rem; }
+  .oc-fb-row { display: flex; gap: 0.6rem; align-items: center; margin: 0.4rem 0; }
+  .oc-fb-row span { flex: 0 0 38%; }
 </style>
 <div class="oc-wrap"><div class="oc-inner">
   <h1>How did this job end?</h1>
@@ -46,6 +49,27 @@
         </div>
       <% } %>
     <% }); %>
+    <% if (applicants.length) { %>
+    <div class="oc-fb" id="oc-fb">
+      <strong>Tell everyone who was not hired what to work on</strong>
+      <p class="oc-muted">Each person sees the area you pick. Pick the one that is true for them.</p>
+      <% if (errors.applicantReasons) { %><div class="oc-err"><%= errors.applicantReasons %></div><% } %>
+      <label class="oc-muted">Set for everyone
+        <select class="oc-in" id="oc-all">
+          <option value="">Choose, then adjust any one below</option>
+          <% reasonsFor('applied').forEach(function(r) { %><option value="<%= r.code %>"><%= r.label %></option><% }); %>
+        </select></label>
+      <% applicants.forEach(function(a) { %>
+        <div class="oc-fb-row" data-app="<%= a._id %>">
+          <span><%= a.candidateId.firstName %> <%= a.candidateId.lastName %></span>
+          <select class="oc-in" name="reason_<%= a._id %>" style="margin-top:0">
+            <option value="">Choose one</option>
+            <% reasonsFor(a.status).forEach(function(r) { %><option value="<%= r.code %>" <%= form['reason_' + a._id] === r.code ? 'selected' : '' %>><%= r.label %></option><% }); %>
+          </select>
+        </div>
+      <% }); %>
+    </div>
+    <% } %>
     <label style="display:block;margin-top:0.8rem;">Note (needed if you chose "Other")<input class="oc-in" name="reasonNote" maxlength="300" value="<%= form.reasonNote || '' %>"></label>
     <% if (errors.reasonNote) { %><div class="oc-err"><%= errors.reasonNote %></div><% } %>
     <p style="margin-top:1rem;"><button class="oc-btn" type="submit">Record outcome</button></p>
@@ -59,7 +83,30 @@
       var chosen = (document.querySelector('input[name=kind]:checked') || {}).value;
       document.querySelectorAll('.oc-sub').forEach(function (d) { d.style.display = d.getAttribute('data-for') === chosen ? 'block' : 'none'; });
       document.querySelectorAll('select[data-reason]').forEach(function (s) { s.name = s.getAttribute('data-reason') === chosen ? 'reason' : ''; });
+      var fb = document.getElementById('oc-fb');
+      if (fb) fb.style.display = (chosen === 'hired_precheckd' || chosen === 'hired_elsewhere') ? 'block' : 'none';
+      syncHired();
     }
+    // Someone ticked as hired needs no area to work on.
+    function syncHired() {
+      var hired = {};
+      document.querySelectorAll('input[name=hiredIds]:checked').forEach(function (c) { hired[c.value] = true; });
+      var chosen = (document.querySelector('input[name=kind]:checked') || {}).value;
+      document.querySelectorAll('.oc-fb-row').forEach(function (row) {
+        var off = chosen === 'hired_precheckd' && hired[row.getAttribute('data-app')];
+        row.style.display = off ? 'none' : 'flex';
+        row.querySelector('select').disabled = !!off;
+      });
+    }
+    document.querySelectorAll('input[name=hiredIds]').forEach(function (c) { c.addEventListener('change', syncHired); });
+    var all = document.getElementById('oc-all');
+    if (all) all.addEventListener('change', function () {
+      if (!all.value) return;
+      document.querySelectorAll('.oc-fb-row select').forEach(function (s) {
+        var ok = Array.prototype.some.call(s.options, function (o) { return o.value === all.value; });
+        if (ok && !s.disabled) s.value = all.value;
+      });
+    });
     radios.forEach(function (r) { r.addEventListener('change', sync); });
     sync();
   })();

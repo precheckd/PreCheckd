@@ -186,6 +186,22 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(v({ kind: 'not_filled', reason: 'other', reasonNote: 'call me at 555-123-4567 or me@x.com' }).reasonNote);
   });
 
+  await t('when a job is filled every applicant who was not hired needs an area to work on that fits their stage', async () => {
+    const job = makePosting();
+    const ctx = { posting: job, liveIds: ['a1', 'a2', 'a3'], live: [{ id: 'a1', status: 'offer' }, { id: 'a2', status: 'applied' }, { id: 'a3', status: 'interviewing' }] };
+    const v = (b) => outcome.validateOutcome(b, ctx);
+    const hire = { kind: 'hired_precheckd', hiredIds: ['a1'] };
+    assert.ok(v(hire).errors.applicantReasons, 'no areas chosen');
+    assert.ok(v({ ...hire, reason_a2: 'skill_depth', reason_a3: 'made-up' }).errors.applicantReasons, 'unknown area');
+    assert.ok(v({ ...hire, reason_a2: 'interview', reason_a3: 'interview' }).errors.applicantReasons, 'a2 never interviewed');
+    assert.ok(v({ ...hire, reason_a2: 'filled', reason_a3: 'interview' }).errors.applicantReasons, 'old reasons not accepted');
+    const ok = v({ ...hire, reason_a2: 'skill_depth', reason_a3: 'interview' });
+    assert.deepStrictEqual(ok.errors, {});
+    assert.deepStrictEqual(ok.value.applicantReasons, { a2: 'skill_depth', a3: 'interview' }, 'the hired person needs none');
+    assert.ok(v({ kind: 'hired_elsewhere', hireName: 'Jo Lee', hireEmail: 'jo@acme-corp.com' }).errors.applicantReasons, 'everyone needs one when hired elsewhere');
+    assert.deepStrictEqual(v({ kind: 'cancelled', reason: 'budget' }).errors, {}, 'cancelled and not-filled jobs need no per-person area');
+  });
+
   // ===== recording an outcome through the form =====
   const job1 = makePosting({ title: 'Cloud Engineer' });
   const ann = makeCandidate('Ann'); const bob = makeCandidate('Bob'); const cy = makeCandidate('Cy');
@@ -205,16 +221,19 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
   await t('hiring through PreCheckd marks the hire, tells everyone else the job is filled, and ends their access', async () => {
     asOwner();
     const before = notes.length;
-    const res = await post(`/recruiter-jobs/${job1._id}/outcome`, { kind: 'hired_precheckd', hiredIds: [String(annApp._id)] });
+    const missing = await post(`/recruiter-jobs/${job1._id}/outcome`, { kind: 'hired_precheckd', hiredIds: [String(annApp._id)] });
+    assert.strictEqual(missing.status, 400, 'areas are required for the others');
+    assert.strictEqual(job1.status, 'awaiting_outcome');
+    const res = await post(`/recruiter-jobs/${job1._id}/outcome`, { kind: 'hired_precheckd', hiredIds: [String(annApp._id)], [`reason_${bobApp._id}`]: 'skill_depth', [`reason_${cyApp._id}`]: 'experience' });
     assert.strictEqual(res.status, 302);
     assert.strictEqual(job1.status, 'closed');
     assert.strictEqual(job1.outcome.kind, 'hired_precheckd');
     assert.strictEqual(job1.outcome.hires[0].source, 'precheckd');
     assert.strictEqual(annApp.status, 'hired');
-    for (const a of [bobApp, cyApp]) {
+    for (const [a, code, area] of [[bobApp, 'skill_depth', 'skill level'], [cyApp, 'experience', 'hands-on experience']]) {
       assert.strictEqual(a.status, 'rejected');
-      assert.strictEqual(a.rejectionText, 'The position has been filled.');
-      assert.strictEqual(a.rejectionReason, 'posting_closed');
+      assert.ok(a.rejectionText.startsWith('The position has been filled.') && a.rejectionText.includes(`Area to work on: ${area}`));
+      assert.strictEqual(a.rejectionReason, code);
       assert.strictEqual(trackers.find((x) => String(x._id) === String(a.trackerId)).status, 'rejected');
     }
     assert.ok(notes.slice(before).some((x) => String(x.ownerId) === String(bob._id) && x.title.includes('has closed')));

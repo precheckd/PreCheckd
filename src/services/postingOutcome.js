@@ -10,6 +10,7 @@ const { notify } = require('./notifications');
 const { isBlockedEmailDomain } = require('../utils/blockedEmailDomains');
 const { scanFields } = require('../utils/textScan');
 const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS, CLOSURE_TEXT } = require('../content/outcomeReasons');
+const { byCode, allowedFor } = require('../content/rejectionReasons');
 
 const DAY = 86400000;
 const hash = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
@@ -30,8 +31,10 @@ async function awaitingPostingFor(recruiterId) {
 
 function reasonList(kind) { return kind === 'cancelled' ? CANCEL_REASONS : NOT_FILLED_REASONS; }
 
-// body: { kind, hiredIds[], hireName, hireEmail, reason, reasonNote }. liveIds: ids of applicants still in play.
-function validateOutcome(body, { posting, liveIds }) {
+// body: { kind, hiredIds[], hireName, hireEmail, reason, reasonNote, reason_<applicantId> }. liveIds: ids of applicants
+// still in play. live (optional): [{ id, status }] for the same applicants; when given and the job was filled, every
+// applicant who was not hired needs an area to work on (the candidate sees it).
+function validateOutcome(body, { posting, liveIds, live }) {
   const errors = {}; const value = {};
   const b = body || {};
   const kind = String(b.kind || '');
@@ -59,6 +62,17 @@ function validateOutcome(body, { posting, liveIds }) {
     if (reason === 'other' && note.length < 5) errors.reasonNote = 'Explain in a few words.';
     value.reason = reason;
   }
+  if (live && (kind === 'hired_precheckd' || kind === 'hired_elsewhere')) {
+    const hired = new Set(value.hiredIds || []);
+    const picks = {};
+    let missing = false;
+    live.filter((a) => !hired.has(String(a.id))).forEach((a) => {
+      const code = String(b[`reason_${a.id}`] || '');
+      if (allowedFor(byCode(code), a.status)) picks[String(a.id)] = code; else missing = true;
+    });
+    if (missing) errors.applicantReasons = 'Choose an area to work on for everyone who was not hired.';
+    value.applicantReasons = picks;
+  }
   if (note) {
     const scan = scanFields({ reasonNote: note }).reasonNote;
     if (scan && scan.length && !errors.reasonNote) errors.reasonNote = scan[0].message;
@@ -68,8 +82,10 @@ function validateOutcome(body, { posting, liveIds }) {
 }
 
 // A live applicant who was not hired is told the posting closed, and their shared access stops.
-async function closeOutApplicant(app, posting, text, now) {
-  app.status = 'rejected'; app.stageChangedAt = now; app.rejectionReason = 'posting_closed'; app.rejectionText = text;
+async function closeOutApplicant(app, posting, text, now, reason = null) {
+  // When the job was filled the applicant is also told why they were not chosen (an area to work on).
+  if (reason) text = `${text} ${reason.candidateText}`;
+  app.status = 'rejected'; app.stageChangedAt = now; app.rejectionReason = reason ? reason.code : 'posting_closed'; app.rejectionText = text;
   await app.save();
   if (app.trackerId) {
     const t = await TrackerApplication.findById(app.trackerId);
@@ -80,7 +96,9 @@ async function closeOutApplicant(app, posting, text, now) {
     }
   }
   await releaseAccess(app);
-  await notify('candidate', app.candidateId, 'job_closed', `${posting.title} at ${posting.hiringCompany} has closed. ${text}`.slice(0, 200), `/jobs/${posting._id}`);
+  // The bell holds 200 characters, so when there is an area to work on it leads the message (the job page has it all).
+  const bell = reason ? `${posting.title} has closed. ${reason.candidateText}` : `${posting.title} at ${posting.hiringCompany} has closed. ${text}`;
+  await notify('candidate', app.candidateId, 'job_closed', bell.slice(0, 200), `/jobs/${posting._id}`);
 }
 
 // Records the outcome and closes the posting. sendHireEmail({ to, title, company, url }) is injectable for tests.
@@ -101,7 +119,8 @@ async function recordOutcome(posting, value, { now = new Date(), sendHireEmail }
   }
 
   const text = CLOSURE_TEXT[value.kind];
-  for (const app of live.filter((a) => !hiredSet.has(String(a._id)))) await closeOutApplicant(app, posting, text, now);
+  const picks = value.applicantReasons || {};
+  for (const app of live.filter((a) => !hiredSet.has(String(a._id)))) await closeOutApplicant(app, posting, text, now, byCode(picks[String(app._id)]));
 
   posting.outcome = { kind: value.kind, reason: value.reason || null, reasonNote: value.reasonNote || '', recordedAt: now, hires };
   posting.status = 'closed';

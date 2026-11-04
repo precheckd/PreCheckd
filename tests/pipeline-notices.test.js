@@ -132,30 +132,34 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(tracker.status, 'interviewing');
   });
 
-  await t('not moving forward needs a reason from the fixed list', async () => {
+  await t('not moving forward needs an area to work on from the fixed list, and only one that is true for their stage', async () => {
     asOwner();
     let res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected' });
-    assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose a reason'));
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose an area'));
     res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'made-up' });
-    assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose a reason'));
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose an area'));
+    res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'not_a_fit' });
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('Choose an area'), 'old reasons are not accepted');
+    res = await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'interview' });
+    assert.ok(decodeURIComponent(res.headers.get('location')).includes('screened or interviewed'), 'interview feedback needs an interview');
     assert.strictEqual(bobApp.status, 'applied');
   });
 
-  await t('a rejection shows the candidate the reason the recruiter picked, stops the access, keeps the connection', async () => {
+  await t('a rejection shows the candidate the area the recruiter picked, stops the access, keeps the connection', async () => {
     asOwner();
     const before = notes.length;
-    await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'not_a_fit' });
+    await post(`/recruiter-jobs/${job._id}/applicants/${bobApp._id}/stage`, { stage: 'rejected', reason: 'skill_depth' });
     assert.strictEqual(bobApp.status, 'rejected');
-    assert.strictEqual(bobApp.rejectionReason, 'not_a_fit');
+    assert.strictEqual(bobApp.rejectionReason, 'skill_depth');
     const conn = conns.find((c) => String(c._id) === String(bobApp.connectionId));
     assert.strictEqual(conn.fullAccessStatus, 'none');
     assert.strictEqual(conn.status, 'accepted');
     const bell = notes.slice(before).find((x) => x.ownerType === 'candidate');
-    assert.ok(bell.title.includes('not the right fit for the team or role'));
+    assert.ok(bell.title.includes('Area to work on: skill level'));
     asCandidate(bob);
     const html = await (await get(pub.pathOf(job))).text();
-    assert.ok(html.includes('Not moving forward') && html.includes('not the right fit for the team or role'));
-    assert.ok(!html.includes('not_a_fit'));
+    assert.ok(html.includes('Not moving forward') && html.includes('Area to work on: skill level'));
+    assert.ok(!html.includes('skill_depth'));
     assert.ok(!html.includes('Withdraw my application') && !html.includes(`/jobs/${job._id}/apply"`));
   });
 

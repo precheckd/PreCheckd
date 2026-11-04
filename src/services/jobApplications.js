@@ -10,7 +10,7 @@ const { notify } = require('./notifications');
 
 const ACTIVE = ['applied', 'screening', 'interviewing', 'offer'];            // still in play: access is open
 const HAS_APPLIED = [...ACTIVE, 'hired', 'rejected'];                         // cannot apply again
-const { byCode } = require('../content/rejectionReasons');
+const { byCode, allowedFor } = require('../content/rejectionReasons');
 const STAGE_LABEL = { applied: 'Applied', screening: 'Screening', interviewing: 'Interviewing', offer: 'Offer', hired: 'Hired', rejected: 'Not moving forward' };
 const TRACKER_STATUS = { applied: 'applied', screening: 'screening', interviewing: 'interviewing', offer: 'offer', hired: 'offer', rejected: 'rejected' };
 
@@ -92,8 +92,8 @@ async function withdrawApplication(app, { by, note = '' }, now = new Date()) {
   await releaseAccess(app);
 }
 
-// A recruiter moves an applicant along the fixed pipeline. Rejecting needs a reason from the fixed list (the
-// candidate sees only the neutral sentence); it stops the shared access but keeps the connection. Hired and
+// A recruiter moves an applicant along the fixed pipeline. Rejecting needs an area from the fixed list (the
+// candidate sees it); it stops the shared access but keeps the connection. Hired and
 // rejected are final in v1. Returns { ok, error? }.
 async function moveStage(app, posting, stage, { reason } = {}, now = new Date()) {
   if (!STAGE_LABEL[stage]) return { ok: false, error: 'Pick a stage.' };
@@ -102,7 +102,8 @@ async function moveStage(app, posting, stage, { reason } = {}, now = new Date())
   let rejection = null;
   if (stage === 'rejected') {
     rejection = byCode(reason);
-    if (!rejection) return { ok: false, error: 'Choose a reason for not moving forward.' };
+    if (!rejection || rejection.legacy) return { ok: false, error: 'Choose an area for them to work on.' };
+    if (!allowedFor(rejection, app.status)) return { ok: false, error: 'That reason only fits someone you have screened or interviewed. Choose another.' };
   }
   app.status = stage;
   app.stageChangedAt = now;

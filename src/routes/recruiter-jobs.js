@@ -16,7 +16,7 @@ const { sweepPostingLater } = require('../services/jobMatches');
 const { analyseEdit, applyImpact } = require('../services/postingImpact');
 const JobApplication = require('../models/JobApplication');
 const { ACTIVE, HAS_APPLIED, STAGE_LABEL, moveStage } = require('../services/jobApplications');
-const { REJECTION_REASONS } = require('../content/rejectionReasons');
+const { REJECTION_REASONS, reasonsFor } = require('../content/rejectionReasons');
 const { CATALOG } = require('../content/certCatalog');
 const { US_STATES } = require('../utils/geo');
 const { validateOutcome, recordOutcome, flagRepost } = require('../services/postingOutcome');
@@ -440,7 +440,7 @@ router.get('/:id', async (req, res) => {
 async function outcomeLocals(posting, extra) {
   const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } }).populate('candidateId');
   return {
-    title: `How did ${posting.title} end? | PreCheckd`, posting, kinds: OUTCOME_KINDS, notFilledReasons: NOT_FILLED_REASONS, cancelReasons: CANCEL_REASONS,
+    title: `How did ${posting.title} end? | PreCheckd`, posting, kinds: OUTCOME_KINDS, reasonsFor, notFilledReasons: NOT_FILLED_REASONS, cancelReasons: CANCEL_REASONS,
     applicants: live.filter((a) => a.candidateId), overdue: posting.status === 'awaiting_outcome', errors: {}, form: {}, ...extra,
   };
 }
@@ -463,7 +463,7 @@ router.post('/:id/outcome', async (req, res) => {
     if (!posting) return;
     if (!['open', 'awaiting_outcome'].includes(posting.status)) return res.redirect(`/recruiter-jobs/${posting._id}`);
     const live = await JobApplication.find({ jobId: posting._id, status: { $in: ACTIVE } });
-    const { errors, value } = validateOutcome(req.body, { posting, liveIds: live.map((a) => String(a._id)) });
+    const { errors, value } = validateOutcome(req.body, { posting, liveIds: live.map((a) => String(a._id)), live: live.map((a) => ({ id: String(a._id), status: a.status })) });
     if (Object.keys(errors).length) {
       return res.status(400).render('recruiter-job-outcome', await outcomeLocals(posting, { errors, form: req.body }));
     }
