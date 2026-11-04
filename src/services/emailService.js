@@ -474,6 +474,38 @@ async function sendWeeklyRecapEmail(candidate, recap) {
   });
 }
 
+// Reminder for a new candidate who hasn't finished the guided setup. `stage` is 'd1' | 'd3' | 'd7'.
+// Covered by the same unsubscribe link as the weekly emails (weeklyEmailOptOut).
+async function sendSetupReminderEmail(candidate, { stage, remaining, total }) {
+  const base = process.env.APP_BASE_URL;
+  const unsubUrl = unsubscribeUrl(candidate._id.toString());
+  const setupUrl = `${base}/candidate/${candidate.slug}/setup`;
+  const copy = {
+    d1: { subject: 'Finish setting up your PreCheckd profile', intro: 'Thanks for joining PreCheckd. Your profile setup is not finished yet.' },
+    d3: { subject: 'Your PreCheckd profile is waiting', intro: 'Your profile still has a few steps left. It only takes a few minutes, and your progress is saved.' },
+    d7: { subject: 'Last reminder: finish your PreCheckd profile', intro: 'This is the last reminder we will send about this. Your progress is saved whenever you want to finish.' }
+  }[stage];
+  const lines = remaining.map((r) => `<li><strong>${weeklyEscape(r.label)}</strong><br><span style="font-size:14px;color:#52666C;">${weeklyEscape(r.blurb)}</span></li>`).join('');
+  const body = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(candidate.firstName))},</p>
+    <p style="margin:0 0 6px;">${copy.intro}</p>
+    <div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
+      <div style="font-weight:700;font-size:17px;">${remaining.length} of ${total} steps left</div>
+      <ul style="margin:8px 0 0;padding-left:20px;">${lines}</ul>
+      ${weeklyButton(setupUrl, 'Finish setup')}
+    </div>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidate.email,
+    subject: copy.subject,
+    headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+    html: brandShell({
+      bodyHtml: body,
+      footerHtml: `You get this email because you started a PreCheckd candidate account.<br>
+        <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these reminders and the weekly emails.`
+    })
+  });
+}
+
 async function sendUnreadMessagesEmail(candidate, { fresh, totalUnread }) {
   const base = process.env.APP_BASE_URL;
   const unsubUrl = unsubscribeUrl(candidate._id.toString());
@@ -775,6 +807,7 @@ module.exports = {
   sendHireConfirmationEmail,
   sendOutcomeReminderEmail,
   sendUnreadMessagesEmail,
+  sendSetupReminderEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,

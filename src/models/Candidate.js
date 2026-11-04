@@ -296,7 +296,9 @@ const candidateSchema = new mongoose.Schema({
   onboarding: {
     required: { type: Boolean, default: false },
     sharingConfirmedAt: { type: Date, default: null },
-    completedAt: { type: Date, default: null }
+    completedAt: { type: Date, default: null },
+    // Setup reminder emails already sent ('d1', 'd3', 'd7'); see services/setupReminders.js.
+    remindersSent: { type: [String], default: [] }
   },
 
   // Whether this candidate shows up in recruiters' candidate search.
