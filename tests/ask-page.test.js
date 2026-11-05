@@ -63,7 +63,7 @@ t('answer text is escaped, not injected', () => {
 });
 t('the chat sits under all the questions, above the final signup box', () => {
   const html = render(false);
-  const lastRow = html.lastIndexOf('</details>');
+  const lastRow = html.lastIndexOf('<details class="qa');
   const chat = html.indexOf('id="chat"');
   const final = html.indexOf('class="ask-final"');
   assert.ok(lastRow < chat && chat < final);
