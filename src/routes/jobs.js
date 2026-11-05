@@ -230,6 +230,7 @@ router.get('/:id/:slug?', async (req, res) => {
     }
 
     const poster = await Recruiter.findById(posting.recruiterId);
+    const record = await require('../services/recruiterRecord').forRecruiter(posting.recruiterId);
     res.status(200).render('job-public', {
       pageTitle: open ? meta.title : `This position is closed | ${j.title} | PreCheckd`,
       metaDescription: open ? meta.description : `${j.title} at ${j.hiringCompany} is no longer taking applications.`,
@@ -238,7 +239,7 @@ router.get('/:id/:slug?', async (req, res) => {
       headExtra: open ? pub.jsonLdScript(pub.jobPostingJsonLd(j)) : '',
       j, open, viewer, gate, application, notice: req.query.applied ? 'applied' : (req.query.withdrew ? 'withdrew' : (req.query.disputed ? 'disputed' : '')), disputeKinds: DISPUTE_KINDS, standard, ...helpers,
       poster: poster && poster.isActive !== false && !poster.isSuspended
-        ? { name: [poster.firstName, poster.lastName].filter(Boolean).join(' '), slug: poster.slug } : null,
+        ? { name: [poster.firstName, poster.lastName].filter(Boolean).join(' '), slug: poster.slug, record } : null,
       postingId: String(posting._id),
     });
   } catch (error) {

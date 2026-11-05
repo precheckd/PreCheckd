@@ -11,6 +11,7 @@ const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const qs = require('qs');
 
+const recruiterRecord = require('../src/services/recruiterRecord'); recruiterRecord.forRecruiter = async () => recruiterRecord.summarize([]); // no database in this test
 const JobPosting = require('../src/models/JobPosting');
 const JobApplication = require('../src/models/JobApplication');
 const JobNotice = require('../src/models/JobNotice');

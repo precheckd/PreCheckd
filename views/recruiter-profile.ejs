@@ -519,6 +519,29 @@
         </div>
 
         <div class="sidebar-stat">
+          <div class="stat-label">Active Job Postings</div>
+          <div class="stat-value"><%= record.openNow %></div>
+        </div>
+
+        <% if (record.showHistory) { %>
+        <div class="sidebar-stat">
+          <div class="stat-label">Jobs Closed</div>
+          <div class="stat-value"><%= record.closed %></div>
+        </div>
+
+        <div class="sidebar-stat">
+          <div class="stat-label">Hires Confirmed</div>
+          <div class="stat-value"><%= record.hiresTotal %></div>
+          <% if (record.hiresTotal > 0) { %><div style="font-size:0.85rem;color:#8FA6AC;margin-top:0.25rem;"><%= record.hiresPrecheckd %> through PreCheckd, <%= record.hiresElsewhere %> elsewhere</div><% } %>
+        </div>
+
+        <div class="sidebar-stat">
+          <div class="stat-label">Not Filled or Cancelled</div>
+          <div class="stat-value"><%= record.notFilled %></div>
+        </div>
+        <% } %>
+
+        <div class="sidebar-stat">
           <div class="stat-label">Years of Experience</div>
           <div class="stat-value"><%= recruiter.yearsOfExperience ? recruiter.yearsOfExperience : 'Pending' %></div>
         </div>

@@ -112,5 +112,5 @@
     <div class="jp-std"><p><%= standard.EEO %></p><p><%= standard.ACCOMMODATION %></p><p><%= standard.BACKGROUND %></p></div>
   </div>
 
-  <% if (poster) { %><p class="jp-std jp-poster">Posted by <a href="/recruiter/<%= poster.slug %>"><%= poster.name %></a>, a PreCheckd verified recruiter.</p><% } %>
+  <% if (poster) { %><p class="jp-std jp-poster">Posted by <a href="/recruiter/<%= poster.slug %>"><%= poster.name %></a>, a PreCheckd verified recruiter.<% if (poster.record && poster.record.showHistory) { %> Jobs closed: <%= poster.record.closed %>. Hires confirmed: <%= poster.record.hiresTotal %><% if (poster.record.hiresTotal > 0) { %> (<%= poster.record.hiresPrecheckd %> through PreCheckd, <%= poster.record.hiresElsewhere %> elsewhere)<% } %>.<% } %></p><% } %>
 </div></div>

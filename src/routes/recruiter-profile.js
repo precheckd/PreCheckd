@@ -61,9 +61,12 @@ router.get('/:slug', async (req, res) => {
       await recordView(req, 'recruiter', recruiter._id, { viaSignature: req.query.ref === 'signature' });
     }
 
+    const record = await require('../services/recruiterRecord').forRecruiter(recruiter._id);
+
     // Render profile
     res.render('recruiter-profile', {
       recruiter: recruiter,
+      record: record,
       isOwner: isOwner,
       emailSent: isOwner ? req.query.emailSent : undefined,
       viewCounts: viewCounts,

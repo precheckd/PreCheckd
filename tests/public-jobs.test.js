@@ -9,6 +9,7 @@ const http = require('http');
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 
+const recruiterRecord = require('../src/services/recruiterRecord'); recruiterRecord.forRecruiter = async () => recruiterRecord.summarize([]); // no database in this test
 const JobPosting = require('../src/models/JobPosting');
 const Recruiter = require('../src/models/Recruiter');
 const Candidate = require('../src/models/Candidate');
