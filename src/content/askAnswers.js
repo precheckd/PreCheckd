@@ -31,6 +31,7 @@ function getAnswers({ billingLive = false } = {}) {
       featured: true,
       open: true,
       paras: [
+        'We know times are tough, especially for people looking for a job. So you should know exactly where your money goes.',
         'Most job sites charge you and give you nothing you can check. Here, the money pays for things you can see.',
         'Recruiters go through an identity check, so you know a real person is behind the job. Your skills are proven by tests instead of claimed on a resume. And ' + FEEDBACK_LINE.charAt(0).toLowerCase() + FEEDBACK_LINE.slice(1) + ' No more silence.',
         'Messages are scanned for scams, bad actors get removed, and a scam checker shows how old a sender\'s domain is and whether we\'ve had reports about that address.',
