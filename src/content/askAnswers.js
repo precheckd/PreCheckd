@@ -38,7 +38,7 @@ function getAnswers({ billingLive = false } = {}) {
         'Browsing jobs is free. Verifying, testing and applying are what the membership covers. Our motto is trust, but verify.'
       ],
       links: [{ href: '#cost', label: 'See the prices' }],
-      video: null
+      video: { file: 'ask-why-paying', poster: false }
     },
     {
       id: 'what-is',
