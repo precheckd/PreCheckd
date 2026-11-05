@@ -1,0 +1,92 @@
+<%# Pop-out assistant in the lower right of every page except /ask (which has the chat on the page) and staff pages. Logic lives in public/js/chat-assistant.js. %>
+<style>
+  #pcWidget { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 150; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  #pcWidget * { box-sizing: border-box; }
+  #pcLauncher { display: flex; align-items: center; gap: 0.5rem; background: #2ECC71; color: #10261A; border: 0; border-radius: 999px; padding: 0.8rem 1.15rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.4); font-family: inherit; }
+  #pcLauncher:hover { background: #4ADE80; }
+  #pcLauncher:focus-visible, #pcClose:focus-visible { outline: 2px solid #F2F4F3; outline-offset: 2px; }
+  #pcPanel { display: none; flex-direction: column; width: 370px; max-width: calc(100vw - 2.5rem); height: 520px; max-height: calc(100vh - 6rem); background: #2A4750; border: 1px solid #3B5860; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 36px rgba(0,0,0,0.5); }
+  #pcWidget.pc-open #pcPanel { display: flex; }
+  #pcWidget.pc-open #pcLauncher { display: none; }
+  #pcWidget .chat-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; border-bottom: 1px solid #3B5860; background: #1F363C; }
+  #pcWidget .chat-avatar { width: 34px; height: 34px; border-radius: 50%; background: #2ECC71; color: #1F363C; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #pcWidget .chat-name { color: #F2F4F3; font-weight: 600; line-height: 1.2; font-size: 0.95rem; }
+  #pcWidget .chat-status { color: #C7D1CF; font-size: 0.75rem; }
+  #pcWidget .chat-ai-badge { border: 1px solid #4ADE80; color: #4ADE80; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 999px; letter-spacing: 0.05em; }
+  #pcClose { margin-left: auto; background: transparent; border: 0; color: #C7D1CF; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; }
+  #pcClose:hover { color: #F2F4F3; }
+  #pcWidget .chat-head .chat-ai-badge { margin-left: auto; }
+  #pcWidget .chat-head .chat-ai-badge + #pcClose { margin-left: 0.25rem; }
+  #pcWidget .chat-body { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem; overflow-y: auto; }
+  #pcWidget .bubble { max-width: 88%; padding: 0.6rem 0.85rem; border-radius: 14px; font-size: 0.92rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #pcWidget .bubble-bot a { color: #4ADE80; }
+  #pcWidget .bubble-bot { background: #1F363C; color: #F2F4F3; border: 1px solid #3B5860; align-self: flex-start; border-bottom-left-radius: 4px; }
+  #pcWidget .bubble-user { background: #2ECC71; color: #10261A; align-self: flex-end; border-bottom-right-radius: 4px; }
+  #pcWidget .bubble-typing { color: #8FA3A0; font-style: italic; }
+  #pcWidget .chat-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  #pcWidget .chip { background: transparent; border: 1px solid #4ADE80; color: #4ADE80; border-radius: 999px; padding: 0.3rem 0.7rem; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+  #pcWidget .chip:hover { background: rgba(74, 222, 128, 0.12); }
+  #pcWidget .chat-foot { border-top: 1px solid #3B5860; padding: 0.75rem 1rem 0.85rem; background: #1F363C; }
+  #pcWidget .chat-input-row { display: flex; gap: 0.5rem; }
+  #pcWidget .chat-input { flex: 1; min-width: 0; background: #2A4750; border: 1px solid #3B5860; color: #F2F4F3; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 16px; font-family: inherit; }
+  #pcWidget .chat-input::placeholder { color: #8FA3A0; }
+  #pcWidget .chat-send { background: #2ECC71; color: #10261A; border: 0; border-radius: 8px; padding: 0 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+  #pcWidget .chat-send:disabled { opacity: 0.5; cursor: default; }
+  #pcWidget .chat-disclaimer { color: #8FA3A0; font-size: 0.7rem; line-height: 1.4; margin-top: 0.5rem; }
+  @media (max-width: 600px) {
+    #pcWidget { right: 0.75rem; bottom: 0.75rem; }
+    #pcLauncher { padding: 0.7rem 1rem; }
+    #pcPanel { width: calc(100vw - 1.5rem); height: 75vh; }
+  }
+</style>
+
+<div id="pcWidget">
+  <button type="button" id="pcLauncher" aria-expanded="false" aria-controls="pcPanel">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Ask us
+  </button>
+  <div id="pcPanel" role="dialog" aria-label="PreCheckd Assistant">
+    <div class="chat-head">
+      <div class="chat-avatar">P</div>
+      <div>
+        <div class="chat-name">PreCheckd Assistant</div>
+        <div class="chat-status">Answers from PreCheckd's own information</div>
+      </div>
+      <span class="chat-ai-badge">AI</span>
+      <button type="button" id="pcClose" aria-label="Close chat">&times;</button>
+    </div>
+    <div class="chat-body" aria-live="polite">
+      <div class="bubble bubble-bot">Hi! I'm PreCheckd's AI assistant. Ask me how verification works, what the skill tests are, how pricing works, or anything else about the site.</div>
+      <div class="chat-chips">
+        <button type="button" class="chip">What does it cost?</button>
+        <button type="button" class="chip">Who can see my information?</button>
+        <button type="button" class="chip">How do I apply to jobs?</button>
+      </div>
+    </div>
+    <div class="chat-foot">
+      <form class="chat-input-row" autocomplete="off">
+        <input class="chat-input" type="text" maxlength="500" placeholder="Type your question..." aria-label="Type your question">
+        <button class="chat-send" type="submit">Send</button>
+      </form>
+      <p class="chat-disclaimer">AI assistant. It answers from PreCheckd's published information and can't see your account. It can make mistakes. Chats are saved to improve it, so please don't share personal or sensitive details. <a href="/ask" style="color:#4ADE80;">More answers</a></p>
+    </div>
+  </div>
+</div>
+<script src="/js/chat-assistant.js"></script>
+<script>
+  (function () {
+    var w = document.getElementById('pcWidget');
+    var launcher = document.getElementById('pcLauncher');
+    var chat = window.PreCheckdChat.init({ root: document.getElementById('pcPanel'), persist: true });
+    function setOpen(open) {
+      w.classList.toggle('pc-open', open);
+      launcher.setAttribute('aria-expanded', open ? 'true' : 'false');
+      try { sessionStorage.setItem('precheckd-chat-open', open ? '1' : '0'); } catch (e) { /* ignore */ }
+      if (open) { chat.focus(); } else { launcher.focus(); }
+    }
+    launcher.addEventListener('click', function () { setOpen(true); });
+    document.getElementById('pcClose').addEventListener('click', function () { setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && w.classList.contains('pc-open')) setOpen(false); });
+    try { if (sessionStorage.getItem('precheckd-chat-open') === '1') { w.classList.add('pc-open'); launcher.setAttribute('aria-expanded', 'true'); } } catch (e) { /* ignore */ }
+  })();
+</script>

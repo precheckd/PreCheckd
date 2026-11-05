@@ -61,4 +61,18 @@ t('answer text is escaped, not injected', () => {
   const html = render(false);
   assert.ok(html.includes("I&#39;m a recruiter") || html.includes("I'm a recruiter"));
 });
+t('the chat sits under all the questions, above the final signup box', () => {
+  const html = render(false);
+  const lastRow = html.lastIndexOf('</details>');
+  const chat = html.indexOf('id="chat"');
+  const final = html.indexOf('class="ask-final"');
+  assert.ok(lastRow < chat && chat < final);
+});
+t('the pop-out widget renders and is left off /ask and staff pages', () => {
+  const widget = ejs.render(fs.readFileSync(path.join(__dirname, '..', 'views', 'partials', 'chat-widget.ejs'), 'utf8'), {});
+  assert.ok(widget.includes('id="pcLauncher"') && widget.includes('/js/chat-assistant.js'));
+  const layout = fs.readFileSync(path.join(__dirname, '..', 'views', 'layouts', 'main.ejs'), 'utf8');
+  assert.ok(layout.includes("partials/chat-widget"));
+  assert.ok(layout.includes("_cp === '/ask'") && layout.includes("indexOf('/internal')"));
+});
 console.log(n + ' passed');

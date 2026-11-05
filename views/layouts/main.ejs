@@ -498,6 +498,10 @@
   </div>
 </footer>
 
+<% const _cp = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; if (!(_cp === '/ask' || _cp.indexOf('/ask/') === 0 || _cp.indexOf('/internal') === 0)) { %>
+  <%- include('../partials/chat-widget') %>
+<% } %>
+
 <script>
   // Close the account / notification menus when clicking elsewhere or pressing Escape.
   (function () {

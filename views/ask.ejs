@@ -114,10 +114,20 @@
   <div class="ask-hero">
     <p class="ask-eyebrow">Ask PreCheckd</p>
     <h1 class="ask-title">Got questions? Get straight answers.</h1>
-    <p class="ask-subtitle">Ask our AI assistant anything about PreCheckd, or open a question below to read or watch the answer.</p>
+    <p class="ask-subtitle">Open a question to read or watch the answer, or ask our AI assistant at the bottom of the page.</p>
   </div>
 
   <% featured.forEach(renderRow); %>
+
+  <h2 class="ask-section-title">The most-asked questions</h2>
+  <p class="ask-section-sub">Tap a question to open the answer. Rows marked Video also have a short clip.</p>
+
+  <div class="qa-list">
+    <% rest.forEach(renderRow); %>
+  </div>
+
+  <h2 class="ask-section-title">Still have a question?</h2>
+  <p class="ask-section-sub">Ask our AI assistant. It answers from PreCheckd's own information.</p>
 
   <div class="ask-card chat-panel" id="chat">
     <div class="chat-head">
@@ -143,13 +153,6 @@
       </form>
       <p class="chat-disclaimer">AI assistant. It answers from PreCheckd's published information and can't see your account. It can make mistakes, so check anything important with our team. Chats are saved to improve the assistant, so please don't share personal or sensitive details.</p>
     </div>
-  </div>
-
-  <h2 class="ask-section-title">The most-asked questions</h2>
-  <p class="ask-section-sub">Tap a question to open the answer. Rows marked Video also have a short clip.</p>
-
-  <div class="qa-list">
-    <% rest.forEach(renderRow); %>
   </div>
 
   <div class="ask-final">
@@ -197,78 +200,7 @@
     })();
   </script>
 
+  <script src="/js/chat-assistant.js"></script>
   <script>
-    (function () {
-      var body = document.getElementById('chatBody');
-      var form = document.getElementById('chatForm');
-      var input = document.getElementById('chatInput');
-      var send = document.getElementById('chatSend');
-      var chips = document.getElementById('chatChips');
-      var history = [];
-      var busy = false;
-      var convId = 'c' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      var LINKS = /(hello@precheckd\.com|\/(?:skills-explained|privacy|terms|safety|candidate-signup|recruiter-landing|jobs|ask)\b)/g;
-
-      function addBubble(text, who) {
-        var el = document.createElement('div');
-        el.className = 'bubble ' + (who === 'user' ? 'bubble-user' : 'bubble-bot');
-        if (who === 'user') {
-          el.textContent = text;
-        } else {
-          text.split(LINKS).forEach(function (part, i) {
-            if (i % 2 === 1) {
-              var a = document.createElement('a');
-              a.textContent = part;
-              a.href = part.indexOf('@') > -1 ? 'mailto:' + part : part;
-              el.appendChild(a);
-            } else if (part) {
-              el.appendChild(document.createTextNode(part));
-            }
-          });
-        }
-        body.appendChild(el);
-        body.scrollTop = body.scrollHeight;
-        return el;
-      }
-
-      function ask(question) {
-        question = (question || '').trim();
-        if (!question || busy) return;
-        busy = true;
-        send.disabled = true;
-        if (chips) { chips.remove(); chips = null; }
-        addBubble(question, 'user');
-        history.push({ role: 'user', content: question });
-        input.value = '';
-        var typing = addBubble('Typing...', 'bot');
-        typing.classList.add('bubble-typing');
-
-        fetch('/api/ask-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversationId: convId, messages: history.slice(-11) })
-        }).then(function (r) {
-          return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, reply: j.reply }; });
-        }).catch(function () {
-          return { ok: false, reply: null };
-        }).then(function (res) {
-          typing.remove();
-          var reply = res.reply || "Sorry, something went wrong. Please try again, or email hello@precheckd.com.";
-          addBubble(reply, 'bot');
-          if (res.ok) {
-            history.push({ role: 'assistant', content: reply });
-          } else {
-            history.pop();
-          }
-          busy = false;
-          send.disabled = false;
-          input.focus();
-        });
-      }
-
-      form.addEventListener('submit', function (e) { e.preventDefault(); ask(input.value); });
-      chips.querySelectorAll('.chip').forEach(function (c) {
-        c.addEventListener('click', function () { ask(c.textContent); });
-      });
-    })();
+    window.PreCheckdChat.init({ root: document.getElementById('chat'), persist: false });
   </script>
