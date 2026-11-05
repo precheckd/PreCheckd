@@ -33,10 +33,11 @@ router.get('/recruiter-search', async (req, res) => {
   }
 });
 
-// Chatbot landing page (layout draft). The chat box and the question videos are
-// placeholders for now. noindex until the real chat and Synthesia clips are in.
+// Ask page: the live chat plus the question rows (text + optional video) from
+// src/content/askAnswers.js. noindex until the remaining Synthesia clips are in.
 router.get('/ask', (req, res) => {
-  res.render('ask', { pageTitle: 'PreCheckd - Ask Us Anything', robotsMeta: 'noindex' });
+  const answers = require('../content/askAnswers').getAnswers({ billingLive: process.env.BILLING_LIVE === 'true' });
+  res.render('ask', { pageTitle: 'PreCheckd - Ask Us Anything', robotsMeta: 'noindex', answers });
 });
 
 router.get('/candidate-landing', (req, res) => {

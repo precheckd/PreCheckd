@@ -72,6 +72,9 @@ Who can join:
 - The Jobs page has tabs: Jobs for you, In my work area, and All open jobs.
 - Postings have a pay range, benefits information, and an application close date. After the close date the recruiter must record the outcome.
 - Job titles come from a fixed list, not free text.
+- If a job already has a full waiting list of applicants, applications pause until the recruiter clears it.
+- Feedback: when a recruiter passes on a candidate, or closes a job without choosing them, the recruiter must pick an area for that candidate to work on, and the candidate sees it on their application. If the feedback is not true (for example, the candidate was never interviewed), the candidate can report it from their application.
+- Recruiters must record an outcome for every job they post. If a recruiter does not record one within 14 days after the close date, the job is closed and every applicant still waiting is told that no one is listed as hired through PreCheckd.
 
 ## 7. Privacy: who sees what
 
