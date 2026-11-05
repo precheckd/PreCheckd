@@ -90,6 +90,8 @@ Who can join:
 ## 8. Safety
 
 - The Safety Center (/safety) lets members check a sender, report a scam, and see their past reports.
+- The sender check shows how old the sender's email domain is and whether PreCheckd has had reports about that exact address. It is one data point, not a verdict.
+- Members found to be bad actors are removed.
 - Never send money or sensitive information to someone you have not independently confirmed.
 
 ## 9. Pricing

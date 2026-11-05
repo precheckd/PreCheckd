@@ -33,6 +33,7 @@ function getAnswers({ billingLive = false } = {}) {
       paras: [
         'Most job sites charge you and give you nothing you can check. Here, the money pays for things you can see.',
         'Recruiters go through an identity check, so you know a real person is behind the job. Your skills are proven by tests instead of claimed on a resume. And ' + FEEDBACK_LINE.charAt(0).toLowerCase() + FEEDBACK_LINE.slice(1) + ' No more silence.',
+        'Messages are scanned for scams, bad actors get removed, and a scam checker shows how old a sender\'s domain is and whether we\'ve had reports about that address.',
         'Browsing jobs is free. Verifying, testing and applying are what the membership covers. Our motto is trust, but verify.'
       ],
       links: [{ href: '#cost', label: 'See the prices' }],
