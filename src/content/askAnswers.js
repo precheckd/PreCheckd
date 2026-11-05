@@ -120,7 +120,7 @@ function getAnswers({ billingLive = false } = {}) {
         'If the feedback you were given is not true, for example you were never interviewed, you can report it from your application.'
       ],
       links: [],
-      video: null
+      video: { file: 'ask-no-hire', poster: false }
     },
     {
       id: 'recruiters',
