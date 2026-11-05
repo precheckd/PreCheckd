@@ -29,7 +29,7 @@ t('why-paying is first, featured and open; nothing else opens by default', () =>
 t('the page renders every question', () => {
   const html = render(false);
   getAnswers().forEach((x) => assert.ok(html.includes('id="' + x.id + '"'), x.id));
-  assert.strictEqual((html.match(/<details /g) || []).length, getAnswers().length);
+  assert.strictEqual((html.match(/<details class="qa/g) || []).length, getAnswers().length);
 });
 t('videos are not loaded until a row opens (data-src only, no source tag in the markup)', () => {
   const html = render(false);

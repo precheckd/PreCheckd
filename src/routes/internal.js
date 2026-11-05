@@ -271,6 +271,7 @@ router.get('/', async (req, res) => {
     const catalogRequestCount = (await require('../models/CatalogRequest').aggregate([{ $match: { status: 'requested' } }, { $group: { _id: { k: '$kind', n: '$key' } } }])).length;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
+    const outsideUsCount = await require('../models/OutsideInterest').countDocuments({});
     const chatGapCount = await require('../models/ChatLog').countDocuments({ noAnswer: true, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } });
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
     const hireReviewCount = (await require('../services/hireReview').listHireReviews()).length;
@@ -278,6 +279,7 @@ router.get('/', async (req, res) => {
     res.render('internal-dashboard', {
       integrityCount,
       chatGapCount,
+      outsideUsCount,
       hireReviewCount,
       skillRequestCount,
       catalogRequestCount,
@@ -469,6 +471,24 @@ router.get('/chat-logs', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading chat logs:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Who outside the US asked to hear if we open in their country (the "Not in the US?" box).
+router.get('/outside-us', async (req, res) => {
+  try {
+    const OutsideInterest = require('../models/OutsideInterest');
+    const [rows, byCountry] = await Promise.all([
+      OutsideInterest.find({}).sort({ createdAt: -1 }).limit(500).lean(),
+      OutsideInterest.aggregate([
+        { $group: { _id: { $toLower: '$country' }, n: { $sum: 1 }, shown: { $first: '$country' } } },
+        { $sort: { n: -1 } }, { $limit: 50 }
+      ])
+    ]);
+    res.render('internal-outside-us', { rows, byCountry: byCountry.map((c) => ({ country: c.shown, n: c.n })), total: rows.length });
+  } catch (error) {
+    console.error('Error loading outside-US interest:', error);
     res.status(500).send('Server error');
   }
 });

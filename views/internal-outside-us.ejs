@@ -1,0 +1,27 @@
+<style>
+  .sr-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .ou-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.92rem; color: #1F363C; }
+  .ou-table th, .ou-table td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid #DCE4E2; }
+  .ou-table th { color: #7A8B91; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ou-h { color: #1F363C; font-size: 1.1rem; margin-top: 1.5rem; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Outside the US</h1>
+  <p class="sr-sub">People who used the "Not in the US?" box. They are kept for 24 months, used only to see demand, and get one email if we open in their country. They are not on any other mailing list.</p>
+  <h2 class="ou-h">By country</h2>
+  <% if (!byCountry.length) { %><p class="sr-sub">Nothing yet.</p><% } else { %>
+  <table class="ou-table"><tr><th>Country (as typed)</th><th>People</th></tr>
+    <% byCountry.forEach((c) => { %><tr><td><%= c.country %></td><td><%= c.n %></td></tr><% }) %>
+  </table>
+  <% } %>
+  <% if (rows.length) { %>
+  <h2 class="ou-h">Newest first (<%= total %>)</h2>
+  <table class="ou-table"><tr><th>When (ET)</th><th>Email</th><th>Country</th><th>Is</th><th>Page</th></tr>
+    <% rows.forEach((r) => { %><tr><td><%= new Date(r.createdAt).toLocaleDateString('en-US', { timeZone: 'America/New_York' }) %></td><td><%= r.email %></td><td><%= r.country %></td><td><%= r.who %></td><td><%= r.page %></td></tr><% }) %>
+  </table>
+  <% } %>
+</div>

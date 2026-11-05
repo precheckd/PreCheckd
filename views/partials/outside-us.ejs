@@ -1,0 +1,63 @@
+<%# "Not in the US?" box. Saves an email and country to OutsideInterest so we can see demand; nothing else is sent. Pass page: 'name' to say where it was filled in. %>
+<style>
+  .ous { max-width: 640px; margin: 2.5rem auto 0; background: #2A4750; border: 1px solid #3B5860; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .ous summary { cursor: pointer; list-style: none; padding: 0.95rem 1.25rem; color: #F2F4F3; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .ous summary::-webkit-details-marker { display: none; }
+  .ous summary::after { content: ""; width: 0.55rem; height: 0.55rem; border-right: 2px solid #4ADE80; border-bottom: 2px solid #4ADE80; transform: rotate(45deg); transition: transform 0.15s; }
+  .ous[open] summary::after { transform: rotate(-135deg); }
+  .ous-body { padding: 0 1.25rem 1.25rem; }
+  .ous-body p { color: #C7D1CF; line-height: 1.55; font-size: 0.95rem; margin-bottom: 0.9rem; }
+  .ous-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .ous-row input, .ous-row select { flex: 1 1 180px; min-width: 0; background: #1F363C; border: 1px solid #3B5860; color: #F2F4F3; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 16px; font-family: inherit; }
+  .ous-row button { background: #2ECC71; color: #10261A; border: 0; border-radius: 8px; padding: 0.6rem 1.1rem; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+  .ous-row button:disabled { opacity: 0.5; cursor: default; }
+  .ous-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .ous-msg { margin-top: 0.7rem; font-size: 0.9rem; color: #C7D1CF; min-height: 1.2em; }
+  .ous-msg.ok { color: #4ADE80; }
+  .ous-msg.err { color: #F2B8B5; }
+</style>
+<details class="ous" id="outsideUs">
+  <summary>Not in the US?</summary>
+  <div class="ous-body">
+    <p>PreCheckd is US only for now. Tell us where you are and we'll email you once if we open there. Nothing else.</p>
+    <form class="ous-row" autocomplete="off" novalidate>
+      <input type="email" name="email" placeholder="Your email" aria-label="Your email" maxlength="254" required>
+      <input type="text" name="country" placeholder="Your country" aria-label="Your country" maxlength="60" required>
+      <select name="who" aria-label="I am">
+        <option value="candidate">Looking for work</option>
+        <option value="recruiter">A recruiter</option>
+        <option value="not-sure">Not sure</option>
+      </select>
+      <div class="ous-hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <button type="submit">Tell us</button>
+    </form>
+    <div class="ous-msg" role="status" aria-live="polite"></div>
+  </div>
+</details>
+<script>
+  (function () {
+    var box = document.getElementById('outsideUs');
+    if (!box || box.getAttribute('data-ready')) return;
+    box.setAttribute('data-ready', '1');
+    var form = box.querySelector('form');
+    var msg = box.querySelector('.ous-msg');
+    var btn = form.querySelector('button');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = form.elements;
+      msg.className = 'ous-msg'; msg.textContent = '';
+      btn.disabled = true;
+      fetch('/api/outside-interest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: f.email.value, country: f.country.value, who: f.who.value, website: f.website.value, page: '<%= typeof page !== "undefined" ? page : "" %>' })
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+        .catch(function () { return { ok: false, j: {} }; })
+        .then(function (res) {
+          btn.disabled = false;
+          if (res.ok) { msg.className = 'ous-msg ok'; msg.textContent = "Thanks. We'll email you once if we open in your country."; form.reset(); }
+          else { msg.className = 'ous-msg err'; msg.textContent = res.j.error || 'Something went wrong. Please try again.'; }
+        });
+    });
+  })();
+</script>
