@@ -327,7 +327,7 @@
       </div>
 
       <div class="fraud-field">
-        <label for="code">Verification code <span class="fraud-hint">(check your email — expires in 10 minutes)</span></label>
+        <label for="code">Verification code <span class="fraud-hint">(check your email, including spam — expires in 10 minutes)</span></label>
         <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code">
         <a href="#" class="fraud-link" id="fraudResendCodeLink">Resend code</a>
         <div class="fraud-inline-msg" id="fraudResendMsg"></div>
@@ -415,7 +415,7 @@
           showMsg(msgEl, result.data.error || 'Something went wrong. Please try again.', true);
           return;
         }
-        showMsg(msgEl, 'Code sent — check your inbox.', false);
+        showMsg(msgEl, 'Code sent — check your inbox, and your spam folder if it is not there.', false);
         if (onSuccess) onSuccess();
       })
       .catch(function () {

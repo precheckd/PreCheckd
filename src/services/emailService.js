@@ -62,6 +62,7 @@ async function sendVerificationEmail(toEmail, firstName, token) {
       <p>Click the link below to verify your email address for your PreCheckd profile:</p>
       <p><a href="${verifyUrl}">${verifyUrl}</a></p>
       <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
+      <p>If our emails ever land in spam, add noreply@precheckd.com to your contacts so they reach you.</p>
     `,
   });
 }
@@ -104,6 +105,7 @@ async function sendCandidateVerificationLink(toEmail, firstName, token) {
       <p>Click the link below to verify your email address for your PreCheckd profile:</p>
       <p><a href="${verifyUrl}">${verifyUrl}</a></p>
       <p>This link expires in 48 hours. If you didn't sign up for PreCheckd, you can safely ignore this email.</p>
+      <p>If our emails ever land in spam, add noreply@precheckd.com to your contacts so they reach you.</p>
     `,
   });
 }

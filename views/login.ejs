@@ -219,7 +219,7 @@
         const data = await res.json();
 
         if (res.ok && data.success) {
-          showMessage('If that email is registered, a password reset link has been sent.', 'success');
+          showMessage('If that email is registered, a password reset link has been sent. If you don\'t see it, check your spam folder.', 'success');
         } else {
           showMessage(data.error || 'Something went wrong. Please try again.', 'error');
         }
