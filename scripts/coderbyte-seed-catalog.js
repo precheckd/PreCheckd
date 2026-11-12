@@ -747,6 +747,246 @@ const SEED = [
     name: 'TypeScript: Expert',
     tier: 'expert',
     skills: [{ key: 'typescript', label: 'TypeScript', ratingKeys: ['TypeScript'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ufiad7o',
+    name: 'Power BI: Basic',
+    tier: 'easy',
+    skills: [{ key: 'power-bi', label: 'Power BI', ratingKeys: ['Power BI'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-93arlmf',
+    name: 'Power BI: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'power-bi', label: 'Power BI', ratingKeys: ['Power BI'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p1hh0s7',
+    name: 'Power BI: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'power-bi', label: 'Power BI', ratingKeys: ['Power BI'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mjdlqhw',
+    name: 'Power BI: Expert',
+    tier: 'expert',
+    skills: [{ key: 'power-bi', label: 'Power BI', ratingKeys: ['Power BI'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-8yg3lfb',
+    name: 'PostgreSQL: Basic',
+    tier: 'easy',
+    skills: [{ key: 'postgresql', label: 'PostgreSQL', ratingKeys: ['PostgreSQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-h8c5fna',
+    name: 'PostgreSQL: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'postgresql', label: 'PostgreSQL', ratingKeys: ['PostgreSQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wsf3g34',
+    name: 'PostgreSQL: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'postgresql', label: 'PostgreSQL', ratingKeys: ['PostgreSQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1vlgy7n',
+    name: 'PostgreSQL: Expert',
+    tier: 'expert',
+    skills: [{ key: 'postgresql', label: 'PostgreSQL', ratingKeys: ['PostgreSQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-tcx1z94',
+    name: 'Jenkins: Basic',
+    tier: 'easy',
+    skills: [{ key: 'jenkins', label: 'Jenkins', ratingKeys: ['Jenkins'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q9uqtif',
+    name: 'Jenkins: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'jenkins', label: 'Jenkins', ratingKeys: ['Jenkins'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q8ji0xt',
+    name: 'Jenkins: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'jenkins', label: 'Jenkins', ratingKeys: ['Jenkins'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wmpv5fy',
+    name: 'Jenkins: Expert',
+    tier: 'expert',
+    skills: [{ key: 'jenkins', label: 'Jenkins', ratingKeys: ['Jenkins'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cbna2vs',
+    name: 'Analyst: Basic',
+    tier: 'easy',
+    skills: [{ key: 'analyst', label: 'Analyst', ratingKeys: ['Analyst'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ayt8i4t',
+    name: 'Analyst: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'analyst', label: 'Analyst', ratingKeys: ['Analyst'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4l4rhsx',
+    name: 'Analyst: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'analyst', label: 'Analyst', ratingKeys: ['Analyst'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ops4e7m',
+    name: 'Analyst: Expert',
+    tier: 'expert',
+    skills: [{ key: 'analyst', label: 'Analyst', ratingKeys: ['Analyst'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-986j6fq',
+    name: 'CSS: Basic',
+    tier: 'easy',
+    skills: [{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y4yvdjy',
+    name: 'CSS: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-sbsyv4i',
+    name: 'CSS: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kwap8d9',
+    name: 'CSS: Expert',
+    tier: 'expert',
+    skills: [{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mjoft44',
+    name: 'MySQL: Basic',
+    tier: 'easy',
+    skills: [{ key: 'mysql', label: 'MySQL', ratingKeys: ['MySQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-op7os4c',
+    name: 'MySQL: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'mysql', label: 'MySQL', ratingKeys: ['MySQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0amx3sv',
+    name: 'MySQL: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'mysql', label: 'MySQL', ratingKeys: ['MySQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-w8d4k8b',
+    name: 'MySQL: Expert',
+    tier: 'expert',
+    skills: [{ key: 'mysql', label: 'MySQL', ratingKeys: ['MySQL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5qsm8jq',
+    name: 'Selenium: Basic',
+    tier: 'easy',
+    skills: [{ key: 'selenium', label: 'Selenium', ratingKeys: ['Selenium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-uees5bp',
+    name: 'Selenium: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'selenium', label: 'Selenium', ratingKeys: ['Selenium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cmcu3yl',
+    name: 'Selenium: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'selenium', label: 'Selenium', ratingKeys: ['Selenium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-vuufv2l',
+    name: 'Selenium: Expert',
+    tier: 'expert',
+    skills: [{ key: 'selenium', label: 'Selenium', ratingKeys: ['Selenium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-k22qh8v',
+    name: 'Ansible: Basic',
+    tier: 'easy',
+    skills: [{ key: 'ansible', label: 'Ansible', ratingKeys: ['Ansible'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-oxarfl8',
+    name: 'Ansible: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'ansible', label: 'Ansible', ratingKeys: ['Ansible'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zy25ywa',
+    name: 'Ansible: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'ansible', label: 'Ansible', ratingKeys: ['Ansible'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-rwdcj6j',
+    name: 'Ansible: Expert',
+    tier: 'expert',
+    skills: [{ key: 'ansible', label: 'Ansible', ratingKeys: ['Ansible'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4nw5g6n',
+    name: 'MITRE: Basic',
+    tier: 'easy',
+    skills: [{ key: 'mitre', label: 'MITRE', ratingKeys: ['MITRE'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-veexqya',
+    name: 'MITRE: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'mitre', label: 'MITRE', ratingKeys: ['MITRE'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-z2ivj78',
+    name: 'MITRE: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'mitre', label: 'MITRE', ratingKeys: ['MITRE'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zad4vn2',
+    name: 'MITRE: Expert',
+    tier: 'expert',
+    skills: [{ key: 'mitre', label: 'MITRE', ratingKeys: ['MITRE'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-68vz1hx',
+    name: 'HTML: Basic',
+    tier: 'easy',
+    skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1s5aggf',
+    name: 'HTML: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hnp6dzu',
+    name: 'HTML: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-sp9376u',
+    name: 'HTML: Expert',
+    tier: 'expert',
+    skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] }]
   }
 ];
 
