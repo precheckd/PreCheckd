@@ -1467,6 +1467,366 @@ const SEED = [
     name: 'Algorithms: Expert',
     tier: 'expert',
     skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-gx0op71',
+    name: 'Go: Basic',
+    tier: 'easy',
+    skills: [{ key: 'go', label: 'Go', ratingKeys: ['Go'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4cttpyx',
+    name: 'Go: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'go', label: 'Go', ratingKeys: ['Go'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-tpt0ngd',
+    name: 'Go: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'go', label: 'Go', ratingKeys: ['Go'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4kgsyjo',
+    name: 'Go: Expert',
+    tier: 'expert',
+    skills: [{ key: 'go', label: 'Go', ratingKeys: ['Go'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p5rwkob',
+    name: 'Figma: Basic',
+    tier: 'easy',
+    skills: [{ key: 'figma', label: 'Figma', ratingKeys: ['Figma'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-cal2ow4',
+    name: 'Figma: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'figma', label: 'Figma', ratingKeys: ['Figma'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ilwhtds',
+    name: 'Figma: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'figma', label: 'Figma', ratingKeys: ['Figma'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-bqpxip4',
+    name: 'Figma: Expert',
+    tier: 'expert',
+    skills: [{ key: 'figma', label: 'Figma', ratingKeys: ['Figma'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-dmrszf6',
+    name: 'Vue.js: Basic',
+    tier: 'easy',
+    skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-x5f03of',
+    name: 'Vue.js: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-s7f0my6',
+    name: 'Vue.js: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7oh1ggp',
+    name: 'Vue.js: Expert',
+    tier: 'expert',
+    skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-lmn8ldi',
+    name: 'iOS: Basic',
+    tier: 'easy',
+    skills: [{ key: 'ios', label: 'iOS', ratingKeys: ['iOS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-qi17pp0',
+    name: 'iOS: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'ios', label: 'iOS', ratingKeys: ['iOS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-dema9pz',
+    name: 'iOS: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'ios', label: 'iOS', ratingKeys: ['iOS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-j39cybv',
+    name: 'iOS: Expert',
+    tier: 'expert',
+    skills: [{ key: 'ios', label: 'iOS', ratingKeys: ['iOS'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p2qfqls',
+    name: 'Playwright: Basic',
+    tier: 'easy',
+    skills: [{ key: 'playwright', label: 'Playwright', ratingKeys: ['Playwright'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-3o64qq5',
+    name: 'Playwright: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'playwright', label: 'Playwright', ratingKeys: ['Playwright'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-8ml1ylh',
+    name: 'Playwright: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'playwright', label: 'Playwright', ratingKeys: ['Playwright'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d5lq6nk',
+    name: 'Playwright: Expert',
+    tier: 'expert',
+    skills: [{ key: 'playwright', label: 'Playwright', ratingKeys: ['Playwright'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-bqnuhh6',
+    name: 'Angular: Basic',
+    tier: 'easy',
+    skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-k0k08dw',
+    name: 'Angular: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-f6o2nuu',
+    name: 'Angular: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-qwdtdzb',
+    name: 'Angular: Expert',
+    tier: 'expert',
+    skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4gyvsiq',
+    name: 'Appium: Basic',
+    tier: 'easy',
+    skills: [{ key: 'appium', label: 'Appium', ratingKeys: ['Appium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-amrue9o',
+    name: 'Appium: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'appium', label: 'Appium', ratingKeys: ['Appium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q0e6vng',
+    name: 'Appium: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'appium', label: 'Appium', ratingKeys: ['Appium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5i15m7n',
+    name: 'Appium: Expert',
+    tier: 'expert',
+    skills: [{ key: 'appium', label: 'Appium', ratingKeys: ['Appium'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-385rppq',
+    name: 'Cypress: Basic',
+    tier: 'easy',
+    skills: [{ key: 'cypress', label: 'Cypress', ratingKeys: ['Cypress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1ki74l7',
+    name: 'Cypress: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'cypress', label: 'Cypress', ratingKeys: ['Cypress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-n70xwqd',
+    name: 'Cypress: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'cypress', label: 'Cypress', ratingKeys: ['Cypress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-tz94cml',
+    name: 'Cypress: Expert',
+    tier: 'expert',
+    skills: [{ key: 'cypress', label: 'Cypress', ratingKeys: ['Cypress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-s5pnlvj',
+    name: 'WordPress: Basic',
+    tier: 'easy',
+    skills: [{ key: 'wordpress', label: 'WordPress', ratingKeys: ['WordPress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-qoc4qjc',
+    name: 'WordPress: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'wordpress', label: 'WordPress', ratingKeys: ['WordPress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-th51hzj',
+    name: 'WordPress: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'wordpress', label: 'WordPress', ratingKeys: ['WordPress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xl9eoeg',
+    name: 'WordPress: Expert',
+    tier: 'expert',
+    skills: [{ key: 'wordpress', label: 'WordPress', ratingKeys: ['WordPress'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p2i01ny',
+    name: 'Spreadsheet: Basic',
+    tier: 'easy',
+    skills: [{ key: 'spreadsheet', label: 'Spreadsheet', ratingKeys: ['Spreadsheet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7pnjz1v',
+    name: 'Spreadsheet: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'spreadsheet', label: 'Spreadsheet', ratingKeys: ['Spreadsheet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-bgwj2f5',
+    name: 'Spreadsheet: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'spreadsheet', label: 'Spreadsheet', ratingKeys: ['Spreadsheet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wfy3izl',
+    name: 'Spreadsheet: Expert',
+    tier: 'expert',
+    skills: [{ key: 'spreadsheet', label: 'Spreadsheet', ratingKeys: ['Spreadsheet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-07c3mr3',
+    name: 'Bootstrap: Basic',
+    tier: 'easy',
+    skills: [{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4yuh74c',
+    name: 'Bootstrap: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zbk6d6m',
+    name: 'Bootstrap: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jv81kxf',
+    name: 'Bootstrap: Expert',
+    tier: 'expert',
+    skills: [{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-tyk1kgp',
+    name: 'Apache: Basic',
+    tier: 'easy',
+    skills: [{ key: 'apache', label: 'Apache', ratingKeys: ['Apache'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d17iszj',
+    name: 'Apache: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'apache', label: 'Apache', ratingKeys: ['Apache'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wip72rf',
+    name: 'Apache: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'apache', label: 'Apache', ratingKeys: ['Apache'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-nu8h5vy',
+    name: 'Apache: Expert',
+    tier: 'expert',
+    skills: [{ key: 'apache', label: 'Apache', ratingKeys: ['Apache'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-8pojhoj',
+    name: 'Hash Table: Basic',
+    tier: 'easy',
+    skills: [{ key: 'hash-table', label: 'Hash Table', ratingKeys: ['Hash table', 'Hash Table'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xmzssk3',
+    name: 'Hash Table: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'hash-table', label: 'Hash Table', ratingKeys: ['Hash table', 'Hash Table'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hl7usll',
+    name: 'Hash Table: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'hash-table', label: 'Hash Table', ratingKeys: ['Hash table', 'Hash Table'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7es6jzr',
+    name: 'Hash Table: Expert',
+    tier: 'expert',
+    skills: [{ key: 'hash-table', label: 'Hash Table', ratingKeys: ['Hash table', 'Hash Table'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-61biqn5',
+    name: 'Manual Testing: Basic',
+    tier: 'easy',
+    skills: [{ key: 'manual', label: 'Manual Testing', ratingKeys: ['Manual', 'Manual Testing'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-mprcjt2',
+    name: 'Manual Testing: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'manual', label: 'Manual Testing', ratingKeys: ['Manual', 'Manual Testing'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-dj2604k',
+    name: 'Manual Testing: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'manual', label: 'Manual Testing', ratingKeys: ['Manual', 'Manual Testing'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-886mbye',
+    name: 'Manual Testing: Expert',
+    tier: 'expert',
+    skills: [{ key: 'manual', label: 'Manual Testing', ratingKeys: ['Manual', 'Manual Testing'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-pkcy76r',
+    name: 'Debugging: Basic',
+    tier: 'easy',
+    skills: [{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hm5ovfe',
+    name: 'Debugging: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kmufds3',
+    name: 'Debugging: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-j7bs49w',
+    name: 'Debugging: Expert',
+    tier: 'expert',
+    skills: [{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] }]
   }
 ];
 
