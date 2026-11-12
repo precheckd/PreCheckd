@@ -987,6 +987,486 @@ const SEED = [
     name: 'HTML: Expert',
     tier: 'expert',
     skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hhmllbv',
+    name: 'C++: Basic',
+    tier: 'easy',
+    skills: [{ key: 'cpp', label: 'C++', ratingKeys: ['C++'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-3g3n2jh',
+    name: 'C++: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'cpp', label: 'C++', ratingKeys: ['C++'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-45mjd3g',
+    name: 'C++: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'cpp', label: 'C++', ratingKeys: ['C++'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-i6m4ocv',
+    name: 'C++: Expert',
+    tier: 'expert',
+    skills: [{ key: 'cpp', label: 'C++', ratingKeys: ['C++'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-drusvkj',
+    name: 'Kotlin: Basic',
+    tier: 'easy',
+    skills: [{ key: 'kotlin', label: 'Kotlin', ratingKeys: ['Kotlin'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y6djjic',
+    name: 'Kotlin: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'kotlin', label: 'Kotlin', ratingKeys: ['Kotlin'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-x8d9wdz',
+    name: 'Kotlin: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'kotlin', label: 'Kotlin', ratingKeys: ['Kotlin'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0913dzr',
+    name: 'Kotlin: Expert',
+    tier: 'expert',
+    skills: [{ key: 'kotlin', label: 'Kotlin', ratingKeys: ['Kotlin'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-6y68baf',
+    name: 'Swift: Basic',
+    tier: 'easy',
+    skills: [{ key: 'swift', label: 'Swift', ratingKeys: ['Swift'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jy65c4k',
+    name: 'Swift: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'swift', label: 'Swift', ratingKeys: ['Swift'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zmj8juz',
+    name: 'Swift: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'swift', label: 'Swift', ratingKeys: ['Swift'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7i49xe1',
+    name: 'Swift: Expert',
+    tier: 'expert',
+    skills: [{ key: 'swift', label: 'Swift', ratingKeys: ['Swift'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zdft1wu',
+    name: 'Next.js: Basic',
+    tier: 'easy',
+    skills: [{ key: 'nextjs', label: 'Next.js', ratingKeys: ['Next.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-aylkhdd',
+    name: 'Next.js: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'nextjs', label: 'Next.js', ratingKeys: ['Next.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-stmtj1w',
+    name: 'Next.js: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'nextjs', label: 'Next.js', ratingKeys: ['Next.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-yxebpxy',
+    name: 'Next.js: Expert',
+    tier: 'expert',
+    skills: [{ key: 'nextjs', label: 'Next.js', ratingKeys: ['Next.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-r5zs2cb',
+    name: 'Spring: Basic',
+    tier: 'easy',
+    skills: [{ key: 'spring', label: 'Spring', ratingKeys: ['Spring'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ujd2u2c',
+    name: 'Spring: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'spring', label: 'Spring', ratingKeys: ['Spring'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-pnrf8pd',
+    name: 'Spring: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'spring', label: 'Spring', ratingKeys: ['Spring'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1zz561w',
+    name: 'Spring: Expert',
+    tier: 'expert',
+    skills: [{ key: 'spring', label: 'Spring', ratingKeys: ['Spring'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-6mnfoec',
+    name: 'PySpark: Basic',
+    tier: 'easy',
+    skills: [{ key: 'pyspark', label: 'PySpark', ratingKeys: ['PySpark'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xt3zb2n',
+    name: 'PySpark: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'pyspark', label: 'PySpark', ratingKeys: ['PySpark'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0ohp3ue',
+    name: 'PySpark: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'pyspark', label: 'PySpark', ratingKeys: ['PySpark'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-fypvehd',
+    name: 'PySpark: Expert',
+    tier: 'expert',
+    skills: [{ key: 'pyspark', label: 'PySpark', ratingKeys: ['PySpark'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-bevo3ip',
+    name: 'Pentest: Basic',
+    tier: 'easy',
+    skills: [{ key: 'pentest', label: 'Pentest', ratingKeys: ['Pentest'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-lfungtw',
+    name: 'Pentest: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'pentest', label: 'Pentest', ratingKeys: ['Pentest'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-sorj1vd',
+    name: 'Pentest: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'pentest', label: 'Pentest', ratingKeys: ['Pentest'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-0qum63m',
+    name: 'Pentest: Expert',
+    tier: 'expert',
+    skills: [{ key: 'pentest', label: 'Pentest', ratingKeys: ['Pentest'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-uiw6ts3',
+    name: 'Pandas: Basic',
+    tier: 'easy',
+    skills: [{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kgz9tsi',
+    name: 'Pandas: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7hzcjfi',
+    name: 'Pandas: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-p459n1b',
+    name: 'Pandas: Expert',
+    tier: 'expert',
+    skills: [{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-f1z445c',
+    name: 'ETL: Basic',
+    tier: 'easy',
+    skills: [{ key: 'etl', label: 'ETL', ratingKeys: ['ETL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-480q7u9',
+    name: 'ETL: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'etl', label: 'ETL', ratingKeys: ['ETL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-2klj2qy',
+    name: 'ETL: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'etl', label: 'ETL', ratingKeys: ['ETL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-lawxp9x',
+    name: 'ETL: Expert',
+    tier: 'expert',
+    skills: [{ key: 'etl', label: 'ETL', ratingKeys: ['ETL'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-g53yi6d',
+    name: 'Tableau: Basic',
+    tier: 'easy',
+    skills: [{ key: 'tableau', label: 'Tableau', ratingKeys: ['Tableau'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-qi560vu',
+    name: 'Tableau: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'tableau', label: 'Tableau', ratingKeys: ['Tableau'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-thylah4',
+    name: 'Tableau: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'tableau', label: 'Tableau', ratingKeys: ['Tableau'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-zd68j8a',
+    name: 'Tableau: Expert',
+    tier: 'expert',
+    skills: [{ key: 'tableau', label: 'Tableau', ratingKeys: ['Tableau'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-lfldysr',
+    name: 'NumPy: Basic',
+    tier: 'easy',
+    skills: [{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-wh6krr6',
+    name: 'NumPy: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-7gun823',
+    name: 'NumPy: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ywzh7u7',
+    name: 'NumPy: Expert',
+    tier: 'expert',
+    skills: [{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-5931zp0',
+    name: 'PHP: Basic',
+    tier: 'easy',
+    skills: [{ key: 'php', label: 'PHP', ratingKeys: ['PHP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-poxm897',
+    name: 'PHP: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'php', label: 'PHP', ratingKeys: ['PHP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-i6ibw4y',
+    name: 'PHP: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'php', label: 'PHP', ratingKeys: ['PHP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-y9sv97p',
+    name: 'PHP: Expert',
+    tier: 'expert',
+    skills: [{ key: 'php', label: 'PHP', ratingKeys: ['PHP'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-4ledd7a',
+    name: 'MongoDB: Basic',
+    tier: 'easy',
+    skills: [{ key: 'mongodb', label: 'MongoDB', ratingKeys: ['MongoDB'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xvaidn1',
+    name: 'MongoDB: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'mongodb', label: 'MongoDB', ratingKeys: ['MongoDB'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-j4zu6wg',
+    name: 'MongoDB: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'mongodb', label: 'MongoDB', ratingKeys: ['MongoDB'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q2ncgs8',
+    name: 'MongoDB: Expert',
+    tier: 'expert',
+    skills: [{ key: 'mongodb', label: 'MongoDB', ratingKeys: ['MongoDB'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-gb4xhlq',
+    name: 'System Design: Basic',
+    tier: 'easy',
+    skills: [{ key: 'system-design', label: 'System Design', ratingKeys: ['System Design'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-jbv2na7',
+    name: 'System Design: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'system-design', label: 'System Design', ratingKeys: ['System Design'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-606m6it',
+    name: 'System Design: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'system-design', label: 'System Design', ratingKeys: ['System Design'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-x6j8hcw',
+    name: 'System Design: Expert',
+    tier: 'expert',
+    skills: [{ key: 'system-design', label: 'System Design', ratingKeys: ['System Design'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-oaiv07t',
+    name: '.NET: Basic',
+    tier: 'easy',
+    skills: [{ key: 'dotnet', label: '.NET', ratingKeys: ['.NET', 'Dotnet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-q8grcuj',
+    name: '.NET: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'dotnet', label: '.NET', ratingKeys: ['.NET', 'Dotnet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-lx6bf34',
+    name: '.NET: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'dotnet', label: '.NET', ratingKeys: ['.NET', 'Dotnet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ronq64x',
+    name: '.NET: Expert',
+    tier: 'expert',
+    skills: [{ key: 'dotnet', label: '.NET', ratingKeys: ['.NET', 'Dotnet'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-f9n9jw6',
+    name: 'Node.js: Basic',
+    tier: 'easy',
+    skills: [{ key: 'nodejs', label: 'Node.js', ratingKeys: ['Node.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-6os7nln',
+    name: 'Node.js: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'nodejs', label: 'Node.js', ratingKeys: ['Node.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-kr8irve',
+    name: 'Node.js: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'nodejs', label: 'Node.js', ratingKeys: ['Node.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-d8g348q',
+    name: 'Node.js: Expert',
+    tier: 'expert',
+    skills: [{ key: 'nodejs', label: 'Node.js', ratingKeys: ['Node.js'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-1pjbid1',
+    name: 'C#: Basic',
+    tier: 'easy',
+    skills: [{ key: 'c-sharp', label: 'C#', ratingKeys: ['C#', 'Csharp'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-rmufbg2',
+    name: 'C#: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'c-sharp', label: 'C#', ratingKeys: ['C#', 'Csharp'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ly2qgua',
+    name: 'C#: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'c-sharp', label: 'C#', ratingKeys: ['C#', 'Csharp'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xlhpsek',
+    name: 'C#: Expert',
+    tier: 'expert',
+    skills: [{ key: 'c-sharp', label: 'C#', ratingKeys: ['C#', 'Csharp'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ynu4o4e',
+    name: 'Android: Basic',
+    tier: 'easy',
+    skills: [{ key: 'android', label: 'Android', ratingKeys: ['Android'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-f5em921',
+    name: 'Android: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'android', label: 'Android', ratingKeys: ['Android'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-g0lrr73',
+    name: 'Android: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'android', label: 'Android', ratingKeys: ['Android'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-vlopl6a',
+    name: 'Android: Expert',
+    tier: 'expert',
+    skills: [{ key: 'android', label: 'Android', ratingKeys: ['Android'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-8jzwx7r',
+    name: 'Bash: Basic',
+    tier: 'easy',
+    skills: [{ key: 'bash', label: 'Bash', ratingKeys: ['Bash'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-88su8av',
+    name: 'Bash: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'bash', label: 'Bash', ratingKeys: ['Bash'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-nw01de2',
+    name: 'Bash: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'bash', label: 'Bash', ratingKeys: ['Bash'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-xbxjyll',
+    name: 'Bash: Expert',
+    tier: 'expert',
+    skills: [{ key: 'bash', label: 'Bash', ratingKeys: ['Bash'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-hnfp7xu',
+    name: 'Algorithms: Basic',
+    tier: 'easy',
+    skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-ktmwxgy',
+    name: 'Algorithms: Intermediate',
+    tier: 'medium',
+    skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-omm73eh',
+    name: 'Algorithms: Advanced',
+    tier: 'hard',
+    skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] }]
+  },
+  {
+    assessmentId: 'technical-assessment-2uf4ba6',
+    name: 'Algorithms: Expert',
+    tier: 'expert',
+    skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] }]
   }
 ];
 
