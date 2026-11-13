@@ -1827,7 +1827,35 @@ const SEED = [
     name: 'Debugging: Expert',
     tier: 'expert',
     skills: [{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] }]
-  }
+  },
+  // Role tests (CoderByte role templates, 3 levels each). Named jobTitle (Skill): Level.
+  { assessmentId: 'software-engineer-j6zzn1sptv', name: 'Software Engineer (Coding): Junior', kind: 'title', roleKey: 'software-engineer-coding', roleLevel: 'Junior', skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] },{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'software-engineer-jjirqw17ax', name: 'Software Engineer (Coding): Mid', kind: 'title', roleKey: 'software-engineer-coding', roleLevel: 'Mid-level', skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] },{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'software-engineer-ki3fr9479x', name: 'Software Engineer (Coding): Senior', kind: 'title', roleKey: 'software-engineer-coding', roleLevel: 'Senior', skills: [{ key: 'algorithms', label: 'Algorithms', ratingKeys: ['Algorithms'] },{ key: 'debugging', label: 'Debugging', ratingKeys: ['Debugging'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-react-urpfr32t0j', name: 'React Developer (Front-end): Junior', kind: 'title', roleKey: 'react-developer-front-end', roleLevel: 'Junior', skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] },{ key: 'node-js', label: 'Node.js', ratingKeys: ['Node.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-react-1lmmopd673', name: 'React Developer (Front-end): Mid', kind: 'title', roleKey: 'react-developer-front-end', roleLevel: 'Mid-level', skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] },{ key: 'node-js', label: 'Node.js', ratingKeys: ['Node.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-react-4msyzy14r8', name: 'React Developer (Front-end): Senior', kind: 'title', roleKey: 'react-developer-front-end', roleLevel: 'Senior', skills: [{ key: 'react', label: 'React', ratingKeys: ['React'] },{ key: 'node-js', label: 'Node.js', ratingKeys: ['Node.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-angular-yqrp55t04r', name: 'Angular Developer (Front-end): Junior', kind: 'title', roleKey: 'angular-developer-front-end', roleLevel: 'Junior', skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-angular-81nvyotfet', name: 'Angular Developer (Front-end): Mid', kind: 'title', roleKey: 'angular-developer-front-end', roleLevel: 'Mid-level', skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-angular-pm4y34jue5', name: 'Angular Developer (Front-end): Senior', kind: 'title', roleKey: 'angular-developer-front-end', roleLevel: 'Senior', skills: [{ key: 'angular', label: 'Angular', ratingKeys: ['Angular'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-vue-323f1m4jen', name: 'Vuejs Developer (Front-end): Junior', kind: 'title', roleKey: 'vuejs-developer-front-end', roleLevel: 'Junior', skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-vue-m19q6ck1h7', name: 'Vuejs Developer (Front-end): Mid', kind: 'title', roleKey: 'vuejs-developer-front-end', roleLevel: 'Mid-level', skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'fullstack-developer-vue-nsvvjfdi5g', name: 'Vuejs Developer (Front-end): Senior', kind: 'title', roleKey: 'vuejs-developer-front-end', roleLevel: 'Senior', skills: [{ key: 'vue-js', label: 'Vue.js', ratingKeys: ['Vue.js'] },{ key: 'git', label: 'Git', ratingKeys: ['Git'] }] },
+  { assessmentId: 'front-end-developer-html-kzeslhfziu', name: 'Front-end Developer (HTML/CSS): Junior', kind: 'title', roleKey: 'front-end-developer-html-css', roleLevel: 'Junior', skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] },{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] },{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }] },
+  { assessmentId: 'front-end-developer-html-0s5e7cpohd', name: 'Front-end Developer (HTML/CSS): Mid', kind: 'title', roleKey: 'front-end-developer-html-css', roleLevel: 'Mid-level', skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] },{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] },{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }] },
+  { assessmentId: 'front-end-developer-html-teuq2hd6d2', name: 'Front-end Developer (HTML/CSS): Senior', kind: 'title', roleKey: 'front-end-developer-html-css', roleLevel: 'Senior', skills: [{ key: 'html', label: 'HTML', ratingKeys: ['HTML'] },{ key: 'css', label: 'CSS', ratingKeys: ['CSS'] },{ key: 'bootstrap', label: 'Bootstrap', ratingKeys: ['Bootstrap'] }] },
+  { assessmentId: 'jquery-developer-ybv65yws0x', name: 'jQuery Developer (JavaScript): Junior', kind: 'title', roleKey: 'jquery-developer-javascript', roleLevel: 'Junior', skills: [{ key: 'jquery', label: 'jQuery', ratingKeys: ['jQuery'] }] },
+  { assessmentId: 'jquery-developer-okv6fya5si', name: 'jQuery Developer (JavaScript): Mid', kind: 'title', roleKey: 'jquery-developer-javascript', roleLevel: 'Mid-level', skills: [{ key: 'jquery', label: 'jQuery', ratingKeys: ['jQuery'] }] },
+  { assessmentId: 'jquery-developer-ioo4d0alsr', name: 'jQuery Developer (JavaScript): Senior', kind: 'title', roleKey: 'jquery-developer-javascript', roleLevel: 'Senior', skills: [{ key: 'jquery', label: 'jQuery', ratingKeys: ['jQuery'] }] },
+  { assessmentId: 'graphql-developer-273xjw6ner', name: 'GraphQL Developer (API): Junior', kind: 'title', roleKey: 'graphql-developer-api', roleLevel: 'Junior', skills: [{ key: 'graphql', label: 'GraphQL', ratingKeys: ['GraphQL'] }] },
+  { assessmentId: 'graphql-developer-pjvwmtmpmi', name: 'GraphQL Developer (API): Mid', kind: 'title', roleKey: 'graphql-developer-api', roleLevel: 'Mid-level', skills: [{ key: 'graphql', label: 'GraphQL', ratingKeys: ['GraphQL'] }] },
+  { assessmentId: 'graphql-developer-phsmff0l8u', name: 'GraphQL Developer (API): Senior', kind: 'title', roleKey: 'graphql-developer-api', roleLevel: 'Senior', skills: [{ key: 'graphql', label: 'GraphQL', ratingKeys: ['GraphQL'] }] },
+  { assessmentId: 'data-science-t982a0ppz5', name: 'Data Science (Coding): Junior', kind: 'title', roleKey: 'data-science-coding', roleLevel: 'Junior', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'sql', label: 'SQL', ratingKeys: ['SQL'] }] },
+  { assessmentId: 'data-science-iezspja11g', name: 'Data Science (Coding): Mid', kind: 'title', roleKey: 'data-science-coding', roleLevel: 'Mid-level', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'sql', label: 'SQL', ratingKeys: ['SQL'] }] },
+  { assessmentId: 'data-science-vylc47wiyh', name: 'Data Science (Coding): Senior', kind: 'title', roleKey: 'data-science-coding', roleLevel: 'Senior', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'sql', label: 'SQL', ratingKeys: ['SQL'] }] },
+  { assessmentId: 'data-science-pandas-91kww6sd3r', name: 'Data Science (Pandas): Junior', kind: 'title', roleKey: 'data-science-pandas', roleLevel: 'Junior', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }] },
+  { assessmentId: 'data-science-pandas-0jlnajx597', name: 'Data Science (Pandas): Mid', kind: 'title', roleKey: 'data-science-pandas', roleLevel: 'Mid-level', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }] },
+  { assessmentId: 'data-science-pandas-x33o16wic1', name: 'Data Science (Pandas): Senior', kind: 'title', roleKey: 'data-science-pandas', roleLevel: 'Senior', skills: [{ key: 'python', label: 'Python', ratingKeys: ['Python'] },{ key: 'numpy', label: 'NumPy', ratingKeys: ['NumPy'] },{ key: 'pandas', label: 'Pandas', ratingKeys: ['Pandas'] }] },
 ];
 
 // Replaced by the rebuilt ladders above (Oct 27): switched off so nobody is invited to a deleted test.
@@ -1847,7 +1875,7 @@ connectDatabase()
       if (apply) {
         await SkillAssessment.findOneAndUpdate(
           { assessmentId: row.assessmentId },
-          { $set: { name: row.name, kind: row.kind || 'skill', tier: row.tier || null, publicUrl: a.public_url, skills: row.skills, active: true } },
+          { $set: { name: row.name, kind: row.kind || 'skill', tier: row.tier || null, roleKey: row.roleKey || null, roleLevel: row.roleLevel || null, publicUrl: a.public_url, skills: row.skills, active: true } },
           { upsert: true }
         );
         // Candidates waiting on a skill are told once its first rung (or a combined test) is live.
@@ -1857,6 +1885,7 @@ connectDatabase()
         }
       }
     }
+    if (apply) { const n = await require('../src/services/roleTests').releaseWaiting(); if (n) console.log(`released ${n} waiting applicant(s) and told them their role test is ready`); }
     console.log(`${apply ? 'DEACTIVATE' : 'would deactivate'} ${RETIRED.length} old Agile/Linux rows`);
     if (apply) await SkillAssessment.updateMany({ assessmentId: { $in: RETIRED } }, { $set: { active: false } });
     if (!apply) console.log('Run with --apply to save.');

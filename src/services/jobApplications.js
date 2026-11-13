@@ -62,6 +62,7 @@ async function applyToJob(candidate, posting, now = new Date()) {
   await app.save();
 
   await notify('recruiter', posting.recruiterId, 'job_applicant', `New applicant for ${posting.title}`.slice(0, 200), `/recruiter-jobs/${posting._id}/applicants`);
+  try { await require('./roleTests').onApplied(app, posting); } catch (e) { console.error('Role test step failed:', e.message); }
   // Warn the recruiter before the queue pauses the job, and tell them when it has.
   try {
     const q = require('./applicantQueue');

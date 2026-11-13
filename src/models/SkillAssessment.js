@@ -37,6 +37,9 @@ const skillAssessmentSchema = new mongoose.Schema({
   publicUrl: { type: String, required: true },                  // CoderByte public_url; the invite API turns this into private links
   skills: { type: [skillSchema], default: [] },
   questions: { type: [questionSchema], default: [] },
+  // 'title' tests built from a CoderByte role: which role (matches JobPosting.titleId) and level it is for.
+  roleKey: { type: String, default: null, index: true },
+  roleLevel: { type: String, enum: [null, 'Junior', 'Mid-level', 'Senior'], default: null },
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 

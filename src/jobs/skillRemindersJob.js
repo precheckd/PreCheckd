@@ -18,6 +18,9 @@ function maybeSendDigest() {
   openRequestsDigest()
     .then((n) => console.log(`[jobs] skill request digest: ${n} skills waiting`))
     .catch((err) => console.error('[jobs] skill request digest failed:', err));
+  require('../services/roleTests').digest()
+    .then((n) => console.log(`[jobs] role test digest: ${n} waiting`))
+    .catch((err) => console.error('[jobs] role test digest failed:', err));
   require('../services/verificationCases').sendDigest()
     .then((n) => console.log(`[jobs] verification digest: ${n} items`))
     .catch((err) => console.error('[jobs] verification digest failed:', err));
@@ -30,6 +33,7 @@ function startSkillRemindersJob() {
   }
   const tick = () => {
     maybeSendDigest();
+    require('../services/roleTests').releaseWaiting().catch((err) => console.error('[jobs] role test release failed:', err));
     require('../services/verificationCases').purgeOldFiles().catch((err) => console.error('[jobs] verification file purge failed:', err));
     require('../services/verificationCases').runDue()
       .then((c) => console.log(`[jobs] verification cases: emailed=${c.emails} opened=${c.opened}`))
