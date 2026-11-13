@@ -239,6 +239,9 @@ app.use('/achievements', require('./routes/achievements'));
 app.use('/candidate', require('./routes/candidate-hire-share'));
 app.use('/email', require('./routes/email-preferences'));
 app.use('/recruiter', recruiterProfileRoutes);
+// Emails link to the candidate's own Skills page; if they are logged out, send them to login and bring them back after.
+// Must sit before the other /candidate routers, which answer logged-out visitors with a 403.
+app.get('/candidate/:slug/skills', require('./routes/auth').skillsLoginRedirect);
 app.use('/candidate', candidateProfileRoutes);
 app.use('/candidate', candidateSetupRoutes);
 app.use('/candidate', candidateEditRoutes);

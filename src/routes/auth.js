@@ -5,6 +5,10 @@ const router = express.Router();
 function safeJobPath(p) {
   return typeof p === 'string' && /^\/jobs\/[a-f0-9]{24}(\/[a-z0-9-]*)?$/.test(p) ? p : null;
 }
+// A candidate's own Skills page (the link in the "your results are ready" emails).
+function safeCandidateSkillsPath(p) {
+  return typeof p === 'string' && /^\/candidate\/[a-z0-9-]+\/skills$/.test(p) ? p : null;
+}
 // A recruiter's own posting pages (the link in the "your job is live" email).
 function safeRecruiterJobPath(p) {
   return typeof p === 'string' && /^\/recruiter-jobs\/[a-f0-9]{24}(\/(edit|applicants|outcome))?$/.test(p) ? p : null;
@@ -75,10 +79,14 @@ router.post('/login', async (req, res) => {
 
     delete req.session.recruiterId;
     req.session.candidateId = candidate._id.toString();
+    // An emailed link to their own Skills page, followed while logged out: land there after login.
+    const skillsPath = safeCandidateSkillsPath(req.session.candidateReturnTo);
+    delete req.session.candidateReturnTo;
 
     res.json({
       success: true,
       accountType: 'candidate',
+      goTo: skillsPath === `/candidate/${candidate.slug}/skills` ? skillsPath : null,
       slug: candidate.slug,
       isFullyVerified: Boolean(candidate.isPhoneVerified && candidate.isIdentityVerified),
       returnTo: safeJobPath(req.session.returnTo)
@@ -231,4 +239,12 @@ router.get('/logout', (req, res) => {
 
 module.exports = router;
 module.exports.safeJobPath = safeJobPath;
+module.exports.safeCandidateSkillsPath = safeCandidateSkillsPath;
+// Logged-out visitor on their emailed Skills link: remember the page, send them to login.
+module.exports.skillsLoginRedirect = (req, res, next) => {
+  if (req.session && req.session.candidateId) return next();
+  const path = req.originalUrl.split('?')[0];
+  if (safeCandidateSkillsPath(path)) req.session.candidateReturnTo = path;
+  res.redirect('/login');
+};
 module.exports.safeRecruiterJobPath = safeRecruiterJobPath;
