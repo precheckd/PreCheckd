@@ -74,7 +74,7 @@ const skillResultSchema = new mongoose.Schema({
   reviewNote: { type: String, default: '', maxlength: 1000 },   // internal only, never shown to the candidate
   rejectionCleared: { type: Boolean, default: false },          // staff allowed another retake after repeated rejections
   timeExpired: { type: Boolean, default: false },
-  reportUrl: { type: String, default: null },   // CoderByte's public report link, when the API gives one
+  reportUrl: { type: String, default: null },   // CoderByte's public report link, when the API gives one. Only shown to the recruiter of a custom-test application (see roleTests.onResult); never to other viewers
   reportReady: { type: Boolean, default: false },
   lastError: { type: String, default: null }
 }, { timestamps: true });
