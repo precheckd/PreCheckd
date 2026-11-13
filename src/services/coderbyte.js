@@ -101,9 +101,6 @@ function applyReport(result, assessment, report) {
   result.aiUsage = !!cd.ai_usage;
   result.tabLeaving = Number(cd.tab_leaving) || 0;
   result.held = isFlagged(result.cheatingFlag) || result.aiUsage;
-  // CoderByte's report page is public and readable by anyone with the link; keep it if the API hands it over.
-  const link = Object.values(report).find((v) => typeof v === 'string' && /^https:\/\/(www\.)?coderbyte\.com\/report\//.test(v));
-  if (link) result.reportUrl = link;
   result.reportReady = report.report_ready !== false;
   result.status = String(report.status).toLowerCase() === 'completed' ? 'completed' : result.status;
   if (result.status === 'completed' && !result.completedAt) result.completedAt = new Date();

@@ -34,7 +34,7 @@
         <div class="ja-name"><%= c.firstName %> <%= c.lastName %></div>
         <div class="ja-meta">Applied <%= fmt(a.appliedAt) %> &middot; <strong><%= stages[a.status] || a.status %></strong></div>
         <% if (a.roleTestResult) { %>
-          <div class="ja-meta">Job test: <strong><%= a.roleTestResult.score == null ? 'scored' : Math.round(a.roleTestResult.score) + '%' %></strong><% if (a.roleTestResult.reportUrl && /^https:\/\/(www\.)?coderbyte\.com\//.test(a.roleTestResult.reportUrl)) { %> &middot; <a href="<%= a.roleTestResult.reportUrl %>" target="_blank" rel="noopener noreferrer">View full report</a><% } %></div>
+          <div class="ja-meta">Job test: <strong><%= a.roleTestResult.score == null ? 'scored' : Math.round(a.roleTestResult.score) + '%' %></strong></div>
         <% } else if (a.roleTestStatus === 'waiting') { %>
           <div class="ja-meta">Job test: being prepared</div>
         <% } else if (a.roleTestStatus === 'ready') { %>
