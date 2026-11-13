@@ -113,8 +113,10 @@ function parseTestRef(input) {
   const t = String(input || '').trim();
   // A CoderByte id looks like words-then-ten-characters (software-engineer-r6fiquec3e), alone or inside any link
   // (invite links hold it after "promo=<account>:", report links after "<user>:").
-  const m = t.match(/[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{8,12}(?![a-z0-9-])/i);
-  if (m) return m[0];
+  const all = [...t.matchAll(/[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{8,12}(?![a-z0-9-])/gi)].map((x) => x[0]);
+  const withDigit = all.filter((x) => /\d/.test(x.split('-').pop()));   // the random tail has digits; "sl-candidate" does not
+  if (withDigit.length) return withDigit[withDigit.length - 1];
+  if (all.length) return all[all.length - 1];
   return /^[A-Za-z0-9_-]{6,}$/.test(t) ? t : null;
 }
 
