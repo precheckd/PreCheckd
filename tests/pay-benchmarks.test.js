@@ -10,7 +10,7 @@ assert.strictEqual(b.soc, '15-1252');
 assert.strictEqual(b.low, 132000);
 assert.strictEqual(b.high, 168000);
 assert.strictEqual(pb.bandFor('help-desk-technician', 'Entry level').low, 38000);
-assert.strictEqual(pb.bandFor('help-desk-technician', 'Lead / Principal').high, null);
+assert.strictEqual(pb.bandFor('help-desk-technician', 'Expert').high, null);
 assert.strictEqual(pb.bandFor('scrum-master', 'Mid-level'), null);
 assert.strictEqual(pb.bandFor('devops-engineer', 'Nope'), null);
 

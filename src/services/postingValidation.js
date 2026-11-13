@@ -66,7 +66,7 @@ function todayNewYork(now) {
 function seniorityLabel(skills) {
   const rank = { Foundational: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
   const top = Math.max(0, ...skills.map((s) => rank[s.minLevel] || 0));
-  return ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Lead / Principal'][top];
+  return ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Expert'][top];
 }
 
 const BLIND_NAME = /\b(confidential|undisclosed|anonymous|stealth|unnamed|private\s+client)\b|^(client|tbd|n\/?a|none|unknown|company|the company|a company|our client|my client)$/i;

@@ -1,7 +1,7 @@
 // Pay suggestions shown on the job form. Source: U.S. Bureau of Labor Statistics, Occupational Employment and
 // Wage Statistics (OEWS), national annual wages, May 2023. Update YEAR and the numbers each spring.
 // Each seniority level gets a band between two neighbouring BLS percentiles:
-//   Entry level  P10-P25 | Junior P25-P50 | Mid-level P50-P75 | Senior P75-P90 | Lead / Principal P90 and up
+//   Entry level  P10-P25 | Junior P25-P50 | Mid-level P50-P75 | Senior P75-P90 | Expert P90 and up
 // Titles that have no good BLS match are simply left out of TITLE_SOC, and no suggestion is shown for them.
 
 const YEAR = 'May 2023';
@@ -33,7 +33,7 @@ const TITLE_SOC = {
   'qa-engineer': '15-1253', 'database-administrator': '15-1242', 'data-engineer': '15-2051',
 };
 
-const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Lead / Principal'];
+const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Expert'];
 // [lowIndex, highIndex] into the percentile array; null high = open ended ("and up")
 const BAND = [[0, 1], [1, 2], [2, 3], [3, 4], [4, null]];
 

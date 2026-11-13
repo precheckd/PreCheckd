@@ -62,7 +62,7 @@ t('seniority comes from the highest minimum level', () => {
   assert.strictEqual(seniorityLabel([{ minLevel: null }]), 'Entry level');
   assert.strictEqual(seniorityLabel([{ minLevel: 'Foundational' }]), 'Junior');
   assert.strictEqual(seniorityLabel([{ minLevel: 'Advanced' }, { minLevel: 'Foundational' }]), 'Senior');
-  assert.strictEqual(seniorityLabel([{ minLevel: 'Expert' }]), 'Lead / Principal');
+  assert.strictEqual(seniorityLabel([{ minLevel: 'Expert' }]), 'Expert');
   const { value } = run({ skills: [{ key: 'linux', minLevel: '' }, { key: 'cloud', minLevel: '' }] });
   assert.strictEqual(value.seniorityLabel, 'Entry level');
 });
