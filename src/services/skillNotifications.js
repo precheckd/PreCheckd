@@ -36,7 +36,7 @@ const COPY = {
   skill_test_request: (n, who) => ({ bell: `${who} asked you to take the ${n} test`, subject: `${who} asked you to take a test`, headline: 'A recruiter asked you to take a test',
     paragraphs: [`${who} would like you to take the ${n} test. If you take it, your exact score goes to them. You have 72 hours to accept or decline, and declining is fine.`], button: 'See the request' }),
   role_test_ready: (n) => ({ bell: `Your ${n} test is ready`, subject: `Your ${n} test is ready`, headline: 'Your role test is ready',
-    paragraphs: [`You applied, so the next step is the ${n} test. It is on your Skills page, and the recruiter sees your score when you finish. The link is open for 72 hours once you start it.`], button: 'Take the test' }),
+    paragraphs: [`You applied, so the next step is the ${n} test. It is on your Skills page, and the recruiter sees your score when you finish. Once you start, your link stays open for ${Number(process.env.CODERBYTE_INVITE_DAYS) || 14} days.`], button: 'Take the test' }),
   role_test_waiting: (n, promise) => ({ bell: `Your ${n} test will be sent ${promise}`, subject: `Your ${n} test is on its way`, headline: 'Your role test is being prepared',
     paragraphs: [`You applied, and the ${n} test is being prepared for you. We will email you as soon as it is ready, ${promise}.`], button: 'Open my Skills page' }),
   skill_unlocked: (n) => ({ bell: `You passed. ${n} is now unlocked`, subject: `${n} is unlocked`, headline: 'You unlocked the next level',
