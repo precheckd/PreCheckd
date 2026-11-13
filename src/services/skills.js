@@ -294,6 +294,7 @@ async function decideReview(result, decision, note) {
   result.reviewNote = String(note || '').slice(0, 1000);
   await result.save();
   try { await require('./testRequests').onResult(result); } catch (e) { console.error('[skills] test request update failed:', e.message); }
+  try { await require('./roleTests').onResult(result); } catch (e) { console.error('[skills] role test update failed:', e.message); }
   const c = await Candidate.findById(result.candidateId);
   const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
   const name = (a && a.name) || 'skills';

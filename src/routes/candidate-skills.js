@@ -65,9 +65,10 @@ router.get('/:slug/skills', async (req, res) => {
       candidate, cards,
       skillCards: cards.filter((c) => c.assessment.kind !== 'title' && !c.assessment.tier),
       ladders: skills.buildLadders(cards, current),
-      titleCards: cards.filter((c) => c.assessment.kind === 'title'),
+      titleCards: cards.filter((c) => c.assessment.kind === 'title' && !c.assessment.roleKey),
       titles,
       testRequests: await testRequests.pendingFor(candidate),
+      roleTests: await require('../services/roleTests').pendingFor(candidate),
       requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
       current: current.map((s) => {
         const shared = (candidate.sharedSkills || []).includes(s.key) && ach.SHAREABLE.has(s.level);
@@ -100,6 +101,23 @@ router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
     if (e.code === 'retake_wait') return res.redirect(`/candidate/${req.params.slug}/skills?notice=wait`);
     if (e.code === 'not_found') return res.status(404).send('Assessment not available.');
     console.error('Error starting skills assessment:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+// The role test for a job the candidate applied to. Starting it opens their private CoderByte link.
+router.post('/:slug/skills/role-tests/:id/start', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    const attempt = await require('../services/roleTests').start(candidate, req.params.id);
+    res.redirect(attempt.inviteUrl);
+  } catch (e) {
+    const back = (n) => res.redirect(`/candidate/${req.params.slug}/skills?notice=${n}`);
+    if (e.code === 'retake_wait') return back('wait');
+    if (e.code === 'manual') return back('manual');
+    if (e.code === 'not_found' || e.code === 'not_ready') return back('req_closed');
+    console.error('Error starting role test:', e);
     res.status(500).send('Server error');
   }
 });

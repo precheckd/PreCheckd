@@ -19,7 +19,8 @@ const jobApplicationSchema = new mongoose.Schema({
   // Set when this applicant takes the job's role test (the role-test feature fills it in). Until then it stays
   // null, and the "role-specific test" feedback area can't be chosen for them.
   // Role test state: none (Entry level, or no test needed), waiting (we are still building it), ready (the test exists).
-  roleTestStatus: { type: String, enum: ['none', 'waiting', 'ready'], default: 'none' },
+  roleTestStatus: { type: String, enum: ['none', 'waiting', 'ready', 'done'], default: 'none' },
+  roleTestResultId: { type: mongoose.Schema.Types.ObjectId, default: null },   // the CoderByte attempt (SkillResult) for this application
   roleTestLevelKey: { type: String, default: null, index: true },   // 'titleId|Level', groups the queue
   roleTestAssessmentId: { type: String, default: null },
   roleTestReadyAt: { type: Date, default: null },

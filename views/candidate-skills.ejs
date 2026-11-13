@@ -80,6 +80,21 @@
     <% if (notice === 'req_closed') { %><div class="sk-banner wait">That request is no longer open. It may have expired, or you already answered it.</div><% } %>
     <% if (notice === 'saved') { %><div class="sk-banner ok">Saved. Recruiters will see only the skills you ticked.</div><% } %>
 
+    <% if (roleTests && roleTests.length) { %>
+    <div class="sk-card">
+      <h2>Role tests for jobs you applied to</h2>
+      <% roleTests.forEach((q) => { %>
+        <div class="sk-row" style="align-items:flex-start;">
+          <div>
+            <div class="sk-name"><%= q.job %><%= q.company ? ' · ' + q.company : '' %></div>
+            <div class="sk-meta">Your <strong><%= q.test %></strong> test is ready. The recruiter sees your score when you finish.</div>
+          </div>
+          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/role-tests/<%= q.id %>/start" style="flex-shrink:0;"><button class="sk-btn" type="submit"><%= q.started ? 'Continue test' : 'Take the test' %></button></form>
+        </div>
+      <% }) %>
+    </div>
+    <% } %>
+
     <% if (testRequests.length) { %>
     <div class="sk-card">
       <h2>Test requests from recruiters</h2>

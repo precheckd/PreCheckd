@@ -6,10 +6,19 @@ const SkillAssessment = require('../src/models/SkillAssessment');
 const JobApplication = require('../src/models/JobApplication');
 const Notification = require('../src/models/Notification');
 const email = require('../src/services/emailService');
+const Candidate = require('../src/models/Candidate');
+const JobPosting = require('../src/models/JobPosting');
+const skills = require('../src/services/skills');
+const delivered = [];
+Candidate.findById = async (id) => ({ _id: id, email: null, firstName: 'Pat', slug: 'pat' });
+JobPosting.findById = async () => ({ title: 'Software Engineer', hiringCompany: 'Acme' });
+JobApplication.findOne = async (f) => apps.find((a) => (f._id === undefined || a._id === f._id) && (f.candidateId === undefined || a.candidateId === f.candidateId) && (f.roleTestResultId === undefined || String(a.roleTestResultId) === String(f.roleTestResultId))) || null;
+SkillAssessment.findOne = ((orig) => async (f) => (f.assessmentId && !f.kind ? tests.find((t) => t.assessmentId === f.assessmentId) || null : orig(f)))(SkillAssessment.findOne);
+skills.startAttempt = async (c, id) => ({ _id: 'att-' + c._id, inviteUrl: 'https://cb.test/' + id });
 
 const tests = []; const apps = []; const notes = []; const alerts = [];
 SkillAssessment.findOne = async (f) => tests.find((t) => t.active && t.kind === f.kind && t.roleKey === f.roleKey && t.roleLevel === f.roleLevel) || null;
-const match = (a, f) => Object.entries(f).every(([k, v]) => a[k] === v);
+const match = (a, f) => Object.entries(f).every(([k, v]) => (v && v.$in ? v.$in.includes(a[k]) : a[k] === v));
 JobApplication.find = (f) => { const rows = apps.filter((a) => match(a, f)); const p = Promise.resolve(rows); p.sort = () => p; return p; };
 JobApplication.countDocuments = async (f) => apps.filter((a) => match(a, f)).length;
 Notification.create = async (d) => { notes.push(d); return d; };
@@ -18,7 +27,7 @@ const rt = require('../src/services/roleTests');
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }
-const mk = (id) => { const a = { candidateId: id, jobId: 'j1', roleTestStatus: 'none', appliedAt: new Date(), save: async () => { if (!apps.includes(a)) apps.push(a); } }; return a; };
+const mk = (id) => { const a = { _id: 'app-' + id, status: 'applied', recruiterId: 'r1', candidateId: id, jobId: 'j1', roleTestStatus: 'none', appliedAt: new Date(), save: async () => { if (!apps.includes(a)) apps.push(a); } }; return a; };
 const posting = (label) => ({ _id: 'j1', title: 'Software Engineer', titleId: 'software-engineer-coding', seniorityLabel: label });
 
 (async () => {
@@ -56,6 +65,26 @@ const posting = (label) => ({ _id: 'j1', title: 'Software Engineer', titleId: 's
     const a = mk('c3'); assert.strictEqual(await rt.onApplied(a, posting('Mid-level')), 'ready'); assert.strictEqual(a.roleTestAssessmentId, 'se-mid');
     tests.push({ assessmentId: 'se-sr', kind: 'title', roleKey: 'software-engineer-coding', roleLevel: 'Senior', active: true });
     const e = mk('c4'); assert.strictEqual(await rt.onApplied(e, posting('Expert')), 'ready'); assert.strictEqual(e.roleTestAssessmentId, 'se-sr');
+  });
+  await t('the candidate starts the test for their own application; a published result puts the score on it', async () => {
+    const a = apps.find((x) => x.candidateId === 'c3');
+    assert.strictEqual((await rt.pendingFor({ _id: 'c3' })).length, 1);
+    const attempt = await rt.start({ _id: 'c3' }, a._id);
+    assert.strictEqual(attempt.inviteUrl, 'https://cb.test/se-mid');
+    await assert.rejects(() => rt.start({ _id: 'someone-else' }, a._id), (e) => e.code === 'not_found');
+    const before = notes.length;
+    await rt.onResult({ _id: 'att-c3', status: 'completed', held: true, overallScore: 78 });   // held for review: nothing yet
+    assert.strictEqual(a.roleTestStatus, 'ready');
+    await rt.onResult({ _id: 'att-c3', status: 'completed', held: false, overallScore: 78, completedAt: new Date() });
+    assert.strictEqual(a.roleTestStatus, 'done'); assert.strictEqual(a.roleTestResult.score, 78);
+    assert.strictEqual(notes.length, before + 1); assert.strictEqual(notes[notes.length - 1].ownerType, 'recruiter');
+    await rt.onResult({ _id: 'att-c3', status: 'completed', held: false, overallScore: 78 });   // idempotent
+    assert.strictEqual(notes.length, before + 1);
+  });
+  await t('a rejected attempt sends the application back to ready so they can retry', async () => {
+    const a = apps.find((x) => x.candidateId === 'c4'); await rt.start({ _id: 'c4' }, a._id);
+    await rt.onResult({ _id: 'att-c4', status: 'completed', reviewDecision: 'rejected' });
+    assert.strictEqual(a.roleTestStatus, 'ready'); assert.strictEqual(a.roleTestResultId, null);
   });
   await t('digest lists what is waiting', async () => {
     const a = mk('c5'); await rt.onApplied(a, posting('Junior'));

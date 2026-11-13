@@ -6,6 +6,16 @@
 const SkillAssessment = require('../models/SkillAssessment');
 const JobApplication = require('../models/JobApplication');
 const { notify } = require('./notifications');
+const Candidate = require('../models/Candidate');
+const JobPosting = require('../models/JobPosting');
+
+// Bell plus email to the candidate (skillNotifications.deliver). Never blocks the caller.
+async function tell(candidateId, kind, name, extra) {
+  try {
+    const c = await Candidate.findById(candidateId);
+    if (c) await require('./skillNotifications').deliver(c, kind, name, extra);
+  } catch (e) { console.error('[roleTests] candidate notice failed:', e.message); }
+}
 
 const PROMISE_DAYS = () => Number(process.env.ROLE_TEST_PROMISE_DAYS) || 2;   // the single setting
 const promiseText = () => `within ${PROMISE_DAYS()} business days`;
@@ -41,12 +51,12 @@ async function onApplied(app, posting) {
   if (test) {
     app.roleTestStatus = 'ready'; app.roleTestAssessmentId = test.assessmentId; app.roleTestReadyAt = new Date();
     await app.save();
-    await notify('candidate', app.candidateId, 'role_test_ready', `Your ${posting.title} test is ready`.slice(0, 200), `/jobs/${posting._id}`);
+    await tell(app.candidateId, 'role_test_ready', test.name);
     return 'ready';
   }
   app.roleTestStatus = 'waiting';
   await app.save();
-  await notify('candidate', app.candidateId, 'role_test_waiting', `Your ${posting.title} test will be sent ${promiseText()}`.slice(0, 200), `/jobs/${posting._id}`);
+  await tell(app.candidateId, 'role_test_waiting', posting.title, promiseText());
   const first = (await JobApplication.countDocuments({ roleTestStatus: 'waiting', roleTestLevelKey: app.roleTestLevelKey })) === 1;
   if (first) await alertStaff(posting, level);   // one alert per role and level; the digest covers the rest
   return 'waiting';
@@ -65,7 +75,7 @@ async function releaseWaiting() {
     if (!test) continue;
     app.roleTestStatus = 'ready'; app.roleTestAssessmentId = test.assessmentId; app.roleTestReadyAt = new Date();
     await app.save();
-    await notify('candidate', app.candidateId, 'role_test_ready', `Your ${test.name} test is ready`.slice(0, 200), `/jobs/${app.jobId}`);
+    await tell(app.candidateId, 'role_test_ready', test.name);
     n++;
   }
   return n;
@@ -93,4 +103,46 @@ async function digest(now = Date.now()) {
   return q.length;
 }
 
-module.exports = { roleLevelFor, findTest, onApplied, releaseWaiting, queue, digest, promiseText, PROMISE_DAYS };
+const ACTIVE = ['applied', 'screening', 'interviewing', 'offer'];
+const published = (r) => r && r.status === 'completed' && (!r.held || r.reviewDecision === 'approved');
+
+// The candidate's applications whose role test is ready to take (or in progress), for their Skills page.
+async function pendingFor(candidate) {
+  const apps = await JobApplication.find({ candidateId: candidate._id, roleTestStatus: 'ready', status: { $in: ACTIVE } });
+  const out = [];
+  for (const a of apps) {
+    const [posting, test] = await Promise.all([JobPosting.findById(a.jobId), SkillAssessment.findOne({ assessmentId: a.roleTestAssessmentId })]);
+    if (!posting) continue;
+    out.push({ id: String(a._id), job: posting.title, company: posting.hiringCompany, test: (test && test.name) || posting.title, started: Boolean(a.roleTestResultId) });
+  }
+  return out;
+}
+
+// Starts (or resumes) the role test for one of the candidate's own applications. Throws .code not_found | not_ready,
+// plus startAttempt's own (retake_wait, manual, locked, not_found).
+async function start(candidate, applicationId) {
+  const app = await JobApplication.findOne({ _id: applicationId, candidateId: candidate._id }).catch(() => null);
+  if (!app || !ACTIVE.includes(app.status)) { const e = new Error('Not found'); e.code = 'not_found'; throw e; }
+  if (app.roleTestStatus !== 'ready' || !app.roleTestAssessmentId) { const e = new Error('Not ready'); e.code = 'not_ready'; throw e; }
+  const attempt = await require('./skills').startAttempt(candidate, app.roleTestAssessmentId);
+  app.roleTestResultId = attempt._id;
+  await app.save();
+  return attempt;
+}
+
+// Called whenever an attempt's outcome changes. Published -> the score goes on the application and the recruiter is
+// told once. Rejected (integrity check) -> the application goes back to "ready" so they can try again.
+async function onResult(result) {
+  const app = await JobApplication.findOne({ roleTestResultId: result._id });
+  if (!app || result.status !== 'completed') return null;
+  if (result.reviewDecision === 'rejected') { app.roleTestResultId = null; await app.save(); return app; }
+  if (!published(result) || app.roleTestStatus === 'done') return app;
+  app.roleTestResult = { score: result.overallScore, takenAt: result.completedAt || new Date() };
+  app.roleTestStatus = 'done';
+  await app.save();
+  const posting = await JobPosting.findById(app.jobId);
+  await notify('recruiter', app.recruiterId, 'role_test_done', `A role test score is in for ${posting ? posting.title : 'your job'}`.slice(0, 200), `/recruiter-jobs/${app.jobId}/applicants`);
+  return app;
+}
+
+module.exports = { pendingFor, start, onResult, roleLevelFor, findTest, onApplied, releaseWaiting, queue, digest, promiseText, PROMISE_DAYS };
