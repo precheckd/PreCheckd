@@ -9,6 +9,9 @@
   const ideas = $('jp-title-ideas');
   const results = $('jp-role-results');
   const note = $('jp-suggest-note');
+  const note1 = $('jp-suggest-note1');
+  const ideas1 = $('jp-title-ideas1');
+  const ideas1Wrap = $('jp-title-ideas1-wrap');
   const keySelects = Array.from(form.querySelectorAll('.jp-skill-key'));
   const levelSelects = Array.from(form.querySelectorAll('select[name$="[minLevel]"]'));
   const roleIds = {};   // lower-case role title -> role id, from the matches shown so far
@@ -87,16 +90,20 @@
       const data = await res.json();
       if (!res.ok) { msg.textContent = data.error || 'Could not suggest skills right now. Pick them yourself in the next step.'; return; }
       if (data.skills && data.skills.length) fillSkills(data.skills);
-      ideas.textContent = '';
-      (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); })));
+      ideas.textContent = ''; ideas1.textContent = '';
+      const useTitle = (t) => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); markChosen(); };
+      const markChosen = () => { [ideas, ideas1].forEach((box) => Array.from(box.children).forEach((c) => { c.style.borderColor = norm(c.textContent) === norm(titleInput.value) ? '#2ECC71' : ''; })); };
+      (data.titles || []).forEach((t) => { ideas.appendChild(chip(t, () => useTitle(t))); ideas1.appendChild(chip(t, () => useTitle(t))); });
+      ideas1Wrap.hidden = !(data.titles && data.titles.length);
       const parts = [];
-      if (data.skills && data.skills.length) parts.push('Suggested skills: ' + data.skills.map((s) => s.label).join(', ') + '. Set the level for each, or leave no minimum.');
+      if (data.skills && data.skills.length) parts.push('Suggested skills: ' + data.skills.map((s) => s.label).join(', ') + '. They are filled in on the next step, where you set the level for each (or no minimum).');
       else parts.push('We could not match skills from that text. Pick them yourself.');
-      if (data.titles && data.titles.length) parts.push('Tap a suggested title below, or type your own.');
       if (data.missing && data.missing.length) parts.push('We do not test ' + data.missing.join(', ') + ' yet, so those cannot be required.');
       note.textContent = parts.join(' ');
       note.hidden = false;
-      msg.textContent = 'Done. See the next step: Job title and skills.';
+      note1.textContent = parts.join(' ');
+      note1.hidden = false;
+      msg.textContent = 'Here is what we found. Click Next when you are ready.';
     } catch (e) {
       msg.textContent = 'Could not suggest skills right now. Pick them yourself in the next step.';
     } finally { sBtns.forEach((b) => { b.disabled = false; }); }
