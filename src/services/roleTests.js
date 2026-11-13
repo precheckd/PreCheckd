@@ -1,5 +1,5 @@
 // Role tests: one CoderByte role test per role and level (Junior, Mid-level, Senior). Built on demand.
-// An Expert posting uses the Senior role test (plus the Expert skill exam); Entry level has no role test.
+// An Expert posting uses the Senior role test (plus the Expert skill exam); Entry level uses the one general Entry Level test.
 // If the test for a posting's role and level is not built yet, its applicants wait in the queue, staff are
 // alerted, and applicants are told it will arrive within ROLE_TEST_PROMISE_DAYS business days. The moment the
 // test is registered, releaseWaiting() tells them it is ready.
@@ -19,22 +19,25 @@ async function tell(candidateId, kind, name, extra) {
 
 const PROMISE_DAYS = () => Number(process.env.ROLE_TEST_PROMISE_DAYS) || 2;   // the single setting
 const promiseText = () => `within ${PROMISE_DAYS()} business days`;
-const LEVEL_FOR = { 'Entry level': null, Junior: 'Junior', 'Mid-level': 'Mid-level', Senior: 'Senior', Expert: 'Senior' };
+const ENTRY_KEY = 'entry-level';   // the one general test every Entry level posting uses, whatever its role
+const LEVEL_FOR = { 'Entry level': 'Entry', Junior: 'Junior', 'Mid-level': 'Mid-level', Senior: 'Senior', Expert: 'Senior' };
 const roleLevelFor = (seniorityLabel) => LEVEL_FOR[seniorityLabel] || null;
 
 const findTest = (titleId, level) => (titleId && level
-  ? SkillAssessment.findOne({ active: true, kind: 'title', roleKey: titleId, roleLevel: level }) : null);
+  ? SkillAssessment.findOne({ active: true, kind: 'title', roleKey: level === 'Entry' ? ENTRY_KEY : titleId, roleLevel: level }) : null);
+const queueKey = (posting, level) => `${level === 'Entry' ? ENTRY_KEY : posting.titleId}|${level}`;
 
 const adminUrl = () => `https://${process.env.ADMIN_HOSTNAME || 'admin.precheckd.com'}/role-tests`;
 
 async function alertStaff(posting, level) {
   try {
-    const waiting = await JobApplication.countDocuments({ roleTestStatus: 'waiting', roleTestLevelKey: `${posting.titleId}|${level}` });
+    const waiting = await JobApplication.countDocuments({ roleTestStatus: 'waiting', roleTestLevelKey: queueKey(posting, level) });
+    const what = level === 'Entry' ? 'the Entry Level (General) test' : `the ${posting.title}: ${level} role test`;
     await require('./emailService').sendStaffAlertEmail({
-      subject: `Role test needed: ${posting.title} (${level})`,
+      subject: `Role test needed: ${level === 'Entry' ? 'Entry Level (General)' : `${posting.title} (${level})`}`,
       headline: 'A role test needs building',
       paragraphs: [
-        `${waiting <= 1 ? 'The first applicant is' : `${waiting} applicants are`} waiting for the ${posting.title}: ${level} role test.`,
+        `${waiting <= 1 ? 'The first applicant is' : `${waiting} applicants are`} waiting for ${what}.`,
         `Applicants are told it will arrive ${promiseText()}.`
       ],
       buttonUrl: adminUrl(), buttonLabel: 'Open the queue'
@@ -45,9 +48,9 @@ async function alertStaff(posting, level) {
 // Call right after an application is saved. Returns 'none' | 'ready' | 'waiting'.
 async function onApplied(app, posting) {
   const level = roleLevelFor(posting.seniorityLabel);
-  if (!level || posting.titleId === 'custom') return 'none';   // custom titles have no role test until staff add the role
+  if (!level || (posting.titleId === 'custom' && level !== 'Entry')) return 'none';   // custom titles have no role test until staff add the role (Entry level uses the general test)
   const test = await findTest(posting.titleId, level);
-  app.roleTestLevelKey = `${posting.titleId}|${level}`;
+  app.roleTestLevelKey = queueKey(posting, level);
   if (test) {
     app.roleTestStatus = 'ready'; app.roleTestAssessmentId = test.assessmentId; app.roleTestReadyAt = new Date();
     await app.save();
@@ -56,7 +59,7 @@ async function onApplied(app, posting) {
   }
   app.roleTestStatus = 'waiting';
   await app.save();
-  await tell(app.candidateId, 'role_test_waiting', posting.title, promiseText());
+  await tell(app.candidateId, 'role_test_waiting', level === 'Entry' ? 'Entry Level (General)' : posting.title, promiseText());
   const first = (await JobApplication.countDocuments({ roleTestStatus: 'waiting', roleTestLevelKey: app.roleTestLevelKey })) === 1;
   if (first) await alertStaff(posting, level);   // one alert per role and level; the digest covers the rest
   return 'waiting';

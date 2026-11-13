@@ -31,8 +31,8 @@ const mk = (id) => { const a = { _id: 'app-' + id, status: 'applied', recruiterI
 const posting = (label) => ({ _id: 'j1', title: 'Software Engineer', titleId: 'software-engineer-coding', seniorityLabel: label });
 
 (async () => {
-  await t('levels: Entry none, Expert uses the Senior test', () => {
-    assert.strictEqual(rt.roleLevelFor('Entry level'), null);
+  await t('levels: Entry uses the general test, Expert uses the Senior test', () => {
+    assert.strictEqual(rt.roleLevelFor('Entry level'), 'Entry');
     assert.strictEqual(rt.roleLevelFor('Junior'), 'Junior');
     assert.strictEqual(rt.roleLevelFor('Mid-level'), 'Mid-level');
     assert.strictEqual(rt.roleLevelFor('Senior'), 'Senior');
@@ -42,8 +42,14 @@ const posting = (label) => ({ _id: 'j1', title: 'Software Engineer', titleId: 's
     assert.strictEqual(rt.promiseText(), 'within 2 business days');
     process.env.ROLE_TEST_PROMISE_DAYS = '3'; assert.strictEqual(rt.promiseText(), 'within 3 business days'); delete process.env.ROLE_TEST_PROMISE_DAYS;
   });
-  await t('entry level: nothing queued', async () => {
-    const a = mk('c0'); assert.strictEqual(await rt.onApplied(a, posting('Entry level')), 'none'); assert.strictEqual(alerts.length, 0);
+  await t('entry level: one general test for every role, queued until it exists, then sent at once', async () => {
+    const a = mk('c0'); assert.strictEqual(await rt.onApplied(a, posting('Entry level')), 'waiting');
+    assert.strictEqual(a.roleTestLevelKey, 'entry-level|Entry'); assert.strictEqual(alerts.length, 1);
+    tests.push({ assessmentId: 'entry-gen', name: 'Entry Level (General)', kind: 'title', roleKey: 'entry-level', roleLevel: 'Entry', active: true });
+    assert.strictEqual(await rt.releaseWaiting(), 1); assert.strictEqual(a.roleTestAssessmentId, 'entry-gen');
+    const other = mk('c0b'); other.jobId = 'j2';
+    assert.strictEqual(await rt.onApplied(other, { _id: 'j2', title: 'Anything', titleId: 'custom', seniorityLabel: 'Entry level' }), 'ready');
+    apps.length = 0; alerts.length = 0; notes.length = 0; tests.length = 0;
   });
   await t('no test yet: waiting, applicant told, staff alerted once', async () => {
     const a = mk('c1'), b = mk('c2');

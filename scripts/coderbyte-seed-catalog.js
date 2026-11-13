@@ -1867,6 +1867,8 @@ const SEED = [
   { assessmentId: 'technical-assessment-16qoa6b', name: 'Finalist (Problem, Time, Numbers)', kind: 'finalist', skills: [{ key: 'finalist-problem', label: 'Problem solving', ratingKeys: ['2Problem'] }, { key: 'finalist-time', label: 'Time management', ratingKeys: ['2Time'] }, { key: 'finalist-numbers', label: 'Numerical reasoning', ratingKeys: ['2Numbers'] }] },
   { assessmentId: 'technical-assessment-lkdzeiv', name: 'Finalist (Problem, Detail, Numbers)', kind: 'finalist', skills: [{ key: 'finalist-problem', label: 'Problem solving', ratingKeys: ['2Problem'] }, { key: 'finalist-detail', label: 'Attention to detail', ratingKeys: ['2Detail'] }, { key: 'finalist-numbers', label: 'Numerical reasoning', ratingKeys: ['2Numbers'] }] },
   { assessmentId: 'technical-assessment-tydjl97', name: 'Finalist (Time, Detail, Numbers)', kind: 'finalist', skills: [{ key: 'finalist-time', label: 'Time management', ratingKeys: ['2Time'] }, { key: 'finalist-detail', label: 'Attention to detail', ratingKeys: ['2Detail'] }, { key: 'finalist-numbers', label: 'Numerical reasoning', ratingKeys: ['2Numbers'] }] },
+  // The one general test every Entry level posting sends after someone applies (one tag, overall score only).
+  { assessmentId: 'technical-assessment-45upelxovx', name: 'Entry Level (General)', kind: 'title', roleKey: 'entry-level', roleLevel: 'Entry', skills: [{ key: 'entry-level', label: 'Entry Level', ratingKeys: ['Entry Level', '2Entry'] }] },
 ];
 
 // Replaced by the rebuilt ladders above (Oct 27): switched off so nobody is invited to a deleted test.
