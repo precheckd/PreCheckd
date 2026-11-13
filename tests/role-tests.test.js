@@ -71,6 +71,9 @@ const posting = (label, id = 'j1') => {
   await t('parseTestRef takes an id or a link', () => {
     assert.strictEqual(rt.parseTestRef('technical-assessment-abc123xyz'), 'technical-assessment-abc123xyz');
     assert.strictEqual(rt.parseTestRef('https://coderbyte.com/assessment/technical-assessment-abc123xyz?x=1'), 'technical-assessment-abc123xyz');
+    assert.strictEqual(rt.parseTestRef('https://coderbyte.com/sl-candidate?promo=precheckd-offr5:software-engineer-r6fiquec3e&invb=userwg0rltjoz'), 'software-engineer-r6fiquec3e');
+    assert.strictEqual(rt.parseTestRef('https://coderbyte.com/report/user5hwqmw4zm:software-engineer-r6fiquec3e'), 'software-engineer-r6fiquec3e');
+    assert.strictEqual(rt.parseTestRef('software-engineer-r6fiquec3e'), 'software-engineer-r6fiquec3e');
     assert.strictEqual(rt.parseTestRef('  '), null);
   });
   await t('saving the custom test releases the waiting applicants, tells them and the recruiter', async () => {

@@ -111,8 +111,11 @@ async function releaseWaiting() {
 // Pulls a CoderByte test id out of whatever staff paste: a bare id, or a link containing it.
 function parseTestRef(input) {
   const t = String(input || '').trim();
-  const m = t.match(/technical-assessment-[a-z0-9]+/i) || t.match(/[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{8,12}$/i) || t.match(/\/(?:tests?|assessments?)\/([A-Za-z0-9_-]+)/);
-  return m ? (m[1] || m[0]) : (/^[A-Za-z0-9_-]{6,}$/.test(t) ? t : null);
+  // A CoderByte id looks like words-then-ten-characters (software-engineer-r6fiquec3e), alone or inside any link
+  // (invite links hold it after "promo=<account>:", report links after "<user>:").
+  const m = t.match(/[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{8,12}(?![a-z0-9-])/i);
+  if (m) return m[0];
+  return /^[A-Za-z0-9_-]{6,}$/.test(t) ? t : null;
 }
 
 // Staff finished building the custom test for a posting: register it, release the waiting applicants, tell the recruiter.
