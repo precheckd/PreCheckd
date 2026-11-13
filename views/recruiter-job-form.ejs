@@ -69,6 +69,7 @@
   .jp-titles input { accent-color: #2ECC71; }
   .jp-muted { color: #8FA6AC; font-size: 0.85rem; }
   .jp-btn { background: #2ECC71; color: #10261C; border: none; border-radius: 6px; padding: 0.8rem 1.6rem; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .jp-sub { color: #E8EBEA; font-size: 1.05rem; margin: 1.4rem 0 0.4rem; padding-top: 1rem; border-top: 1px solid #3B5860; }
   .jp-suggest { margin: 0.8rem 0; }
   .jp-suggest-note { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 0.9rem; font-size: 0.9rem; }
   .jp-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
@@ -101,8 +102,8 @@
     <input type="hidden" name="_draftId" value="<%= draftId || '' %>">
 
     <!-- 1. Description -->
-    <div class="jp-card jp-step" data-name="Description">
-      <h2>1. Description</h2>
+    <div class="jp-card jp-step" data-name="Description, title and skills">
+      <h2>1. Description, title and skills</h2>
       <p class="jp-hint">No phone numbers, emails, links, or "message me on" wording (candidates apply through PreCheckd only), no "X+ years of experience", no "US citizens only", and no wording that signals age, gender or nationality preferences.</p>
       <label class="jp-field">Role summary
         <textarea name="summary" id="jp-summary" maxlength="<%= limits.summaryMax %>"><%= val('summary') %></textarea>
@@ -115,27 +116,11 @@
       <% if (errors.responsibilities) { %><div class="jp-err"><%= errors.responsibilities %></div><% } %>
       <div class="jp-suggest" id="jp-suggest-box">
         <button type="button" class="jp-btn-ghost js-suggest" id="jp-suggest-btn">Suggest skills and job titles from this description</button>
-        <p class="jp-muted" id="jp-suggest-msg" aria-live="polite">Optional. We read what you wrote and fill in the next step for you. You check and change everything.</p>
-        <div class="jp-suggest-note" id="jp-suggest-note1" hidden></div>
-        <div id="jp-title-ideas1-wrap" hidden>
-          <span class="jp-label">Suggested job titles <span class="jp-muted">(tap one to use it, or type your own in the next step)</span></span>
-          <div class="jp-chips" id="jp-title-ideas1" aria-live="polite"></div>
-        </div>
+        <p class="jp-muted" id="jp-suggest-msg" aria-live="polite">Optional. We read what you wrote and suggest skills and job titles below. You check and change everything.</p>
+        <div class="jp-suggest-note" id="jp-suggest-note" hidden></div>
       </div>
-      <div class="jp-standard">
-        <p><strong>Added to every posting automatically:</strong></p>
-        <p><%= standard.EEO %></p>
-        <p><%= standard.ACCOMMODATION %></p>
-        <p><%= standard.BACKGROUND %></p>
-      </div>
-    </div>
-
-
-    <!-- 2. Job title and skills -->
-    <div class="jp-card jp-step" data-name="Job title and skills">
-      <h2>2. Job title and skills</h2>
-      <p class="jp-hint">Type the title you want candidates to see. Pick up to three skills the job needs. Each skill takes the lowest level a candidate needs (or no minimum); the levels you set decide the job's level, and a candidate must meet them to apply. No minimum level on any skill makes it an entry-level job.</p>
-      <div class="jp-suggest-note" id="jp-suggest-note" hidden></div>
+      <h3 class="jp-sub">Job title and skills</h3>
+      <p class="jp-hint">Type the title you want candidates to see (tap a suggested one if you like). Pick up to three skills the job needs. Each skill takes the lowest level a candidate needs (or no minimum); the levels you set decide the job's level, and a candidate must meet them to apply. No minimum level on any skill makes it an entry-level job.</p>
       <label class="jp-field">Job title
         <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
       </label>
@@ -143,7 +128,7 @@
       <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
       <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
       <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
-      <span class="jp-label">Skills</span>
+      <span class="jp-label">Skills the job needs</span>
       <% for (let i = 0; i < 3; i++) { %>
         <div class="jp-row">
           <select name="skills[<%= i %>][key]" class="jp-skill-key" aria-label="Skill <%= i + 1 %>">
@@ -157,12 +142,17 @@
         </div>
       <% } %>
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
-      <button type="button" class="jp-btn-ghost js-suggest" id="jp-suggest-btn2" style="margin-top:0.6rem;">Suggest skills from my description</button>
+      <div class="jp-standard">
+        <p><strong>Added to every posting automatically:</strong></p>
+        <p><%= standard.EEO %></p>
+        <p><%= standard.ACCOMMODATION %></p>
+        <p><%= standard.BACKGROUND %></p>
+      </div>
     </div>
 
-    <!-- 2. Company -->
+
     <div class="jp-card jp-step" data-name="Company">
-      <h2>3. Company</h2>
+      <h2>2. Company</h2>
       <p class="jp-hint">The company where the job is. Candidates see this name. Confidential or blind postings are not allowed.</p>
       <label class="jp-field">Hiring company
         <input type="text" name="hiringCompany" id="jp-company" list="jp-company-list" maxlength="100" autocomplete="off" value="<%= val('hiringCompany') %>">
@@ -175,7 +165,7 @@
 
     <!-- 3. Job details -->
     <div class="jp-card jp-step" data-name="Job details">
-      <h2>4. Job details</h2>
+      <h2>3. Job details</h2>
       <div class="jp-row">
         <label class="jp-field" style="margin:0;">Employment type
           <select name="employmentType" id="jp-emp">
@@ -197,7 +187,7 @@
 
     <!-- 4. Location -->
     <div class="jp-card jp-step" data-name="Location and schedule">
-      <h2>5. Location and schedule</h2>
+      <h2>4. Location and schedule</h2>
       <p class="jp-hint">The street address is used to place the job and is never shown to candidates. They see the city and state only. Candidates must be authorized to work in the US.</p>
       <label class="jp-field">How is the work done?
         <select name="arrangement" id="jp-arr">
@@ -271,7 +261,7 @@
 
     <!-- 5. Pay -->
     <div class="jp-card jp-step" data-name="Pay">
-      <h2>6. Pay</h2>
+      <h2>5. Pay</h2>
       <p class="jp-hint">Required on every posting. The most the range can be above the minimum is 25%.</p>
       <div class="jp-row" id="jp-base-row">
         <select name="basePayType" class="jp-narrow" aria-label="Base pay type">
@@ -332,7 +322,7 @@
 
     <!-- 6. Requirements -->
     <div class="jp-card jp-step" data-name="Requirements">
-      <h2>7. Requirements</h2>
+      <h2>6. Requirements</h2>
       <p class="jp-hint">Every requirement stops candidates who do not meet it, and they are told exactly why. There is no years-of-experience requirement on PreCheckd; skills and verified credentials replace it. Only verified, unexpired certifications and verified degrees count.</p>
       <label class="jp-field">Minimum education (verified)
         <select name="education"><option value="">None required</option>
