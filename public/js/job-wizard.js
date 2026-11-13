@@ -18,6 +18,7 @@
   var visited = {};
   var errored = {};
   var saving = false;
+  var leaving = false;
 
   wiz.classList.add('jp-wizard');
   progress.hidden = false;
@@ -67,8 +68,27 @@
     renderNav();
   }
 
-  function go(i) {
+  function go(i, skipHook) {
     if (i === cur || i < 0 || i > last) return;
+    // Leaving the description page forward: read it and suggest title and skills first (waits at most 8 seconds).
+    if (cur === 0 && i > 0 && typeof window.jpOnLeaveDescription === 'function' && !leaving && !skipHook) {
+      leaving = true;
+      var btns = [].slice.call(steps[0].querySelectorAll('.jp-nextbar button'));
+      var label = btns.map(function (b) { return b.textContent; });
+      btns.forEach(function (b) { b.disabled = true; });
+      if (btns.length) btns[btns.length - 1].textContent = 'Reading your description...';
+      var finished = false;
+      var finish = function () {
+        if (finished) return;
+        finished = true;
+        btns.forEach(function (b, k) { b.disabled = false; b.textContent = label[k]; });
+        go(i, true);
+        leaving = false;
+      };
+      setTimeout(finish, 8000);
+      Promise.resolve().then(window.jpOnLeaveDescription).catch(function () {}).then(finish);
+      return;
+    }
     // An error marker clears once the recruiter has seen that page.
     delete errored[cur];
     var leaving = steps[cur];

@@ -179,7 +179,7 @@ const validForm = (over = {}) => ({
     assert.ok(html.includes('at most 25% above'));
     assert.ok(html.includes('<option value="linux" selected>'));
     assert.ok(html.includes('name="title" id="jp-title"') && html.includes('name="titleId" id="jp-titleid"'));
-    assert.ok(html.indexOf('1. Description, title and skills') > 0 && html.indexOf('1. Description, title and skills') < html.indexOf('2. Company'));
+    assert.ok(html.indexOf('1. Description') > 0 && html.indexOf('1. Description') < html.indexOf('2. Job title and skills') && html.indexOf('2. Job title and skills') < html.indexOf('3. Company'));
   });
 
   await t('contact details in the description are refused with the reason', async () => {
@@ -348,7 +348,7 @@ const validForm = (over = {}) => ({
 
   await t('the form is a wizard: every section is a step, with a review page', async () => {
     const html = await (await get('/recruiter-jobs/new')).text();
-    assert.strictEqual((html.match(/class="jp-card jp-step"/g) || []).length, 7);
+    assert.strictEqual((html.match(/class="jp-card jp-step"/g) || []).length, 8);
     assert.ok(html.includes('id="jp-nav"') && html.includes('/js/job-wizard.js') && html.includes('data-draft-url="/recruiter-jobs/draft"'));
     assert.ok(html.indexOf('/js/job-wizard.js') < html.indexOf('/js/job-form.js'));
   });

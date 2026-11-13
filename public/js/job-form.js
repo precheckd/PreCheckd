@@ -76,33 +76,39 @@
   // ---- suggest skills and titles from the description ----
   const sumEl = $('jp-summary');
   const respEl = form.querySelector('textarea[name="responsibilities"]');
-  const msg = $('jp-suggest-msg');
-  const sBtns = Array.from(form.querySelectorAll('.js-suggest'));
+  const lastKey = 'data-suggested';
+  const textNow = () => (sumEl.value + '\n' + respEl.value).trim();
+  // Edits and drafts that already have skills picked are not re-suggested until the description changes.
+  if (!noSkillsYet()) form.setAttribute(lastKey, textNow());
   async function suggest() {
-    msg.textContent = 'Reading your description...';
-    sBtns.forEach((b) => { b.disabled = true; });
+    const text = textNow();
+    if (text.length < 40 || form.getAttribute(lastKey) === text) return;
+    form.setAttribute(lastKey, text);
     try {
       const res = await fetch('/recruiter-jobs/suggest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
       const data = await res.json();
-      if (!res.ok) { msg.textContent = data.error || 'Could not suggest skills right now. Pick them yourself below.'; return; }
-      if (data.skills && data.skills.length) fillSkills(data.skills);
+      if (!res.ok) { note.textContent = data.error || 'We could not suggest skills right now. Pick them yourself below.'; note.hidden = false; return; }
+      const hadSkills = !noSkillsYet();
+      if (!hadSkills && data.skills && data.skills.length) fillSkills(data.skills);
       ideas.textContent = '';
       const useTitle = (t) => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); markChosen(); };
       const markChosen = () => { Array.from(ideas.children).forEach((c) => { c.style.borderColor = norm(c.textContent) === norm(titleInput.value) ? '#2ECC71' : ''; }); };
       (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => useTitle(t))));
       const parts = [];
-      if (data.skills && data.skills.length) parts.push('Suggested skills: ' + data.skills.map((s) => s.label).join(', ') + '. They are filled in below. Set the level for each, or leave no minimum.');
+      if (data.skills && data.skills.length) parts.push((hadSkills ? 'Suggested skills (your choices below were kept): ' : 'Suggested skills, filled in below: ') + data.skills.map((s) => s.label).join(', ') + '. Set the level for each, or leave no minimum.');
       else parts.push('We could not match skills from that text. Pick them yourself.');
+      if (data.titles && data.titles.length) parts.push('Tap a suggested title if one fits.');
       if (data.missing && data.missing.length) parts.push('We do not test ' + data.missing.join(', ') + ' yet, so those cannot be required.');
       note.textContent = parts.join(' ');
       note.hidden = false;
-      msg.textContent = 'Done. Check the skills and title below.';
     } catch (e) {
-      msg.textContent = 'Could not suggest skills right now. Pick them yourself below.';
-    } finally { sBtns.forEach((b) => { b.disabled = false; }); }
+      form.removeAttribute(lastKey);
+      note.textContent = 'We could not suggest skills right now. Pick them yourself below.'; note.hidden = false;
+    }
   }
-  sBtns.forEach((b) => b.addEventListener('click', suggest));
+  // The wizard calls this when the recruiter leaves the description page going forward.
+  window.jpOnLeaveDescription = suggest;
 
   // ---- company suggestions ----
   const company = $('jp-company');
