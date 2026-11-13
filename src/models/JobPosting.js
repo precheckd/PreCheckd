@@ -31,6 +31,9 @@ const jobPostingSchema = new mongoose.Schema({
   titleId: { type: String, required: true },
   title: { type: String, required: true },                          // snapshot of the catalog title
   skills: { type: [skillReqSchema], default: [] },
+  // Custom test (Junior..Expert postings): staff generate it in CoderByte from the job description and attach its id.
+  customTestAssessmentId: { type: String, default: null },
+  customTestRequestedAt: { type: Date, default: null },
   seniorityLabel: { type: String, required: true },                // derived from the skill levels, never typed
   hiringCompany: { type: String, required: true, maxlength: 100 },
   authorizedToRecruit: { type: Boolean, required: true },

@@ -271,6 +271,8 @@ router.get('/', async (req, res) => {
     const catalogRequestCount = (await require('../models/CatalogRequest').aggregate([{ $match: { status: 'requested' } }, { $group: { _id: { k: '$kind', n: '$key' } } }])).length;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
+    const customTestCount = (await require('../services/roleTests').customQueue()).length;
+
     const outsideUsCount = await require('../models/OutsideInterest').countDocuments({});
     const chatGapCount = await require('../models/ChatLog').countDocuments({ noAnswer: true, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } });
     const integrityCount = await SkillResult.countDocuments({ status: 'completed', held: true, reviewDecision: null });
@@ -282,6 +284,7 @@ router.get('/', async (req, res) => {
       outsideUsCount,
       hireReviewCount,
       skillRequestCount,
+      customTestCount,
       catalogRequestCount,
       verificationCount,
       verificationOpen: vcDigest.open,
@@ -366,6 +369,37 @@ router.post('/integrity-review/:id/clear', async (req, res) => {
     res.redirect(`/integrity-review/${result._id}`);
   } catch (error) {
     console.error('Error clearing rejections:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Postings waiting for a custom test. Staff copy the job description into CoderByte's "generate a test from a job
+// description", edit the title, save, then paste the test id (or link) here; applicants are released at once.
+router.get('/custom-tests', async (req, res) => {
+  try {
+    const { businessHoursSince, slaFlag } = require('../utils/businessTime');
+    const rows = (await require('../services/roleTests').customQueue()).map((r) => {
+      const hours = businessHoursSince(r.posting.customTestRequestedAt);
+      return { id: String(r.posting._id), title: r.posting.title, company: r.posting.hiringCompany, level: r.posting.seniorityLabel,
+        waiting: r.waiting, hours, flag: slaFlag(hours), description: r.description };
+    });
+    res.render('internal-custom-tests', { rows, notice: req.query.notice || '', error: req.query.error || '' });
+  } catch (error) {
+    console.error('Error loading custom tests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/custom-tests/:id', async (req, res) => {
+  try {
+    if (!/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(404).send('Not found');
+    const posting = await require('../models/JobPosting').findById(req.params.id);
+    if (!posting) return res.status(404).send('Not found');
+    const out = await require('../services/roleTests').attach(posting, req.body.testRef);
+    res.redirect(`/custom-tests?notice=${encodeURIComponent(`Saved. ${out.released} applicant${out.released === 1 ? '' : 's'} sent the test.`)}`);
+  } catch (error) {
+    if (error.code === 'bad_ref' || error.code === 'not_found') return res.redirect(`/custom-tests?error=${encodeURIComponent(error.message)}`);
+    console.error('Error saving custom test:', error);
     res.status(500).send('Server error');
   }
 });

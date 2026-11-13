@@ -116,7 +116,7 @@ router.get('/', async (req, res) => {
     // ?searched=1 the form sends when nothing is filled in (show everyone).
     // Skills that have a test, for the filter dropdowns and to validate what was submitted.
     const skillOptions = [];
-    for (const a of await SkillAssessment.find({ active: true, kind: { $nin: ['title', 'finalist'] } })) {
+    for (const a of await SkillAssessment.find({ active: true, kind: { $nin: ['title', 'finalist', 'custom'] } })) {
       for (const sk of a.skills || []) if (!skillOptions.some((o) => o.key === sk.key)) skillOptions.push({ key: sk.key, label: sk.label });
     }
     skillOptions.sort((x, y) => x.label.localeCompare(y.label));

@@ -15,7 +15,8 @@ const SHOWABLE = new Set(['Foundational', 'Intermediate', 'Advanced', 'Expert'])
 
 const isTitle = (a) => !!a && a.kind === 'title';
 const isFinalist = (a) => !!a && a.kind === 'finalist';
-const perTest = (a) => isTitle(a) || isFinalist(a);   // retake rules apply to this exact test, not to a skill
+const isCustom = (a) => !!a && a.kind === 'custom';
+const perTest = (a) => isTitle(a) || isFinalist(a) || isCustom(a);   // retake rules apply to this exact test, not to a skill
 const published = (r) => r.status === 'completed' && (!r.held || r.reviewDecision === 'approved');
 
 async function assessmentsById() {
@@ -32,7 +33,7 @@ async function currentSkills(candidateId) {
   const ladder = new Map(); // skill key -> { label, byTier: { easy: { right, total, takenAt }, ... } }
   for (const r of results) {
     const asm = asms.get(r.assessmentId);
-    if (!published(r) || isTitle(asm) || isFinalist(asm)) continue;
+    if (!published(r) || isTitle(asm) || isFinalist(asm) || isCustom(asm)) continue;
     if (asm && asm.tier) {
       // One rung of a skill's ladder. The latest result per tier counts, under the same 60-day rule.
       const s = (r.skills || [])[0];
@@ -77,7 +78,7 @@ function buildLadders(cards, current) {
   const groups = new Map();
   for (const c of cards) {
     const a = c.assessment;
-    if (!a.tier || a.kind === 'title' || a.kind === 'finalist') continue;
+    if (!a.tier || ['title', 'finalist', 'custom'].includes(a.kind)) continue;
     const sk = (a.skills || [])[0];
     if (!sk) continue;
     const g = groups.get(sk.key) || { key: sk.key, label: sk.label, rungs: [] };
@@ -264,7 +265,7 @@ async function requestSkill(candidate, text) {
   const key = normalizeSkill(text);
   if (key.length < 2) { const e = new Error('Enter a skill name'); e.code = 'invalid'; throw e; }
   const asms = await SkillAssessment.find({ active: true });
-  const covered = asms.some((a) => a.kind !== 'title' && a.kind !== 'finalist' && (a.skills || []).some((s) => normalizeSkill(s.label) === key || s.key === key));
+  const covered = asms.some((a) => !['title', 'finalist', 'custom'].includes(a.kind) && (a.skills || []).some((s) => normalizeSkill(s.label) === key || s.key === key));
   if (covered) { const e = new Error('Already available'); e.code = 'exists'; throw e; }
   const mine = await SkillRequest.find({ candidateId: candidate._id });
   if (mine.some((r) => r.key === key)) return mine.find((r) => r.key === key);

@@ -32,7 +32,8 @@ const skillAssessmentSchema = new mongoose.Schema({
   // score in their own box and never feed skill levels.
   // 'finalist': one of the 10 second-stage combos (3 of 5 general topics); never feeds skill levels and is never
   // offered as a skill, a title test or a role test.
-  kind: { type: String, enum: ['skill', 'title', 'finalist'], default: 'skill' },
+  kind: { type: String, enum: ['skill', 'title', 'finalist', 'custom'], default: 'skill' },
+  // 'custom': generated in CoderByte from one posting's job description (postingId); only that posting's applicants take it.
   // Set on a 'skill' assessment that is one rung of a skill's ladder (Basic, Intermediate, Advanced): all of
   // its questions are this tier and it covers one skill. Null for a combined test.
   tier: { type: String, enum: ['easy', 'medium', 'hard', 'expert'], default: null },
@@ -42,6 +43,7 @@ const skillAssessmentSchema = new mongoose.Schema({
   // 'title' tests built from a CoderByte role (or the one general Entry Level test: roleKey 'entry-level', roleLevel 'Entry'): which role (matches JobPosting.titleId) and level it is for.
   roleKey: { type: String, default: null, index: true },
   roleLevel: { type: String, enum: [null, 'Entry', 'Junior', 'Mid-level', 'Senior'], default: null },
+  postingId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 

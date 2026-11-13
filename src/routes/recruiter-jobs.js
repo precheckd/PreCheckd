@@ -60,7 +60,7 @@ async function loadPostingRecruiter(req, res) {
 // Skills a posting can ask for: the ones we have a test for (same list recruiter search uses).
 async function skillOptions() {
   const out = [];
-  for (const a of await SkillAssessment.find({ active: true, kind: { $nin: ['title', 'finalist'] } })) {
+  for (const a of await SkillAssessment.find({ active: true, kind: { $nin: ['title', 'finalist', 'custom'] } })) {
     for (const sk of a.skills || []) if (!out.some((o) => o.key === sk.key)) out.push({ key: sk.key, label: sk.label });
   }
   return out.sort((x, y) => x.label.localeCompare(y.label));
@@ -104,16 +104,14 @@ router.get('/', async (req, res) => {
 });
 
 // GET /recruiter-jobs/roles?q=devops — roles matching what the recruiter typed, with their skills.
-// testable: a skill test exists for it. ready: the role's Junior/Mid/Senior tests are built (otherwise the first
-// applicants trigger the build queue).
+// testable: a skill test exists for it.
 router.get('/roles', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 60);
     const labels = new Map((await skillOptions()).map((o) => [o.key, o.label]));
     const roles = searchRoles(q);
-    const built = new Set((await SkillAssessment.find({ active: true, kind: 'title', roleKey: { $in: roles.map((r) => r.id) } })).map((a) => a.roleKey));
     res.json({ roles: roles.map((r) => ({
-      id: r.id, title: r.title, ready: built.has(r.id),
+      id: r.id, title: r.title,
       skills: r.skills.map((k) => ({ key: k, label: labels.get(k) || k.replace(/-/g, ' '), testable: labels.has(k) })),
     })) });
   } catch (e) { res.json({ roles: [] }); }
@@ -267,6 +265,7 @@ router.post('/new', async (req, res) => {
       try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
     }
     await noteCustomTitle(recruiter, posting);
+    try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
     sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
@@ -389,6 +388,7 @@ router.post('/:id/edit', async (req, res) => {
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
     if (posting.titleId === 'custom' && (!wasCustom || wasCustom !== posting.title)) await noteCustomTitle(recruiter, posting);
+    try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
     await applyImpact(posting, r.impact, r.parts);
     sweepPostingLater(posting);
     sendJobEditedEmail(recruiter, posting, { parts: r.parts, withdrawn: r.impact.withdraw.length, notified: r.impact.keep.length })

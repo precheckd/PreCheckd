@@ -147,6 +147,12 @@
       <span class="id-card-stat <%= integrityCount > 0 ? 'id-stat-alert' : '' %>"><%= integrityCount %> waiting</span>
     </a>
 
+    <a class="id-card" href="/custom-tests">
+      <div class="id-card-title">Custom Tests</div>
+      <div class="id-card-desc">New postings that need a test generated in CoderByte from their job description. Copy, paste, save the test id.</div>
+      <span class="id-card-stat <%= customTestCount > 0 ? 'id-stat-alert' : '' %>"><%= customTestCount %> waiting</span>
+    </a>
+
     <a class="id-card" href="/skill-requests">
       <div class="id-card-title">Skill Requests</div>
       <div class="id-card-desc">Skills candidates want to be tested on, most-requested first. This is the list of tests to build next.</div>

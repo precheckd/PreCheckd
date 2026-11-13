@@ -112,7 +112,6 @@ const validForm = (over = {}) => ({
     const data = await (await get('/recruiter-jobs/roles?q=devops%20aws')).json();
     assert.strictEqual(data.roles[0].id, 'devops-aws');
     assert.deepStrictEqual(data.roles[0].skills.map((x) => [x.key, x.testable]), [['aws', false], ['python', false], ['cloud', true]]);
-    assert.strictEqual(data.roles[0].ready, false);   // no role test built in this stub
     assert.deepStrictEqual((await (await get('/recruiter-jobs/roles?q=')).json()).roles, []);
   });
 

@@ -1,0 +1,44 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; }
+  .sr-table td { padding: 0.75rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.92rem; }
+  .sr-count { font-weight: 700; }
+  .sr-form { display: inline; }
+  .sr-btn { border: 1px solid #1F7A4C; color: #1F7A4C; background: transparent; border-radius: 5px; padding: 0.3rem 0.65rem; font-size: 0.8rem; cursor: pointer; margin-right: 0.3rem; }
+</style>
+<style>
+  .ct-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .ct-card h2 { font-size: 1.05rem; color: #1F363C; margin: 0 0 0.25rem; }
+  .ct-meta { color: #7A8B91; font-size: 0.85rem; margin-bottom: 0.6rem; }
+  .ct-desc { width: 100%; min-height: 160px; font: 0.85rem/1.4 ui-monospace, monospace; border: 1px solid #DCE4E2; border-radius: 6px; padding: 0.6rem; box-sizing: border-box; }
+  .ct-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .ct-row input[type=text] { flex: 1; min-width: 220px; padding: 0.45rem 0.6rem; border: 1px solid #DCE4E2; border-radius: 6px; }
+  .ct-msg { padding: 0.6rem 0.9rem; border-radius: 6px; margin-bottom: 1rem; }
+  .ct-ok { background: #E6F4EC; color: #1F7A4C; } .ct-bad { background: #FDECEA; color: #B42318; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Custom Tests</h1>
+  <p class="sr-sub">Each posting below needs its own test. Copy the job description, paste it into CoderByte's generate-from-job-description, trim to about 3 challenges, 20 questions and 2 free-form questions, set the time limit (60-90 min), edit the title, save, then paste the test id or link here. Saving sends the test to everyone waiting and tells the recruiter. Oldest first; the clock counts weekday hours (due soon at 20h, overdue at 24h).</p>
+  <% if (notice) { %><div class="ct-msg ct-ok"><%= notice %></div><% } %>
+  <% if (error) { %><div class="ct-msg ct-bad"><%= error %></div><% } %>
+  <% rows.forEach((r) => { %>
+    <div class="ct-card">
+      <h2><%= r.title %> &middot; <%= r.company %></h2>
+      <div class="ct-meta"><%= r.level %> &middot; <%= r.waiting %> applicant<%= r.waiting === 1 ? '' : 's' %> waiting &middot;
+        <span style="font-weight:700;color:<%= r.flag === 'overdue' ? '#B42318' : r.flag === 'soon' ? '#B7791F' : '#1F363C' %>;"><%= Math.round(r.hours) %>h<%= r.flag === 'overdue' ? ' overdue' : r.flag === 'soon' ? ' due soon' : '' %></span></div>
+      <textarea class="ct-desc" id="d-<%= r.id %>" readonly><%= r.description %></textarea>
+      <form class="ct-row" method="POST" action="/custom-tests/<%= r.id %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="sr-btn" type="button" onclick="var t=document.getElementById('d-<%= r.id %>');t.select();navigator.clipboard&&navigator.clipboard.writeText(t.value);this.textContent='Copied'">Copy description</button>
+        <input type="text" name="testRef" placeholder="CoderByte test id or link" required>
+        <button class="sr-btn" type="submit">Save and send</button>
+      </form>
+    </div>
+  <% }) %>
+  <% if (!rows.length) { %><p class="sr-sub">Nothing waiting. Every live posting has its test.</p><% } %>
+</div>
