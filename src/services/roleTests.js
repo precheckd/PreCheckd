@@ -125,7 +125,7 @@ async function attach(posting, ref, { name, lookup } = {}) {
   const id = parseTestRef(ref);
   if (!id) { const e = new Error('Could not find a test id in that.'); e.code = 'bad_ref'; throw e; }
   const found = lookup ? await lookup(id) : await require('./coderbyte').api('GET', '/assessments').then((r) => {
-    const list = Array.isArray(r) ? r : (r && (r.assessments || r.data)) || [];
+    const list = (r && r.data && r.data.assessments) || (r && r.assessments) || (Array.isArray(r) ? r : []);   // same shape the seed script reads
     return list.find((x) => String(x.test_id || x.id) === id);
   });
   if (!found) { const e = new Error('CoderByte has no test with that id.'); e.code = 'not_found'; throw e; }

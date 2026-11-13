@@ -400,7 +400,7 @@ router.post('/custom-tests/:id', async (req, res) => {
   } catch (error) {
     if (error.code === 'bad_ref' || error.code === 'not_found') return res.redirect(`/custom-tests?error=${encodeURIComponent(error.message)}`);
     console.error('Error saving custom test:', error);
-    res.status(500).send('Server error');
+    res.redirect(`/custom-tests?error=${encodeURIComponent('Could not save that test: ' + (error.message || 'unknown error').slice(0, 120))}`);
   }
 });
 

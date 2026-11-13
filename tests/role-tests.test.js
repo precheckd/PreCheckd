@@ -85,6 +85,12 @@ const posting = (label, id = 'j1') => {
     assert.ok(apps.every((x) => x.roleTestStatus === 'ready' && x.roleTestAssessmentId === 'technical-assessment-custom01'));
     assert.strictEqual((await rt.customQueue()).length, 0);
   });
+  await t('attach reads the CoderByte list in the same shape the seed script does', async () => {
+    const cb = require('../src/services/coderbyte'); const orig = cb.api;
+    cb.api = async () => ({ data: { assessments: [{ test_id: 'software-engineer-zz11aa22bb', name: 'X', public_url: 'https://cb/y' }] } });
+    try { const out = await rt.attach(posting('Mid-level'), 'software-engineer-zz11aa22bb'); assert.strictEqual(out.id, 'software-engineer-zz11aa22bb'); } finally { cb.api = orig; }
+    posting('Mid-level').customTestAssessmentId = 'technical-assessment-custom01';
+  });
   await t('test already attached: ready at once', async () => {
     const a = mk('c3'); assert.strictEqual(await rt.onApplied(a, posting('Expert')), 'ready'); assert.strictEqual(a.roleTestAssessmentId, 'technical-assessment-custom01');
   });
