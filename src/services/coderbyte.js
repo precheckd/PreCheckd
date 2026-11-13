@@ -140,6 +140,8 @@ async function syncResult(result) {
   } catch (e) { console.error('[coderbyte] skill summary refresh failed:', e.message); }
   // A bell notice must never fail the sync: CoderByte would retry the webhook for nothing.
   try { await require('./skillNotifications').resultsLanded(result); } catch (e) { console.error('[coderbyte] result notification failed:', e.message); }
+  // resultsLanded only acts the first time; a repeat sync still refreshes the job-test score and written answers (idempotent).
+  try { await require('./roleTests').onResult(result); } catch (e) { console.error('[coderbyte] role test refresh failed:', e.message); }
   return result;
 }
 
