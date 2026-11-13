@@ -63,7 +63,7 @@ router.get('/:slug/skills', async (req, res) => {
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
       candidate, cards,
-      skillCards: cards.filter((c) => c.assessment.kind !== 'title' && !c.assessment.tier),
+      skillCards: cards.filter((c) => c.assessment.kind !== 'title' && c.assessment.kind !== 'finalist' && !c.assessment.tier),
       ladders: skills.buildLadders(cards, current),
       titleCards: cards.filter((c) => c.assessment.kind === 'title' && !c.assessment.roleKey),
       titles,

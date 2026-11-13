@@ -60,7 +60,7 @@ async function loadPostingRecruiter(req, res) {
 // Skills a posting can ask for: the ones we have a test for (same list recruiter search uses).
 async function skillOptions() {
   const out = [];
-  for (const a of await SkillAssessment.find({ active: true, kind: { $ne: 'title' } })) {
+  for (const a of await SkillAssessment.find({ active: true, kind: { $nin: ['title', 'finalist'] } })) {
     for (const sk of a.skills || []) if (!out.some((o) => o.key === sk.key)) out.push({ key: sk.key, label: sk.label });
   }
   return out.sort((x, y) => x.label.localeCompare(y.label));

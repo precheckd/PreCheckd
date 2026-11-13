@@ -14,6 +14,8 @@ const retakeDays = (tier) => (tier === 'expert' ? EXPERT_RETAKE_DAYS : RETAKE_DA
 const SHOWABLE = new Set(['Foundational', 'Intermediate', 'Advanced', 'Expert']);
 
 const isTitle = (a) => !!a && a.kind === 'title';
+const isFinalist = (a) => !!a && a.kind === 'finalist';
+const perTest = (a) => isTitle(a) || isFinalist(a);   // retake rules apply to this exact test, not to a skill
 const published = (r) => r.status === 'completed' && (!r.held || r.reviewDecision === 'approved');
 
 async function assessmentsById() {
@@ -30,7 +32,7 @@ async function currentSkills(candidateId) {
   const ladder = new Map(); // skill key -> { label, byTier: { easy: { right, total, takenAt }, ... } }
   for (const r of results) {
     const asm = asms.get(r.assessmentId);
-    if (!published(r) || isTitle(asm)) continue;
+    if (!published(r) || isTitle(asm) || isFinalist(asm)) continue;
     if (asm && asm.tier) {
       // One rung of a skill's ladder. The latest result per tier counts, under the same 60-day rule.
       const s = (r.skills || [])[0];
@@ -75,7 +77,7 @@ function buildLadders(cards, current) {
   const groups = new Map();
   for (const c of cards) {
     const a = c.assessment;
-    if (!a.tier || a.kind === 'title') continue;
+    if (!a.tier || a.kind === 'title' || a.kind === 'finalist') continue;
     const sk = (a.skills || [])[0];
     if (!sk) continue;
     const g = groups.get(sk.key) || { key: sk.key, label: sk.label, rungs: [] };
@@ -167,7 +169,7 @@ const MAX_REJECTIONS = 2;
 
 async function completedFor(candidateId, assessment) {
   // A title test or one rung of a ladder is its own thing: other tiers of the same skill don't count against it.
-  if (isTitle(assessment) || assessment.tier) return SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' });
+  if (perTest(assessment) || assessment.tier) return SkillResult.find({ candidateId, assessmentId: assessment.assessmentId, status: 'completed' });
   const keys = (assessment.skills || []).map((s) => s.key);
   return SkillResult.find({ candidateId, status: 'completed', 'skills.key': { $in: keys } });
 }
@@ -189,7 +191,7 @@ async function nextAllowed(candidateId, assessment) {
     .reduce((m, r) => Math.max(m, r.reviewedAt.getTime()), 0);
   const cooldown = lastRejected ? lastRejected + REJECT_COOLDOWN_DAYS * DAY : 0;
   let lockUntil;
-  if (isTitle(assessment)) {
+  if (perTest(assessment)) {
     const last = counted.reduce((m, r) => Math.max(m, r.completedAt ? r.completedAt.getTime() : 0), 0);
     lockUntil = last ? last + RETAKE_DAYS * DAY : 0;
   } else {
@@ -262,7 +264,7 @@ async function requestSkill(candidate, text) {
   const key = normalizeSkill(text);
   if (key.length < 2) { const e = new Error('Enter a skill name'); e.code = 'invalid'; throw e; }
   const asms = await SkillAssessment.find({ active: true });
-  const covered = asms.some((a) => a.kind !== 'title' && (a.skills || []).some((s) => normalizeSkill(s.label) === key || s.key === key));
+  const covered = asms.some((a) => a.kind !== 'title' && a.kind !== 'finalist' && (a.skills || []).some((s) => normalizeSkill(s.label) === key || s.key === key));
   if (covered) { const e = new Error('Already available'); e.code = 'exists'; throw e; }
   const mine = await SkillRequest.find({ candidateId: candidate._id });
   if (mine.some((r) => r.key === key)) return mine.find((r) => r.key === key);

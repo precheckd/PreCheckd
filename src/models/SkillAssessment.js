@@ -30,7 +30,9 @@ const skillAssessmentSchema = new mongoose.Schema({
   // 'skill': our own controlled module (3/3/3 per skill); results become skill levels.
   // 'title': a CoderByte job-title test with a mix we don't control; results are shown as an exact
   // score in their own box and never feed skill levels.
-  kind: { type: String, enum: ['skill', 'title'], default: 'skill' },
+  // 'finalist': one of the 10 second-stage combos (3 of 5 general topics); never feeds skill levels and is never
+  // offered as a skill, a title test or a role test.
+  kind: { type: String, enum: ['skill', 'title', 'finalist'], default: 'skill' },
   // Set on a 'skill' assessment that is one rung of a skill's ladder (Basic, Intermediate, Advanced): all of
   // its questions are this tier and it covers one skill. Null for a combined test.
   tier: { type: String, enum: ['easy', 'medium', 'hard', 'expert'], default: null },
