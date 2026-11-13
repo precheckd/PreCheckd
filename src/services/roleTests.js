@@ -198,7 +198,7 @@ async function onResult(result) {
   if (!app || result.status !== 'completed') return null;
   if (result.reviewDecision === 'rejected') { app.roleTestResultId = null; await app.save(); return app; }
   if (!published(result) || app.roleTestStatus === 'done') return app;
-  app.roleTestResult = { score: result.overallScore, takenAt: result.completedAt || new Date() };
+  app.roleTestResult = { score: result.overallScore, takenAt: result.completedAt || new Date(), reportUrl: result.reportUrl || null };
   app.roleTestStatus = 'done';
   await app.save();
   const posting = await JobPosting.findById(app.jobId);

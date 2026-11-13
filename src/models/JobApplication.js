@@ -24,7 +24,7 @@ const jobApplicationSchema = new mongoose.Schema({
   roleTestLevelKey: { type: String, default: null, index: true },   // 'titleId|Level', groups the queue
   roleTestAssessmentId: { type: String, default: null },
   roleTestReadyAt: { type: Date, default: null },
-  roleTestResult: { type: { score: Number, takenAt: Date }, default: null, _id: false },
+  roleTestResult: { type: { score: Number, takenAt: Date, reportUrl: String }, default: null, _id: false },
   // The candidate says the area they were given is not true. Staff review it (routes/jobs.js).
   feedbackDispute: { type: { at: Date, kind: String }, default: null, _id: false },
   // pipeline
