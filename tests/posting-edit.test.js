@@ -13,7 +13,7 @@ const skillLabels = new Map([['linux', 'Linux'], ['cloud', 'Cloud'], ['agile', '
 const ctx = { now: NOW, skillLabels };
 const base = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: '' }],
-  titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '2',
+  titleId: 'custom', title: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '2',
   arrangement: 'hybrid', inOfficeDays: '3', address: '1 Main St, Boston, MA', relocation: 'yes', travel: 'occasional', shift: 'evenings',
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
   commissionEnabled: 'on', commissionMin: '10000', commissionAverage: '30000', commissionAck: 'on',

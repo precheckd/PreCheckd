@@ -378,7 +378,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     postings.length = 0;
     const old = makePosting({ titleId: 'cloud-engineer', status: 'closed', closedAt: new Date(Date.now() - 10 * day), outcome: { kind: 'cancelled', reason: 'budget' } });
     const fresh = makePosting({ titleId: 'cloud-engineer' });
-    const other = makePosting({ titleId: 'network-engineer' });
+    const other = makePosting({ titleId: 'network-engineer', title: 'Network Engineer' });
     let alerted = 0; const alert = async () => { alerted++; };
     assert.strictEqual(await outcome.flagRepost(fresh, { alert }), true);
     assert.strictEqual(fresh.reviewFlag, 'repost_after_cancel');

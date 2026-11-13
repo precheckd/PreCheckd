@@ -161,6 +161,9 @@ const ROLES = [
 const TITLES = ROLES;   // old name, kept so existing callers keep working
 const BY_ID = new Map(ROLES.map((t) => [t.id, t]));
 function byId(id) { return BY_ID.get(id) || null; }
+const BY_TITLE = new Map(ROLES.map((t) => [t.title.trim().toLowerCase(), t]));
+// A typed title that is exactly a role's title (any capitalization) is that role; anything else is the recruiter's own.
+function byTitle(title) { return BY_TITLE.get(String(title || '').trim().toLowerCase()) || null; }
 
 // Closest BLS occupation for the pay tip; roles with no good match get none.
 function socFor(role) {
@@ -200,4 +203,4 @@ function titlesForSkills(skillKeys) {
     .sort((a, b) => a.skills.length - b.skills.length || a.title.localeCompare(b.title));
 }
 
-module.exports = { ROLES, TITLES, ROLE_SOC, byId, searchRoles, titlesForSkills };
+module.exports = { ROLES, TITLES, ROLE_SOC, byId, byTitle, searchRoles, titlesForSkills };

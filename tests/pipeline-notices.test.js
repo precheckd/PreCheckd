@@ -71,7 +71,7 @@ skills.currentSkills = async (id) => (levels[String(id)] || []).map((s) => ({ ..
 const day = 86400000;
 function makePosting(over = {}) {
   const p = new JobPosting({
-    recruiterId: '507f1f77bcf86cd799439011', status: 'open', source: 'precheckd', nickname: 'x', titleId: 'custom', customTitle: 'Cloud Engineer', title: 'Cloud Engineer',
+    recruiterId: '507f1f77bcf86cd799439011', status: 'open', source: 'precheckd', nickname: 'x', titleId: 'custom', title: 'Cloud Engineer', title: 'Cloud Engineer',
     skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }], seniorityLabel: 'Mid-level', hiringCompany: 'Acme <Corp>', authorizedToRecruit: true,
     employmentType: 'full_time', openings: 1, arrangement: 'remote', relocation: false, travel: 'none', shift: 'daytime', basePayType: 'salary',
     baseMin: 100000, baseMax: 120000, payBasis: ['skill_level'], benefits: ['health'], goodFaithAt: new Date(), requirementsAttestedAt: new Date(),
@@ -247,7 +247,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     asOwner();
     const form = {
       skills: [{ key: 'linux', minLevel: 'Expert' }, { key: '', minLevel: '' }, { key: '', minLevel: '' }],
-      titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme <Corp>', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '1',
+      titleId: 'custom', title: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme <Corp>', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '1',
       arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
       payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on', education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',
       closeDate: new Date(strict.closeDate.getTime() - 4 * 3600000).toISOString().slice(0, 10), startDate: strict.startDate.toISOString().slice(0, 10),

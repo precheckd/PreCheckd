@@ -40,7 +40,7 @@ function formFromPosting(p) {
   const hasCommission = Boolean(o.commissionOnly || (o.commission && o.commission.average));
   const f = {
     skills: [0, 1, 2].map((i) => (o.skills[i] ? { key: o.skills[i].key, minLevel: o.skills[i].minLevel || '' } : { key: '', minLevel: '' })),
-    titleId: o.titleId, customTitle: o.titleId === 'custom' ? o.title : '', nickname: o.nickname || '', hiringCompany: o.hiringCompany, authorizedToRecruit: yes(o.authorizedToRecruit),
+    title: o.title, nickname: o.nickname || '', hiringCompany: o.hiringCompany, authorizedToRecruit: yes(o.authorizedToRecruit),
     employmentType: o.employmentType, contractLength: o.contractLength || '', openings: String(o.openings),
     arrangement: o.arrangement, inOfficeDays: o.inOfficeDays ? String(o.inOfficeDays) : '', areaReason: o.areaReason || '',
     states: rule.states || [], radiusMiles: rule.radiusMiles ? String(rule.radiusMiles) : '', address: o.address || '',
@@ -68,7 +68,7 @@ function formFromPosting(p) {
 // ---- edit log ----------------------------------------------------------------------------------
 
 const PARTS = {
-  'title and skills': ['titleId', 'skills'],
+  'title and skills': ['titleId', 'title', 'skills'],
   company: ['hiringCompany'],
   'job details': ['employmentType', 'contractLength', 'openings'],
   location: ['arrangement', 'inOfficeDays', 'areaReason', 'address', 'areaRule', 'relocation', 'travel', 'shift'],

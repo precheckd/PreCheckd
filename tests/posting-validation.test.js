@@ -11,7 +11,7 @@ const ctx = { now: NOW, skillLabels };
 
 const good = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'Foundational' }],
-  titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'custom', title: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '2',
   arrangement: 'onsite', address: '1 Main St, Boston, MA', relocation: 'no', travel: 'occasional', shift: 'daytime',
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
@@ -53,17 +53,18 @@ t('skills may arrive as an object keyed by index (how forms are parsed)', () => 
   const { errors } = run({ skills: { 0: { key: 'linux', minLevel: 'Intermediate' }, 1: { key: 'cloud', minLevel: '' } } });
   assert.deepStrictEqual(errors, {});
 });
-t('title must fit every picked skill', () => {
-  only({ titleId: '' }, 'titleId');
-  only({ titleId: 'project-manager-scrum' }, 'titleId');
-  only({ titleId: 'made-up-title' }, 'titleId');
-  only({ titleId: 'custom', customTitle: 'ab' }, 'titleId');
+t('the title is free text: needs 3 letters and no contact details', () => {
+  only({ title: '' }, 'titleId');
+  only({ title: 'ab' }, 'titleId');
+  only({ title: 'Email jobs@acme.com now' }, 'titleId');
 });
-t('a role from the list that covers the skills is accepted; a custom title needs typing and keeps what was typed', () => {
-  const ok = validatePosting(good({ titleId: 'devops-aws', skills: [{ key: 'cloud', minLevel: 'Foundational' }] }), ctx);
-  assert.ok(!ok.errors.titleId); assert.strictEqual(ok.value.title, 'DevOps (AWS)');
-  const c = run({ titleId: 'custom', customTitle: 'Platform Reliability Lead' });
-  assert.ok(!c.errors.titleId); assert.strictEqual(c.value.titleId, 'custom'); assert.strictEqual(c.value.title, 'Platform Reliability Lead');
+t('a typed title that is exactly a role keeps that role (for pay); anything else is the recruiter\'s own', () => {
+  const role = validatePosting(good({ title: 'devops (aws)', skills: [{ key: 'cloud', minLevel: 'Foundational' }] }), ctx);
+  assert.ok(!role.errors.titleId); assert.strictEqual(role.value.titleId, 'devops-aws'); assert.strictEqual(role.value.title, 'DevOps (AWS)');
+  const c = run({ title: 'Infrastructure Engineer' });
+  assert.ok(!c.errors.titleId); assert.strictEqual(c.value.titleId, 'custom'); assert.strictEqual(c.value.title, 'Infrastructure Engineer');
+  const old = run({ title: undefined, customTitle: 'Platform Reliability Lead' });   // drafts saved before the change
+  assert.strictEqual(old.value.title, 'Platform Reliability Lead');
 });
 t('seniority comes from the highest minimum level', () => {
   assert.strictEqual(seniorityLabel([{ minLevel: null }]), 'Entry level');

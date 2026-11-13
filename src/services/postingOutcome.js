@@ -166,7 +166,7 @@ async function answerHireConfirmation(token, answer, { now = new Date(), alert }
 // A recruiter who cancels and then posts the same title within 30 days is flagged for staff review.
 async function flagRepost(posting, { now = new Date(), alert } = {}) {
   const all = await JobPosting.find({ recruiterId: posting.recruiterId });
-  const prior = all.find((p) => String(p._id) !== String(posting._id) && p.titleId === posting.titleId
+  const prior = all.find((p) => String(p._id) !== String(posting._id) && String(p.title || '').trim().toLowerCase() === String(posting.title || '').trim().toLowerCase()
     && p.outcome && p.outcome.kind === 'cancelled' && p.closedAt && now.getTime() - new Date(p.closedAt).getTime() <= 30 * DAY);
   if (!prior) return false;
   posting.reviewFlag = 'repost_after_cancel';

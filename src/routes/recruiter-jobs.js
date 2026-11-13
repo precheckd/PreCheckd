@@ -9,9 +9,8 @@ const MAX_DRAFTS = 10;
 const SkillAssessment = require('../models/SkillAssessment');
 const { validatePosting } = require('../services/postingValidation');
 const { buildLocation } = require('../services/postingLocation');
-const { recordMissingTitle, record: recordCatalogRequest } = require('../services/catalogRequests');
 const { docFromValue, formFromPosting, changedParts } = require('../services/postingEdit');
-const { titlesForSkills, searchRoles } = require('../content/roles');
+const { searchRoles } = require('../content/roles');
 const { sweepPostingLater } = require('../services/jobMatches');
 const { analyseEdit, applyImpact } = require('../services/postingImpact');
 const JobApplication = require('../models/JobApplication');
@@ -117,12 +116,6 @@ router.get('/roles', async (req, res) => {
   } catch (e) { res.json({ roles: [] }); }
 });
 
-// GET /recruiter-jobs/titles?skills=linux,cloud — titles that cover every picked skill
-router.get('/titles', async (req, res) => {
-  const keys = String(req.query.skills || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, opt.LIMITS.maxSkills);
-  res.json({ titles: titlesForSkills(keys).map((t) => ({ id: t.id, title: t.title })) });
-});
-
 // GET /recruiter-jobs/companies?q=acm — company names already used on postings
 router.get('/companies', async (req, res) => {
   try {
@@ -138,36 +131,22 @@ router.get('/companies', async (req, res) => {
   }
 });
 
-// POST /recruiter-jobs/request-title — no catalog title fits the skills; staff are told
-router.post('/request-title', async (req, res) => {
+// POST /recruiter-jobs/suggest — skills and titles suggested from the description (recruiter confirms each; nothing is saved)
+router.post('/suggest', async (req, res) => {
   try {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
-    const labels = await skillOptions();
-    const byKey = new Map(labels.map((o) => [o.key, o.label]));
-    const names = formList(req.body.skills).map((s) => byKey.get(String((s && s.key) || s))).filter(Boolean).slice(0, opt.LIMITS.maxSkills);
-    if (!names.length) return res.status(400).json({ error: 'Pick your skills first.' });
-    await recordMissingTitle(recruiter._id, names);
-    res.json({ ok: true, message: 'Thanks. We will add a title for these skills, usually within one business day, and you can finish your posting then.' });
+    const out = await require('../services/postingSuggest').suggest(
+      { summary: String(req.body.summary || ''), responsibilities: String(req.body.responsibilities || '') },
+      await skillOptions(), { recruiterId: recruiter._id });
+    if (out.error === 'short') return res.status(400).json({ error: 'Write the role summary and responsibilities first.' });
+    if (out.error === 'limit') return res.status(429).json({ error: 'That is enough suggestions for today. Pick the skills yourself below.' });
+    res.json(out);
   } catch (error) {
-    console.error('Error recording title request:', error);
-    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    console.error('Error suggesting skills:', error);
+    res.status(500).json({ error: 'Could not suggest skills right now. Pick them yourself below.' });
   }
 });
-
-// A posting with the recruiter's own title goes to staff (Catalog Requests) with its skills, so the role test can be built.
-async function noteCustomTitle(recruiter, posting) {
-  if (posting.titleId !== 'custom') return;
-  try { await recordCatalogRequest({ kind: 'job_title', name: posting.title, detail: posting.skills.map((x) => x.label).join(', '), byType: 'recruiter', byId: recruiter._id }); }
-  catch (e) { console.error('Custom title request failed:', e.message); }
-  try {
-    await require('../services/emailService').sendStaffAlertEmail({
-      subject: `Custom job title: ${posting.title}`, headline: 'A posting uses a title we do not have',
-      paragraphs: [`A recruiter posted "${posting.title}" with these skills: ${posting.skills.map((x) => x.label).join(', ')}.`, 'It has no role test until you add the role.'],
-      buttonUrl: `https://${process.env.ADMIN_HOSTNAME || 'admin.precheckd.com'}/catalog-requests`, buttonLabel: 'Open catalog requests'
-    });
-  } catch (e) { console.error('Custom title alert failed:', e.message); }
-}
 
 // GET /recruiter-jobs/new
 router.get('/new', async (req, res) => {
@@ -179,10 +158,8 @@ router.get('/new', async (req, res) => {
       draft = await JobDraft.findOne({ _id: req.query.draft, recruiterId: recruiter._id });
     }
     const form = draft ? draft.form || {} : {};
-    const pickedKeys = formList(form.skills).map((x) => x && x.key).filter(Boolean);
     res.render('recruiter-job-form', formLocals({
       errors: {}, form, skillChoices: await skillOptions(),
-      titleChoices: pickedKeys.length ? titlesForSkills(pickedKeys).map((t) => ({ id: t.id, title: t.title })) : [],
       draftId: draft ? String(draft._id) : '', startStep: draft ? draft.step || 0 : 0,
     }));
   } catch (error) {
@@ -200,7 +177,7 @@ router.post('/draft', async (req, res) => {
     const picked = formList(form.skills).map((x) => x && x.key).filter(Boolean);
     if (!picked.length && !String(form.hiringCompany || '').trim()) return res.json({ ok: true, id: null });
     const step = Math.max(0, Math.min(20, parseInt(_step, 10) || 0));
-    const label = String(form.nickname || form.hiringCompany || (form.titleId ? String(form.titleId).replace(/-/g, ' ') : '') || 'Untitled').slice(0, 80);
+    const label = String(form.nickname || form.hiringCompany || String(form.title || form.customTitle || '') || 'Untitled').slice(0, 80);
     let draft = null;
     if (_draftId && /^[a-f0-9]{24}$/i.test(String(_draftId))) draft = await JobDraft.findOne({ _id: _draftId, recruiterId: recruiter._id });
     if (draft) {
@@ -253,9 +230,8 @@ router.post('/new', async (req, res) => {
     }
 
     if (Object.keys(errors).length) {
-      const pickedKeys = value.skills.map((s) => s.key);
       return res.status(400).render('recruiter-job-form', formLocals({
-        errors, form: req.body, skillChoices, titleChoices: titlesForSkills(pickedKeys).map((t) => ({ id: t.id, title: t.title })),
+        errors, form: req.body, skillChoices,
         draftId: String(req.body._draftId || '').replace(/[^a-f0-9]/gi, '').slice(0, 24),
       }));
     }
@@ -264,7 +240,6 @@ router.post('/new', async (req, res) => {
     if (/^[a-f0-9]{24}$/i.test(String(req.body._draftId || ''))) {
       try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
     }
-    await noteCustomTitle(recruiter, posting);
     try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
@@ -299,7 +274,6 @@ router.get('/:id/edit', async (req, res) => {
     const skillChoices = await skillOptions();
     res.render('recruiter-job-form', editLocals(posting, {
       errors: {}, form: formFromPosting(posting), skillChoices,
-      titleChoices: titlesForSkills(posting.skills.map((s) => s.key)).map((t) => ({ id: t.id, title: t.title })),
     }));
   } catch (error) {
     console.error('Error loading edit form:', error);
@@ -367,9 +341,8 @@ router.post('/:id/edit', async (req, res) => {
     if (posting.status !== 'open') return res.status(409).render('recruiter-jobs-locked', { title: 'Edit Job | PreCheckd', notEditable: true });
 
     const r = await checkEdit(req, posting);
-    const titleChoices = () => titlesForSkills((r.value.skills || []).map((x) => x.key)).map((t) => ({ id: t.id, title: t.title }));
     if (Object.keys(r.errors).length) {
-      return res.status(400).render('recruiter-job-form', editLocals(posting, { errors: r.errors, form: req.body, skillChoices: r.skillChoices, titleChoices: titleChoices() }));
+      return res.status(400).render('recruiter-job-form', editLocals(posting, { errors: r.errors, form: req.body, skillChoices: r.skillChoices }));
     }
 
     if (!r.parts.length) return res.redirect(`/recruiter-jobs/${posting._id}?saved=nochange`);
@@ -377,17 +350,15 @@ router.post('/:id/edit', async (req, res) => {
     // Withdrawing people is never silent: the recruiter confirms the count first.
     if (r.impact.withdraw.length && !confirmed(req.body.confirmWithdraw)) {
       return res.status(409).render('recruiter-job-form', editLocals(posting, {
-        errors: {}, form: req.body, skillChoices: r.skillChoices, titleChoices: titleChoices(), withdrawPrompt: r.impact.withdraw.length,
+        errors: {}, form: req.body, skillChoices: r.skillChoices, withdrawPrompt: r.impact.withdraw.length,
       }));
     }
 
-    const wasCustom = posting.titleId === 'custom' && posting.title;
     posting.set(r.next);
     if (!r.location.areaRule) posting.areaRule = undefined;
     posting.editedAt = new Date();
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
-    if (posting.titleId === 'custom' && (!wasCustom || wasCustom !== posting.title)) await noteCustomTitle(recruiter, posting);
     try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
     await applyImpact(posting, r.impact, r.parts);
     sweepPostingLater(posting);

@@ -3,101 +3,105 @@
   if (!form) return;
   const $ = (id) => document.getElementById(id);
 
-  // ---- titles follow the picked skills ----
-  const titlesBox = $('jp-titles');
-  const emptyMsg = $('jp-titles-empty');
-  const noTitle = $('jp-no-title');
-  const keySelects = Array.from(form.querySelectorAll('.jp-skill-key'));
-
-  function pickedKeys() {
-    return Array.from(new Set(keySelects.map((s) => s.value).filter(Boolean)));
-  }
-
-  function showTitles(titles, keys) {
-    const current = (form.querySelector('input[name="titleId"]:checked') || {}).value;
-    titlesBox.textContent = '';
-    titles.forEach((t) => {
-      const label = document.createElement('label');
-      const input = document.createElement('input');
-      input.type = 'radio'; input.name = 'titleId'; input.value = t.id;
-      if (t.id === current) input.checked = true;
-      label.appendChild(input);
-      label.appendChild(document.createTextNode(' ' + t.title));
-      titlesBox.appendChild(label);
-    });
-    emptyMsg.hidden = keys.length > 0;
-    noTitle.hidden = !(keys.length > 0 && titles.length === 0);
-  }
-
-  async function refreshTitles() {
-    const keys = pickedKeys();
-    if (!keys.length) return showTitles([], keys);
-    try {
-      const res = await fetch('/recruiter-jobs/titles?skills=' + encodeURIComponent(keys.join(',')), { credentials: 'same-origin' });
-      const data = await res.json();
-      showTitles(data.titles || [], keys);
-    } catch (e) { /* leave the list as it is */ }
-  }
-  keySelects.forEach((s) => s.addEventListener('change', refreshTitles));
-  if (pickedKeys().length && !titlesBox.children.length) refreshTitles();
-  else noTitle.hidden = !(pickedKeys().length > 0 && titlesBox.children.length === 0);
-
-  // ---- type a job title, pick a role, its skills fill in ----
-  const search = $('jp-role-search');
+  // ---- job title (free text) with optional suggestions ----
+  const titleInput = $('jp-title');
+  const titleIdInput = $('jp-titleid');
+  const ideas = $('jp-title-ideas');
   const results = $('jp-role-results');
+  const note = $('jp-suggest-note');
+  const keySelects = Array.from(form.querySelectorAll('.jp-skill-key'));
   const levelSelects = Array.from(form.querySelectorAll('select[name$="[minLevel]"]'));
-  const customBox = $('jp-custom-box');
-  function syncCustom() {
-    const c = form.querySelector('input[name="titleId"]:checked');
-    if (customBox) customBox.hidden = !(c && c.value === 'custom');
-  }
-  form.addEventListener('change', (e) => { if (e.target && e.target.name === 'titleId') syncCustom(); });
+  const roleIds = {};   // lower-case role title -> role id, from the matches shown so far
+  const norm = (t) => String(t || '').trim().toLowerCase();
 
-  function fillSkills(role) {
-    const usable = role.skills.filter((s) => s.testable).slice(0, keySelects.length);
+  // The hidden id is only for the pay suggestion: a role's id when the typed title is exactly that role, else "custom".
+  function syncTitleId() {
+    titleIdInput.value = roleIds[norm(titleInput.value)] || (titleIdInput.dataset.initial && norm(titleInput.value) === titleIdInput.dataset.initialTitle ? titleIdInput.dataset.initial : 'custom');
+    form.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  titleIdInput.dataset.initial = titleIdInput.value !== 'custom' ? titleIdInput.value : '';
+  titleIdInput.dataset.initialTitle = norm(titleInput.value);
+
+  function chip(text, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'jp-chip'; b.textContent = text;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function noSkillsYet() { return keySelects.every((s) => !s.value); }
+  function fillSkills(list) {
+    const usable = list.slice(0, keySelects.length);
     keySelects.forEach((sel, i) => {
       const s = usable[i];
       const has = s && Array.from(sel.options).some((o) => o.value === s.key);
       sel.value = has ? s.key : '';
-      if (!has && levelSelects[i]) levelSelects[i].value = '';
+      if (levelSelects[i]) levelSelects[i].value = '';   // levels are always the recruiter's choice
     });
-    refreshTitles();
+    form.dispatchEvent(new Event('change', { bubbles: true }));
   }
+
   function showRoles(roles) {
     results.textContent = '';
     roles.forEach((r) => {
-      const label = document.createElement('label');
-      const input = document.createElement('input');
-      input.type = 'radio'; input.name = 'titleId'; input.value = r.id;
-      input.addEventListener('change', () => fillSkills(r));
-      label.appendChild(input);
-      const text = document.createElement('span');
-      const names = r.skills.map((s) => s.label + (s.testable ? '' : ' (test not built yet)')).join(', ');
-      text.textContent = ' ' + r.title + (names ? ' \u2013 ' + names : '');
-      label.appendChild(text);
-      results.appendChild(label);
+      roleIds[norm(r.title)] = r.id;
+      results.appendChild(chip(r.title, () => {
+        titleInput.value = r.title;
+        if (noSkillsYet()) fillSkills(r.skills.filter((s) => s.testable));
+        syncTitleId();
+      }));
     });
-    if (!roles.length && search.value.trim().length >= 2) {
-      const p = document.createElement('p');
-      p.className = 'jp-muted';
-      p.textContent = 'No role matches that. Pick your skills below, or choose "My job is not listed".';
-      results.appendChild(p);
+    if (roles.length) {
+      const hint = document.createElement('p');
+      hint.className = 'jp-muted'; hint.style.width = '100%'; hint.style.margin = '0';
+      hint.textContent = 'Optional: tap a matching role to use its title and fill in its skills.';
+      results.insertBefore(hint, results.firstChild);
     }
   }
   let roleTimer = null;
-  if (search) search.addEventListener('input', () => {
+  titleInput.addEventListener('input', () => {
+    syncTitleId();
     clearTimeout(roleTimer);
-    const q = search.value.trim();
+    const q = titleInput.value.trim();
     if (q.length < 2) { results.textContent = ''; return; }
     roleTimer = setTimeout(async () => {
       try {
         const res = await fetch('/recruiter-jobs/roles?q=' + encodeURIComponent(q), { credentials: 'same-origin' });
         const data = await res.json();
         showRoles(data.roles || []);
-      } catch (e) { /* leave the list as it is */ }
+        syncTitleId();
+      } catch (e) { /* suggestions are optional */ }
     }, 250);
   });
-  syncCustom();
+
+  // ---- suggest skills and titles from the description ----
+  const sumEl = $('jp-summary');
+  const respEl = form.querySelector('textarea[name="responsibilities"]');
+  const msg = $('jp-suggest-msg');
+  const sBtns = Array.from(form.querySelectorAll('.js-suggest'));
+  async function suggest() {
+    msg.textContent = 'Reading your description...';
+    sBtns.forEach((b) => { b.disabled = true; });
+    try {
+      const res = await fetch('/recruiter-jobs/suggest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
+      const data = await res.json();
+      if (!res.ok) { msg.textContent = data.error || 'Could not suggest skills right now. Pick them yourself in the next step.'; return; }
+      if (data.skills && data.skills.length) fillSkills(data.skills);
+      ideas.textContent = '';
+      (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); })));
+      const parts = [];
+      if (data.skills && data.skills.length) parts.push('Suggested skills: ' + data.skills.map((s) => s.label).join(', ') + '. Set the level for each, or leave no minimum.');
+      else parts.push('We could not match skills from that text. Pick them yourself.');
+      if (data.titles && data.titles.length) parts.push('Tap a suggested title below, or type your own.');
+      if (data.missing && data.missing.length) parts.push('We do not test ' + data.missing.join(', ') + ' yet, so those cannot be required.');
+      note.textContent = parts.join(' ');
+      note.hidden = false;
+      msg.textContent = 'Done. See the next step: Job title and skills.';
+    } catch (e) {
+      msg.textContent = 'Could not suggest skills right now. Pick them yourself in the next step.';
+    } finally { sBtns.forEach((b) => { b.disabled = false; }); }
+  }
+  sBtns.forEach((b) => b.addEventListener('click', suggest));
 
   // ---- company suggestions ----
   const company = $('jp-company');
@@ -187,7 +191,7 @@
       return LEVELS[top];
     }
     function showTip() {
-      const t = form.querySelector('input[name="titleId"]:checked');
+      const t = $('jp-titleid');
       const type = (form.querySelector('[name="basePayType"]') || {}).value;
       const comm = $('jp-comm-only');
       const band = t && bench.bands[t.value] && bench.bands[t.value][levelNow()];
@@ -200,7 +204,6 @@
       tip.hidden = false;
     }
     form.addEventListener('change', showTip);
-    [$('jp-titles'), $('jp-role-results')].forEach((el) => { if (el) new MutationObserver(showTip).observe(el, { childList: true, subtree: true }); });
     showTip();
   }
 })();

@@ -71,7 +71,7 @@ app.use('/recruiter-jobs', require('../src/routes/recruiter-jobs'));
 const soon = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const validForm = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: '' }, { key: '', minLevel: '' }],
-  titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'custom', title: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '1', arrangement: 'onsite', address: '1 Main St, Boston, MA',
   relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
   payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
@@ -100,12 +100,6 @@ const validForm = (over = {}) => ({
     assert.ok(html.includes('CompTIA Security+') && html.includes('Remote in Area'));
     assert.ok(html.includes('id="jp-paytip"') && html.includes('window.PAY_BENCH') && html.includes('"devops-aws"'));
     if (process.env.DUMP_FORM) require('fs').writeFileSync(process.env.DUMP_FORM, html);
-  });
-
-  await t('GET /titles offers titles that cover every picked skill', async () => {
-    const data = await (await get('/recruiter-jobs/titles?skills=aws,cloud')).json();
-    assert.deepStrictEqual(data.titles.map((x) => x.id), ['aws-developer', 'devops-aws']);
-    assert.deepStrictEqual((await (await get('/recruiter-jobs/titles?skills=')).json()).titles, []);
   });
 
   await t('GET /roles finds roles by typed title and flags testable skills', async () => {
@@ -184,7 +178,8 @@ const validForm = (over = {}) => ({
     assert.ok(html.includes('value="Keep Me Inc"'));
     assert.ok(html.includes('at most 25% above'));
     assert.ok(html.includes('<option value="linux" selected>'));
-    assert.ok(/name="titleId" value="custom" id="jp-custom-radio" checked/.test(html));
+    assert.ok(html.includes('name="title" id="jp-title"') && html.includes('name="titleId" id="jp-titleid"'));
+    assert.ok(html.indexOf('1. Description') < html.indexOf('2. Job title and skills'));
   });
 
   await t('contact details in the description are refused with the reason', async () => {
@@ -203,16 +198,16 @@ const validForm = (over = {}) => ({
     assert.ok(html.includes('could not find that address'));
   });
 
-  await t('request-title tells staff which skills had no title', async () => {
-    assert.ok(catalogWrites.some(([f, u]) => f.kind === 'job_title' && u.$setOnInsert.name === 'Cloud Engineer'), 'a custom-title posting reaches staff');
-    catalogWrites.length = 0;
-    const res = await post('/recruiter-jobs/request-title', { skills: [{ key: 'linux' }, { key: 'agile' }] }, true);
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(catalogWrites.length, 1);
-    const [filter, update] = catalogWrites[0];
-    assert.strictEqual(filter.kind, 'job_title');
-    assert.strictEqual(update.$setOnInsert.detail, 'Linux, Agile');
-    assert.strictEqual((await post('/recruiter-jobs/request-title', { skills: [] }, true)).status, 400);
+  await t('a custom title no longer creates a catalog request or staff email', async () => {
+    assert.strictEqual(catalogWrites.length, 0);
+  });
+
+  await t('POST /suggest returns skills from our list; short text and missing login are refused', async () => {
+    const ok = await post('/recruiter-jobs/suggest', { summary: 'We need someone to run our Linux servers and manage the cloud environment day to day.', responsibilities: 'Patch Linux hosts' }, true);
+    const data = await ok.json();
+    assert.strictEqual(ok.status, 200); assert.ok(data.skills.some((x) => x.key === 'linux'));
+    assert.ok(data.skills.every((x) => ['linux', 'agile', 'cloud', 'aws'].includes(x.key)));
+    assert.strictEqual((await post('/recruiter-jobs/suggest', { summary: 'short' }, true)).status, 400);
   });
 
   await t('My postings lists them; the detail page shows the private address to its owner', async () => {
