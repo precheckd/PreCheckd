@@ -109,6 +109,12 @@ const posting = (label, id = 'j1') => {
     await rt.onResult({ _id: 'att-c3', status: 'completed', held: false, overallScore: 78 });   // idempotent
     assert.strictEqual(notes.length, before + 1);
   });
+  await t('written answers from a custom test are copied onto the application, and refreshed on a repeat sync', async () => {
+    const a = apps.find((x) => x.candidateId === 'c3');
+    a.markModified = () => {};
+    await rt.onResult({ _id: 'att-c3', status: 'completed', held: false, overallScore: 78, freeForm: [{ question: 'Q1', answer: 'A1' }] });
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(a.roleTestResult.freeForm)), [{ question: 'Q1', answer: 'A1' }]);
+  });
   await t('a rejected attempt sends the application back to ready so they can retry', async () => {
     const e4 = mk('c4'); e4.roleTestStatus = 'ready'; e4.roleTestAssessmentId = 'technical-assessment-custom01'; apps.push(e4);
     const a = e4; await rt.start({ _id: 'c4' }, a._id);

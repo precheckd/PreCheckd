@@ -26,6 +26,10 @@
   .ja-table td { padding: 0.7rem 0.9rem; border-top: 1px solid #3B5860; vertical-align: top; font-size: 0.9rem; }
   .ja-table .ja-form { margin-top: 0; }
   .ja-score { font-weight: 700; }
+  .ja-ff { margin-top: 0.35rem; max-width: 340px; }
+  .ja-ff summary { cursor: pointer; color: #2ECC71; font-size: 0.82rem; }
+  .ja-ffq { margin-top: 0.5rem; color: #C7D1CF; font-size: 0.8rem; }
+  .ja-ffa { white-space: pre-wrap; background: #1F363C; border-radius: 6px; padding: 0.5rem 0.6rem; margin-top: 0.2rem; font-size: 0.85rem; }
 </style>
 <div class="ja-wrap"><div class="ja-inner">
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
@@ -60,6 +64,11 @@
           <% } else if (a.roleTestStatus === 'waiting') { %><span class="ja-meta">Being prepared</span>
           <% } else if (a.roleTestStatus === 'ready') { %><span class="ja-meta">Sent, not finished</span>
           <% } else { %><span class="ja-meta">&ndash;</span><% } %>
+          <% if (a.roleTestResult && a.roleTestResult.freeForm && a.roleTestResult.freeForm.length) { %>
+            <details class="ja-ff"><summary>Written answers</summary>
+              <% a.roleTestResult.freeForm.forEach(function(f) { %><div class="ja-ffq"><%= f.question %></div><div class="ja-ffa"><%= f.answer %></div><% }); %>
+            </details>
+          <% } %>
         </td>
         <td>
           <% if (isLive) { %>

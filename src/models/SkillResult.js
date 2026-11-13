@@ -74,6 +74,8 @@ const skillResultSchema = new mongoose.Schema({
   reviewNote: { type: String, default: '', maxlength: 1000 },   // internal only, never shown to the candidate
   rejectionCleared: { type: Boolean, default: false },          // staff allowed another retake after repeated rejections
   timeExpired: { type: Boolean, default: false },
+  // Custom (per-posting) tests only: the written answers, as plain text, for the recruiter who posted that job.
+  freeForm: { type: [{ question: String, answer: String, _id: false }], default: [] },
   reportReady: { type: Boolean, default: false },
   lastError: { type: String, default: null }
 }, { timestamps: true });

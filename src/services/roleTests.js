@@ -202,8 +202,12 @@ async function onResult(result) {
   const app = await JobApplication.findOne({ roleTestResultId: result._id });
   if (!app || result.status !== 'completed') return null;
   if (result.reviewDecision === 'rejected') { app.roleTestResultId = null; await app.save(); return app; }
-  if (!published(result) || app.roleTestStatus === 'done') return app;
-  app.roleTestResult = { score: result.overallScore, takenAt: result.completedAt || new Date() };
+  if (!published(result)) return app;
+  if (app.roleTestStatus === 'done') {   // a repeat sync: just refresh the written answers
+    if ((result.freeForm || []).length && app.roleTestResult) { app.roleTestResult.freeForm = result.freeForm.map((f) => ({ question: f.question, answer: f.answer })); app.markModified('roleTestResult'); await app.save(); }
+    return app;
+  }
+  app.roleTestResult = { score: result.overallScore, takenAt: result.completedAt || new Date(), freeForm: (result.freeForm || []).map((f) => ({ question: f.question, answer: f.answer })) };
   app.roleTestStatus = 'done';
   await app.save();
   const posting = await JobPosting.findById(app.jobId);

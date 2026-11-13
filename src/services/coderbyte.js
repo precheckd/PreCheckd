@@ -83,6 +83,16 @@ function isFlagged(flag) {
   return f.includes('likely') || f.includes('detect');
 }
 
+const plain = (html, max) => String(html || '').replace(/<\/(p|div|li)>/gi, '\n').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+  .replace(/\n{3,}/g, '\n\n').trim().slice(0, max);
+function freeFormFrom(details) {
+  if (!Array.isArray(details)) return [];
+  return details.slice(0, 5).map((q, i) => ({
+    question: plain(q.question || q.text || q.title || q.prompt || q.name || `Question ${i + 1}`, 500),
+    answer: plain(q.answer, 5000)
+  })).filter((x) => x.answer);
+}
 function applyReport(result, assessment, report) {
   const ratings = Object.entries(report.skill_ratings || {})
     .filter(([, v]) => Number.isFinite(Number(v)))
@@ -101,6 +111,8 @@ function applyReport(result, assessment, report) {
   result.aiUsage = !!cd.ai_usage;
   result.tabLeaving = Number(cd.tab_leaving) || 0;
   result.held = isFlagged(result.cheatingFlag) || result.aiUsage;
+  // Written answers are kept only for custom per-posting tests, as plain text (CoderByte sends HTML).
+  result.freeForm = assessment.kind === 'custom' ? freeFormFrom(report.oe_details) : [];
   result.reportReady = report.report_ready !== false;
   result.status = String(report.status).toLowerCase() === 'completed' ? 'completed' : result.status;
   if (result.status === 'completed' && !result.completedAt) result.completedAt = new Date();
@@ -267,5 +279,5 @@ async function handleCompleted(req, res) {
 
 module.exports = {
   api, inviteCandidate, inviteLink, deriveCoderbyteId, coderbyteIdFor, syncResult, fetchReport, pickReport, applyReport, isFlagged, computeSkills,
-  verifyWebhookAuth, handleJoined, handleCompleted
+  verifyWebhookAuth, handleJoined, handleCompleted, freeFormFrom
 };

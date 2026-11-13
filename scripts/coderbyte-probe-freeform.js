@@ -14,6 +14,7 @@ coderbyte.api('GET', `/candidates/${encodeURIComponent(id)}/${encodeURIComponent
     console.log(`reports: ${reports.length}`);
     for (const r of reports) {
       console.log('\nTOP-LEVEL FIELDS:', Object.keys(r).join(', '));
+      if (Array.isArray(r.oe_details) && r.oe_details[0]) console.log('FREE-FORM ITEM FIELDS:', Object.keys(r.oe_details[0]).join(', '));
       const walk = (v, path) => {
         if (v && typeof v === 'object') { for (const [k, x] of Object.entries(v)) walk(x, path ? `${path}.${k}` : k); return; }
         if (/free|open|essay|text|answer|response|comment|url|link/i.test(path)) console.log(`  ${path} = ${String(v).slice(0, 120)}`);
