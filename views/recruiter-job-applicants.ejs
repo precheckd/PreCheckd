@@ -26,10 +26,11 @@
   .ja-table td { padding: 0.7rem 0.9rem; border-top: 1px solid #3B5860; vertical-align: top; font-size: 0.9rem; }
   .ja-table .ja-form { margin-top: 0; }
   .ja-score { font-weight: 700; }
-  .ja-ff { margin-top: 0.35rem; max-width: 340px; }
-  .ja-ff summary { cursor: pointer; color: #2ECC71; font-size: 0.82rem; }
-  .ja-ffq { margin-top: 0.5rem; color: #C7D1CF; font-size: 0.8rem; }
-  .ja-ffa { white-space: pre-wrap; background: #1F363C; border-radius: 6px; padding: 0.5rem 0.6rem; margin-top: 0.2rem; font-size: 0.85rem; }
+  .ja-fftoggle { display: block; margin-top: 0.35rem; background: none; border: none; padding: 0; color: #2ECC71; font-size: 0.82rem; cursor: pointer; text-decoration: underline; }
+  .ja-ffrow td { background: #24404A; padding: 1.1rem 1.4rem 1.3rem; }
+  .ja-ffhead { font-weight: 700; margin-bottom: 0.4rem; }
+  .ja-ffq { margin-top: 0.9rem; color: #C7D1CF; font-size: 0.92rem; font-weight: 600; max-width: 860px; }
+  .ja-ffa { white-space: pre-wrap; background: #1F363C; border-radius: 6px; padding: 0.9rem 1.1rem; margin-top: 0.35rem; font-size: 1rem; line-height: 1.6; max-width: 860px; min-height: 5rem; }
 </style>
 <div class="ja-wrap"><div class="ja-inner">
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
@@ -53,7 +54,8 @@
     </tr></thead>
     <tbody>
     <% applicants.forEach(function(a) { const c = a.candidateId; const isLive = live.indexOf(a.status) !== -1;
-         const score = a.roleTestResult && a.roleTestResult.score != null ? Math.round(a.roleTestResult.score) : null; %>
+         const score = a.roleTestResult && a.roleTestResult.score != null ? Math.round(a.roleTestResult.score) : null;
+         const hasFF = !!(a.roleTestResult && a.roleTestResult.freeForm && a.roleTestResult.freeForm.length); %>
       <tr>
         <td data-v="<%= (c.lastName + ' ' + c.firstName).toLowerCase() %>"><span class="ja-name"><%= c.firstName %> <%= c.lastName %></span></td>
         <td data-v="<%= new Date(a.appliedAt).getTime() %>"><%= fmt(a.appliedAt) %></td>
@@ -64,11 +66,7 @@
           <% } else if (a.roleTestStatus === 'waiting') { %><span class="ja-meta">Being prepared</span>
           <% } else if (a.roleTestStatus === 'ready') { %><span class="ja-meta">Sent, not finished</span>
           <% } else { %><span class="ja-meta">&ndash;</span><% } %>
-          <% if (a.roleTestResult && a.roleTestResult.freeForm && a.roleTestResult.freeForm.length) { %>
-            <details class="ja-ff"><summary>Written answers</summary>
-              <% a.roleTestResult.freeForm.forEach(function(f) { %><div class="ja-ffq"><%= f.question %></div><div class="ja-ffa"><%= f.answer %></div><% }); %>
-            </details>
-          <% } %>
+          <% if (hasFF) { %><button type="button" class="ja-fftoggle" aria-expanded="false">Written answers</button><% } %>
         </td>
         <td>
           <% if (isLive) { %>
@@ -86,6 +84,15 @@
         </td>
         <td><% if (a.connectionId && isLive) { %><a class="ja-btn" href="/recruiter-dashboard/requests/<%= a.connectionId %>/candidate">View profile</a><% } %></td>
       </tr>
+      <% if (hasFF) { %>
+      <tr class="ja-ffrow" hidden><td colspan="6">
+        <div class="ja-ffhead">Written answers &middot; <%= c.firstName %> <%= c.lastName %></div>
+        <% a.roleTestResult.freeForm.forEach(function(f, i) { %>
+          <div class="ja-ffq"><%= i + 1 %>. <%= f.question %></div>
+          <div class="ja-ffa"><%= f.answer %></div>
+        <% }); %>
+      </td></tr>
+      <% } %>
     <% }); %>
     </tbody>
   </table></div>
