@@ -98,7 +98,11 @@
     <!-- 1. Skills and title -->
     <div class="jp-card jp-step" data-name="Skills and job title">
       <h2>1. Skills and job title</h2>
-      <p class="jp-hint">Pick up to 3 skills first, each with the lowest level a candidate needs (or no minimum). The job title comes from your skills, so every posting uses the same names. No minimum level on any skill makes it an entry-level job.</p>
+      <p class="jp-hint">Type your job title and pick the closest role. Its skills fill in below and you can change them. Each skill takes the lowest level a candidate needs (or no minimum); the levels you set decide the job's level. No minimum level on any skill makes it an entry-level job.</p>
+      <label class="jp-field">Job title
+        <input type="text" id="jp-role-search" placeholder="Start typing, e.g. devops, react, data engineer" autocomplete="off" maxlength="60">
+      </label>
+      <div class="jp-titles" id="jp-role-results" aria-live="polite"></div>
       <% for (let i = 0; i < 3; i++) { %>
         <div class="jp-row">
           <select name="skills[<%= i %>][key]" class="jp-skill-key" aria-label="Skill <%= i + 1 %>">
@@ -113,17 +117,24 @@
       <% } %>
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
 
-      <span class="jp-label">Job title</span>
+      <span class="jp-label">Roles that fit your skills</span>
       <div class="jp-titles" id="jp-titles">
         <% titleChoices.forEach(function(t) { %>
           <label><input type="radio" name="titleId" value="<%= t.id %>" <%= val('titleId') === t.id ? 'checked' : '' %>> <%= t.title %></label>
         <% }); %>
       </div>
-      <p class="jp-muted" id="jp-titles-empty" <%= titleChoices.length ? 'hidden' : '' %>>Pick your skills above and the matching titles appear here.</p>
+      <p class="jp-muted" id="jp-titles-empty" <%= titleChoices.length ? 'hidden' : '' %>>Can't find your job above? Pick your skills and the roles that fit them appear here.</p>
       <div id="jp-no-title" hidden>
-        <p class="jp-muted">No title fits those skills yet. Fewer skills gives more titles. Or ask us to add one:</p>
-        <button type="button" class="jp-btn-ghost" id="jp-request-title">Ask us to add a title</button>
-        <span class="jp-muted" id="jp-request-status" role="status"></span>
+        <p class="jp-muted">No role fits those skills. Fewer skills gives more roles, or choose "My job is not listed" below.</p>
+      </div>
+      <div class="jp-titles">
+        <label><input type="radio" name="titleId" value="custom" id="jp-custom-radio" <%= val('titleId') === 'custom' ? 'checked' : '' %>> My job is not listed</label>
+      </div>
+      <div id="jp-custom-box" <%= val('titleId') === 'custom' ? '' : 'hidden' %>>
+        <label class="jp-field">Your job title
+          <input type="text" name="customTitle" id="jp-custom-title" maxlength="60" value="<%= val('customTitle') %>">
+        </label>
+        <p class="jp-muted">List the skills the job needs above so we can build the right role test. Applicants are screened on those skill tests in the meantime.</p>
       </div>
       <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
 

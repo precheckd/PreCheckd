@@ -71,7 +71,7 @@ app.use('/recruiter-jobs', require('../src/routes/recruiter-jobs'));
 const soon = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const validForm = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: '' }, { key: '', minLevel: '' }],
-  titleId: 'cloud-engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '1', arrangement: 'onsite', address: '1 Main St, Boston, MA',
   relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
   payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
@@ -98,14 +98,22 @@ const validForm = (over = {}) => ({
     assert.strictEqual(res.status, 200);
     assert.ok(html.includes('Post a job') && html.includes('<option value="linux"') && html.includes('name="skills[0][key]"'));
     assert.ok(html.includes('CompTIA Security+') && html.includes('Remote in Area'));
-    assert.ok(html.includes('id="jp-paytip"') && html.includes('window.PAY_BENCH') && html.includes('"devops-engineer"'));
+    assert.ok(html.includes('id="jp-paytip"') && html.includes('window.PAY_BENCH') && html.includes('"devops-aws"'));
     if (process.env.DUMP_FORM) require('fs').writeFileSync(process.env.DUMP_FORM, html);
   });
 
   await t('GET /titles offers titles that cover every picked skill', async () => {
-    const data = await (await get('/recruiter-jobs/titles?skills=linux,agile,cloud')).json();
-    assert.deepStrictEqual(data.titles.map((x) => x.id), ['devops-engineer']);
+    const data = await (await get('/recruiter-jobs/titles?skills=aws,cloud')).json();
+    assert.deepStrictEqual(data.titles.map((x) => x.id), ['aws-developer', 'devops-aws']);
     assert.deepStrictEqual((await (await get('/recruiter-jobs/titles?skills=')).json()).titles, []);
+  });
+
+  await t('GET /roles finds roles by typed title and flags testable skills', async () => {
+    const data = await (await get('/recruiter-jobs/roles?q=devops%20aws')).json();
+    assert.strictEqual(data.roles[0].id, 'devops-aws');
+    assert.deepStrictEqual(data.roles[0].skills.map((x) => [x.key, x.testable]), [['aws', false], ['python', false], ['cloud', true]]);
+    assert.strictEqual(data.roles[0].ready, false);   // no role test built in this stub
+    assert.deepStrictEqual((await (await get('/recruiter-jobs/roles?q=')).json()).roles, []);
   });
 
   await t('GET /companies de-duplicates by name', async () => {
@@ -177,7 +185,7 @@ const validForm = (over = {}) => ({
     assert.ok(html.includes('value="Keep Me Inc"'));
     assert.ok(html.includes('at most 25% above'));
     assert.ok(html.includes('<option value="linux" selected>'));
-    assert.ok(/name="titleId" value="cloud-engineer" checked/.test(html));
+    assert.ok(/name="titleId" value="custom" id="jp-custom-radio" checked/.test(html));
   });
 
   await t('contact details in the description are refused with the reason', async () => {
@@ -197,6 +205,8 @@ const validForm = (over = {}) => ({
   });
 
   await t('request-title tells staff which skills had no title', async () => {
+    assert.ok(catalogWrites.some(([f, u]) => f.kind === 'job_title' && u.$setOnInsert.name === 'Cloud Engineer'), 'a custom-title posting reaches staff');
+    catalogWrites.length = 0;
     const res = await post('/recruiter-jobs/request-title', { skills: [{ key: 'linux' }, { key: 'agile' }] }, true);
     assert.strictEqual(res.status, 200);
     assert.strictEqual(catalogWrites.length, 1);

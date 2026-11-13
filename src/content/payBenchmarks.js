@@ -19,19 +19,8 @@ const SOC = {
   '15-2051': { name: 'Data Scientists', p: [61070, 79810, 108020, 147670, 184090] },
 };
 
-// catalog title id -> closest BLS occupation. Support-engineer titles use the systems-admin occupation (closest fit).
-const TITLE_SOC = {
-  'help-desk-technician': '15-1232', 'it-support-specialist': '15-1232', 'desktop-support-engineer': '15-1232',
-  'product-support-engineer': '15-1244', 'technical-support-engineer': '15-1244', 'cloud-support-engineer': '15-1244',
-  'systems-administrator': '15-1244', 'linux-administrator': '15-1244', 'windows-administrator': '15-1244',
-  'network-administrator': '15-1244', 'security-administrator': '15-1244',
-  'network-engineer': '15-1241', 'cloud-architect': '15-1241',
-  'cloud-engineer': '15-1252', 'devops-engineer': '15-1252', 'site-reliability-engineer': '15-1252',
-  'security-analyst': '15-1212', 'soc-analyst': '15-1212', 'cybersecurity-engineer': '15-1212', 'grc-analyst': '15-1212',
-  'penetration-tester': '15-1212', 'incident-responder': '15-1212',
-  'software-engineer': '15-1252', 'front-end-developer': '15-1252', 'back-end-developer': '15-1252', 'full-stack-developer': '15-1252',
-  'qa-engineer': '15-1253', 'database-administrator': '15-1242', 'data-engineer': '15-2051',
-};
+// role id -> closest BLS occupation (rules live in content/roles.js; roles with no good match get no tip)
+const TITLE_SOC = require('./roles').ROLE_SOC;
 
 const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Expert'];
 // [lowIndex, highIndex] into the percentile array; null high = open ended ("and up")

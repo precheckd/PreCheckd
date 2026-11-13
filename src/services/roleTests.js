@@ -35,7 +35,7 @@ async function alertStaff(posting, level) {
 // Call right after an application is saved. Returns 'none' | 'ready' | 'waiting'.
 async function onApplied(app, posting) {
   const level = roleLevelFor(posting.seniorityLabel);
-  if (!level) return 'none';
+  if (!level || posting.titleId === 'custom') return 'none';   // custom titles have no role test until staff add the role
   const test = await findTest(posting.titleId, level);
   app.roleTestLevelKey = `${posting.titleId}|${level}`;
   if (test) {

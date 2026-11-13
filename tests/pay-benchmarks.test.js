@@ -5,14 +5,14 @@ const jt = require('../src/content/jobTitles');
 // every mapped title exists in the catalog
 for (const id of Object.keys(pb.TITLE_SOC)) assert(jt.byId(id), 'unknown title ' + id);
 
-const b = pb.bandFor('devops-engineer', 'Mid-level');
+const b = pb.bandFor('devops-aws', 'Mid-level');
 assert.strictEqual(b.soc, '15-1252');
 assert.strictEqual(b.low, 132000);
 assert.strictEqual(b.high, 168000);
-assert.strictEqual(pb.bandFor('help-desk-technician', 'Entry level').low, 38000);
-assert.strictEqual(pb.bandFor('help-desk-technician', 'Expert').high, null);
-assert.strictEqual(pb.bandFor('scrum-master', 'Mid-level'), null);
-assert.strictEqual(pb.bandFor('devops-engineer', 'Nope'), null);
+assert.strictEqual(pb.bandFor('technical-support-engineer', 'Entry level').low, 38000);
+assert.strictEqual(pb.bandFor('technical-support-engineer', 'Expert').high, null);
+assert.strictEqual(pb.bandFor('project-manager-scrum', 'Mid-level'), null);
+assert.strictEqual(pb.bandFor('devops-aws', 'Nope'), null);
 
 assert.strictEqual(pb.positionOf(b, 90000, 100000), 'below');
 assert.strictEqual(pb.positionOf(b, 130000, 160000), 'below');

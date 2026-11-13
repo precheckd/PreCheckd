@@ -42,24 +42,62 @@
   if (pickedKeys().length && !titlesBox.children.length) refreshTitles();
   else noTitle.hidden = !(pickedKeys().length > 0 && titlesBox.children.length === 0);
 
-  const requestBtn = $('jp-request-title');
-  if (requestBtn) {
-    requestBtn.addEventListener('click', async () => {
-      const status = $('jp-request-status');
-      requestBtn.disabled = true;
-      try {
-        const res = await fetch('/recruiter-jobs/request-title', {
-          method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ skills: pickedKeys().map((k) => ({ key: k })) }),
-        });
-        const data = await res.json();
-        status.textContent = ' ' + (data.message || data.error || 'Done.');
-      } catch (e) {
-        status.textContent = ' Something went wrong. Please try again.';
-        requestBtn.disabled = false;
-      }
-    });
+  // ---- type a job title, pick a role, its skills fill in ----
+  const search = $('jp-role-search');
+  const results = $('jp-role-results');
+  const levelSelects = Array.from(form.querySelectorAll('select[name$="[minLevel]"]'));
+  const customBox = $('jp-custom-box');
+  function syncCustom() {
+    const c = form.querySelector('input[name="titleId"]:checked');
+    if (customBox) customBox.hidden = !(c && c.value === 'custom');
   }
+  form.addEventListener('change', (e) => { if (e.target && e.target.name === 'titleId') syncCustom(); });
+
+  function fillSkills(role) {
+    const usable = role.skills.filter((s) => s.testable).slice(0, keySelects.length);
+    keySelects.forEach((sel, i) => {
+      const s = usable[i];
+      const has = s && Array.from(sel.options).some((o) => o.value === s.key);
+      sel.value = has ? s.key : '';
+      if (!has && levelSelects[i]) levelSelects[i].value = '';
+    });
+    refreshTitles();
+  }
+  function showRoles(roles) {
+    results.textContent = '';
+    roles.forEach((r) => {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'radio'; input.name = 'titleId'; input.value = r.id;
+      input.addEventListener('change', () => fillSkills(r));
+      label.appendChild(input);
+      const text = document.createElement('span');
+      const names = r.skills.map((s) => s.label + (s.testable ? '' : ' (test not built yet)')).join(', ');
+      text.textContent = ' ' + r.title + (names ? ' \u2013 ' + names : '');
+      label.appendChild(text);
+      results.appendChild(label);
+    });
+    if (!roles.length && search.value.trim().length >= 2) {
+      const p = document.createElement('p');
+      p.className = 'jp-muted';
+      p.textContent = 'No role matches that. Pick your skills below, or choose "My job is not listed".';
+      results.appendChild(p);
+    }
+  }
+  let roleTimer = null;
+  if (search) search.addEventListener('input', () => {
+    clearTimeout(roleTimer);
+    const q = search.value.trim();
+    if (q.length < 2) { results.textContent = ''; return; }
+    roleTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/recruiter-jobs/roles?q=' + encodeURIComponent(q), { credentials: 'same-origin' });
+        const data = await res.json();
+        showRoles(data.roles || []);
+      } catch (e) { /* leave the list as it is */ }
+    }, 250);
+  });
+  syncCustom();
 
   // ---- company suggestions ----
   const company = $('jp-company');
@@ -141,7 +179,7 @@
   const bench = window.PAY_BENCH;
   if (tip && bench) {
     const RANK = { Foundational: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
-    const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Lead / Principal'];
+    const LEVELS = ['Entry level', 'Junior', 'Mid-level', 'Senior', 'Expert'];
     const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
     function levelNow() {
       let top = 0;
@@ -162,7 +200,7 @@
       tip.hidden = false;
     }
     form.addEventListener('change', showTip);
-    new MutationObserver(showTip).observe($('jp-titles') || form, { childList: true, subtree: true });
+    [$('jp-titles'), $('jp-role-results')].forEach((el) => { if (el) new MutationObserver(showTip).observe(el, { childList: true, subtree: true }); });
     showTip();
   }
 })();

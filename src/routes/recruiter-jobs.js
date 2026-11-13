@@ -9,9 +9,9 @@ const MAX_DRAFTS = 10;
 const SkillAssessment = require('../models/SkillAssessment');
 const { validatePosting } = require('../services/postingValidation');
 const { buildLocation } = require('../services/postingLocation');
-const { recordMissingTitle } = require('../services/catalogRequests');
+const { recordMissingTitle, record: recordCatalogRequest } = require('../services/catalogRequests');
 const { docFromValue, formFromPosting, changedParts } = require('../services/postingEdit');
-const { titlesForSkills } = require('../content/jobTitles');
+const { titlesForSkills, searchRoles } = require('../content/roles');
 const { sweepPostingLater } = require('../services/jobMatches');
 const { analyseEdit, applyImpact } = require('../services/postingImpact');
 const JobApplication = require('../models/JobApplication');
@@ -103,6 +103,22 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /recruiter-jobs/roles?q=devops — roles matching what the recruiter typed, with their skills.
+// testable: a skill test exists for it. ready: the role's Junior/Mid/Senior tests are built (otherwise the first
+// applicants trigger the build queue).
+router.get('/roles', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim().slice(0, 60);
+    const labels = new Map((await skillOptions()).map((o) => [o.key, o.label]));
+    const roles = searchRoles(q);
+    const built = new Set((await SkillAssessment.find({ active: true, kind: 'title', roleKey: { $in: roles.map((r) => r.id) } })).map((a) => a.roleKey));
+    res.json({ roles: roles.map((r) => ({
+      id: r.id, title: r.title, ready: built.has(r.id),
+      skills: r.skills.map((k) => ({ key: k, label: labels.get(k) || k.replace(/-/g, ' '), testable: labels.has(k) })),
+    })) });
+  } catch (e) { res.json({ roles: [] }); }
+});
+
 // GET /recruiter-jobs/titles?skills=linux,cloud — titles that cover every picked skill
 router.get('/titles', async (req, res) => {
   const keys = String(req.query.skills || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, opt.LIMITS.maxSkills);
@@ -140,6 +156,20 @@ router.post('/request-title', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
+
+// A posting with the recruiter's own title goes to staff (Catalog Requests) with its skills, so the role test can be built.
+async function noteCustomTitle(recruiter, posting) {
+  if (posting.titleId !== 'custom') return;
+  try { await recordCatalogRequest({ kind: 'job_title', name: posting.title, detail: posting.skills.map((x) => x.label).join(', '), byType: 'recruiter', byId: recruiter._id }); }
+  catch (e) { console.error('Custom title request failed:', e.message); }
+  try {
+    await require('../services/emailService').sendStaffAlertEmail({
+      subject: `Custom job title: ${posting.title}`, headline: 'A posting uses a title we do not have',
+      paragraphs: [`A recruiter posted "${posting.title}" with these skills: ${posting.skills.map((x) => x.label).join(', ')}.`, 'It has no role test until you add the role.'],
+      buttonUrl: `https://${process.env.ADMIN_HOSTNAME || 'admin.precheckd.com'}/catalog-requests`, buttonLabel: 'Open catalog requests'
+    });
+  } catch (e) { console.error('Custom title alert failed:', e.message); }
+}
 
 // GET /recruiter-jobs/new
 router.get('/new', async (req, res) => {
@@ -236,6 +266,7 @@ router.post('/new', async (req, res) => {
     if (/^[a-f0-9]{24}$/i.test(String(req.body._draftId || ''))) {
       try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
     }
+    await noteCustomTitle(recruiter, posting);
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
     sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
@@ -351,11 +382,13 @@ router.post('/:id/edit', async (req, res) => {
       }));
     }
 
+    const wasCustom = posting.titleId === 'custom' && posting.title;
     posting.set(r.next);
     if (!r.location.areaRule) posting.areaRule = undefined;
     posting.editedAt = new Date();
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
+    if (posting.titleId === 'custom' && (!wasCustom || wasCustom !== posting.title)) await noteCustomTitle(recruiter, posting);
     await applyImpact(posting, r.impact, r.parts);
     sweepPostingLater(posting);
     sendJobEditedEmail(recruiter, posting, { parts: r.parts, withdrawn: r.impact.withdraw.length, notified: r.impact.keep.length })

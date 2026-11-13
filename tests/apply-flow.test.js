@@ -59,7 +59,7 @@ const day = 86400000;
 function makePosting(over = {}) {
   const p = new JobPosting({
     recruiterId: '507f1f77bcf86cd799439011', status: 'open', source: 'precheckd', nickname: 'x',
-    titleId: 'cloud-engineer', title: 'Cloud Engineer', skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }],
+    titleId: 'custom', customTitle: 'Cloud Engineer', title: 'Cloud Engineer', skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }],
     seniorityLabel: 'Mid-level', hiringCompany: 'Acme Corp', authorizedToRecruit: true, employmentType: 'full_time', openings: 1,
     arrangement: 'remote', relocation: false, travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: 100000, baseMax: 120000,
     payBasis: ['skill_level'], benefits: ['health'], goodFaithAt: new Date(), requirementsAttestedAt: new Date(),
@@ -212,7 +212,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
   // ---- editing a posting that has applicants ----
   const ownerForm = (over = {}) => ({
     skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: '', minLevel: '' }, { key: '', minLevel: '' }],
-    titleId: 'cloud-engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+    titleId: 'custom', customTitle: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
     employmentType: 'full_time', openings: '1', arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime',
     basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
     education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',

@@ -96,11 +96,17 @@ function validatePosting(body, ctx) {
   v.skills = skills.slice(0, opt.LIMITS.maxSkills);
   v.seniorityLabel = seniorityLabel(v.skills);
 
-  // Title: only from the catalog, only one that covers every picked skill.
+  // Title: a role from the list that covers every picked skill, or "custom" (the recruiter's own title, which
+  // staff see in Catalog Requests so the role test can be built; skills are required either way).
   const titleId = text(b.titleId, 80);
   const offered = titlesForSkills(v.skills.map((s) => s.key));
   if (!titleId) err('titleId', 'Choose a job title.');
-  else if (!offered.some((t) => t.id === titleId)) err('titleId', 'That title does not fit the skills you picked. Choose one from the list.');
+  else if (titleId === 'custom') {
+    const custom = text(b.customTitle, 60);
+    if (custom.length < 3) err('titleId', 'Type your job title (at least 3 letters).');
+    else { v.titleId = 'custom'; v.title = custom; }
+  }
+  else if (!offered.some((t) => t.id === titleId)) err('titleId', 'That role does not fit the skills you picked. Choose one from the list, or pick "My job is not listed".');
   else { v.titleId = titleId; v.title = titleById(titleId).title; }
 
   v.nickname = text(b.nickname, 60);
