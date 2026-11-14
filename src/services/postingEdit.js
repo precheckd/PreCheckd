@@ -54,7 +54,7 @@ function formFromPosting(p) {
     equityOffered: yes(o.equity && o.equity.offered), equityNote: (o.equity && o.equity.note) || '',
     tipsOffered: yes(o.tips && o.tips.offered), tipsNote: (o.tips && o.tips.note) || '',
     benefits: o.benefits || [], benefitsOther: o.benefitsOther || '', noBenefits: yes(o.noBenefits),
-    goodFaith: yes(o.goodFaithAt),
+    goodFaith: yes(o.goodFaithAt), attest: yes(o.goodFaithAt && o.requirementsAttestedAt && o.outcomeAckAt && o.authorizedToRecruit),
     education: o.education || '', certGroups: groups, clearance: o.clearance || '',
     closeDate: nyDay(o.closeDate), startDate: new Date(o.startDate).toISOString().slice(0, 10), startFirm: yes(o.startFirm),
     requirementsAttested: yes(o.requirementsAttestedAt), outcomeAck: yes(o.outcomeAckAt),

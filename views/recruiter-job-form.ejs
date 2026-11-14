@@ -168,8 +168,6 @@
         <input type="text" name="companyWebsite" maxlength="120" autocomplete="off" placeholder="company.com" value="<%= val('companyWebsite') %>">
       </label>
       <% if (errors.companyWebsite) { %><div class="jp-err"><%= errors.companyWebsite %></div><% } %>
-      <label class="jp-check"><input type="checkbox" name="authorizedToRecruit" value="on" <%= on('authorizedToRecruit') ? 'checked' : '' %>> I am authorized by this company to recruit for this role. A false claim means the posting is removed and posting privileges may be suspended.</label>
-      <% if (errors.authorizedToRecruit) { %><div class="jp-err"><%= errors.authorizedToRecruit %></div><% } %>
     </div>
 
     <!-- 3. Job details -->
@@ -288,9 +286,7 @@
           <input type="text" name="commissionMin" inputmode="decimal" placeholder="Minimum anticipated commission ($ a year)" value="<%= val('commissionMin') %>" aria-label="Minimum anticipated commission">
           <input type="text" name="commissionAverage" inputmode="decimal" placeholder="Average commission ($ a year)" value="<%= val('commissionAverage') %>" aria-label="Average commission">
         </div>
-        <div class="jp-warn">You are attesting that most people in this position earn commission of at least the minimum and about the average you entered. Postings with false pay information are removed, and your and the company's posting privileges may be suspended.</div>
-        <label class="jp-check"><input type="checkbox" name="commissionAck" value="on" <%= on('commissionAck') ? 'checked' : '' %>> I confirm these commission figures are accurate.</label>
-        <% ['commission', 'commissionAck'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
+        <% ['commission'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
       </div>
 
       <span class="jp-label" style="margin-top:0.9rem;">Also offered</span>
@@ -311,18 +307,12 @@
       </div>
       <% if (errors.benefits) { %><div class="jp-err"><%= errors.benefits %></div><% } %>
 
-      <div class="jp-attest">
-        <div class="jp-attest-title">Confirm before posting</div>
-        <div>You are attesting that the pay shown is what you genuinely expect to pay for this role. Postings with false pay information are removed, and your and the company's posting privileges may be suspended.</div>
-        <label class="jp-check"><input type="checkbox" name="goodFaith" value="on" <%= on('goodFaith') ? 'checked' : '' %>> I confirm this pay is what I actually expect to pay for this role.</label>
-      </div>
-      <% if (errors.goodFaith) { %><div class="jp-err"><%= errors.goodFaith %></div><% } %>
     </div>
 
     <!-- 6. Requirements -->
     <div class="jp-card jp-step" data-name="Requirements">
       <h2>6. Requirements</h2>
-      <p class="jp-hint">Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean.<%= isEdit ? ' If you change commission figures you will need to confirm them again.' : '' %></p>
+      <p class="jp-hint">Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean.</p>
       <p class="jp-hint">Every requirement stops candidates who do not meet it, and they are told exactly why. There is no years-of-experience requirement on PreCheckd; skills and verified credentials replace it. Only verified, unexpired certifications and verified degrees count.</p>
       <label class="jp-field">Minimum education (verified)
         <select name="education"><option value="">None required</option>
@@ -371,18 +361,6 @@
       <% ['closeDate', 'startDate'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
       <label class="jp-check"><input type="checkbox" name="startFirm" value="on" <%= on('startFirm') ? 'checked' : '' %>> The start date is firm. Candidates who cannot start by then are stopped before applying.</label>
 
-      <div class="jp-attest">
-        <div class="jp-attest-title">Confirm before posting</div>
-        <div>You are attesting that every requirement above is genuinely needed to do this job and lawful. Candidates who don't meet a requirement are stopped before applying.</div>
-        <label class="jp-check"><input type="checkbox" name="requirementsAttested" value="on" <%= on('requirementsAttested') ? 'checked' : '' %>> I confirm these requirements are genuinely required for this job and lawful.</label>
-      </div>
-      <% if (errors.requirementsAttested) { %><div class="jp-err"><%= errors.requirementsAttested %></div><% } %>
-      <div class="jp-attest">
-        <div class="jp-attest-title">Confirm before posting</div>
-        <div>When applications close you must record how this job ended. Your account is paused until you do.</div>
-        <label class="jp-check"><input type="checkbox" name="outcomeAck" value="on" <%= on('outcomeAck') ? 'checked' : '' %>> I understand this: I must record how the job ended (hired, not filled, or cancelled, with a reason).</label>
-      </div>
-      <% if (errors.outcomeAck) { %><div class="jp-err"><%= errors.outcomeAck %></div><% } %>
     </div>
 
     <!-- Review and post -->
@@ -396,7 +374,11 @@
         <p><%= standard.ACCOMMODATION %></p>
         <p><%= standard.BACKGROUND %></p>
       </div>
-      
+      <div class="jp-attest">
+        <div class="jp-attest-title">Confirm before posting</div>
+        <label class="jp-check"><input type="checkbox" name="attest" value="on" <%= (on('attest') || (on('goodFaith') && on('requirementsAttested') && on('outcomeAck') && on('authorizedToRecruit'))) ? 'checked' : '' %>> I confirm everything in this posting is accurate, including the pay and requirements, that I am authorized by this company to recruit for this role, and that I must record how the job ended when applications close. Inaccurate postings are removed and posting privileges may be suspended.</label>
+      </div>
+      <% if (errors.attest) { %><div class="jp-err"><%= errors.attest %></div><% } %>
     <% if (isEdit && withdrawPrompt) { %>
       <div class="jp-confirm-box" style="background:#3A3320;border-left:4px solid #E0B341;color:#F5E7B8;padding:0.9rem 1.1rem;border-radius:6px;margin-bottom:1rem;">
         <strong>This change adds or tightens a requirement.</strong> <%= withdrawPrompt %> applicant<%= withdrawPrompt === 1 ? '' : 's' %> will be withdrawn automatically and told what changed and how to fix it.

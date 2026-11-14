@@ -52,16 +52,13 @@ t('the edit form is filled from the saved posting and passes the same validation
   assert.deepStrictEqual(changedParts(p, docFromValue(again.value, location)), []);
 });
 
-t('the commission confirmation is never pre-ticked, so it must be given again', () => {
+t('editing a posting starts with the single confirmation ticked', () => {
   const p = saveAs(base());
   const form = formFromPosting(p);
-  assert.strictEqual(form.commissionAck, undefined);
+  assert.strictEqual(form.attest, 'on');
   assert.strictEqual(form.commissionEnabled, 'on');
   const { errors } = validatePosting(form, { ...ctx, editing: { createdAt: p.createdAt } });
-  assert.ok(errors.commissionAck);
-  assert.strictEqual(form.goodFaith, 'on');
-  assert.strictEqual(form.requirementsAttested, 'on');
-  assert.strictEqual(form.outcomeAck, 'on');
+  assert.deepStrictEqual(errors, {});
 });
 
 t('a commission-only posting round-trips', () => {

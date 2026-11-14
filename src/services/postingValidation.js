@@ -115,8 +115,12 @@ function validatePosting(body, ctx) {
   const site = normalizeSite(b.companyWebsite);
   if (!site) err('companyWebsite', "Enter the company's own website, like company.com.");
   else { v.companyWebsite = site.website; v.companyDomain = site.domain; }
-  if (!flag(b.authorizedToRecruit)) err('authorizedToRecruit', 'Confirm you are authorized by this company to recruit for this role.');
-  v.authorizedToRecruit = flag(b.authorizedToRecruit);
+  // One confirmation on the last page covers all of these; the separate flags still count (older drafts and forms).
+  const attestAll = flag(b.attest);
+  const ok = (x) => attestAll || flag(b[x]);
+  let missingAttest = false;
+  v.authorizedToRecruit = ok('authorizedToRecruit');
+  if (!v.authorizedToRecruit) missingAttest = true;
 
   // Employment
   v.employmentType = text(b.employmentType, 20);
@@ -210,7 +214,7 @@ function validatePosting(body, ctx) {
     else if (!(avgC > 0)) err('commission', 'Enter the average commission.');
     else if (avgC < minC) err('commission', 'The average commission cannot be below the minimum.');
     v.commission = { minAnticipated: minC, average: avgC };
-    if (!flag(b.commissionAck)) err('commissionAck', 'Confirm the commission statement. Postings with false pay information are removed, and posting privileges may be suspended.');
+    if (!ok('commissionAck')) missingAttest = true;
     else v.commissionAckAt = new Date(now);
   }
   for (const k of ['bonus', 'equity', 'tips']) {
@@ -222,8 +226,8 @@ function validatePosting(body, ctx) {
   v.benefitsOther = text(b.benefitsOther, 80);
   if (v.noBenefits && (v.benefits.length || v.benefitsOther)) err('benefits', 'Untick "No benefits offered" or clear the benefits you ticked.');
   else if (!v.noBenefits && !v.benefits.length && !v.benefitsOther) err('benefits', 'Tick the benefits offered, or tick "No benefits offered".');
-  if (!flag(b.goodFaith)) err('goodFaith', 'Confirm the pay is what you actually expect to pay for this role.');
-  v.goodFaithAt = flag(b.goodFaith) ? new Date(now) : null;
+  if (!ok('goodFaith')) missingAttest = true;
+  v.goodFaithAt = ok('goodFaith') ? new Date(now) : null;
 
   // Requirements
   const edu = text(b.education, 20);
@@ -265,10 +269,11 @@ function validatePosting(body, ctx) {
     else v.startDate = start.utcMidnight;
   }
   v.startFirm = flag(b.startFirm);
-  if (!flag(b.requirementsAttested)) err('requirementsAttested', 'Confirm the requirements are genuinely required for this job and lawful.');
-  v.requirementsAttestedAt = flag(b.requirementsAttested) ? new Date(now) : null;
-  if (!flag(b.outcomeAck)) err('outcomeAck', 'Confirm you understand that you must record how this job ended when applications close.');
-  v.outcomeAckAt = flag(b.outcomeAck) ? new Date(now) : null;
+  if (!ok('requirementsAttested')) missingAttest = true;
+  v.requirementsAttestedAt = ok('requirementsAttested') ? new Date(now) : null;
+  if (!ok('outcomeAck')) missingAttest = true;
+  v.outcomeAckAt = ok('outcomeAck') ? new Date(now) : null;
+  if (missingAttest) err('attest', 'Tick the confirmation at the bottom of the last page.');
 
   // Description
   v.summary = String(b.summary || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim();

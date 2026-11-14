@@ -111,7 +111,6 @@ t('company: required, real, authorization ticked', () => {
   only({ hiringCompany: 'Confidential Client' }, 'hiringCompany');
   only({ hiringCompany: 'Undisclosed' }, 'hiringCompany');
   only({ hiringCompany: 'client' }, 'hiringCompany');
-  only({ authorizedToRecruit: undefined }, 'authorizedToRecruit');
   assert.deepStrictEqual(run({ hiringCompany: 'Booking.com' }).errors, {}); // a real name with a dot is fine
 });
 
@@ -185,10 +184,9 @@ t('commission only does not need a pay type (the form disables the base fields)'
   assert.deepStrictEqual(errors, {});
   assert.strictEqual(value.baseMax, 0);
 });
-t('commission: two numbers, average not below minimum, warning accepted every time', () => {
+t('commission: two numbers, average not below minimum, figures required', () => {
   only({ commissionEnabled: 'on', commissionMin: '', commissionAverage: '' , commissionAck: 'on' }, 'commission');
   only({ commissionEnabled: 'on', commissionMin: '50000', commissionAverage: '40000', commissionAck: 'on' }, 'commission');
-  only({ commissionEnabled: 'on', commissionMin: '20000', commissionAverage: '40000' }, 'commissionAck');
   const ok = run({ commissionEnabled: 'on', commissionMin: '20000', commissionAverage: '500000', commissionAck: 'on' });
   assert.deepStrictEqual(ok.errors, {}); // no cap on the average; the warning is the guard
   assert.ok(ok.value.commissionAckAt instanceof Date);
@@ -199,7 +197,7 @@ t('benefits and the good-faith box are required', () => {
   assert.deepStrictEqual(run({ benefits: [], noBenefits: 'on' }).errors, {});
   only({ benefits: ['health'], noBenefits: 'on' }, 'benefits');
   assert.deepStrictEqual(run({ benefits: [], benefitsOther: 'Free lunch Fridays' }).errors, {});
-  only({ goodFaith: undefined }, 'goodFaith');
+  only({ goodFaith: undefined, authorizedToRecruit: undefined, requirementsAttested: undefined, outcomeAck: undefined }, 'attest');
 });
 t('bonus, equity and tips are plain checkmarks, no notes', () => {
   const { value, errors } = run({ bonusOffered: 'on', bonusNote: 'a typed note is ignored', equityOffered: 'on' });
@@ -221,12 +219,15 @@ t('education, certification groups and clearance come from fixed lists', () => {
   assert.deepStrictEqual(run({ certGroups: [] }).errors, {});
   assert.deepStrictEqual(run({ certGroups: { 0: ['comptia-security-plus'], 1: ['isc2-cissp'] } }).errors, {});
 });
-t('the attestation that requirements are genuine and lawful is required', () => {
-  only({ requirementsAttested: undefined }, 'requirementsAttested');
-});
-
-t('the acknowledgment that an outcome must be recorded is required', () => {
-  only({ outcomeAck: undefined }, 'outcomeAck');
+t('one confirmation on the last page covers authorization, pay, requirements and the outcome rule', () => {
+  const none = { authorizedToRecruit: undefined, goodFaith: undefined, requirementsAttested: undefined, outcomeAck: undefined };
+  only(none, 'attest');
+  const all = run({ ...none, attest: 'on' });
+  assert.deepStrictEqual(all.errors, {});
+  for (const k of ['goodFaithAt', 'requirementsAttestedAt', 'outcomeAckAt']) assert.ok(all.value[k] instanceof Date, k);
+  assert.strictEqual(all.value.authorizedToRecruit, true);
+  const comm = run({ ...none, attest: 'on', commissionEnabled: 'on', commissionMin: '20000', commissionAverage: '40000' });
+  assert.deepStrictEqual(comm.errors, {}); assert.ok(comm.value.commissionAckAt instanceof Date);
 });
 
 // dates
@@ -274,8 +275,8 @@ t('the free-text scan blocks contact details, years, citizens only and age wordi
 
 t('several mistakes are all reported at once', () => {
   const { errors } = validatePosting({}, ctx);
-  for (const f of ['skills', 'titleId', 'hiringCompany', 'authorizedToRecruit', 'employmentType', 'openings', 'arrangement', 'relocation',
-    'travel', 'shift', 'basePayType', 'baseRange', 'benefits', 'goodFaith', 'closeDate', 'startDate', 'requirementsAttested', 'outcomeAck', 'summary', 'responsibilities']) {
+  for (const f of ['skills', 'titleId', 'hiringCompany', 'employmentType', 'openings', 'arrangement', 'relocation',
+    'travel', 'shift', 'basePayType', 'baseRange', 'benefits', 'attest', 'closeDate', 'startDate', 'summary', 'responsibilities']) {
     assert.ok(errors[f], 'no error for ' + f);
   }
 });
