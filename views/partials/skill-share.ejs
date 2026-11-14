@@ -1,7 +1,7 @@
 <% if (!s.shared) { %>
   <form id="share-<%= s.key %>" method="POST" action="/candidate/<%= candidate.slug %>/skills/share" style="margin:0;" title="Creates a public page with your first name and last initial. Optional.">
     <input type="hidden" name="key" value="<%= s.key %>"><input type="hidden" name="on" value="1">
-    <button class="sk-btn sm alt" type="submit">Share achievement</button>
+    <button class="sk-btn sm" type="submit">Share achievement</button>
   </form>
 <% } else { %>
 <div class="sk-share" id="share-<%= s.key %>">
