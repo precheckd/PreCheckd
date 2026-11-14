@@ -67,7 +67,7 @@
 
     <div class="sk-card" id="sk-find">
       <h2>Find a skill or a job</h2>
-      <input type="text" id="sk-q" autocomplete="off" placeholder="Search a skill (Python) or a job title (Data Analyst)" style="width:100%;padding:0.7rem 0.9rem;border-radius:6px;border:1px solid #5A7880;background:#1F363C;color:#F2F4F3;font-size:1rem;">
+      <div style="position:relative;"><input type="text" id="sk-q" autocomplete="off" placeholder="Search a skill (Python) or a job title (Data Analyst)" style="width:100%;box-sizing:border-box;padding:0.7rem 2.4rem 0.7rem 0.9rem;border-radius:6px;border:1px solid #5A7880;background:#1F363C;color:#F2F4F3;font-size:1rem;"><button type="button" id="sk-x" aria-label="Clear search" hidden style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:0;color:#8FA6AC;font-size:1.4rem;line-height:1;cursor:pointer;padding:0.2rem 0.5rem;">&times;</button></div>
       <div id="sk-res" style="margin-top:0.6rem;"></div>
     </div>
 
@@ -314,7 +314,10 @@
     });
     out.innerHTML = html || '<p class="sk-meta">No match. Use Request a skill below.</p>';
   }
-  q.addEventListener('input', draw);
+  var x = document.getElementById('sk-x');
+  function sync() { x.hidden = !q.value; draw(); }
+  q.addEventListener('input', sync);
+  x.addEventListener('click', function () { q.value = ''; sync(); q.focus(); });
 })();
 </script>
 <style>
