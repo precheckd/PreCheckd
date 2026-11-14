@@ -50,6 +50,7 @@
   .sk-share { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid #3A5560; font-size: 0.85rem; }
   .sk-share a.sb, .sk-share button.sb { display: inline-block; background: #1F363C; color: #F2F4F3; border: 1px solid #3A5560; border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.8rem; text-decoration: none; cursor: pointer; margin: 0.2rem 0.2rem 0 0; font-family: inherit; }
   .sk-share a.sb:hover, .sk-share button.sb:hover { border-color: #4ADE80; }
+  .sk-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
   .sk-rungname { color: #F2F4F3; font-weight: 600; font-size: 0.9rem; }
   .sk-btn.sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; white-space: nowrap; }
   .sk-visbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -151,12 +152,17 @@
         <% } else if (g.topLevel) { %>
           <div class="sk-meta">Top level reached</div>
         <% } %>
-        <% if (s && s.shareable) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
-        <% if (canStart) { %>
-          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin-top:0.6rem;">
+        <% if (canStart || (s && s.shareable && !s.shared)) { %>
+        <div class="sk-actions">
+          <% if (canStart) { %>
+          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= nextRung.assessment.assessmentId %>" style="margin:0;">
             <button class="sk-btn sm <%= nextRung.tier === 'expert' ? 'gold' : '' %>" type="submit"><%= nextRung.open ? 'Continue ' : 'Start ' %><%= nextRung.tierName %></button>
           </form>
+          <% } %>
+          <% if (s && s.shareable && !s.shared) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
+        </div>
         <% } %>
+        <% if (s && s.shared) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
         <details class="sk-more2">
           <summary>Details</summary>
           <% g.rungs.forEach((r, i) => { %>
@@ -195,7 +201,7 @@
         <div><span class="sk-level <%= s.level === 'Expert' ? (s.grandmaster ? 'gm' : 'master') : '' %>"><%= levelName(s.level, s.grandmaster) %></span><% if (s.stale) { %><span class="sk-stale">Needs retake</span><% } %></div>
         <%- include('partials/skill-meter', { sk: s }) %>
         <div class="sk-meta">Taken <%= shortDate(s.takenAt) %>, <%= s.takenAt.getFullYear() %></div>
-        <% if (s.shareable) { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %>
+        <% if (s.shareable) { %><% if (!s.shared) { %><div class="sk-actions"><%- include('partials/skill-share', { s: s, candidate: candidate }) %></div><% } else { %><%- include('partials/skill-share', { s: s, candidate: candidate }) %><% } %><% } %>
       </div>
       <% }) %>
     </div>
