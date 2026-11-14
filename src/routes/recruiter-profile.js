@@ -68,7 +68,7 @@ router.get('/:slug', async (req, res) => {
       recruiter: recruiter,
       record: record,
       isOwner: isOwner,
-      feed: isOwner ? await require('../services/updates').latest('recruiter', recruiter._id, 5) : null,
+      feed: isOwner ? await require('../services/updates').latest('recruiter', recruiter._id, 20) : null,
       emailSent: isOwner ? req.query.emailSent : undefined,
       viewCounts: viewCounts,
       pane: pane,

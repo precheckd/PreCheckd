@@ -8,23 +8,48 @@
   .upd-item.is-new { font-weight: 600; }
   .upd-item a { color: #4ADE80; text-decoration: none; }
   .upd-ago { color: #8FA6AC; font-size: 0.8rem; white-space: nowrap; font-weight: 400; }
-  .upd-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; }
-  .upd-card h2 { font-size: 1.05rem; color: #F2F4F3; margin: 0 0 0.4rem; }
+  /* Side box beside the profile card: same height as the card, its own scrollbar, newest first. */
+  .upd-side { position: relative; flex: 0 0 320px; min-height: 230px; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
+  .upd-side-in { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 1rem 1.1rem; }
+  .upd-side h2 { font-size: 1.05rem; color: #F2F4F3; margin: 0 0 0.5rem; }
+  .upd-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 0.3rem; }
+  .upd-scroll::-webkit-scrollbar { width: 8px; }
+  .upd-scroll::-webkit-scrollbar-thumb { background: #4A6770; border-radius: 4px; }
+  .upd-more { margin: 0.5rem 0 0; font-size: 0.85rem; }
+  @media (max-width: 900px) { .upd-side { flex: 0 0 auto; width: 100%; height: 280px; min-height: 0; } }
 </style>
-<% const shown = full ? feed.items : feed.items.slice(0, 5); %>
-<div class="<%= full ? '' : 'upd-card' %>">
-  <% if (!full) { %><h2>Latest updates</h2><% } %>
-  <% if (!shown.length) { %>
+<% if (full) { %>
+<div>
+  <% if (!feed.items.length) { %>
     <p style="color:#C7D1CF;font-size:0.92rem;margin:0;"><%= empty %></p>
   <% } else { %>
     <ul class="upd-list">
-      <% shown.forEach((i) => { %>
+      <% feed.items.forEach((i) => { %>
         <li class="upd-item<%= i.unread ? ' is-new' : '' %>">
           <span><%= i.text %><% if (i.url && i.kind === 'new_job') { %> <a href="<%= i.url %>">View job</a><% } %></span>
           <span class="upd-ago"><%= i.ago %></span>
         </li>
       <% }) %>
     </ul>
-    <% if (!full) { %><p style="margin:0.6rem 0 0;"><a href="/connections?tab=updates" style="color:#4ADE80;font-size:0.88rem;text-decoration:none;">See all updates</a></p><% } %>
   <% } %>
 </div>
+<% } else { %>
+<div class="upd-side"><div class="upd-side-in">
+  <h2>Latest updates</h2>
+  <div class="upd-scroll">
+    <% if (!feed.items.length) { %>
+      <p style="color:#C7D1CF;font-size:0.9rem;margin:0;"><%= empty %></p>
+    <% } else { %>
+      <ul class="upd-list">
+        <% feed.items.forEach((i) => { %>
+          <li class="upd-item<%= i.unread ? ' is-new' : '' %>" style="flex-direction:column;gap:0.15rem;">
+            <span><%= i.text %><% if (i.url && i.kind === 'new_job') { %> <a href="<%= i.url %>">View job</a><% } %></span>
+            <span class="upd-ago"><%= i.ago %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+  <p class="upd-more"><a href="/connections?tab=updates" style="color:#4ADE80;text-decoration:none;">See all updates</a></p>
+</div></div>
+<% } %>

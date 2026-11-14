@@ -6,6 +6,9 @@
     min-height: 100vh;
   }
 
+  .top-row { max-width: 1200px; margin: 0 auto 2rem; display: flex; gap: 1.5rem; align-items: stretch; }
+  .top-row .profile-header { flex: 1 1 0; min-width: 0; max-width: none; margin: 0; }
+  @media (max-width: 900px) { .top-row { flex-direction: column; } }
   .profile-header {
     max-width: 1200px;
     margin: 0 auto 2rem;
@@ -426,6 +429,7 @@
   <% } %>
 
   <!-- Header: photo + identity -->
+  <div class="top-row">
   <div class="profile-header">
     <% if (showSaveButton) { %>
       <button type="button" id="save-recruiter-btn" class="save-recruiter-btn" data-recruiter-slug="<%= recruiter.slug %>">
@@ -475,6 +479,7 @@
     </div>
   </div>
   <% if (isOwner && typeof feed !== 'undefined' && feed) { %><%- include('partials/updates-list', { feed: feed, full: false, isCandidate: false }) %><% } %>
+  </div>
 
   <% if (isOwner && !allVerified) {
        const checks = [
