@@ -51,7 +51,7 @@ function publicShape(p) {
     id: String(p._id), path: pathOf(p), title: p.title, seniorityLabel: p.seniorityLabel, hiringCompany: p.hiringCompany, companyWebsite: p.companyWebsite || '', companyDomain: p.companyDomain || '',
     employmentType: p.employmentType, contractLength: p.contractLength, openings: p.openings,
     arrangement: p.arrangement, inOfficeDays: p.inOfficeDays, areaLabel: p.areaLabel, location: locationText(p),
-    displayCity: p.displayCity, displayState: p.displayState, relocation: p.relocation, travel: p.travel, shift: p.shift,
+    displayCity: p.displayCity, displayState: p.displayState, relocation: p.relocation, travel: p.travel, shift: p.shift, shifts: p.shifts && p.shifts.length ? Array.from(p.shifts) : [p.shift],
     basePayType: p.basePayType, baseMin: p.baseMin, baseMax: p.baseMax, commissionOnly: p.commissionOnly, payBasis: p.payBasis,
     commission: p.commission, bonus: p.bonus, equity: p.equity, tips: p.tips,
     benefits: p.benefits, benefitsOther: p.benefitsOther, noBenefits: p.noBenefits,

@@ -188,6 +188,11 @@ t('clearance: reported level gates, higher satisfies lower, never says verified'
   assert.strictEqual(ev(cand({ clearance: null }), post({ clearance: null })).canApply, true);
 });
 
+t('shift: a job with several shifts needs the candidate to work at least one', () => {
+  assert.strictEqual(ev(cand({ shifts: ['evenings'] }), post({ shifts: ['daytime', 'evenings'] })).canApply, true);
+  assert.deepStrictEqual(codes(ev(cand({ shifts: ['overnight'] }), post({ shifts: ['daytime', 'evenings'] }))), ['shift_missing']);
+  assert.strictEqual(ev(cand({ shifts: [] }), post({ shifts: ['flexible'] })).canApply, true);
+});
 t('shift: must match; flexible on either side satisfies', () => {
   const r = ev(cand({ shifts: ['daytime'] }), post({ shift: 'overnight' }));
   assert.deepStrictEqual(codes(r), ['shift_missing']);

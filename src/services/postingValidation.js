@@ -168,8 +168,12 @@ function validatePosting(body, ctx) {
   if (v.relocation === null) err('relocation', 'Say whether relocation is offered.');
   v.travel = text(b.travel, 20);
   if (!codes(opt.TRAVEL).includes(v.travel)) err('travel', 'Choose how much travel is required.');
-  v.shift = text(b.shift, 20);
-  if (!codes(opt.SHIFT_OPTIONS).includes(v.shift)) err('shift', 'Choose the shift.');
+  const allowedShifts = codes(opt.SHIFT_OPTIONS);
+  let chosenShifts = [...new Set(asArray(b.shifts !== undefined ? b.shifts : b.shift).map((s) => text(s, 20)).filter((s) => allowedShifts.includes(s)))];
+  if (chosenShifts.includes('flexible')) chosenShifts = ['flexible'];   // flexible means any shift, so nothing else is needed
+  v.shifts = chosenShifts;
+  v.shift = chosenShifts[0] || '';
+  if (!chosenShifts.length) err('shift', 'Choose at least one shift.');
 
   // Pay
   v.commissionOnly = flag(b.commissionOnly);

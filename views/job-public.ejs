@@ -93,7 +93,7 @@
     <p><%= lbl(options.arrangements, j.arrangement) %><% if (j.inOfficeDays) { %> (<%= j.inOfficeDays %> days a week in the office)<% } %>
       <% if (j.arrangement !== 'remote') { %> &middot; <%= j.location %><% } %><br>
       <%= lbl(options.employmentTypes, j.employmentType) %><%= j.contractLength ? ' (' + j.contractLength + ')' : '' %> &middot; <%= j.openings %> opening<%= j.openings === 1 ? '' : 's' %><br>
-      Shift: <%= lbl(options.shifts, j.shift) %> &middot; Travel: <%= lbl(options.travel, j.travel) %> &middot; Relocation: <%= j.relocation ? 'offered' : 'not offered' %><br>
+      Shift: <%= (j.shifts && j.shifts.length ? j.shifts : [j.shift]).map(function(c) { return lbl(options.shifts, c); }).join(', ') %> &middot; Travel: <%= lbl(options.travel, j.travel) %> &middot; Relocation: <%= j.relocation ? 'offered' : 'not offered' %><br>
       Starts <%= fmt(j.startDate) %><%= j.startFirm ? ' (firm)' : '' %> &middot; applications close <%= fmtClose(j.closeDate) %></p>
   </div>
 

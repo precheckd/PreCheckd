@@ -193,7 +193,7 @@
 
       <h3 class="jp-sub">Location and schedule</h3>
       <p class="jp-hint">The street address is used to place the job and is never shown to candidates. They see the city and state only. Candidates must be authorized to work in the US.</p>
-      <label class="jp-field">How is the work done?
+      <label class="jp-field">Work setting
         <select name="arrangement" id="jp-arr">
           <option value="">Choose</option>
           <% arrangements.forEach(function(a) { %><option value="<%= a.code %>" <%= val('arrangement') === a.code ? 'selected' : '' %>><%= a.label %></option><% }); %>
@@ -253,14 +253,13 @@
             <% travelOptions.forEach(function(t) { %><option value="<%= t.code %>" <%= val('travel') === t.code ? 'selected' : '' %>><%= t.label %></option><% }); %>
           </select>
         </label>
-        <label class="jp-field" style="margin:0;">Shift
-          <select name="shift"><option value="">Choose</option>
-            <% shiftOptions.forEach(function(s) { %><option value="<%= s.code %>" <%= val('shift') === s.code ? 'selected' : '' %>><%= s.label %></option><% }); %>
-          </select>
-        </label>
+      </div>
+      <span class="jp-label">Shift (pick all that apply)</span>
+      <div class="jp-grid" id="jp-shifts">
+        <% shiftOptions.forEach(function(s) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="shifts" value="<%= s.code %>" <%= (has('shifts', s.code) || (!list(form.shifts).length && val('shift') === s.code)) ? 'checked' : '' %>> <%= s.label %></label><% }); %>
       </div>
       <% ['relocation', 'travel', 'shift'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
-      <p class="jp-muted">A candidate who has not said they will work this shift is stopped before applying. Choose Flexible if any shift is fine.</p>
+      <p class="jp-muted">A candidate must be willing to work at least one of these shifts to apply. Flexible means any shift.</p>
     </div>
 
     <!-- 5. Pay -->

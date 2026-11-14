@@ -171,11 +171,11 @@ function clearanceBlocker(posting, candidate) {
 }
 
 function shiftBlocker(posting, candidate) {
-  const need = posting.shift;
-  if (!need || need === 'flexible') return null;            // a flexible posting has no shift requirement
+  const need = (Array.isArray(posting.shifts) && posting.shifts.length ? posting.shifts : [posting.shift]).filter(Boolean);
+  if (!need.length || need.includes('flexible')) return null;   // a flexible posting has no shift requirement
   const mine = candidate.shifts || [];
-  if (mine.includes(need) || mine.includes('flexible')) return null; // a candidate who ticked flexible can work any
-  const label = SHIFT_LABELS[need] || need;
+  if (need.some((s) => mine.includes(s)) || mine.includes('flexible')) return null; // working any one of the job's shifts is enough; flexible can work any
+  const label = need.map((s) => SHIFT_LABELS[s] || s).join(' or ');
   return { criterion: 'shift', code: 'shift_missing',
     message: `You have not selected to work the hours of this job (${label}). If you do want to work ${label} hours, update your profile and apply for this position again.`,
     actions: [{ kind: 'edit_profile', section: 'shifts' }] };

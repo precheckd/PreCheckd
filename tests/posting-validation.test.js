@@ -73,6 +73,14 @@ t('every skill needs a level chosen (or no minimum)', () => {
   const none = run({ skills: [{ key: 'linux', minLevel: 'none' }] });
   assert.ok(!none.errors.skills); assert.strictEqual(none.value.skills[0].minLevel, null); assert.strictEqual(none.value.seniorityLabel, 'Entry level');
 });
+t('shifts: pick one or more; flexible stands alone; none is refused', () => {
+  const two = run({ shifts: ['daytime', 'evenings'] });
+  assert.deepStrictEqual(two.value.shifts, ['daytime', 'evenings']); assert.strictEqual(two.value.shift, 'daytime');
+  assert.deepStrictEqual(run({ shifts: ['daytime', 'flexible'] }).value.shifts, ['flexible']);
+  assert.deepStrictEqual(run({ shifts: undefined, shift: 'overnight' }).value.shifts, ['overnight']);   // older form posts
+  only({ shifts: [], shift: '' }, 'shift');
+  only({ shifts: ['moon'] }, 'shift');
+});
 t('the company website is required, cleaned to a bare domain, and must be the company\'s own', () => {
   const ok = run({});
   assert.strictEqual(ok.value.companyDomain, 'acme.com'); assert.strictEqual(ok.value.companyWebsite, 'https://acme.com');

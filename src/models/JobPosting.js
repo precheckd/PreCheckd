@@ -58,7 +58,8 @@ const jobPostingSchema = new mongoose.Schema({
   displayState: { type: String, default: '' },                      // public
   relocation: { type: Boolean, required: true },
   travel: { type: String, enum: ['none', 'occasional', 'up_to_25', 'up_to_50', 'over_50'], required: true },
-  shift: { type: String, enum: ['daytime', 'evenings', 'overnight', 'rotating', 'flexible'], required: true },
+  shift: { type: String, enum: ['daytime', 'evenings', 'overnight', 'rotating', 'flexible'], required: true },   // first of `shifts` (older postings only have this)
+  shifts: { type: [String], default: [] },                                                                       // every shift the job covers; 'flexible' alone = any
 
   // Pay
   basePayType: { type: String, enum: ['salary', 'hourly'], required: true },
@@ -146,6 +147,7 @@ jobPostingSchema.methods.toGateShape = function toGateShape() {
     certGroups: this.certGroups.map((g) => g.certs.map((c) => ({ catalogId: c.catalogId, label: c.label }))),
     clearance: this.clearance ? CLR_INDEX[this.clearance] : null,
     shift: this.shift,
+    shifts: this.shifts && this.shifts.length ? Array.from(this.shifts) : [this.shift],
     arrangement: this.arrangement,
     areaLabel: this.areaLabel,
     areaRule: this.areaRule && (this.areaRule.point || this.areaRule.states)

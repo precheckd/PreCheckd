@@ -132,6 +132,13 @@
   };
   levelSelects.forEach((lv) => lv.addEventListener('change', () => lv.classList.remove('jp-bad')));
 
+  // ---- shifts: Flexible means any shift, so it stands alone ----
+  const shiftBoxes = Array.from(form.querySelectorAll('input[name="shifts"]'));
+  shiftBoxes.forEach((box) => box.addEventListener('change', () => {
+    if (!box.checked) return;
+    shiftBoxes.forEach((o) => { if (o !== box && (box.value === 'flexible' || o.value === 'flexible')) o.checked = false; });
+  }));
+
   // ---- company suggestions ----
   const company = $('jp-company');
   const companyList = $('jp-company-list');

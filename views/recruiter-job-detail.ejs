@@ -44,7 +44,7 @@
     <p><%= lbl(options.arrangements, posting.arrangement) %><% if (posting.inOfficeDays) { %> (<%= posting.inOfficeDays %> days a week in the office)<% } %>
       <% if (posting.areaLabel) { %> &middot; <%= posting.arrangement === 'remote_in_area' ? 'limited to ' : '' %><%= posting.areaLabel %><% } %><br>
       <%= lbl(options.employmentTypes, posting.employmentType) %><%= posting.contractLength ? ' (' + posting.contractLength + ')' : '' %> &middot; <%= posting.openings %> opening<%= posting.openings === 1 ? '' : 's' %><br>
-      Shift: <%= lbl(options.shifts, posting.shift) %> &middot; Travel: <%= lbl(options.travel, posting.travel) %> &middot; Relocation: <%= posting.relocation ? 'offered' : 'not offered' %><br>
+      Shift: <%= (posting.shifts && posting.shifts.length ? posting.shifts : [posting.shift]).map(function(c) { return lbl(options.shifts, c); }).join(', ') %> &middot; Travel: <%= lbl(options.travel, posting.travel) %> &middot; Relocation: <%= posting.relocation ? 'offered' : 'not offered' %><br>
       Starts <%= fmt(posting.startDate) %><%= posting.startFirm ? ' (firm)' : '' %> &middot; applications close <%= fmtClose(posting.closeDate) %></p>
     <% if (posting.address) { %><p class="jd-priv">Street address (only you see this): <%= posting.address %></p><% } %>
   </div>
