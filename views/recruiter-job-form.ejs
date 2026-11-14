@@ -9,7 +9,7 @@
   const errorKeys = Object.keys(errors || {});
 %>
 <style>
-  .jp-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jp-wrap { flex: 1; padding: 1rem 1.5rem 3rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
   .jp-inner { max-width: 1060px; width: 100%; }
   .jp-wiz { display: flex; gap: 1.5rem; align-items: flex-start; }
   .jp-main { flex: 1; min-width: 0; max-width: 820px; }
@@ -36,7 +36,8 @@
   .jp-rev-row span:first-child { flex: 0 0 11rem; color: #8FA6AC; }
   .jp-rev-row span:last-child { overflow-wrap: anywhere; }
   @media (max-width: 820px) { .jp-nav { display: none !important; } .jp-wiz { display: block; } }
-  .jp-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .jp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .jp-back { display: inline-block; margin-bottom: 0.6rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
   .jp-inner h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.4rem; }
   .jp-lead { color: #C7D1CF; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem; }
   .jp-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -85,9 +86,7 @@
 
 <div class="jp-wrap"><div class="jp-inner">
   <a class="jp-back" href="<%= backHref %>">&larr; <%= isEdit ? 'Back to this posting' : 'My job postings' %></a>
-  <h1><%= heading %></h1>
-  <% if (isEdit) { %><p class="jp-lead">Change anything below and save. The same rules apply as when you posted. If you change commission figures you will need to confirm them again.</p><% } %>
-  <p class="jp-lead">Everything here is a fixed choice except the description. Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean. Your name and verified badge are added automatically.</p>
+  <h1 class="jp-sr"><%= heading %></h1>
 
   <% if (errorKeys.length) { %>
     <div class="jp-errbox"><strong>Please fix <%= errorKeys.length === 1 ? 'one thing' : errorKeys.length + ' things' %> below:</strong>
@@ -324,6 +323,7 @@
     <!-- 6. Requirements -->
     <div class="jp-card jp-step" data-name="Requirements">
       <h2>7. Requirements</h2>
+      <p class="jp-hint">Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean.<%= isEdit ? ' If you change commission figures you will need to confirm them again.' : '' %></p>
       <p class="jp-hint">Every requirement stops candidates who do not meet it, and they are told exactly why. There is no years-of-experience requirement on PreCheckd; skills and verified credentials replace it. Only verified, unexpired certifications and verified degrees count.</p>
       <label class="jp-field">Minimum education (verified)
         <select name="education"><option value="">None required</option>
