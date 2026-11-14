@@ -114,7 +114,6 @@
         <textarea name="responsibilities"><%= val('responsibilities') %></textarea>
       </label>
       <% if (errors.responsibilities) { %><div class="jp-err"><%= errors.responsibilities %></div><% } %>
-      <p class="jp-muted" id="jp-suggest-msg" aria-live="polite">When you click Next we read what you wrote and suggest a job title and skills on the next page. You check and change everything.</p>
     </div>
 
     <!-- 2. Title and skills -->
@@ -134,9 +133,9 @@
         </div>
       <% } %>
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
-      <p class="jp-hint" id="jp-suggest-note" aria-live="polite">Skills are chosen from your description. Each skill takes the lowest level a candidate needs (or no minimum). The levels you set decide the job's level, and a candidate must meet them to apply. No minimum on any skill makes it an entry-level job.</p>
+      <p class="jp-hint" id="jp-suggest-note" aria-live="polite" hidden></p>
       <h3 class="jp-sub">Job title</h3>
-      <label class="jp-field">Choose the closest match, or type your own
+      <label class="jp-field" aria-label="Job title">
         <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
       </label>
       <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || 'custom' %>">
