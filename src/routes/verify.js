@@ -65,6 +65,11 @@ router.get('/:slug', async (req, res) => {
 
     const candidate = await Candidate.findOne({ slug, publicVerifyPage: true });
 
+    if (candidate && require('../services/membership').isLapsed(candidate)) {
+      res.set('X-Robots-Tag', 'noindex, nofollow');
+      return res.render('not-member', { pageTitle: 'Not a member | PreCheckd', backHref: '/' });
+    }
+
     if (candidate) {
       res.set('X-Robots-Tag', 'noindex, nofollow');
 

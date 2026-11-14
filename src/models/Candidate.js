@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const billingSchema = require('./billingSchema');
 const crypto = require('crypto');
 const { guessLevel, LEVELS: EDUCATION_LEVEL_LIST } = require('../utils/educationLevel');
 
@@ -216,6 +217,7 @@ const candidateSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  billing: { type: billingSchema, default: () => ({}) },
   stripeVerificationSessionId: {
     type: String,
     default: null

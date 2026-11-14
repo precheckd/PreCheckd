@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const billingSchema = require('./billingSchema');
 
 const recruiterSchema = new mongoose.Schema({
   firstName: {
@@ -60,6 +61,7 @@ const recruiterSchema = new mongoose.Schema({
     type: String,
     default: 'Not provided'
   },
+  billing: { type: billingSchema, default: () => ({}) },
   isPhoneVerified: {
     type: Boolean,
     default: false

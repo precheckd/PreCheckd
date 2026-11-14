@@ -1,0 +1,14 @@
+<style>
+  .nm-wrap { flex: 1; min-height: 60vh; display: flex; justify-content: center; align-items: center; padding: 3rem 1.5rem; }
+  .nm-card { max-width: 480px; text-align: center; background: #fff; border: 1px solid #e3e8ea; border-radius: 14px; padding: 2.25rem 2rem; }
+  .nm-card h1 { font-size: 1.4rem; margin: 0 0 .6rem; color: #1F363C; }
+  .nm-card p { margin: 0 0 1.25rem; color: #4a5a5f; line-height: 1.5; }
+  .nm-card a { color: #1F363C; font-weight: 600; }
+</style>
+<main class="nm-wrap">
+  <div class="nm-card">
+    <h1>This person isn't a member anymore</h1>
+    <p>Their PreCheckd membership has ended, so their profile and verification details are no longer shown.</p>
+    <a href="<%= typeof backHref !== 'undefined' ? backHref : '/' %>">Go back</a>
+  </div>
+</main>

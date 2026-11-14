@@ -1,4 +1,5 @@
 const express = require('express');
+const membership = require('../services/membership');
 const skillsService = require('../services/skills');
 const router = express.Router();
 const SkillAssessment = require('../models/SkillAssessment');
@@ -140,7 +141,7 @@ router.get('/', async (req, res) => {
       // Required-matching-fields check runs in app code (not the Mongo
       // query) so this stays in sync with the one shared definition rather
       // than duplicating field-by-field logic here.
-      candidates = candidates.filter(candidateMeetsMatchingRequirements);
+      candidates = candidates.filter(candidateMeetsMatchingRequirements).filter((c) => !membership.isLapsed(c));
 
       if (hasBudget) {
         candidates = candidates.filter((c) => c.minSalaryAnnualEquivalent <= budgetAnnualEquivalent);
@@ -250,6 +251,9 @@ router.get('/:anonId', async (req, res) => {
     if (!candidate || !candidateMeetsMatchingRequirements(candidate)) {
       return res.status(404).send('Candidate not found.');
     }
+    if (membership.isLapsed(candidate)) {
+      return res.status(200).render('not-member', { pageTitle: 'Not a member | PreCheckd', backHref: '/candidate-search' });
+    }
 
     const existingRequest = await ConnectionRequest.findOne({
       candidateId: candidate._id,
@@ -283,7 +287,7 @@ router.post('/:anonId/connect', async (req, res) => {
       isIdentityVerified: true
     });
 
-    if (!candidate || !candidateMeetsMatchingRequirements(candidate)) {
+    if (!candidate || !candidateMeetsMatchingRequirements(candidate) || membership.isLapsed(candidate)) {
       return res.status(404).json({ error: 'Candidate not found.' });
     }
 

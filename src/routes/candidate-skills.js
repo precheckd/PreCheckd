@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const membership = require('../services/membership');
 const Candidate = require('../models/Candidate');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
@@ -131,6 +132,7 @@ router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
     const attempt = await skills.startAttempt(candidate, req.params.assessmentId);
     res.redirect(attempt.inviteUrl);
   } catch (e) {
@@ -148,6 +150,7 @@ router.post('/:slug/skills/role-tests/:id/start', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
     const attempt = await require('../services/roleTests').start(candidate, req.params.id);
     res.redirect(attempt.inviteUrl);
   } catch (e) {
@@ -165,6 +168,7 @@ router.post('/:slug/skills/test-requests/:id/accept', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
     const attempt = await testRequests.accept(candidate, req.params.id);
     res.redirect(attempt.inviteUrl);
   } catch (e) {
@@ -223,6 +227,7 @@ router.post('/:slug/skills/request', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
     await skills.requestSkill(candidate, req.body.skill);
     res.redirect(`/candidate/${candidate.slug}/skills?notice=requested`);
   } catch (e) {

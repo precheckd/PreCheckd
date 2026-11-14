@@ -86,7 +86,7 @@ function toFacts(candidate, { skills = [], posting = null, alreadyApplied = fals
     shifts: Array.isArray(candidate.shifts) ? candidate.shifts : [],
     availableFrom: candidate.availableFrom || null,
     areaMatch: needsArea ? areaMatch(candidate.workAreas, posting.areaRule) : null,
-    membershipActive,
+    membershipActive: membershipActive === undefined ? require('./membership').gateFact(candidate) : membershipActive,
     alreadyApplied: Boolean(alreadyApplied),
     blockedByRecruiter: Boolean(blockedByRecruiter),
   };

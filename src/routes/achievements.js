@@ -7,6 +7,10 @@ const ach = require('../services/achievements');
 router.get('/:slug/:key', async (req, res) => {
   try {
     const candidate = await Candidate.findOne({ slug: req.params.slug });
+    if (candidate && require('../services/membership').isLapsed(candidate)) {
+      res.set('X-Robots-Tag', 'noindex');
+      return res.render('not-member', { pageTitle: 'Not a member | PreCheckd', backHref: '/' });
+    }
     const v = ach.publicView(candidate, req.params.key);
     if (!v) return res.status(404).render('error', { title: 'Not found', message: 'This achievement is not being shared.' });
     const owner = req.session.candidateId && req.session.candidateId === candidate._id.toString();

@@ -170,6 +170,9 @@ router.get('/requests/:id/candidate', async (req, res) => {
     await expireStaleFullAccessRequest(request);
 
     const candidate = request.candidateId;
+    if (require('../services/membership').isLapsed(candidate)) {
+      return res.render('not-member', { pageTitle: 'Not a member | PreCheckd', backHref: '/connections' });
+    }
     const hasFullAccess = request.fullAccessStatus === 'granted';
 
     const pane = await buildPane({ type: 'recruiter', id: req.session.recruiterId }, request._id.toString());
