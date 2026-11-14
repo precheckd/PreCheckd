@@ -80,6 +80,9 @@
   const textNow = () => (sumEl.value + '\n' + respEl.value).trim();
   // Edits and drafts that already have skills picked are not re-suggested until the description changes.
   if (!noSkillsYet()) form.setAttribute(lastKey, textNow());
+  function lockSkills(on) {
+    keySelects.forEach((sel) => { sel.classList.toggle('jp-locked', on); sel.tabIndex = on ? -1 : 0; if (sel.parentElement) sel.parentElement.hidden = on && !sel.value; });
+  }
   async function suggest() {
     const text = textNow();
     if (text.length < 40 || form.getAttribute(lastKey) === text) return;
@@ -89,16 +92,19 @@
         body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
       const data = await res.json();
       if (!res.ok) { note.textContent = data.error || 'We could not suggest skills right now. Pick them yourself below.'; note.hidden = false; return; }
-      const hadSkills = !noSkillsYet();
-      if (!hadSkills && data.skills && data.skills.length) fillSkills(data.skills);
+      const hasSkills = !!(data.skills && data.skills.length);
+      if (hasSkills) fillSkills(data.skills);
+      lockSkills(hasSkills);
       ideas.textContent = '';
       const useTitle = (t) => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); markChosen(); };
       const markChosen = () => { Array.from(ideas.children).forEach((c) => { c.style.borderColor = norm(c.textContent) === norm(titleInput.value) ? '#2ECC71' : ''; }); };
       (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => useTitle(t))));
       const parts = [];
-      if (data.skills && data.skills.length) parts.push((hadSkills ? 'Suggested skills (your choices below were kept): ' : 'Suggested skills, filled in below: ') + data.skills.map((s) => s.label).join(', ') + '. Set the level for each, or leave no minimum.');
-      else parts.push('We could not match skills from that text. Pick them yourself.');
-      if (data.titles && data.titles.length) parts.push('Tap a suggested title if one fits.');
+      if (hasSkills) {
+        parts.push('We read your posting and chose the top ' + (data.skills.length === 1 ? 'skill' : data.skills.length + ' skills') + ' for this position: ' + data.skills.map((s) => s.label).join(', ') + '. These are set automatically. Choose the job title below that most closely matches, then set the minimum level for each skill.');
+      } else {
+        parts.push('We could not match skills from that text. Pick them yourself below, or go back and add more detail to your description.');
+      }
       if (data.missing && data.missing.length) parts.push('We do not test ' + data.missing.join(', ') + ' yet, so those cannot be required.');
       note.textContent = parts.join(' ');
       note.hidden = false;

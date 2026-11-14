@@ -75,6 +75,7 @@
   .jp-suggest-note { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 0.9rem; font-size: 0.9rem; }
   .jp-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
   .jp-chip { background: #24404A; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; }
+  select.jp-locked { pointer-events: none; opacity: 0.85; background-image: none; border-style: dashed; }
   .jp-chip:hover { border-color: #2ECC71; }
   .jp-btn-ghost { background: transparent; color: #2ECC71; border: 1px solid #2ECC71; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.88rem; cursor: pointer; }
   .jp-standard { color: #C7D1CF; font-size: 0.85rem; line-height: 1.5; border-top: 1px solid #3B5860; padding-top: 0.9rem; margin-top: 0.6rem; }
@@ -120,7 +121,7 @@
     <div class="jp-card jp-step" data-name="Job title and skills">
       <h2>2. Job title and skills</h2>
       <div class="jp-suggest-note" id="jp-suggest-note" hidden></div>
-      <p class="jp-hint">Type the title you want candidates to see (tap a suggested one if you like). Pick up to three skills the job needs. Each skill takes the lowest level a candidate needs (or no minimum); the levels you set decide the job's level, and a candidate must meet them to apply. No minimum level on any skill makes it an entry-level job.</p>
+      <p class="jp-hint">Skills are chosen from your description. Each skill takes the lowest level a candidate needs (or no minimum). The levels you set decide the job's level, and a candidate must meet them to apply. No minimum on any skill makes it an entry-level job.</p>
       <label class="jp-field">Job title
         <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
       </label>
