@@ -169,14 +169,17 @@
     $('jp-radius').hidden = !(a === 'remote_in_area' && r === 'radius');
     $('jp-address').hidden = !(a === 'onsite' || a === 'hybrid' || (a === 'remote_in_area' && r === 'radius'));
 
-    const commOnly = $('jp-comm-only').checked;
+    const payType = form.querySelector('[name="basePayType"]');
+    const commOnly = payType.value === 'commission';
     const enable = $('jp-comm-enable');
-    form.querySelectorAll('#jp-base-row input, #jp-base-row select').forEach((el) => { el.disabled = commOnly; });
+    form.querySelectorAll('#jp-base-row input').forEach((el) => { el.disabled = commOnly; if (commOnly) el.value = ''; });
+    $('jp-basis').hidden = commOnly;
+    $('jp-comm-enable-row').hidden = commOnly;
     if (commOnly) enable.checked = true;
     enable.disabled = commOnly;
     $('jp-comm').hidden = !(enable.checked || commOnly);
   }
-  [emp, arr, reason, $('jp-comm-only'), $('jp-comm-enable')].forEach((el) => el.addEventListener('change', sync));
+  [emp, arr, reason, form.querySelector('[name="basePayType"]'), $('jp-comm-enable')].forEach((el) => el.addEventListener('change', sync));
   sync();
 
   // Disabled inputs are not submitted; the server forces base pay to 0 for commission-only jobs anyway.
@@ -229,7 +232,7 @@
     function showTip() {
       const t = $('jp-titleid');
       const type = (form.querySelector('[name="basePayType"]') || {}).value;
-      const comm = $('jp-comm-only');
+      const comm = { checked: type === 'commission' };
       const band = t && bench.bands[t.value] && bench.bands[t.value][levelNow()];
       if (!band || (comm && comm.checked)) { tip.hidden = true; return; }
       const hourly = type === 'hourly';

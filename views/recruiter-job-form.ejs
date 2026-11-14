@@ -78,6 +78,8 @@
   .jp-suggest-note { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 0.9rem; font-size: 0.9rem; }
   .jp-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
   .jp-chip { background: #24404A; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; }
+  .jp-also { grid-template-columns: repeat(3, auto); justify-content: start; gap: 1.8rem; }
+  #jp-base-row input:disabled { opacity: 0.4; cursor: not-allowed; }
   select.jp-locked { pointer-events: none; opacity: 0.85; background-image: none; border-style: dashed; }
   .jp-chip.is-on { border-color: #2ECC71; background: #1E3B2C; }
   .jp-picked { margin-top: 0.8rem; width: 100%; box-sizing: border-box; background: #1F363C; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; font-weight: 700; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem; font-family: inherit; font-size: 1rem; }
@@ -271,19 +273,21 @@
           <option value="">Pay type</option>
           <option value="salary" <%= val('basePayType') === 'salary' ? 'selected' : '' %>>Salary (per year)</option>
           <option value="hourly" <%= val('basePayType') === 'hourly' ? 'selected' : '' %>>Hourly</option>
+          <option value="commission" <%= (val('basePayType') === 'commission' || on('commissionOnly')) ? 'selected' : '' %>>Commission only</option>
         </select>
         <input type="text" name="baseMin" inputmode="decimal" placeholder="Base pay minimum" value="<%= val('baseMin') %>" aria-label="Base pay minimum">
         <input type="text" name="baseMax" inputmode="decimal" placeholder="Base pay maximum" value="<%= val('baseMax') %>" aria-label="Base pay maximum">
       </div>
       <div class="jp-paytip" id="jp-paytip" hidden></div>
       <% ['basePayType', 'baseRange'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
-      <label class="jp-check" style="margin-top:0.2rem;"><input type="checkbox" name="commissionOnly" id="jp-comm-only" value="on" <%= on('commissionOnly') ? 'checked' : '' %>> This is a commission-only job (base pay is $0)</label>
 
+      <div id="jp-basis">
       <span class="jp-label">What the base pay range is based on (pick any)</span>
       <div class="jp-grid">
         <% payBasisOptions.forEach(function(p) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="payBasis" value="<%= p.code %>" <%= has('payBasis', p.code) ? 'checked' : '' %>> <%= p.label %></label><% }); %>
       </div>
       <% if (errors.payBasis) { %><div class="jp-err"><%= errors.payBasis %></div><% } %>
+      </div>
 
       <label class="jp-check" id="jp-comm-enable-row" style="margin-top:0.8rem;"><input type="checkbox" name="commissionEnabled" id="jp-comm-enable" value="on" <%= on('commissionEnabled') ? 'checked' : '' %>> Commission is part of the pay</label>
       <div id="jp-comm" hidden>
@@ -297,12 +301,11 @@
       </div>
 
       <span class="jp-label" style="margin-top:0.9rem;">Also offered</span>
-      <% [['bonus', 'Bonus'], ['equity', 'Equity'], ['tips', 'Tips']].forEach(function(x) { %>
-        <div class="jp-row">
-          <label class="jp-check jp-narrow" style="margin:0;"><input type="checkbox" name="<%= x[0] %>Offered" value="on" <%= on(x[0] + 'Offered') ? 'checked' : '' %>> <%= x[1] %></label>
-          <input type="text" name="<%= x[0] %>Note" maxlength="80" placeholder="Optional note, e.g. 10% of salary" value="<%= val(x[0] + 'Note') %>" aria-label="<%= x[1] %> note">
-        </div>
-      <% }); %>
+      <div class="jp-grid jp-also">
+        <% [['bonus', 'Bonus'], ['equity', 'Equity'], ['tips', 'Tips']].forEach(function(x) { %>
+          <label class="jp-check" style="margin:0;"><input type="checkbox" name="<%= x[0] %>Offered" value="on" <%= on(x[0] + 'Offered') ? 'checked' : '' %>> <%= x[1] %></label>
+        <% }); %>
+      </div>
       <% if (errors.bonus) { %><div class="jp-err"><%= errors.bonus %></div><% } %>
 
       <span class="jp-label" style="margin-top:0.9rem;">Benefits</span>

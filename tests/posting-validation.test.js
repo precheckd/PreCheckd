@@ -73,6 +73,12 @@ t('every skill needs a level chosen (or no minimum)', () => {
   const none = run({ skills: [{ key: 'linux', minLevel: 'none' }] });
   assert.ok(!none.errors.skills); assert.strictEqual(none.value.skills[0].minLevel, null); assert.strictEqual(none.value.seniorityLabel, 'Entry level');
 });
+t('Commission only is a pay type: base pay is $0 and no base-pay basis is needed', () => {
+  const { errors, value } = run({ basePayType: 'commission', baseMin: '90000', baseMax: '99999', payBasis: [], commissionMin: '20000', commissionAverage: '60000', commissionAck: 'on' });
+  assert.deepStrictEqual(errors, {});
+  assert.strictEqual(value.commissionOnly, true); assert.strictEqual(value.baseMin, 0); assert.deepStrictEqual(value.payBasis, []);
+  assert.ok(only({ basePayType: 'commission', commissionMin: '', commissionAverage: '' }, 'commission'));   // commission figures still required
+});
 t('shifts: pick one or more; flexible stands alone; none is refused', () => {
   const two = run({ shifts: ['daytime', 'evenings'] });
   assert.deepStrictEqual(two.value.shifts, ['daytime', 'evenings']); assert.strictEqual(two.value.shift, 'daytime');
@@ -197,10 +203,10 @@ t('pay basis, benefits and the good-faith box are required', () => {
   assert.deepStrictEqual(run({ benefits: [], benefitsOther: 'Free lunch Fridays' }).errors, {});
   only({ goodFaith: undefined }, 'goodFaith');
 });
-t('bonus, equity and tips are checkmarks with an optional short note', () => {
-  const { value, errors } = run({ bonusOffered: 'on', bonusNote: '10% of salary', equityOffered: 'on', tipsNote: 'ignored without the box' });
+t('bonus, equity and tips are plain checkmarks, no notes', () => {
+  const { value, errors } = run({ bonusOffered: 'on', bonusNote: 'a typed note is ignored', equityOffered: 'on' });
   assert.deepStrictEqual(errors, {});
-  assert.deepStrictEqual(value.bonus, { offered: true, note: '10% of salary' });
+  assert.deepStrictEqual(value.bonus, { offered: true, note: '' });
   assert.deepStrictEqual(value.equity, { offered: true, note: '' });
   assert.deepStrictEqual(value.tips, { offered: false, note: '' });
 });
@@ -264,7 +270,6 @@ t('the free-text scan blocks contact details, years, citizens only and age wordi
   assert.match(only({ summary: '5+ years of experience with Linux ' + 'x'.repeat(60) }, 'summary'), /Years of experience/);
   assert.match(only({ summary: 'US citizens only ' + 'x'.repeat(60) }, 'summary'), /authorized to work/);
   assert.match(only({ summary: 'A young, digital native team that ' + 'x'.repeat(60) }, 'summary'), /age, gender or nationality/);
-  assert.match(only({ bonusOffered: 'on', bonusNote: 'text me on whatsapp' }, 'bonus'), /contact you elsewhere/);
   only({ benefits: [], benefitsOther: 'see www.perks.com' }, 'benefits');
   only({ employmentType: 'contract', contractLength: 'call 555-123-4567' }, 'contractLength');
 });

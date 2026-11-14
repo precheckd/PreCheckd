@@ -67,7 +67,7 @@ t('the commission confirmation is never pre-ticked, so it must be given again', 
 t('a commission-only posting round-trips', () => {
   const p = saveAs(base({ commissionOnly: 'on', commissionEnabled: undefined, basePayType: undefined, baseMin: undefined, baseMax: undefined, arrangement: 'remote', address: '', inOfficeDays: '' }));
   const form = formFromPosting(p);
-  assert.strictEqual(form.commissionOnly, 'on');
+  assert.strictEqual(form.basePayType, 'commission');
   assert.strictEqual(form.baseMin, '');
   const again = validatePosting({ ...form, commissionAck: 'on' }, { ...ctx, editing: { createdAt: p.createdAt } });
   assert.deepStrictEqual(again.errors, {});

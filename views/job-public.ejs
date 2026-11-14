@@ -82,7 +82,7 @@
   <div class="jp-card"><h2>Pay</h2>
     <p>
       <% if (j.commissionOnly) { %>Base pay: $0 (commission only)<% } else { %>Base pay: <%= money(j.baseMin) %> to <%= money(j.baseMax) %><%= per %><% } %><br>
-      Based on: <%= j.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %>
+      <% if (j.payBasis && j.payBasis.length) { %>Based on: <%= j.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %><% } %>
       <% if (j.commission && j.commission.average) { %><br>Commission: at least <%= money(j.commission.minAnticipated) %>, average <%= money(j.commission.average) %> a year<% } %>
       <% ['bonus', 'equity', 'tips'].forEach(function(k) { if (j[k] && j[k].offered) { %><br><%= k.charAt(0).toUpperCase() + k.slice(1) %> offered<%= j[k].note ? ': ' + j[k].note : '' %><% } }); %>
     </p>

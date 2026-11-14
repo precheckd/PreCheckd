@@ -45,7 +45,7 @@ function formFromPosting(p) {
     arrangement: o.arrangement, inOfficeDays: o.inOfficeDays ? String(o.inOfficeDays) : '', areaReason: o.areaReason || '',
     states: rule.states || [], radiusMiles: rule.radiusMiles ? String(rule.radiusMiles) : '', address: o.address || '',
     relocation: o.relocation ? 'yes' : 'no', travel: o.travel, shifts: o.shifts && o.shifts.length ? Array.from(o.shifts) : [o.shift],
-    basePayType: o.commissionOnly ? '' : o.basePayType,
+    basePayType: o.commissionOnly ? 'commission' : o.basePayType,
     baseMin: o.commissionOnly ? '' : String(o.baseMin), baseMax: o.commissionOnly ? '' : String(o.baseMax),
     commissionOnly: yes(o.commissionOnly), commissionEnabled: yes(hasCommission && !o.commissionOnly),
     commissionMin: o.commission && o.commission.minAnticipated ? String(o.commission.minAnticipated) : '',

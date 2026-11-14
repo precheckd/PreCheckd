@@ -176,9 +176,9 @@ function validatePosting(body, ctx) {
   if (!chosenShifts.length) err('shift', 'Choose at least one shift.');
 
   // Pay
-  v.commissionOnly = flag(b.commissionOnly);
+  v.commissionOnly = flag(b.commissionOnly) || text(b.basePayType, 12) === 'commission';   // "Commission only" is a pay type choice
   v.basePayType = v.commissionOnly ? 'salary' : text(b.basePayType, 10); // a $0 base has no type to choose
-  if (!['salary', 'hourly'].includes(v.basePayType)) err('basePayType', 'Choose salary or hourly.');
+  if (!['salary', 'hourly'].includes(v.basePayType)) err('basePayType', 'Choose a pay type.');
   const commissionOn = v.commissionOnly || flag(b.commissionEnabled);
   if (v.commissionOnly) {
     v.baseMin = 0;
@@ -202,7 +202,8 @@ function validatePosting(body, ctx) {
     }
   }
   v.payBasis = [...new Set(asArray(b.payBasis).map((p) => text(p, 20)).filter((p) => codes(opt.PAY_BASIS).includes(p)))];
-  if (!v.payBasis.length) err('payBasis', 'Say what the pay range is based on.');
+  if (v.commissionOnly) v.payBasis = [];   // there is no base range to explain
+  else if (!v.payBasis.length) err('payBasis', 'Say what the pay range is based on.');
   v.commission = { minAnticipated: null, average: null };
   v.commissionAckAt = null;
   if (commissionOn) {
@@ -217,7 +218,7 @@ function validatePosting(body, ctx) {
   }
   for (const k of ['bonus', 'equity', 'tips']) {
     const offered = flag(b[`${k}Offered`]);
-    v[k] = { offered, note: offered ? text(b[`${k}Note`], opt.LIMITS.noteMax) : '' };
+    v[k] = { offered, note: '' };   // just offered or not; no free-text note
   }
   v.benefits = [...new Set(asArray(b.benefits).map((x) => text(x, 30)).filter((x) => codes(opt.BENEFITS).includes(x)))];
   v.noBenefits = flag(b.noBenefits);

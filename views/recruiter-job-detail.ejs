@@ -33,7 +33,7 @@
   <div class="jd-card"><h2>Pay</h2>
     <p>
       <% if (posting.commissionOnly) { %>Base pay: $0 (commission only)<% } else { %>Base pay: <%= money(posting.baseMin) %> to <%= money(posting.baseMax) %><%= per %><% } %><br>
-      Based on: <%= posting.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %>
+      <% if (posting.payBasis && posting.payBasis.length) { %>Based on: <%= posting.payBasis.map((c) => lbl(options.payBasis, c)).join(', ') %><% } %>
       <% if (posting.commission && posting.commission.average) { %><br>Commission: at least <%= money(posting.commission.minAnticipated) %>, average <%= money(posting.commission.average) %> a year<% } %>
       <% ['bonus', 'equity', 'tips'].forEach(function(k) { if (posting[k] && posting[k].offered) { %><br><%= k.charAt(0).toUpperCase() + k.slice(1) %> offered<%= posting[k].note ? ': ' + posting[k].note : '' %><% } }); %>
     </p>
