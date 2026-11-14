@@ -7,6 +7,36 @@ const skills = require('../services/skills');
 const SkillRequest = require('../models/SkillRequest');
 const testRequests = require('../services/testRequests');
 const ach = require('../services/achievements');
+const { ROLES } = require('../content/roles');
+const { levelName } = require('../utils/levelName');
+
+const prettyKey = (k) => String(k).split('-').map((w) => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1))).join(' ');
+const shortDay = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+// One plain record per testable skill, used by "Your skills", the browse list and the search box.
+function buildSkillIndex(ladders, skillCards, current, levelName) {
+  const cur = new Map(current.map((x) => [x.key, x]));
+  const out = new Map();
+  for (const g of ladders) {
+    const next = g.rungs.find((r) => !r.passed);
+    const started = g.rungs.some((r) => r.result || r.open || r.held || r.rejected);
+    const canStart = !!(next && !next.locked && !next.retakeOn && !next.held);
+    out.set(g.key, { key: g.key, label: g.label, level: g.level ? levelName(g.level, g.grandmaster) : null, started: !!g.level || started,
+      startId: canStart ? next.assessment.assessmentId : null,
+      startText: canStart ? (next.open ? 'Continue ' : 'Start ') + next.tierName : null,
+      note: next && next.retakeOn ? 'Retake ' + shortDay(next.retakeOn) : (next && next.held ? 'In review' : '') });
+  }
+  for (const c of skillCards) {
+    const sk = (c.assessment.skills || [])[0];
+    if (!sk || out.has(sk.key)) continue;
+    const x = cur.get(sk.key);
+    out.set(sk.key, { key: sk.key, label: sk.label, level: x ? levelName(x.level, x.grandmaster) : null, started: !!x || !!c.open,
+      startId: !c.retakeOn && !c.held ? c.assessment.assessmentId : null,
+      startText: !c.retakeOn && !c.held ? (c.open ? 'Continue' : (x ? 'Retake' : 'Start')) : null,
+      note: c.retakeOn ? 'Retake ' + shortDay(c.retakeOn) : (c.held ? 'In review' : '') });
+  }
+  return out;
+}
 
 // CoderByte's "post assessment redirect URL" points here. The candidate's session cookie is
 // what identifies them (CoderByte passes nothing we need), so a logged-out visitor goes to login.
@@ -59,12 +89,20 @@ router.get('/:slug/skills', async (req, res) => {
         rejected: !!(lastDone && lastDone.reviewDecision === 'rejected')
       });
     }
+    const skillCardsOnly = cards.filter((c) => !['title', 'finalist', 'custom'].includes(c.assessment.kind) && !c.assessment.tier);
+    const ladderList = skills.buildLadders(cards, current);
+    const index = buildSkillIndex(ladderList, skillCardsOnly, current, levelName);
+    const skillList = [...index.values()].sort((a, b) => a.label.localeCompare(b.label));
+    const searchData = {
+      skills: skillList,
+      roles: ROLES.map((r) => ({ id: r.id, title: r.title, skills: r.skills.map((k) => ({ key: k, label: index.has(k) ? index.get(k).label : prettyKey(k) })) }))
+    };
     const finished = req.query.finished === '1';
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
       candidate, cards,
-      skillCards: cards.filter((c) => !['title', 'finalist', 'custom'].includes(c.assessment.kind) && !c.assessment.tier),
-      ladders: skills.buildLadders(cards, current),
+      skillCards: skillCardsOnly,
+      ladders: ladderList, skillList, searchData,
       titleCards: cards.filter((c) => c.assessment.kind === 'title' && !c.assessment.roleKey),
       titles,
       testRequests: await testRequests.pendingFor(candidate),

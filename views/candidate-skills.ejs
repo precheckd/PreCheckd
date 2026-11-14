@@ -62,7 +62,13 @@
   <div class="sk-container">
     <a href="/candidate/<%= candidate.slug %>/edit" class="sk-back">&larr; Back to your profile</a>
     <h1>Skills &amp; Tests</h1>
-    <p class="sk-lead">Take a short test and recruiters will see your level in each skill: Foundational, Intermediate, Advanced or Master (and Grandmaster for a perfect Expert exam). Results below Foundational stay private. Levels come from which difficulty tiers you pass, not a percentage. You can retake a skill once every <%= RETAKE_DAYS %> days and your latest result counts. <a href="/skills-explained" style="color:#4ADE80;">How levels work</a></p>
+    <p class="sk-lead">Take a short test to set your level. Retake a skill every <%= RETAKE_DAYS %> days. <a href="/skills-explained" style="color:#4ADE80;">How levels work</a></p>
+
+    <div class="sk-card" id="sk-find">
+      <h2>Find a skill or a job</h2>
+      <input type="text" id="sk-q" autocomplete="off" placeholder="Search a skill (Python) or a job title (Data Analyst)" style="width:100%;padding:0.7rem 0.9rem;border-radius:6px;border:1px solid #5A7880;background:#1F363C;color:#F2F4F3;font-size:1rem;">
+      <div id="sk-res" style="margin-top:0.6rem;"></div>
+    </div>
 
     <% if (finished && processing) { %>
       <div class="sk-banner ok">Thanks, you're done. We're pulling in your results now. This page refreshes on its own and usually takes a few seconds.</div>
@@ -130,7 +136,7 @@
     <% if (achievementVisits > 0) { %><p class="sk-meta" style="margin-bottom:0.5rem;"><%= achievementVisits %> visit<%= achievementVisits === 1 ? '' : 's' %> so far from your shared achievements.</p><% } %>
     <p class="sk-meta" style="margin-bottom:0.9rem;">Tick Show on the skills recruiters can see. They see how many skills you've been tested on and how many you're showing, never the hidden ones, and a hidden skill can move you into the partial-match section of their searches.</p>
     <div class="sk-grid">
-      <% ladders.forEach((g) => { const s = curByKey.get(g.key);
+      <% ladders.filter((g) => (skillList.find((x) => x.key === g.key) || {}).started).forEach((g) => { const s = curByKey.get(g.key);
            const nextRung = g.rungs.find((r) => !r.passed);
            const canStart = nextRung && !nextRung.locked && !nextRung.retakeOn && !nextRung.held; %>
       <div class="sk-card sk-skill">
@@ -199,29 +205,16 @@
     </form>
     <% } %>
 
-    <h2 class="sk-h2">Skill tests</h2>
-    <% skillCards.forEach((c) => { %>
-      <div class="sk-card">
-        <h2><%= c.assessment.name || 'Technical Assessment' %></h2>
-        <div class="sk-tags"><% c.assessment.skills.forEach((s) => { %><span class="sk-tag"><%= s.label %></span><% }) %></div>
-        <% if (c.rejected) { %>
-          <p>Your last attempt couldn't be verified, so it wasn't published.<%= c.retakeOn ? ' You can try again from ' + c.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' : '' %></p>
-        <% } %>
-        <% if (c.held) { %>
-          <p>Your last attempt is being reviewed before it's shown. You'll see it here once it's cleared.</p>
-        <% } %>
-        <% if (c.retakeOn) { %>
-          <p>You can take this again on <strong><%= c.retakeOn.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></strong>.</p>
-          <button class="sk-btn" disabled>Retake locked</button>
-        <% } else { %>
-          <p>One sitting, multiple choice, timed. Your results come back to this page automatically. Use your own work and knowledge, since attempts that look assisted aren't published.</p>
-          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= c.assessment.assessmentId %>">
-            <button class="sk-btn" type="submit"><%= c.open ? 'Continue test' : (current.length ? 'Take it again' : 'Start test') %></button>
-          </form>
-        <% } %>
+    <details class="sk-card" id="sk-browse">
+      <summary class="sk-name" style="cursor:pointer;">Browse all skills (<%= skillList.length %>)</summary>
+      <div style="margin-top:0.6rem;">
+      <% skillList.forEach((x) => { %>
+        <div class="sk-row"><div><span class="sk-name"><%= x.label %></span><% if (x.level) { %> <span class="sk-level"><%= x.level %></span><% } %><% if (x.note) { %> <span class="sk-meta"><%= x.note %></span><% } %></div>
+          <% if (x.startId) { %><form method="POST" action="/candidate/<%= candidate.slug %>/skills/start/<%= x.startId %>"><button class="sk-btn sm" type="submit"><%= x.startText.trim() %></button></form><% } else { %><button class="sk-btn sm" disabled><%= x.note || 'Locked' %></button><% } %></div>
+      <% }) %>
+      <% if (!skillList.length) { %><p>No skill tests are available yet. Check back soon.</p><% } %>
       </div>
-    <% }) %>
-    <% if (!skillCards.length && !ladders.length) { %><div class="sk-card"><p>No skill tests are available yet. Skill tests set your skill levels, so check back soon.</p></div><% } %>
+    </details>
 
     <div class="sk-pair">
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/request">
@@ -286,6 +279,38 @@
     <% if (!titleCards.length) { %><div class="sk-card"><p>No job title assessments are available yet.</p></div><% } %>
   </div>
 </div>
+<script id="sk-data" type="application/json"><%- JSON.stringify(searchData).replace(/</g, '\\u003c') %></script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('sk-data').textContent);
+  var slug = <%- JSON.stringify(candidate.slug) %>;
+  var by = {}; D.skills.forEach(function (s) { by[s.key] = s; });
+  var q = document.getElementById('sk-q'), out = document.getElementById('sk-res');
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function btn(s) {
+    if (!s) return '<span class="sk-meta">Coming soon</span>';
+    if (s.startId) return '<form method="POST" action="/candidate/' + slug + '/skills/start/' + esc(s.startId) + '" style="margin:0"><button class="sk-btn sm" type="submit">' + esc(s.startText.trim()) + '</button></form>';
+    return '<span class="sk-meta">' + esc(s.note || 'Locked') + '</span>';
+  }
+  function skillRow(label, s) {
+    return '<div class="sk-row"><div><span class="sk-name">' + esc(label) + '</span>' + (s && s.level ? ' <span class="sk-level">' + esc(s.level) + '</span>' : '') + '</div>' + btn(s) + '</div>';
+  }
+  function draw() {
+    var t = q.value.trim().toLowerCase(); if (!t) { out.innerHTML = ''; return; }
+    var html = '';
+    var sk = D.skills.filter(function (s) { return s.label.toLowerCase().indexOf(t) > -1; }).slice(0, 6);
+    sk.forEach(function (s) { html += skillRow(s.label, s); });
+    var jobs = D.roles.filter(function (r) { return r.title.toLowerCase().indexOf(t) > -1; }).slice(0, 5);
+    jobs.forEach(function (r) {
+      var have = r.skills.filter(function (k) { return by[k] && by[k].level; }).length;
+      html += '<div class="sk-card" style="margin:0.6rem 0 0;padding:0.9rem 1rem;"><div class="sk-name">' + esc(r.title) + '</div><div class="sk-meta">You have ' + have + ' of ' + r.skills.length + ' skills</div>' +
+        r.skills.map(function (k) { var s = by[k]; return skillRow(s ? s.label : k, s && s.level ? s : (s ? s : null)); }).join('') + '</div>';
+    });
+    out.innerHTML = html || '<p class="sk-meta">No match. Use Request a skill below.</p>';
+  }
+  q.addEventListener('input', draw);
+})();
+</script>
 <style>
   .skm-bar { display: flex; gap: 4px; margin: 0.45rem 0 0.35rem; width: 100%; }
   .skm-bar span { flex: 1; height: 7px; border-radius: 999px; background: #1F363C; }
