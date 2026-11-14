@@ -88,12 +88,14 @@
     const text = textNow();
     if (text.length < 40 || form.getAttribute(lastKey) === text) return;
     form.setAttribute(lastKey, text);
+    $('jp-ai-ok').hidden = true;
     try {
       const res = await fetch('/recruiter-jobs/suggest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
       const data = await res.json();
       if (!res.ok) { note.textContent = 'Pick your skills above.'; note.hidden = false; return; }
       const hasSkills = !!(data.skills && data.skills.length);
+      $('jp-ai-ok').hidden = !(hasSkills && data.source === 'ai');
       if (hasSkills) fillSkills(data.skills);
       lockSkills(hasSkills);
       renderIdeas(data.roles);

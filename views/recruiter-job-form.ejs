@@ -58,6 +58,7 @@
   .jp-check input { width: 18px; height: 18px; margin-top: 0.1rem; flex-shrink: 0; accent-color: #2ECC71; }
   .jp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.25rem 1rem; margin-bottom: 0.6rem; }
   .jp-states { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-height: 220px; overflow-y: auto; padding: 0.5rem; border: 1px solid #3B5860; border-radius: 6px; }
+  .jp-ai-ok { display: inline-flex; align-items: center; gap: 0.4rem; background: #2ECC71; color: #10241A; font-weight: 700; font-size: 0.85rem; padding: 0.3rem 0.8rem; border-radius: 999px; margin: 0 0 0.7rem; }
   .jp-label { color: #E8EBEA; font-weight: 600; font-size: 0.9rem; margin: 0.4rem 0 0.35rem; display: block; }
   .jp-err { color: #FF8A8A; font-size: 0.85rem; margin: 0.25rem 0 0.6rem; }
   .jp-errbox { background: #3A2020; color: #FF8A8A; padding: 0.9rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; border-left: 4px solid #E53E3E; font-size: 0.9rem; }
@@ -125,7 +126,8 @@
     <!-- 2. Title and skills -->
     <div class="jp-card jp-step" data-name="Job title and skills">
       <h2>2. Job title and skills</h2>
-      <span class="jp-label">Suggested skills</span>
+      <div class="jp-ai-ok" id="jp-ai-ok" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg> AI Analysis Successful</div>
+      <span class="jp-label">Suggested skills from job description</span>
       <% for (let i = 0; i < 3; i++) { %>
         <div class="jp-row">
           <select name="skills[<%= i %>][key]" class="jp-skill-key" aria-label="Skill <%= i + 1 %>">
