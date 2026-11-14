@@ -308,9 +308,9 @@
     sk.forEach(function (s) { html += skillRow(s.label, s); });
     var jobs = D.roles.filter(function (r) { return r.title.toLowerCase().indexOf(t) > -1; }).slice(0, 5);
     jobs.forEach(function (r) {
-      var have = r.skills.filter(function (k) { return by[k] && by[k].level; }).length;
+      var have = r.skills.filter(function (k) { return by[k.key] && by[k.key].level; }).length;
       html += '<div class="sk-card" style="margin:0.6rem 0 0;padding:0.9rem 1rem;"><div class="sk-name">' + esc(r.title) + '</div><div class="sk-meta">You have ' + have + ' of ' + r.skills.length + ' skills</div>' +
-        r.skills.map(function (k) { var s = by[k]; return skillRow(s ? s.label : k, s && s.level ? s : (s ? s : null)); }).join('') + '</div>';
+        r.skills.map(function (k) { var s = by[k.key]; return skillRow(k.label, s || null); }).join('') + '</div>';
     });
     out.innerHTML = html || '<p class="sk-meta">No match. Use Request a skill below.</p>';
   }
