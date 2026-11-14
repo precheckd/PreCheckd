@@ -132,6 +132,58 @@
   };
   levelSelects.forEach((lv) => lv.addEventListener('change', () => lv.classList.remove('jp-bad')));
 
+  // ---- certifications: one slot, then AND (a new group that must also be met) or OR (another choice in the same group) ----
+  const certBox = $('jp-certs');
+  if (certBox) {
+    const maxGroups = parseInt(certBox.dataset.maxGroups, 10) || 3;
+    const maxPer = parseInt(certBox.dataset.maxPer, 10) || 5;
+    const add = document.createElement('span');
+    add.className = 'jp-certadd';
+    const mk = (label, conn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', () => addRow(conn)); return b; };
+    const andBtn = mk('AND', 'and'); const orBtn = mk('OR', 'or');
+    add.appendChild(andBtn); add.appendChild(orBtn);
+    const rows = () => Array.from(certBox.querySelectorAll('.jp-certrow'));
+    function refresh() {
+      let g = 0; let inGroup = 0;
+      const all = rows();
+      all.forEach((row, i) => {
+        if (i === 0) row.dataset.conn = '';
+        else if (!row.dataset.conn) row.dataset.conn = 'or';
+        if (i > 0 && row.dataset.conn === 'and') { g++; inGroup = 0; }
+        inGroup++;
+        row.querySelector('select').name = 'certGroups[' + g + '][]';
+        row.querySelector('.jp-conn').textContent = row.dataset.conn ? row.dataset.conn.toUpperCase() : '';
+        row.querySelector('.jp-cert-x').hidden = all.length === 1 && !row.querySelector('select').value;
+      });
+      const last = all[all.length - 1];
+      last.appendChild(add);
+      const filled = !!last.querySelector('select').value;
+      andBtn.disabled = !filled || g + 1 >= maxGroups;
+      orBtn.disabled = !filled || inGroup >= maxPer;
+    }
+    function addRow(conn) {
+      add.remove();   // never copy the buttons into the new row
+      const first = rows()[0];
+      const row = first.cloneNode(true);
+      row.dataset.conn = conn;
+      row.querySelector('select').value = '';
+      certBox.appendChild(row);
+      wire(row);
+      refresh();
+      row.querySelector('select').focus();
+    }
+    function wire(row) {
+      row.querySelector('select').addEventListener('change', refresh);
+      row.querySelector('.jp-cert-x').addEventListener('click', () => {
+        if (rows().length === 1) { row.querySelector('select').value = ''; }
+        else { add.remove(); row.remove(); }
+        refresh();
+      });
+    }
+    rows().forEach(wire);
+    refresh();
+  }
+
   // ---- shifts: Flexible means any shift, so it stands alone ----
   const shiftBoxes = Array.from(form.querySelectorAll('input[name="shifts"]'));
   shiftBoxes.forEach((box) => box.addEventListener('change', () => {
