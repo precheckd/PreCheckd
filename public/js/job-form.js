@@ -42,8 +42,18 @@
     markChosen();
     form.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  // The last suggestion: "Not listed" opens the search box for the whole role list.
+  function renderIdeas(roles) {
+    ideas.textContent = '';
+    (roles || []).forEach((r) => ideas.appendChild(roleChip(r, null)));
+    const nl = chip('Not listed', () => { search.hidden = false; nl.classList.add('is-on'); search.focus(); });
+    if (!search.hidden) nl.classList.add('is-on');
+    ideas.appendChild(nl);
+    markChosen();
+  }
   function roleChip(r, skills) { const c = chip(r.title, () => pickRole(r, skills)); c.dataset.id = r.id; return c; }
   if (titleIdInput.value && !titleInput.value) titleIdInput.value = '';
+  renderIdeas([]);
 
   let roleTimer = null;
   search.addEventListener('input', () => {
@@ -83,9 +93,7 @@
       const hasSkills = !!(data.skills && data.skills.length);
       if (hasSkills) fillSkills(data.skills);
       lockSkills(hasSkills);
-      ideas.textContent = '';
-      (data.roles || []).forEach((r) => ideas.appendChild(roleChip(r, null)));
-      markChosen();
+      renderIdeas(data.roles);
       note.hidden = hasSkills;
       note.textContent = hasSkills ? '' : 'Pick your skills above.';
     } catch (e) {

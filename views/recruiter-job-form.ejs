@@ -12,6 +12,7 @@
   .jp-wrap { flex: 1; padding: 1rem 1.5rem 3rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
   .jp-inner { max-width: 1060px; width: 100%; }
   #jp-wiz { scroll-margin-top: 6rem; }
+  .jp-sub + .jp-chips { margin-top: 0.7rem; }
   .jp-wiz { display: flex; gap: 1.5rem; align-items: flex-start; }
   .jp-main { flex: 1; min-width: 0; max-width: 820px; }
   .jp-nav { flex: 0 0 210px; position: sticky; top: 6rem; display: none; }
@@ -78,7 +79,7 @@
   .jp-chip { background: #24404A; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; }
   select.jp-locked { pointer-events: none; opacity: 0.85; background-image: none; border-style: dashed; }
   .jp-chip.is-on { border-color: #2ECC71; background: #1E3B2C; }
-  .jp-picked { width: 100%; box-sizing: border-box; background: #1F363C; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; font-weight: 700; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem; font-family: inherit; font-size: 1rem; }
+  .jp-picked { margin-top: 0.8rem; width: 100%; box-sizing: border-box; background: #1F363C; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; font-weight: 700; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem; font-family: inherit; font-size: 1rem; }
   .jp-search { width: 100%; box-sizing: border-box; background: #24404A; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; padding: 0.55rem 0.75rem; margin: 0.6rem 0; font-family: inherit; font-size: 0.95rem; }
   select.jp-bad { border-color: #E53E3E !important; }
   .jp-chip:hover { border-color: #2ECC71; }
@@ -141,11 +142,11 @@
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
       <p class="jp-hint" id="jp-suggest-note" aria-live="polite" hidden></p>
       <h3 class="jp-sub">Choose the job title that is the closest match for your job</h3>
+      <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
+      <input type="text" id="jp-role-search" class="jp-search" placeholder="Search all job titles" autocomplete="off" aria-label="Search all job titles" hidden>
+      <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
       <input type="text" name="title" id="jp-title" class="jp-picked" readonly placeholder="No title chosen yet" aria-label="Chosen job title" value="<%= val('title') || val('customTitle') %>">
       <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || '' %>">
-      <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
-      <input type="text" id="jp-role-search" class="jp-search" placeholder="Search all job titles" autocomplete="off" aria-label="Search all job titles">
-      <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
       <div class="jp-err" id="jp-step2-err" hidden></div>
       <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
     </div>
