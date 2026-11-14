@@ -7,6 +7,7 @@
 //
 // Every rule here comes from the Oct 21 decisions in docs/job-board-spec.md.
 
+const { normalizeSite } = require('./companySite');
 const { byTitle, byId: roleById } = require('../content/roles');
 const { catalogIdFor, byId: certById, CATALOG } = require('../content/certCatalog');
 const { STATE_CODES } = require('../utils/geo');
@@ -111,6 +112,9 @@ function validatePosting(body, ctx) {
   if (v.hiringCompany.length < 2) err('hiringCompany', 'Enter the company where the job is.');
   else if (BLIND_NAME.test(v.hiringCompany)) err('hiringCompany', 'Enter the real company name. Confidential or blind postings are not allowed.');
   else if (scanFields({ c: v.hiringCompany }).c && scanFields({ c: v.hiringCompany }).c.some((i) => i.code === 'email' || i.code === 'phone')) err('hiringCompany', 'Enter just the company name.');
+  const site = normalizeSite(b.companyWebsite);
+  if (!site) err('companyWebsite', "Enter the company's own website, like company.com.");
+  else { v.companyWebsite = site.website; v.companyDomain = site.domain; }
   if (!flag(b.authorizedToRecruit)) err('authorizedToRecruit', 'Confirm you are authorized by this company to recruit for this role.');
   v.authorizedToRecruit = flag(b.authorizedToRecruit);
 

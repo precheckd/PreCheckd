@@ -48,7 +48,7 @@ function publicShape(p) {
   const circle = (p.arrangement === 'onsite' || p.arrangement === 'hybrid' || (p.arrangement === 'remote_in_area' && p.areaReason === 'radius'))
     && p.areaRule && p.areaRule.point ? blurredCircle(p.areaRule.point, p._id) : null;
   return {
-    id: String(p._id), path: pathOf(p), title: p.title, seniorityLabel: p.seniorityLabel, hiringCompany: p.hiringCompany,
+    id: String(p._id), path: pathOf(p), title: p.title, seniorityLabel: p.seniorityLabel, hiringCompany: p.hiringCompany, companyWebsite: p.companyWebsite || '', companyDomain: p.companyDomain || '',
     employmentType: p.employmentType, contractLength: p.contractLength, openings: p.openings,
     arrangement: p.arrangement, inOfficeDays: p.inOfficeDays, areaLabel: p.areaLabel, location: locationText(p),
     displayCity: p.displayCity, displayState: p.displayState, relocation: p.relocation, travel: p.travel, shift: p.shift,
@@ -86,7 +86,7 @@ function jobPostingJsonLd(j) {
     datePosted: new Date(j.createdAt).toISOString().slice(0, 10),
     validThrough: new Date(j.closeDate).toISOString(),
     employmentType: EMPLOYMENT_SCHEMA[j.employmentType] || 'OTHER',
-    hiringOrganization: { '@type': 'Organization', name: j.hiringCompany },
+    hiringOrganization: { '@type': 'Organization', name: j.hiringCompany, ...(j.companyWebsite ? { sameAs: j.companyWebsite } : {}) },
     directApply: true,
     url: BASE_URL() + j.path,
   };

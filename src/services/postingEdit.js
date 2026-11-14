@@ -8,7 +8,7 @@ const nyDay = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Americ
 function docFromValue(value, location) {
   return {
     nickname: value.nickname, titleId: value.titleId, title: value.title, skills: value.skills, seniorityLabel: value.seniorityLabel,
-    hiringCompany: value.hiringCompany, authorizedToRecruit: value.authorizedToRecruit,
+    hiringCompany: value.hiringCompany, companyWebsite: value.companyWebsite, companyDomain: value.companyDomain, authorizedToRecruit: value.authorizedToRecruit,
     employmentType: value.employmentType, contractLength: value.contractLength, openings: value.openings,
     arrangement: value.arrangement, inOfficeDays: value.inOfficeDays, areaReason: value.areaReason,
     address: value.address, areaRule: location.areaRule || undefined, areaLabel: location.areaLabel,
@@ -40,7 +40,7 @@ function formFromPosting(p) {
   const hasCommission = Boolean(o.commissionOnly || (o.commission && o.commission.average));
   const f = {
     skills: [0, 1, 2].map((i) => (o.skills[i] ? { key: o.skills[i].key, minLevel: o.skills[i].minLevel || 'none' } : { key: '', minLevel: '' })),
-    title: o.title, nickname: o.nickname || '', hiringCompany: o.hiringCompany, authorizedToRecruit: yes(o.authorizedToRecruit),
+    title: o.title, nickname: o.nickname || '', hiringCompany: o.hiringCompany, companyWebsite: o.companyDomain || '', authorizedToRecruit: yes(o.authorizedToRecruit),
     employmentType: o.employmentType, contractLength: o.contractLength || '', openings: String(o.openings),
     arrangement: o.arrangement, inOfficeDays: o.inOfficeDays ? String(o.inOfficeDays) : '', areaReason: o.areaReason || '',
     states: rule.states || [], radiusMiles: rule.radiusMiles ? String(rule.radiusMiles) : '', address: o.address || '',
@@ -69,7 +69,7 @@ function formFromPosting(p) {
 
 const PARTS = {
   'title and skills': ['titleId', 'title', 'skills'],
-  company: ['hiringCompany'],
+  company: ['hiringCompany', 'companyDomain'],
   'job details': ['employmentType', 'contractLength', 'openings'],
   location: ['arrangement', 'inOfficeDays', 'areaReason', 'address', 'areaRule', 'relocation', 'travel', 'shift'],
   pay: ['basePayType', 'baseMin', 'baseMax', 'commissionOnly', 'payBasis', 'commission', 'bonus', 'equity', 'tips', 'benefits', 'benefitsOther', 'noBenefits'],

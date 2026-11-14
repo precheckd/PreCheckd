@@ -41,7 +41,7 @@
   </div>
   <% } %>
   <h1><%= j.title %></h1>
-  <div class="jp-meta"><%= j.seniorityLabel %> &middot; <%= j.hiringCompany %> &middot; <%= j.location %></div>
+  <div class="jp-meta"><%= j.seniorityLabel %> &middot; <%= j.hiringCompany %><% if (j.companyDomain) { %> (<a href="<%= j.companyWebsite %>" target="_blank" rel="nofollow noopener noreferrer"><%= j.companyDomain %></a>)<% } %> &middot; <%= j.location %></div>
 
   <% if (open) { %>
   <div class="jp-card">

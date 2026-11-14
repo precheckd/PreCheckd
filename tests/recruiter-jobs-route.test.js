@@ -71,7 +71,7 @@ app.use('/recruiter-jobs', require('../src/routes/recruiter-jobs'));
 const soon = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const validForm = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'none' }, { key: '', minLevel: '' }],
-  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', companyWebsite: 'acme.com', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '1', arrangement: 'onsite', address: '1 Main St, Boston, MA',
   relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
   payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',

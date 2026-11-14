@@ -162,6 +162,10 @@
         <datalist id="jp-company-list"></datalist>
       </label>
       <% if (errors.hiringCompany) { %><div class="jp-err"><%= errors.hiringCompany %></div><% } %>
+      <label class="jp-field">Company website
+        <input type="text" name="companyWebsite" maxlength="120" autocomplete="off" placeholder="company.com" value="<%= val('companyWebsite') %>">
+      </label>
+      <% if (errors.companyWebsite) { %><div class="jp-err"><%= errors.companyWebsite %></div><% } %>
       <label class="jp-check"><input type="checkbox" name="authorizedToRecruit" value="on" <%= on('authorizedToRecruit') ? 'checked' : '' %>> I am authorized by this company to recruit for this role. A false claim means the posting is removed and posting privileges may be suspended.</label>
       <% if (errors.authorizedToRecruit) { %><div class="jp-err"><%= errors.authorizedToRecruit %></div><% } %>
     </div>

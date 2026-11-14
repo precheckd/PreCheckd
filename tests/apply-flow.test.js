@@ -212,7 +212,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
   // ---- editing a posting that has applicants ----
   const ownerForm = (over = {}) => ({
     skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: '', minLevel: '' }, { key: '', minLevel: '' }],
-    titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+    titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme Corp', companyWebsite: 'acme.com', authorizedToRecruit: 'on',
     employmentType: 'full_time', openings: '1', arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime',
     basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
     education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',

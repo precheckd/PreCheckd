@@ -241,6 +241,7 @@ router.post('/new', async (req, res) => {
       try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
     }
     try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
+    require('../services/companySite').flagNewDomain(posting).catch((e) => console.error('Company site check failed:', e.message));
     sweepPostingLater(posting);
     try { await flagRepost(posting); } catch (e) { console.error('Repost check failed:', e.message); }
     sendJobPostedEmail(recruiter, posting, { publicUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}` }).catch((e) => console.error('Job posted email failed:', e.message));
@@ -360,6 +361,7 @@ router.post('/:id/edit', async (req, res) => {
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
     await posting.save();
     try { await require('../services/roleTests').requestForPosting(posting); } catch (e) { console.error('Custom test request failed:', e.message); }
+    if (r.parts.includes('company')) require('../services/companySite').flagNewDomain(posting).catch((e) => console.error('Company site check failed:', e.message));
     await applyImpact(posting, r.impact, r.parts);
     sweepPostingLater(posting);
     sendJobEditedEmail(recruiter, posting, { parts: r.parts, withdrawn: r.impact.withdraw.length, notified: r.impact.keep.length })

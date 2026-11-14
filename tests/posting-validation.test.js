@@ -11,7 +11,7 @@ const ctx = { now: NOW, skillLabels };
 
 const good = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'Foundational' }],
-  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', companyWebsite: 'https://www.acme.com/careers?x=1', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '2',
   arrangement: 'onsite', address: '1 Main St, Boston, MA', relocation: 'no', travel: 'occasional', shift: 'daytime',
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
@@ -72,6 +72,15 @@ t('every skill needs a level chosen (or no minimum)', () => {
   only({ skills: [{ key: 'linux', minLevel: '' }] }, 'skills');
   const none = run({ skills: [{ key: 'linux', minLevel: 'none' }] });
   assert.ok(!none.errors.skills); assert.strictEqual(none.value.skills[0].minLevel, null); assert.strictEqual(none.value.seniorityLabel, 'Entry level');
+});
+t('the company website is required, cleaned to a bare domain, and must be the company\'s own', () => {
+  const ok = run({});
+  assert.strictEqual(ok.value.companyDomain, 'acme.com'); assert.strictEqual(ok.value.companyWebsite, 'https://acme.com');
+  only({ companyWebsite: '' }, 'companyWebsite');
+  only({ companyWebsite: 'not a site' }, 'companyWebsite');
+  only({ companyWebsite: 'me@acme.com' }, 'companyWebsite');
+  only({ companyWebsite: 'https://www.linkedin.com/company/acme' }, 'companyWebsite');
+  assert.strictEqual(run({ companyWebsite: 'HTTP://Sub.Acme.co.uk/jobs' }).value.companyDomain, 'sub.acme.co.uk');
 });
 t('seniority comes from the highest minimum level', () => {
   assert.strictEqual(seniorityLabel([{ minLevel: null }]), 'Entry level');

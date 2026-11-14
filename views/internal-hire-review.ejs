@@ -18,7 +18,7 @@
       <% rows.forEach((r) => { %>
         <tr>
           <td><%= r.title %> at <%= r.company %><div style="color:#7A8B91;font-size:0.8rem;">recruiter <%= r.recruiterId %></div></td>
-          <td><%= r.flag === 'hire_denied' ? 'Named hire said no' : r.flag === 'repost_after_cancel' ? 'Reposted after cancelling' : '' %></td>
+          <td><%= r.flag === 'hire_denied' ? 'Named hire said no' : r.flag === 'repost_after_cancel' ? 'Reposted after cancelling' : r.flag === 'new_company_domain' ? 'New company website' : '' %></td>
           <td><%= r.pending %></td><td><%= r.denied %></td><td><%= r.expired %></td>
           <td><% if (r.flag) { %>
             <form method="POST" action="/hire-review/<%= r.id %>/clear"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="sr-btn" type="submit">Clear flag</button></form>

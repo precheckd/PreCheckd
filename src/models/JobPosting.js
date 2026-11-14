@@ -36,6 +36,8 @@ const jobPostingSchema = new mongoose.Schema({
   customTestRequestedAt: { type: Date, default: null },
   seniorityLabel: { type: String, required: true },                // derived from the skill levels, never typed
   hiringCompany: { type: String, required: true, maxlength: 100 },
+  companyWebsite: { type: String, default: '', maxlength: 120 },
+  companyDomain: { type: String, default: '', maxlength: 100 },
   authorizedToRecruit: { type: Boolean, required: true },
   employmentType: { type: String, enum: ['full_time', 'part_time', 'contract', 'temp', 'internship'], required: true },
   contractLength: { type: String, default: '', maxlength: 60 },
@@ -99,7 +101,7 @@ const jobPostingSchema = new mongoose.Schema({
   awaitingOutcomeAt: { type: Date, default: null },
   closeRemindersSent: { type: [Number], default: [] },           // days-before reminders already sent (3, 1)
   lastOutcomeReminderAt: { type: Date, default: null },
-  reviewFlag: { type: String, default: null },                    // staff attention: 'repost_after_cancel', 'hire_denied', 'no_outcome'
+  reviewFlag: { type: String, default: null },                    // staff attention: 'repost_after_cancel', 'hire_denied', 'no_outcome', 'new_company_domain'
   reviewClearedAt: { type: Date, default: null },
   outcome: {
     kind: { type: String, enum: [null, 'hired_precheckd', 'hired_elsewhere', 'not_filled', 'cancelled', 'no_outcome'], default: null },

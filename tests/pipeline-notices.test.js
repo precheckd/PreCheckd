@@ -247,7 +247,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     asOwner();
     const form = {
       skills: [{ key: 'linux', minLevel: 'Expert' }, { key: '', minLevel: '' }, { key: '', minLevel: '' }],
-      titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme <Corp>', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '1',
+      titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme <Corp>', companyWebsite: 'acme.com', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '1',
       arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
       payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on', education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',
       closeDate: new Date(strict.closeDate.getTime() - 4 * 3600000).toISOString().slice(0, 10), startDate: strict.startDate.toISOString().slice(0, 10),
