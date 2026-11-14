@@ -46,7 +46,10 @@
   function renderIdeas(roles) {
     ideas.textContent = '';
     (roles || []).forEach((r) => ideas.appendChild(roleChip(r, null)));
-    const nl = chip('Not listed', () => { search.hidden = false; nl.classList.add('is-on'); search.focus(); });
+    const nl = chip('Not listed', () => {
+      if (!search.hidden) { search.hidden = true; search.value = ''; results.textContent = ''; nl.classList.remove('is-on'); return; }
+      search.hidden = false; nl.classList.add('is-on'); search.focus();
+    });
     if (!search.hidden) nl.classList.add('is-on');
     ideas.appendChild(nl);
     markChosen();
