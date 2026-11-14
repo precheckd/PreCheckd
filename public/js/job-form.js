@@ -91,7 +91,7 @@
       const res = await fetch('/recruiter-jobs/suggest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
       const data = await res.json();
-      if (!res.ok) { note.textContent = data.error || 'We could not suggest skills right now. Pick them yourself below.'; note.hidden = false; return; }
+      if (!res.ok) { note.textContent = data.error || 'We could not suggest skills right now. Pick them yourself.'; return; }
       const hasSkills = !!(data.skills && data.skills.length);
       if (hasSkills) fillSkills(data.skills);
       lockSkills(hasSkills);
@@ -101,16 +101,15 @@
       (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => useTitle(t))));
       const parts = [];
       if (hasSkills) {
-        parts.push('We read your posting and chose the top ' + (data.skills.length === 1 ? 'skill' : data.skills.length + ' skills') + ' for this position: ' + data.skills.map((s) => s.label).join(', ') + '. These are set automatically. Choose the job title below that most closely matches, then set the minimum level for each skill.');
+        parts.push('We read your posting and chose the top ' + (data.skills.length === 1 ? 'skill' : data.skills.length + ' skills') + ' for this position. Set the minimum level for each skill, then choose the job title that most closely matches.');
       } else {
         parts.push('We could not match skills from that text. Pick them yourself below, or go back and add more detail to your description.');
       }
       if (data.missing && data.missing.length) parts.push('We do not test ' + data.missing.join(', ') + ' yet, so those cannot be required.');
       note.textContent = parts.join(' ');
-      note.hidden = false;
     } catch (e) {
       form.removeAttribute(lastKey);
-      note.textContent = 'We could not suggest skills right now. Pick them yourself below.'; note.hidden = false;
+      note.textContent = 'We could not suggest skills right now. Pick them yourself.';
     }
   }
   // The wizard calls this when the recruiter leaves the description page going forward.

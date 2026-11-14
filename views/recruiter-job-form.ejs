@@ -120,16 +120,7 @@
     <!-- 2. Title and skills -->
     <div class="jp-card jp-step" data-name="Job title and skills">
       <h2>2. Job title and skills</h2>
-      <div class="jp-suggest-note" id="jp-suggest-note" hidden></div>
-      <p class="jp-hint">Skills are chosen from your description. Each skill takes the lowest level a candidate needs (or no minimum). The levels you set decide the job's level, and a candidate must meet them to apply. No minimum on any skill makes it an entry-level job.</p>
-      <label class="jp-field">Job title
-        <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
-      </label>
-      <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || 'custom' %>">
-      <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
-      <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
-      <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
-      <span class="jp-label">Skills the job needs</span>
+      <span class="jp-label">Suggested skills</span>
       <% for (let i = 0; i < 3; i++) { %>
         <div class="jp-row">
           <select name="skills[<%= i %>][key]" class="jp-skill-key" aria-label="Skill <%= i + 1 %>">
@@ -143,12 +134,15 @@
         </div>
       <% } %>
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
-      <div class="jp-standard">
-        <p><strong>Added to every posting automatically:</strong></p>
-        <p><%= standard.EEO %></p>
-        <p><%= standard.ACCOMMODATION %></p>
-        <p><%= standard.BACKGROUND %></p>
-      </div>
+      <p class="jp-hint" id="jp-suggest-note" aria-live="polite">Skills are chosen from your description. Each skill takes the lowest level a candidate needs (or no minimum). The levels you set decide the job's level, and a candidate must meet them to apply. No minimum on any skill makes it an entry-level job.</p>
+      <h3 class="jp-sub">Job title</h3>
+      <label class="jp-field">Choose the closest match, or type your own
+        <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
+      </label>
+      <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || 'custom' %>">
+      <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
+      <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
+      <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
     </div>
 
 
@@ -392,6 +386,13 @@
       <h2><%= isEdit ? 'Review and save' : 'Review and post' %></h2>
       <p class="jp-hint">Check everything below. Use Edit to go back to any section.</p>
       <div id="jp-review"></div>
+      <div class="jp-standard">
+        <p><strong>Added to every posting automatically:</strong></p>
+        <p><%= standard.EEO %></p>
+        <p><%= standard.ACCOMMODATION %></p>
+        <p><%= standard.BACKGROUND %></p>
+      </div>
+      
     <% if (isEdit && withdrawPrompt) { %>
       <div class="jp-confirm-box" style="background:#3A3320;border-left:4px solid #E0B341;color:#F5E7B8;padding:0.9rem 1.1rem;border-radius:6px;margin-bottom:1rem;">
         <strong>This change adds or tightens a requirement.</strong> <%= withdrawPrompt %> applicant<%= withdrawPrompt === 1 ? '' : 's' %> will be withdrawn automatically and told what changed and how to fix it.
