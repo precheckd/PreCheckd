@@ -190,11 +190,8 @@
         <input type="text" name="contractLength" maxlength="60" placeholder="e.g. 6 months, or ends June 30" value="<%= val('contractLength') %>">
       </label>
       <% if (errors.contractLength) { %><div class="jp-err"><%= errors.contractLength %></div><% } %>
-    </div>
 
-    <!-- 4. Location -->
-    <div class="jp-card jp-step" data-name="Location and schedule">
-      <h2>5. Location and schedule</h2>
+      <h3 class="jp-sub">Location and schedule</h3>
       <p class="jp-hint">The street address is used to place the job and is never shown to candidates. They see the city and state only. Candidates must be authorized to work in the US.</p>
       <label class="jp-field">How is the work done?
         <select name="arrangement" id="jp-arr">
@@ -268,7 +265,7 @@
 
     <!-- 5. Pay -->
     <div class="jp-card jp-step" data-name="Pay">
-      <h2>6. Pay</h2>
+      <h2>5. Pay</h2>
       <p class="jp-hint">Required on every posting. The most the range can be above the minimum is 25%.</p>
       <div class="jp-row" id="jp-base-row">
         <select name="basePayType" class="jp-narrow" aria-label="Base pay type">
@@ -329,7 +326,7 @@
 
     <!-- 6. Requirements -->
     <div class="jp-card jp-step" data-name="Requirements">
-      <h2>7. Requirements</h2>
+      <h2>6. Requirements</h2>
       <p class="jp-hint">Candidates who do not meet a requirement are stopped before they apply and told why, so set requirements you really mean.<%= isEdit ? ' If you change commission figures you will need to confirm them again.' : '' %></p>
       <p class="jp-hint">Every requirement stops candidates who do not meet it, and they are told exactly why. There is no years-of-experience requirement on PreCheckd; skills and verified credentials replace it. Only verified, unexpired certifications and verified degrees count.</p>
       <label class="jp-field">Minimum education (verified)

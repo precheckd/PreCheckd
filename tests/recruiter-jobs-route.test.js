@@ -348,7 +348,7 @@ const validForm = (over = {}) => ({
 
   await t('the form is a wizard: every section is a step, with a review page', async () => {
     const html = await (await get('/recruiter-jobs/new')).text();
-    assert.strictEqual((html.match(/class="jp-card jp-step"/g) || []).length, 8);
+    assert.strictEqual((html.match(/class="jp-card jp-step"/g) || []).length, 7);
     assert.ok(html.includes('id="jp-nav"') && html.includes('/js/job-wizard.js') && html.includes('data-draft-url="/recruiter-jobs/draft"'));
     assert.ok(html.indexOf('/js/job-wizard.js') < html.indexOf('/js/job-form.js'));
   });
