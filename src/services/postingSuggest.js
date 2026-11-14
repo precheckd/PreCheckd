@@ -1,8 +1,9 @@
 // Suggests skills and job titles from a job description, for the posting form.
-//   suggest({ summary, responsibilities }, skillOptions, { recruiterId }) -> { skills: [{key,label}], titles: [string], missing: [string], source }
+//   suggest({ summary, responsibilities }, skillOptions, { recruiterId }) -> { skills: [{key,label}], roles: [{id,title}], missing: [string], source }
 // The AI may only pick from our own tested skills (skillOptions); it never sets levels and never saves anything,
 // the recruiter confirms every skill. If the AI is unavailable the same skills are found by matching skill names in the
 // text, so the form always works. Capped per recruiter per day.
+const { ROLES, byId, rolesForSkills } = require('../content/roles');
 const MODEL = process.env.CHAT_MODEL || 'claude-haiku-4-5-20251001';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const MAX_TEXT = 8000;
@@ -42,8 +43,11 @@ Job description:
 ${text}
 ---
 
-Return only JSON: {"skills": [up to ${MAX_SKILLS} allowed keys, most important first], "titles": [up to 3 plausible job titles, each under 60 characters, plain words], "missing": [up to 5 important technologies or skills in the description that are NOT in the allowed list, short names]}.
-Never invent keys. If nothing fits, use an empty list.`;
+Allowed job titles (use ONLY these exact ids):
+${ROLES.map((r) => `${r.id} = ${r.title}`).join('\n')}
+
+Return only JSON: {"skills": [up to ${MAX_SKILLS} allowed skill keys, most important first], "roles": [up to 5 allowed job title ids that most closely match this job, best first], "missing": [up to 5 important technologies or skills in the description that are NOT in the allowed skill list, short names]}.
+Never invent keys or ids. If nothing fits, use an empty list.`;
 }
 
 function parse(raw, options) {
@@ -56,7 +60,12 @@ function parse(raw, options) {
     if (hit && !skills.some((s) => s.key === hit.key)) skills.push({ key: hit.key, label: hit.label });
   }
   const clean = (arr, n, max) => (Array.isArray(arr) ? arr : []).map((x) => String(x || '').replace(/[<>]/g, '').trim()).filter((x) => x.length >= 2 && x.length <= max).slice(0, n);
-  return { skills: skills.slice(0, MAX_SKILLS), titles: clean(o.titles, 3, 60), missing: clean(o.missing, 5, 40) };
+  const roles = [];
+  for (const id of Array.isArray(o.roles) ? o.roles : []) {
+    const r = byId(String(id));
+    if (r && !roles.some((x) => x.id === r.id)) roles.push({ id: r.id, title: r.title });
+  }
+  return { skills: skills.slice(0, MAX_SKILLS), roles: roles.slice(0, 5), missing: clean(o.missing, 5, 40) };
 }
 
 async function suggest({ summary, responsibilities }, options, { recruiterId, fetchImpl = fetch } = {}) {
@@ -73,11 +82,12 @@ async function suggest({ summary, responsibilities }, options, { recruiterId, fe
       if (res.ok) {
         const data = await res.json();
         const out = parse((data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(''), options);
-        if (out) return { ...out, source: 'ai' };
+        if (out) { if (!out.roles.length) out.roles = rolesForSkills(out.skills.map((x) => x.key)).map((r) => ({ id: r.id, title: r.title })); return { ...out, source: 'ai' }; }
       } else console.error('Suggest API error:', res.status);
     } catch (e) { console.error('Suggest failed:', e.name === 'AbortError' ? 'timeout' : e.message); }
   }
-  return { skills: keywordSkills(text, options), titles: [], missing: [], source: 'keywords' };
+  const skills = keywordSkills(text, options);
+  return { skills, roles: rolesForSkills(skills.map((x) => x.key)).map((r) => ({ id: r.id, title: r.title })), missing: [], source: 'keywords' };
 }
 
 module.exports = { suggest, keywordSkills, parse, allow, MAX_SKILLS };

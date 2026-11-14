@@ -70,8 +70,8 @@ app.use('/recruiter-jobs', require('../src/routes/recruiter-jobs'));
 
 const soon = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const validForm = (over = {}) => ({
-  skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: '' }, { key: '', minLevel: '' }],
-  titleId: 'custom', title: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'none' }, { key: '', minLevel: '' }],
+  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '1', arrangement: 'onsite', address: '1 Main St, Boston, MA',
   relocation: 'no', travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: '100000', baseMax: '120000',
   payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
@@ -120,7 +120,7 @@ const validForm = (over = {}) => ({
     assert.match(res.headers.get('location'), /^\/recruiter-jobs\/[0-9a-f]{24}\?posted=1$/);
     assert.strictEqual(saved.length, 1);
     const p = saved[0];
-    assert.strictEqual(p.title, 'Cloud Engineer');
+    assert.strictEqual(p.title, 'DevOps (AWS)');
     assert.strictEqual(p.seniorityLabel, 'Mid-level');
     assert.strictEqual(p.address, '1 Main St, Boston, MA');
     assert.deepStrictEqual(Array.from(p.areaRule.point), [-71.0589, 42.3601]);
@@ -212,7 +212,7 @@ const validForm = (over = {}) => ({
 
   await t('My postings lists them; the detail page shows the private address to its owner', async () => {
     const list = await (await get('/recruiter-jobs')).text();
-    assert.ok(list.includes('Cloud Engineer') && list.includes('Boston, MA') && list.includes('Acme Corp'));
+    assert.ok(list.includes('DevOps (AWS)') && list.includes('Boston, MA') && list.includes('Acme Corp'));
     const detail = await get(`/recruiter-jobs/${saved[0]._id}?posted=1`);
     const html = await detail.text();
     assert.strictEqual(detail.status, 200);

@@ -7,7 +7,7 @@
 //
 // Every rule here comes from the Oct 21 decisions in docs/job-board-spec.md.
 
-const { byTitle } = require('../content/roles');
+const { byTitle, byId: roleById } = require('../content/roles');
 const { catalogIdFor, byId: certById, CATALOG } = require('../content/certCatalog');
 const { STATE_CODES } = require('../utils/geo');
 const { scanFields } = require('../utils/textScan');
@@ -88,24 +88,21 @@ function validatePosting(body, ctx) {
     if (seen.has(s.key)) { err('skills', 'Each skill can only be picked once.'); continue; }
     seen.add(s.key);
     if (!ctx.skillLabels.has(s.key)) { err('skills', 'One of those skills is not available.'); continue; }
-    if (s.minLevel && !opt.MIN_LEVELS.includes(s.minLevel)) { err('skills', 'Pick a minimum level from the list, or none.'); continue; }
-    skills.push({ key: s.key, label: ctx.skillLabels.get(s.key), minLevel: s.minLevel || null });
+    if (!s.minLevel) { err('skills', 'Choose a level for each skill.'); continue; }
+    if (s.minLevel !== 'none' && !opt.MIN_LEVELS.includes(s.minLevel)) { err('skills', 'Pick a minimum level from the list, or no minimum.'); continue; }
+    skills.push({ key: s.key, label: ctx.skillLabels.get(s.key), minLevel: s.minLevel === 'none' ? null : s.minLevel });
   }
   if (!skills.length) err('skills', 'Pick at least one skill the job needs.');
   if (skills.length > opt.LIMITS.maxSkills) err('skills', `Pick up to ${opt.LIMITS.maxSkills} skills.`);
   v.skills = skills.slice(0, opt.LIMITS.maxSkills);
   v.seniorityLabel = seniorityLabel(v.skills);
 
-  // Title: whatever the recruiter types. If it is exactly one of our roles' titles it is tied to that role (for the
-  // pay suggestion); anything else is their own title. Skills are required either way.
+  // Title: one of our roles (picked from the list). A posting saved earlier with its own title can keep that title.
   const typed = text(b.title !== undefined ? b.title : b.customTitle, 60);
-  if (typed.length < 3) err('titleId', 'Type your job title (at least 3 letters).');
-  else if ((scanFields({ t: typed }).t || []).some((i) => ['email', 'phone', 'link'].includes(i.code))) err('titleId', 'Enter just the job title, with no contact details or links.');
-  else {
-    const role = byTitle(typed);
-    v.title = role ? role.title : typed;
-    v.titleId = role ? role.id : 'custom';
-  }
+  const role = roleById(text(b.titleId, 80)) || byTitle(typed);
+  if (role) { v.title = role.title; v.titleId = role.id; }
+  else if (ctx.existingTitle && typed && typed === ctx.existingTitle) { v.title = typed; v.titleId = 'custom'; }
+  else err('titleId', 'Choose the job title that is the closest match for your job.');
 
   v.nickname = text(b.nickname, 60);
 

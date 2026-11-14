@@ -16,9 +16,9 @@ let n = 0; const t = async (name, fn) => { await fn(); n++; console.log('ok  ' +
     assert.deepStrictEqual(ps.keywordSkills('The lawsuits were lawful', options), []);
   });
   await t('parse keeps only allowed keys, dedupes, trims titles, drops junk', async () => {
-    const out = ps.parse('```json\n{"skills":["azure","terraform","azure","aws"],"titles":["Cloud Engineer","<b>x</b>","", "A"],"missing":["Terraform"]}\n```', options);
+    const out = ps.parse('```json\n{"skills":["azure","terraform","azure","aws"],"roles":["devops-aws","made-up","devops-aws"],"missing":["Terraform"]}\n```', options);
     assert.deepStrictEqual(out.skills.map((x) => x.key), ['azure', 'aws']);
-    assert.ok(out.titles.includes('Cloud Engineer')); assert.deepStrictEqual(out.missing, ['Terraform']);
+    assert.deepStrictEqual(out.roles, [{ id: 'devops-aws', title: 'DevOps (AWS)' }]); assert.deepStrictEqual(out.missing, ['Terraform']);
     assert.strictEqual(ps.parse('not json', options), null);
   });
   await t('no API key: falls back to keywords; short text is refused', async () => {
@@ -28,9 +28,9 @@ let n = 0; const t = async (name, fn) => { await fn(); n++; console.log('ok  ' +
   });
   await t('AI answer is used; an unknown skill the AI invents is dropped', async () => {
     process.env.ANTHROPIC_API_KEY = 'k';
-    const fetchImpl = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: '{"skills":["azure","kubernetes"],"titles":["Infrastructure Engineer"],"missing":["Kubernetes"]}' }] }) });
+    const fetchImpl = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: '{"skills":["azure","kubernetes"],"roles":["devops-aws"],"missing":["Kubernetes"]}' }] }) });
     const out = await ps.suggest({ summary: text, responsibilities: '' }, options, { recruiterId: 'r2', fetchImpl });
-    assert.strictEqual(out.source, 'ai'); assert.deepStrictEqual(out.skills.map((x) => x.key), ['azure']); assert.deepStrictEqual(out.titles, ['Infrastructure Engineer']);
+    assert.strictEqual(out.source, 'ai'); assert.deepStrictEqual(out.skills.map((x) => x.key), ['azure']); assert.deepStrictEqual(out.roles.map((r) => r.id), ['devops-aws']);
   });
   await t('an AI failure falls back to keywords', async () => {
     const out = await ps.suggest({ summary: text, responsibilities: '' }, options, { recruiterId: 'r3', fetchImpl: async () => { throw new Error('down'); } });

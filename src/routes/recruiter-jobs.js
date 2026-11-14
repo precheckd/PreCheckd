@@ -140,7 +140,7 @@ router.post('/suggest', async (req, res) => {
       { summary: String(req.body.summary || ''), responsibilities: String(req.body.responsibilities || '') },
       await skillOptions(), { recruiterId: recruiter._id });
     if (out.error === 'short') return res.status(400).json({ error: 'Write the role summary and responsibilities first.' });
-    if (out.error === 'limit') return res.status(429).json({ error: 'That is enough suggestions for today. Pick the skills yourself below.' });
+    if (out.error === 'limit') return res.status(429).json({ error: 'That is enough suggestions for today. Pick the skills yourself.' });
     res.json(out);
   } catch (error) {
     console.error('Error suggesting skills:', error);
@@ -285,7 +285,7 @@ router.get('/:id/edit', async (req, res) => {
 async function checkEdit(req, posting) {
   const skillChoices = await skillOptions();
   const skillLabels = new Map(skillChoices.map((o) => [o.key, o.label]));
-  const { errors, value } = validatePosting(req.body, { skillLabels, editing: { createdAt: posting.createdAt } });
+  const { errors, value } = validatePosting(req.body, { skillLabels, existingTitle: posting.title, editing: { createdAt: posting.createdAt } });
   let location = null;
   if (!Object.keys(errors).length) {
     try {

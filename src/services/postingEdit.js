@@ -39,7 +39,7 @@ function formFromPosting(p) {
   while (groups.length < 3) groups.push(['', '', '', '', '']);
   const hasCommission = Boolean(o.commissionOnly || (o.commission && o.commission.average));
   const f = {
-    skills: [0, 1, 2].map((i) => (o.skills[i] ? { key: o.skills[i].key, minLevel: o.skills[i].minLevel || '' } : { key: '', minLevel: '' })),
+    skills: [0, 1, 2].map((i) => (o.skills[i] ? { key: o.skills[i].key, minLevel: o.skills[i].minLevel || 'none' } : { key: '', minLevel: '' })),
     title: o.title, nickname: o.nickname || '', hiringCompany: o.hiringCompany, authorizedToRecruit: yes(o.authorizedToRecruit),
     employmentType: o.employmentType, contractLength: o.contractLength || '', openings: String(o.openings),
     arrangement: o.arrangement, inOfficeDays: o.inOfficeDays ? String(o.inOfficeDays) : '', areaReason: o.areaReason || '',

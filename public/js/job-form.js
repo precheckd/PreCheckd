@@ -3,30 +3,25 @@
   if (!form) return;
   const $ = (id) => document.getElementById(id);
 
-  // ---- job title (free text) with optional suggestions ----
+  // ---- job title: always one of our roles ----
   const titleInput = $('jp-title');
   const titleIdInput = $('jp-titleid');
   const ideas = $('jp-title-ideas');
   const results = $('jp-role-results');
+  const search = $('jp-role-search');
   const note = $('jp-suggest-note');
+  const stepErr = $('jp-step2-err');
   const keySelects = Array.from(form.querySelectorAll('.jp-skill-key'));
   const levelSelects = Array.from(form.querySelectorAll('select[name$="[minLevel]"]'));
-  const roleIds = {};   // lower-case role title -> role id, from the matches shown so far
-  const norm = (t) => String(t || '').trim().toLowerCase();
-
-  // The hidden id is only for the pay suggestion: a role's id when the typed title is exactly that role, else "custom".
-  function syncTitleId() {
-    titleIdInput.value = roleIds[norm(titleInput.value)] || (titleIdInput.dataset.initial && norm(titleInput.value) === titleIdInput.dataset.initialTitle ? titleIdInput.dataset.initial : 'custom');
-    form.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  titleIdInput.dataset.initial = titleIdInput.value !== 'custom' ? titleIdInput.value : '';
-  titleIdInput.dataset.initialTitle = norm(titleInput.value);
 
   function chip(text, onClick) {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'jp-chip'; b.textContent = text;
     b.addEventListener('click', onClick);
     return b;
+  }
+  function markChosen() {
+    form.querySelectorAll('.jp-chip[data-id]').forEach((c) => c.classList.toggle('is-on', c.dataset.id === titleIdInput.value));
   }
   function noSkillsYet() { return keySelects.every((s) => !s.value); }
   function fillSkills(list) {
@@ -39,37 +34,30 @@
     });
     form.dispatchEvent(new Event('change', { bubbles: true }));
   }
-
-  function showRoles(roles) {
-    results.textContent = '';
-    roles.forEach((r) => {
-      roleIds[norm(r.title)] = r.id;
-      results.appendChild(chip(r.title, () => {
-        titleInput.value = r.title;
-        if (noSkillsYet()) fillSkills(r.skills.filter((s) => s.testable));
-        syncTitleId();
-      }));
-    });
-    if (roles.length) {
-      const hint = document.createElement('p');
-      hint.className = 'jp-muted'; hint.style.width = '100%'; hint.style.margin = '0';
-      hint.textContent = 'Optional: tap a matching role to use its title and fill in its skills.';
-      results.insertBefore(hint, results.firstChild);
-    }
+  function pickRole(r, skills) {
+    titleInput.value = r.title;
+    titleIdInput.value = r.id;
+    if (skills && noSkillsYet() && !keySelects[0].classList.contains('jp-locked')) fillSkills(skills.filter((s) => s.testable));
+    stepErr.hidden = true;
+    markChosen();
+    form.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  function roleChip(r, skills) { const c = chip(r.title, () => pickRole(r, skills)); c.dataset.id = r.id; return c; }
+  if (titleIdInput.value && !titleInput.value) titleIdInput.value = '';
+
   let roleTimer = null;
-  titleInput.addEventListener('input', () => {
-    syncTitleId();
+  search.addEventListener('input', () => {
     clearTimeout(roleTimer);
-    const q = titleInput.value.trim();
+    const q = search.value.trim();
     if (q.length < 2) { results.textContent = ''; return; }
     roleTimer = setTimeout(async () => {
       try {
         const res = await fetch('/recruiter-jobs/roles?q=' + encodeURIComponent(q), { credentials: 'same-origin' });
         const data = await res.json();
-        showRoles(data.roles || []);
-        syncTitleId();
-      } catch (e) { /* suggestions are optional */ }
+        results.textContent = '';
+        (data.roles || []).forEach((r) => results.appendChild(roleChip(r, r.skills)));
+        markChosen();
+      } catch (e) { /* the suggestions above still work */ }
     }, 250);
   });
 
@@ -96,19 +84,40 @@
       if (hasSkills) fillSkills(data.skills);
       lockSkills(hasSkills);
       ideas.textContent = '';
-      const useTitle = (t) => { titleInput.value = t; titleInput.dispatchEvent(new Event('input', { bubbles: true })); markChosen(); };
-      const markChosen = () => { Array.from(ideas.children).forEach((c) => { c.style.borderColor = norm(c.textContent) === norm(titleInput.value) ? '#2ECC71' : ''; }); };
-      (data.titles || []).forEach((t) => ideas.appendChild(chip(t, () => useTitle(t))));
+      (data.roles || []).forEach((r) => ideas.appendChild(roleChip(r, null)));
+      markChosen();
       note.hidden = hasSkills;
       note.textContent = hasSkills ? '' : 'Pick your skills above.';
-
     } catch (e) {
       form.removeAttribute(lastKey);
       note.textContent = 'Pick your skills above.'; note.hidden = false;
     }
   }
-  // The wizard calls this when the recruiter leaves the description page going forward.
+  // The wizard calls these when the recruiter leaves a page going forward.
   window.jpOnLeaveDescription = suggest;
+  window.jpCanLeave = function (from, to) {
+    if (!(from <= 1 && to > 1)) return true;
+    const problems = [];
+    let any = false;
+    keySelects.forEach((sel, i) => {
+      const lv = levelSelects[i];
+      const bad = !!(sel.value && lv && !lv.value);
+      if (sel.value) any = true;
+      if (lv) lv.classList.toggle('jp-bad', bad);
+      if (bad) problems.push('level');
+    });
+    if (!any) problems.unshift('skill');
+    if (!titleIdInput.value && !titleInput.value.trim()) problems.push('title');
+    if (!problems.length) { stepErr.hidden = true; return true; }
+    const msgs = [];
+    if (problems.includes('skill')) msgs.push('Pick at least one skill.');
+    if (problems.includes('level')) msgs.push('Choose a level for each skill.');
+    if (problems.includes('title')) msgs.push('Choose a job title.');
+    stepErr.textContent = msgs.join(' ');
+    stepErr.hidden = false;
+    return false;
+  };
+  levelSelects.forEach((lv) => lv.addEventListener('change', () => lv.classList.remove('jp-bad')));
 
   // ---- company suggestions ----
   const company = $('jp-company');

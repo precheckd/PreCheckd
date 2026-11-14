@@ -11,7 +11,7 @@ const ctx = { now: NOW, skillLabels };
 
 const good = (over = {}) => ({
   skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'Foundational' }],
-  titleId: 'custom', title: 'Cloud Engineer', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'Acme cloud', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
   employmentType: 'full_time', openings: '2',
   arrangement: 'onsite', address: '1 Main St, Boston, MA', relocation: 'no', travel: 'occasional', shift: 'daytime',
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
@@ -32,7 +32,7 @@ const only = (over, field) => {
 t('a complete posting passes with no errors', () => {
   const { errors, value } = run({});
   assert.deepStrictEqual(errors, {});
-  assert.strictEqual(value.title, 'Cloud Engineer');
+  assert.strictEqual(value.title, 'DevOps (AWS)');
   assert.strictEqual(value.seniorityLabel, 'Mid-level');
   assert.strictEqual(value.needsAddress, true);
   assert.strictEqual(value.baseMax, 120000);
@@ -50,28 +50,35 @@ t('skills: at least one, at most three, no repeats, known keys, valid levels', (
   only({ skills: [{ key: 'linux', minLevel: 'Wizard' }] }, 'skills');
 });
 t('skills may arrive as an object keyed by index (how forms are parsed)', () => {
-  const { errors } = run({ skills: { 0: { key: 'linux', minLevel: 'Intermediate' }, 1: { key: 'cloud', minLevel: '' } } });
+  const { errors } = run({ skills: { 0: { key: 'linux', minLevel: 'Intermediate' }, 1: { key: 'cloud', minLevel: 'none' } } });
   assert.deepStrictEqual(errors, {});
 });
-t('the title is free text: needs 3 letters and no contact details', () => {
-  only({ title: '' }, 'titleId');
-  only({ title: 'ab' }, 'titleId');
-  only({ title: 'Email jobs@acme.com now' }, 'titleId');
+t('the title must be one of our roles; a missing or made-up title is refused', () => {
+  only({ title: '', titleId: '' }, 'titleId');
+  only({ title: 'Infrastructure Engineer', titleId: 'custom' }, 'titleId');
+  only({ title: 'Anything', titleId: 'not-a-role' }, 'titleId');
+  const byId = validatePosting(good({ title: '', titleId: 'devops-aws' }), ctx);
+  assert.ok(!byId.errors.titleId); assert.strictEqual(byId.value.title, 'DevOps (AWS)');
+  const typed = validatePosting(good({ titleId: '', title: 'devops (aws)' }), ctx);   // drafts saved before the change
+  assert.strictEqual(typed.value.titleId, 'devops-aws');
 });
-t('a typed title that is exactly a role keeps that role (for pay); anything else is the recruiter\'s own', () => {
-  const role = validatePosting(good({ title: 'devops (aws)', skills: [{ key: 'cloud', minLevel: 'Foundational' }] }), ctx);
-  assert.ok(!role.errors.titleId); assert.strictEqual(role.value.titleId, 'devops-aws'); assert.strictEqual(role.value.title, 'DevOps (AWS)');
-  const c = run({ title: 'Infrastructure Engineer' });
-  assert.ok(!c.errors.titleId); assert.strictEqual(c.value.titleId, 'custom'); assert.strictEqual(c.value.title, 'Infrastructure Engineer');
-  const old = run({ title: undefined, customTitle: 'Platform Reliability Lead' });   // drafts saved before the change
-  assert.strictEqual(old.value.title, 'Platform Reliability Lead');
+t('a posting saved with its own title keeps it when edited, but cannot get a new made-up one', () => {
+  const kept = validatePosting(good({ titleId: 'custom', title: 'Platform Reliability Lead' }), { ...ctx, existingTitle: 'Platform Reliability Lead' });
+  assert.ok(!kept.errors.titleId); assert.strictEqual(kept.value.titleId, 'custom');
+  const changed = validatePosting(good({ titleId: 'custom', title: 'Something Else' }), { ...ctx, existingTitle: 'Platform Reliability Lead' });
+  assert.ok(changed.errors.titleId);
+});
+t('every skill needs a level chosen (or no minimum)', () => {
+  only({ skills: [{ key: 'linux', minLevel: '' }] }, 'skills');
+  const none = run({ skills: [{ key: 'linux', minLevel: 'none' }] });
+  assert.ok(!none.errors.skills); assert.strictEqual(none.value.skills[0].minLevel, null); assert.strictEqual(none.value.seniorityLabel, 'Entry level');
 });
 t('seniority comes from the highest minimum level', () => {
   assert.strictEqual(seniorityLabel([{ minLevel: null }]), 'Entry level');
   assert.strictEqual(seniorityLabel([{ minLevel: 'Foundational' }]), 'Junior');
   assert.strictEqual(seniorityLabel([{ minLevel: 'Advanced' }, { minLevel: 'Foundational' }]), 'Senior');
   assert.strictEqual(seniorityLabel([{ minLevel: 'Expert' }]), 'Expert');
-  const { value } = run({ skills: [{ key: 'linux', minLevel: '' }, { key: 'cloud', minLevel: '' }] });
+  const { value } = run({ skills: [{ key: 'linux', minLevel: 'none' }, { key: 'cloud', minLevel: 'none' }] });
   assert.strictEqual(value.seniorityLabel, 'Entry level');
 });
 

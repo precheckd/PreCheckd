@@ -76,6 +76,10 @@
   .jp-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
   .jp-chip { background: #24404A; color: #F2F4F3; border: 1px solid #4A6F7B; border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; }
   select.jp-locked { pointer-events: none; opacity: 0.85; background-image: none; border-style: dashed; }
+  .jp-chip.is-on { border-color: #2ECC71; background: #1E3B2C; }
+  .jp-picked { width: 100%; box-sizing: border-box; background: #1F363C; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; font-weight: 700; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem; font-family: inherit; font-size: 1rem; }
+  .jp-search { width: 100%; box-sizing: border-box; background: #24404A; border: 1px solid #4A6F7B; border-radius: 6px; color: #F2F4F3; padding: 0.55rem 0.75rem; margin: 0.6rem 0; font-family: inherit; font-size: 0.95rem; }
+  select.jp-bad { border-color: #E53E3E !important; }
   .jp-chip:hover { border-color: #2ECC71; }
   .jp-btn-ghost { background: transparent; color: #2ECC71; border: 1px solid #2ECC71; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.88rem; cursor: pointer; }
   .jp-standard { color: #C7D1CF; font-size: 0.85rem; line-height: 1.5; border-top: 1px solid #3B5860; padding-top: 0.9rem; margin-top: 0.6rem; }
@@ -127,20 +131,21 @@
             <% skillChoices.forEach(function(o) { %><option value="<%= o.key %>" <%= sk(i, 'key') === o.key ? 'selected' : '' %>><%= o.label %></option><% }); %>
           </select>
           <select name="skills[<%= i %>][minLevel]" aria-label="Minimum level for skill <%= i + 1 %>">
-            <option value="">No minimum level</option>
+            <option value="">Choose a level</option>
+            <option value="none" <%= sk(i, 'minLevel') === 'none' ? 'selected' : '' %>>No minimum level</option>
             <% minLevels.forEach(function(l) { %><option value="<%= l %>" <%= sk(i, 'minLevel') === l ? 'selected' : '' %>>At least <%= levelName(l) %></option><% }); %>
           </select>
         </div>
       <% } %>
       <% if (errors.skills) { %><div class="jp-err"><%= errors.skills %></div><% } %>
       <p class="jp-hint" id="jp-suggest-note" aria-live="polite" hidden></p>
-      <h3 class="jp-sub">Job title</h3>
-      <label class="jp-field" aria-label="Job title">
-        <input type="text" name="title" id="jp-title" placeholder="e.g. Infrastructure Engineer" autocomplete="off" maxlength="60" value="<%= val('title') || val('customTitle') %>">
-      </label>
-      <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || 'custom' %>">
+      <h3 class="jp-sub">Choose the job title that is the closest match for your job</h3>
+      <input type="text" name="title" id="jp-title" class="jp-picked" readonly placeholder="No title chosen yet" aria-label="Chosen job title" value="<%= val('title') || val('customTitle') %>">
+      <input type="hidden" name="titleId" id="jp-titleid" value="<%= val('titleId') || '' %>">
       <div class="jp-chips" id="jp-title-ideas" aria-live="polite"></div>
+      <input type="text" id="jp-role-search" class="jp-search" placeholder="Search all job titles" autocomplete="off" aria-label="Search all job titles">
       <div class="jp-chips" id="jp-role-results" aria-live="polite"></div>
+      <div class="jp-err" id="jp-step2-err" hidden></div>
       <% if (errors.titleId) { %><div class="jp-err"><%= errors.titleId %></div><% } %>
     </div>
 

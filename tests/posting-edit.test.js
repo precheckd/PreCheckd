@@ -12,8 +12,8 @@ const NOW = new Date('2026-10-22T16:00:00Z').getTime();
 const skillLabels = new Map([['linux', 'Linux'], ['cloud', 'Cloud'], ['agile', 'Agile']]);
 const ctx = { now: NOW, skillLabels };
 const base = (over = {}) => ({
-  skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: '' }],
-  titleId: 'custom', title: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '2',
+  skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: 'cloud', minLevel: 'none' }],
+  titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on', employmentType: 'full_time', openings: '2',
   arrangement: 'hybrid', inOfficeDays: '3', address: '1 Main St, Boston, MA', relocation: 'yes', travel: 'occasional', shift: 'evenings',
   basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level', 'location'],
   commissionEnabled: 'on', commissionMin: '10000', commissionAverage: '30000', commissionAck: 'on',

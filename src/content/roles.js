@@ -203,4 +203,12 @@ function titlesForSkills(skillKeys) {
     .sort((a, b) => a.skills.length - b.skills.length || a.title.localeCompare(b.title));
 }
 
-module.exports = { ROLES, TITLES, ROLE_SOC, byId, byTitle, searchRoles, titlesForSkills };
+// Roles that best fit a set of skill keys: most skills in common first, then the tighter role (fewer extra skills).
+function rolesForSkills(skillKeys, limit = 5) {
+  const keys = new Set((skillKeys || []).filter(Boolean));
+  if (!keys.size) return [];
+  return ROLES.map((r) => { const hit = r.skills.filter((k) => keys.has(k)).length; return { r, score: hit * 10 - (r.skills.length - hit) }; })
+    .filter((x) => x.score >= 10).sort((a, b) => b.score - a.score || a.r.title.localeCompare(b.r.title)).slice(0, limit).map((x) => x.r);
+}
+
+module.exports = { ROLES, TITLES, ROLE_SOC, byId, byTitle, searchRoles, titlesForSkills, rolesForSkills };

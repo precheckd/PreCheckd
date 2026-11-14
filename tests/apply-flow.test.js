@@ -59,7 +59,7 @@ const day = 86400000;
 function makePosting(over = {}) {
   const p = new JobPosting({
     recruiterId: '507f1f77bcf86cd799439011', status: 'open', source: 'precheckd', nickname: 'x',
-    titleId: 'custom', title: 'Cloud Engineer', title: 'Cloud Engineer', skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }],
+    titleId: 'devops-aws', title: 'DevOps (AWS)', skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }],
     seniorityLabel: 'Mid-level', hiringCompany: 'Acme Corp', authorizedToRecruit: true, employmentType: 'full_time', openings: 1,
     arrangement: 'remote', relocation: false, travel: 'none', shift: 'daytime', basePayType: 'salary', baseMin: 100000, baseMax: 120000,
     payBasis: ['skill_level'], benefits: ['health'], goodFaithAt: new Date(), requirementsAttestedAt: new Date(),
@@ -140,7 +140,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.strictEqual(conns[0].status, 'accepted');
     assert.strictEqual(conns[0].fullAccessStatus, 'granted');
     assert.strictEqual(trackers.length, 1);
-    assert.strictEqual(trackers[0].roleTitle, 'Cloud Engineer');
+    assert.strictEqual(trackers[0].roleTitle, 'DevOps (AWS)');
     assert.strictEqual(trackers[0].source, 'precheckd');
     assert.ok(notes.some((x) => x.ownerType === 'recruiter' && x.title.includes('New applicant')));
   });
@@ -212,7 +212,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
   // ---- editing a posting that has applicants ----
   const ownerForm = (over = {}) => ({
     skills: [{ key: 'linux', minLevel: 'Intermediate' }, { key: '', minLevel: '' }, { key: '', minLevel: '' }],
-    titleId: 'custom', title: 'Cloud Engineer', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
+    titleId: 'devops-aws', title: 'DevOps (AWS)', nickname: 'x', hiringCompany: 'Acme Corp', authorizedToRecruit: 'on',
     employmentType: 'full_time', openings: '1', arrangement: 'remote', relocation: 'no', travel: 'none', shift: 'daytime',
     basePayType: 'salary', baseMin: '100000', baseMax: '120000', payBasis: ['skill_level'], benefits: ['health'], goodFaith: 'on',
     education: '', certGroups: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']], clearance: '',

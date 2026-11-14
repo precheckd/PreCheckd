@@ -24,7 +24,7 @@
   progress.hidden = false;
 
   steps.forEach(function (st, i) {
-    if (st.querySelector('.jp-err')) errored[i] = true;
+    if (st.querySelector('.jp-err:not([hidden])')) errored[i] = true;
     // Back / Next bar (the review page has Back plus the real submit button)
     var bar = document.createElement('div');
     bar.className = 'jp-nextbar';
@@ -87,6 +87,10 @@
       };
       setTimeout(finish, 8000);
       Promise.resolve().then(window.jpOnLeaveDescription).catch(function () {}).then(finish);
+      return;
+    }
+    if (i > cur && typeof window.jpCanLeave === 'function' && !window.jpCanLeave(cur, i)) {
+      if (cur === 0) go(1, true); else wiz.scrollIntoView({ block: 'start' });
       return;
     }
     // An error marker clears once the recruiter has seen that page.
