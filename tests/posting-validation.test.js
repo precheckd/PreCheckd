@@ -74,9 +74,9 @@ t('every skill needs a level chosen (or no minimum)', () => {
   assert.ok(!none.errors.skills); assert.strictEqual(none.value.skills[0].minLevel, null); assert.strictEqual(none.value.seniorityLabel, 'Entry level');
 });
 t('Commission only is a pay type: base pay is $0 and no base-pay basis is needed', () => {
-  const { errors, value } = run({ basePayType: 'commission', baseMin: '90000', baseMax: '99999', payBasis: [], commissionMin: '20000', commissionAverage: '60000', commissionAck: 'on' });
+  const { errors, value } = run({ basePayType: 'commission', baseMin: '90000', baseMax: '99999', commissionMin: '20000', commissionAverage: '60000', commissionAck: 'on' });
   assert.deepStrictEqual(errors, {});
-  assert.strictEqual(value.commissionOnly, true); assert.strictEqual(value.baseMin, 0); assert.deepStrictEqual(value.payBasis, []);
+  assert.strictEqual(value.commissionOnly, true); assert.strictEqual(value.baseMin, 0);
   assert.ok(only({ basePayType: 'commission', commissionMin: '', commissionAverage: '' }, 'commission'));   // commission figures still required
 });
 t('shifts: pick one or more; flexible stands alone; none is refused', () => {
@@ -194,9 +194,7 @@ t('commission: two numbers, average not below minimum, warning accepted every ti
   assert.ok(ok.value.commissionAckAt instanceof Date);
   assert.strictEqual(run({}).value.commissionAckAt, null);
 });
-t('pay basis, benefits and the good-faith box are required', () => {
-  only({ payBasis: [] }, 'payBasis');
-  only({ payBasis: ['years_of_experience'] }, 'payBasis');
+t('benefits and the good-faith box are required', () => {
   only({ benefits: [] }, 'benefits');
   assert.deepStrictEqual(run({ benefits: [], noBenefits: 'on' }).errors, {});
   only({ benefits: ['health'], noBenefits: 'on' }, 'benefits');
@@ -277,7 +275,7 @@ t('the free-text scan blocks contact details, years, citizens only and age wordi
 t('several mistakes are all reported at once', () => {
   const { errors } = validatePosting({}, ctx);
   for (const f of ['skills', 'titleId', 'hiringCompany', 'authorizedToRecruit', 'employmentType', 'openings', 'arrangement', 'relocation',
-    'travel', 'shift', 'basePayType', 'baseRange', 'payBasis', 'benefits', 'goodFaith', 'closeDate', 'startDate', 'requirementsAttested', 'outcomeAck', 'summary', 'responsibilities']) {
+    'travel', 'shift', 'basePayType', 'baseRange', 'benefits', 'goodFaith', 'closeDate', 'startDate', 'requirementsAttested', 'outcomeAck', 'summary', 'responsibilities']) {
     assert.ok(errors[f], 'no error for ' + f);
   }
 });

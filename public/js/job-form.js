@@ -173,7 +173,6 @@
     const commOnly = payType.value === 'commission';
     const enable = $('jp-comm-enable');
     form.querySelectorAll('#jp-base-row input').forEach((el) => { el.disabled = commOnly; if (commOnly) el.value = ''; });
-    $('jp-basis').hidden = commOnly;
     $('jp-comm-enable-row').hidden = commOnly;
     if (commOnly) enable.checked = true;
     enable.disabled = commOnly;

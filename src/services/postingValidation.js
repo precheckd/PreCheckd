@@ -201,9 +201,6 @@ function validatePosting(body, ctx) {
       v.payCheck = { soc: band.soc, year: band.year, bandLow: band.low, bandHigh: band.high, position: payBench.positionOf(band, v.baseMin * mult, v.baseMax * mult) };
     }
   }
-  v.payBasis = [...new Set(asArray(b.payBasis).map((p) => text(p, 20)).filter((p) => codes(opt.PAY_BASIS).includes(p)))];
-  if (v.commissionOnly) v.payBasis = [];   // there is no base range to explain
-  else if (!v.payBasis.length) err('payBasis', 'Say what the pay range is based on.');
   v.commission = { minAnticipated: null, average: null };
   v.commissionAckAt = null;
   if (commissionOn) {

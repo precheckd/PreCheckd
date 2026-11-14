@@ -281,13 +281,6 @@
       <div class="jp-paytip" id="jp-paytip" hidden></div>
       <% ['basePayType', 'baseRange'].forEach(function(k) { if (errors[k]) { %><div class="jp-err"><%= errors[k] %></div><% } }); %>
 
-      <div id="jp-basis">
-      <span class="jp-label">What the base pay range is based on (pick any)</span>
-      <div class="jp-grid">
-        <% payBasisOptions.forEach(function(p) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="payBasis" value="<%= p.code %>" <%= has('payBasis', p.code) ? 'checked' : '' %>> <%= p.label %></label><% }); %>
-      </div>
-      <% if (errors.payBasis) { %><div class="jp-err"><%= errors.payBasis %></div><% } %>
-      </div>
 
       <label class="jp-check" id="jp-comm-enable-row" style="margin-top:0.8rem;"><input type="checkbox" name="commissionEnabled" id="jp-comm-enable" value="on" <%= on('commissionEnabled') ? 'checked' : '' %>> Commission is part of the pay</label>
       <div id="jp-comm" hidden>
