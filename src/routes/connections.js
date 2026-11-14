@@ -59,13 +59,21 @@ function requestsFor(viewer, data, tabParam, list) {
   // Tabs: Connections (accepted), Saved (bookmarked, not connected; candidates only), Requests.
   const connectedList = list.filter((e) => e.connected);
   const savedList = list.filter((e) => e.saved && !e.connected);
-  const tabs = viewer === 'candidate' ? ['connections', 'saved', 'requests'] : ['connections', 'requests'];
+  const tabs = viewer === 'candidate' ? ['connections', 'saved', 'requests', 'updates'] : ['connections', 'requests', 'updates'];
   const tab = tabs.includes(tabParam) ? tabParam : (waitingOnYou.length > 0 ? 'requests' : 'connections');
   return {
     waitingOnYou, waitingOnThem, pendingCount: waitingOnYou.length, waitingCount, tab,
     connectionCount: connectedList.length, savedCount: savedList.length,
     entries: tab === 'saved' ? savedList : connectedList
   };
+}
+
+// Updates tab data: the feed itself on that tab (then marked read), otherwise just the unread count for the tab pill.
+async function feedFor(type, id, tab) {
+  const updates = require('../services/updates');
+  const feed = await updates.latest(type, id);
+  if (tab === 'updates') await updates.markRead(type, id);
+  return { feed };
 }
 
 // GET /connections
@@ -145,11 +153,13 @@ async function renderCandidateConnections(req, res) {
   const list = Array.from(entries.values()).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
   const requestsData = await require('./candidate-dashboard').buildRequestsData(candidateId);
+  const rf = requestsFor('candidate', requestsData, req.query.tab, list);
   res.render('connections', {
     isCandidate: true,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsFor('candidate', requestsData, req.query.tab, list)
+    ...rf,
+    ...(await feedFor('candidate', candidateId, rf.tab))
   });
 }
 
@@ -204,11 +214,13 @@ async function renderRecruiterConnections(req, res) {
   const list = Array.from(entries.values()).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
   const requestsData = await require('./recruiter-dashboard').buildRequestsData(recruiterId);
+  const rf = requestsFor('recruiter', requestsData, req.query.tab, list);
   res.render('connections', {
     isCandidate: false,
     entries: list,
     title: 'Connections | PreCheckd',
-    ...requestsFor('recruiter', requestsData, req.query.tab, list)
+    ...rf,
+    ...(await feedFor('recruiter', recruiterId, rf.tab))
   });
 }
 

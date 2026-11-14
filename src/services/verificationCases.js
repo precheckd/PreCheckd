@@ -218,7 +218,7 @@ async function resolve(c, outcome) {
   const cand = await Candidate.findById(c.candidateId);
   if (outcome === 'verified' && cand) {
     const e = (cand[c.category] || []).find((x) => (isWork(c) ? x.employerName === c.subject && x.jobTitle === c.detail : x.schoolName === c.subject && x.degree === c.detail));
-    if (e) { e.verified = true; e.verifiedAt = new Date(); cand.markModified(c.category); await cand.save(); }
+    if (e) { e.verified = true; e.verifiedAt = new Date(); cand.markModified(c.category); await cand.save(); require('./updates').sweepCandidateLater(cand._id); }
     else logLine(c, 'Profile entry not found (edited since?): mark it verified by hand');
   }
   c.status = outcome; c.closedAt = new Date(); c.turn = null;

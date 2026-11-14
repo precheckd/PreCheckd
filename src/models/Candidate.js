@@ -324,6 +324,10 @@ const candidateSchema = new mongoose.Schema({
   // Opt-in: also show recruiters the easy/medium/hard breakdown (questions right out of asked) for
   // each skill the candidate is showing. Off by default; levels are always the headline.
   showSkillBreakdown: { type: Boolean, default: false },
+  // Updates feed: opt in to telling recruiter connections about verified certs/degrees and shown skill levels.
+  shareUpdates: { type: Boolean, default: false },
+  // Facts already announced (or silently skipped before the switch was on), so nothing is announced twice.
+  announcedKeys: { type: [String], default: [] },
   // Denormalized copy of the skills recruiters may see (shown, Foundational or above), kept in sync by
   // services/skills.js refreshSkillSummary so recruiter search can query it. Staleness is computed
   // from takenAt at search time because it changes with the calendar, not with an event.

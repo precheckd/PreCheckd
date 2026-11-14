@@ -510,6 +510,7 @@
       </p>
     </div>
   </div>
+  <% if (typeof feed !== 'undefined' && feed) { %><%- include('partials/updates-list', { feed: feed, full: false, isCandidate: true }) %><% } %>
 
   <% if (candidate.introVideoUrl) { %>
   <div class="cprofile-wrapper" style="margin-bottom: 1.5rem;">

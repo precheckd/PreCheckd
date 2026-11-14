@@ -77,6 +77,7 @@ async function resultsLanded(result) {
   await result.save();
   const { c, name } = await context(result);
   if (!c) return false;
+  if (!(result.held && !result.reviewDecision)) require('./updates').sweepCandidateLater(c._id);
   try { await require('./testRequests').onResult(result); } catch (e) { console.error('[skills] test request update failed:', e.message); }
   try { await require('./roleTests').onResult(result); } catch (e) { console.error('[skills] role test update failed:', e.message); }
   if (result.held && !result.reviewDecision) { await deliver(c, 'skill_held', name); return true; }

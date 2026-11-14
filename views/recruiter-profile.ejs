@@ -474,6 +474,7 @@
       <% } %>
     </div>
   </div>
+  <% if (isOwner && typeof feed !== 'undefined' && feed) { %><%- include('partials/updates-list', { feed: feed, full: false, isCandidate: false }) %><% } %>
 
   <% if (isOwner && !allVerified) {
        const checks = [

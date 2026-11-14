@@ -173,6 +173,7 @@ router.post('/:slug/edit/recheck-credly', async (req, res) => {
     }
 
     await candidate.save();
+    require('../services/updates').sweepCandidateLater(candidate._id);
 
     const verifiedNow = candidate.certifications.filter((c) => c.verified).length;
 
@@ -423,6 +424,7 @@ router.post('/:slug/edit', upload.fields([
     }
 
     await candidate.save();
+    require('../services/updates').sweepCandidateLater(candidate._id);
     await recordUnlistedCerts(candidate); // names the catalog does not know go to staff's Catalog Requests
 
     if (resumeParseError || credlyError) {

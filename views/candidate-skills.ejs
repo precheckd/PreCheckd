@@ -239,6 +239,12 @@
         </div>
       <% } %>
     </form>
+    <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/updates">
+      <h2>Tell my recruiters</h2>
+      <p>Your recruiter connections see a one-line update when you earn a verified certification or degree, or reach a level in a skill you're showing. Failed tests and hidden skills are never shared.</p>
+      <label class="sk-show"><input type="checkbox" name="share" <%= candidate.shareUpdates ? 'checked' : '' %>> Share my updates with my connections</label>
+      <div style="margin-top:0.9rem;"><button class="sk-btn" type="submit">Save</button></div>
+    </form>
     <form class="sk-card" method="POST" action="/candidate/<%= candidate.slug %>/skills/email-prefs">
       <h2>Email reminders</h2>
       <p>We always email you when results are ready or reviewed. These are optional: when you can retake a test, when a result needs a retake, and when a test link is about to expire.</p>

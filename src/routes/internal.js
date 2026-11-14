@@ -762,6 +762,7 @@ router.post('/verify/:candidateId/toggle', async (req, res) => {
 
     candidate.markModified(category);
     await candidate.save();
+    require('../services/updates').sweepCandidateLater(candidate._id);
 
     res.redirect(`/verify/${candidate._id}`);
   } catch (error) {

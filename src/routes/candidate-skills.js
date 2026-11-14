@@ -197,6 +197,7 @@ router.post('/:slug/skills/visibility', async (req, res) => {
     const shown = [].concat(req.body.shown || []);
     candidate.showSkillBreakdown = req.body.breakdown === 'on';
     await skills.setHidden(candidate, shown);
+    require('../services/updates').sweepCandidateLater(candidate._id);
     res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
   } catch (e) {
     console.error('Error saving skill visibility:', e);
@@ -227,6 +228,22 @@ router.post('/:slug/skills/request', async (req, res) => {
   } catch (e) {
     if (['invalid', 'exists', 'limit'].includes(e.code)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=${e.code}`);
     console.error('Error requesting skill:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+// The master switch for the Updates feed. Turning it on never announces old history.
+router.post('/:slug/skills/updates', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    const on = req.body.share === 'on';
+    if (on && !candidate.shareUpdates) await require('../services/updates').sweepCandidate(candidate, { silent: true });
+    candidate.shareUpdates = on;
+    await candidate.save();
+    res.redirect(`/candidate/${candidate.slug}/skills?notice=saved`);
+  } catch (e) {
+    console.error('Error saving updates switch:', e);
     res.status(500).send('Server error');
   }
 });

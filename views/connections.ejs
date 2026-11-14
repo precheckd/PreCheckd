@@ -19,8 +19,11 @@
       <a href="/connections?tab=connections" class="net-tab<%= tab === 'connections' ? ' is-on' : '' %>">Connections<% if (connectionCount > 0) { %><span class="net-pill"><%= connectionCount %></span><% } %></a>
       <% if (isCandidate) { %><a href="/connections?tab=saved" class="net-tab<%= tab === 'saved' ? ' is-on' : '' %>">Saved<% if (savedCount > 0) { %><span class="net-pill"><%= savedCount %></span><% } %></a><% } %>
       <a href="/connections?tab=requests" class="net-tab<%= tab === 'requests' ? ' is-on' : '' %>">Requests<% if (waitingCount > 0) { %><span class="net-pill<%= pendingCount > 0 ? ' alert' : '' %>"><%= waitingCount %></span><% } %></a>
+      <a href="/connections?tab=updates" class="net-tab<%= tab === 'updates' ? ' is-on' : '' %>">Updates<% if (feed.unread > 0 && tab !== 'updates') { %><span class="net-pill alert"><%= feed.unread %></span><% } %></a>
     </div>
-    <% if (tab === 'requests') { %>
+    <% if (tab === 'updates') { %>
+      <%- include('partials/updates-list', { feed: feed, full: true, isCandidate: isCandidate }) %>
+    <% } else if (tab === 'requests') { %>
       <%- include(isCandidate ? 'candidate-requests' : 'recruiter-requests') %>
     <% } else { %>
       <%- include('connections-list') %>

@@ -31,6 +31,7 @@ function canApplyTo(candidate, skills, posting, now) {
 
 async function tell(candidate, posting) {
   try { await JobNotice.create({ candidateId: candidate._id, jobId: posting._id }); } catch (e) { return false; } // already told
+  try { await require('./updates').jobForCandidate(candidate, posting, pub.pathOf(posting)); } catch (e) { /* feed is a bonus */ }
   await notify('candidate', candidate._id, 'job_match', `You qualify for ${posting.title} at ${posting.hiringCompany}.`.slice(0, 200), pub.pathOf(posting));
   return true;
 }

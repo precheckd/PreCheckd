@@ -65,6 +65,7 @@ router.get('/:slug', requireCandidateLogin, async (req, res) => {
       mySkills,
       myTitles,
       viewCounts,
+      feed: await require('../services/updates').latest('candidate', candidate._id, 5),
       certExpiry,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`,
       missingRequirements: getMissingMatchingRequirements(candidate)
