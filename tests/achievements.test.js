@@ -71,7 +71,7 @@ const mk = (extra = {}, summary) => new Candidate({
     const on = await ejs.renderFile(path.join(views, 'partials/skill-share.ejs'), { candidate: c, s: { key: 'linux', shared: true, shareUrl: url, links: ach.shareLinks(v, url), liProfile: ach.linkedinProfileLink(v, url) } });
     assert.ok(on.includes('LinkedIn') && on.includes('Stop sharing') && on.includes('Add to LinkedIn profile'));
     const off = await ejs.renderFile(path.join(views, 'partials/skill-share.ejs'), { candidate: c, s: { key: 'linux', shared: false } });
-    assert.ok(off.includes('Share this achievement') && !off.includes('Stop sharing'));
+    assert.ok(off.includes('Share achievement') && !off.includes('Stop sharing'));
   });
   await t('every card image exists', async () => {
     const fs = require('fs');
