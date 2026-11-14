@@ -132,6 +132,27 @@
   };
   levelSelects.forEach((lv) => lv.addEventListener('change', () => lv.classList.remove('jp-bad')));
 
+  // ---- skills recap on the Requirements page (read-only; edited on step 2) ----
+  const recap = $('jp-skillsum-chips');
+  if (recap) {
+    const drawRecap = () => {
+      recap.textContent = '';
+      keySelects.forEach((sel, i) => {
+        if (!sel.value) return;
+        const lv = levelSelects[i];
+        const chipEl = document.createElement('span');
+        chipEl.className = 'jp-skillchip';
+        const level = lv && lv.value ? lv.options[lv.selectedIndex].text : 'level not chosen';
+        chipEl.textContent = sel.options[sel.selectedIndex].text + ', ' + level;
+        recap.appendChild(chipEl);
+      });
+      if (!recap.children.length) recap.textContent = 'None chosen';
+    };
+    form.addEventListener('change', drawRecap);
+    drawRecap();
+    $('jp-skillsum-edit').addEventListener('click', () => { const b = document.querySelectorAll('.jp-nav button')[1]; if (b) b.click(); });
+  }
+
   // ---- certifications: one slot, then AND (a new group that must also be met) or OR (another choice in the same group) ----
   const certBox = $('jp-certs');
   if (certBox) {
