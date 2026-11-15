@@ -30,6 +30,14 @@ async function findOwner(meta, customerId) {
   return null;
 }
 
+// Newer Stripe API versions moved the subscription off the invoice root into invoice.parent.subscription_details.
+function invoiceSubscriptionId(inv) {
+  const direct = inv && inv.subscription;
+  const nested = inv && inv.parent && inv.parent.subscription_details && inv.parent.subscription_details.subscription;
+  const v = direct || nested;
+  return (v && typeof v === 'object' ? v.id : v) || null;
+}
+
 const idOf = (v) => (v && typeof v === 'object' ? v.id : v) || null;
 
 async function apply(event, { stripe, now }) {
@@ -50,7 +58,7 @@ async function apply(event, { stripe, now }) {
     if (current && current !== obj.id && owner.doc.billing.status !== 'canceled' && owner.doc.billing.status !== 'none') return { note: 'stale subscription' };
     sync.applySubscription(owner.doc.billing, obj, now);
   } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
-    if (!obj.subscription) return { note: 'not a subscription invoice' };
+    if (!invoiceSubscriptionId(obj)) return { note: 'not a subscription invoice' };
     owner = await findOwner(null, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
     if (event.type === 'invoice.paid') sync.applyPaid(owner.doc.billing, obj);
@@ -82,4 +90,4 @@ async function handleEvent(event, { stripe, now = new Date() } = {}) {
   }
 }
 
-module.exports = { handleEvent, HANDLED };
+module.exports = { handleEvent, HANDLED, invoiceSubscriptionId };

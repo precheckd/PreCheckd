@@ -94,6 +94,16 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
     await webhook.handleEvent({ id: 'evt_3', type: 'invoice.paid', data: { object: { subscription: 'sub_9', customer: 'cus_1', lines: { data: [{ period: { end: secs(new Date(now.getTime() + 30 * DAY)) } }] } } } }, { stripe, now });
     assert.strictEqual(rec.billing.status, 'active'); assert.strictEqual(rec.billing.graceUntil, null);
   });
+  await t('webhook: invoice events work with the newer Stripe layout (subscription under invoice.parent)', async () => {
+    const newer = (id, type, extra) => ({ id, type, data: { object: Object.assign({ customer: 'cus_1', parent: { subscription_details: { subscription: 'sub_9' } } }, extra) } });
+    await webhook.handleEvent(newer('evt_n1', 'invoice.payment_failed', {}), { stripe, now });
+    assert.strictEqual(rec.billing.status, 'past_due');
+    await webhook.handleEvent(newer('evt_n2', 'invoice.paid', { lines: { data: [{ period: { end: secs(new Date(now.getTime() + 30 * DAY)) } }] } }), { stripe, now });
+    assert.strictEqual(rec.billing.status, 'active');
+    // and a one-off invoice with no subscription is still ignored
+    const r = await webhook.handleEvent({ id: 'evt_n3', type: 'invoice.paid', data: { object: { customer: 'cus_1' } } }, { stripe, now });
+    assert.strictEqual(r.handled, true); assert.strictEqual(events.get('evt_n3').note, 'not a subscription invoice');
+  });
   await t('webhook: a failure inside the handler lets Stripe retry (the event is forgotten)', async () => {
     const bad = { subscriptions: { retrieve: async () => { throw new Error('stripe down'); } } };
     const ev = { id: 'evt_4', type: 'checkout.session.completed', data: { object: { mode: 'subscription', subscription: 'sub_9', customer: 'cus_1', metadata: {} } } };
