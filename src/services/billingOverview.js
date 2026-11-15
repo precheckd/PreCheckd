@@ -33,7 +33,7 @@ async function load(now = new Date()) {
   const events = await BillingEvent.find({}).sort({ createdAt: -1 }).limit(25);
   return {
     recruiters: rc, candidates: cc,
-    waves: plans.WAVES.map((w) => ({ wave: w.wave, size: w.size, taken: wave[w.wave] || 0, price: plans.PLANS[w.plan].cents / 100 })),
+    waves: plans.WAVES.map((w) => ({ wave: w.wave, size: w.size, taken: wave[w.wave] || 0, price: plans.waveCents(w) / 100, label: w.label, locked: w.locked })),
     candidateFounding: { size: plans.FOUNDING_CANDIDATES, left: candLeft },
     trouble, leaving,
     events: events.map((e) => ({ at: e.createdAt, type: e.type, ownerType: e.ownerType, note: e.note })),

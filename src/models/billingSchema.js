@@ -22,6 +22,8 @@ const billingSchema = new mongoose.Schema({
   founding: {
     wave: { type: Number, default: null },
     priceCents: { type: Number, default: null },
+    // true for the Founders (steps 1-2): price locked while subscribed. false for Early Access: first-year price only.
+    locked: { type: Boolean, default: false },
     // reservedAt: a spot is held while the person is at Stripe Checkout (35 minutes). lockedAt: payment landed.
     reservedAt: { type: Date, default: null },
     lockedAt: { type: Date, default: null }

@@ -32,7 +32,7 @@
   <table class="sr-table">
     <thead><tr><th>Group</th><th>Price</th><th>Taken</th><th>Left</th></tr></thead>
     <tbody>
-      <% data.waves.forEach((w) => { %><tr><td>Recruiter wave <%= w.wave %></td><td>$<%= w.price %>/yr</td><td><%= w.taken %> of <%= w.size %></td><td><%= w.size - w.taken %></td></tr><% }) %>
+      <% data.waves.forEach((w) => { %><tr><td><%= w.label %> step <%= w.wave %><%= w.locked ? ' (price locked)' : ' (first year only)' %></td><td>$<%= w.price %>/yr</td><td><%= w.taken %> of <%= w.size %></td><td><%= w.size - w.taken %></td></tr><% }) %>
       <tr><td>Founding candidates (no $79 fee)</td><td>free fee</td><td><%= data.candidateFounding.size - data.candidateFounding.left %> of <%= data.candidateFounding.size %></td><td><%= data.candidateFounding.left %></td></tr>
     </tbody>
   </table>

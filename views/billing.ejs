@@ -31,7 +31,7 @@
     <% if (state.status === 'active') { %>
       <p>Your <%= billing.plan === 'annual' ? 'annual' : 'monthly' %> plan is active<% if (billing.currentPeriodEnd) { %> through <%= new Date(billing.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) %><% } %>.
         <% if (billing.cancelAtPeriodEnd) { %>It will end then and won't renew.<% } else { %>It renews automatically.<% } %></p>
-      <% if (billing.founding && billing.founding.lockedAt && billing.founding.priceCents) { %><p class="bl-meta">Founding recruiter: your price is locked at $<%= (billing.founding.priceCents / 100).toLocaleString('en-US') %>/year while you stay subscribed.</p><% } %>
+      <% if (billing.founding && billing.founding.lockedAt && billing.founding.priceCents) { %><% if (billing.founding.locked) { %><p class="bl-meta">Founding recruiter: your price is locked at $<%= (billing.founding.priceCents / 100).toLocaleString('en-US') %>/year while you stay subscribed.</p><% } else { %><p class="bl-meta">Early Access: your first year was $<%= (billing.founding.priceCents / 100).toLocaleString('en-US') %>. After that it renews at the standard <%= annual %>/year.</p><% } %><% } %>
       <p class="bl-meta">Includes <%= limit %> open job postings at a time.</p>
     <% } else if (state.status === 'grace') { %>
       <div class="bl-banner bl-warn">Your last payment didn't go through. Update your card within <%= graceDays %> day<%= graceDays === 1 ? '' : 's' %> to keep your account active.</div>
@@ -45,10 +45,10 @@
           <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="monthly"><button class="bl-btn bl-ghost" type="submit">Choose monthly</button></form>
         </div>
         <div class="bl-plan">
-          <% if (wave.wave && !hadFounding) { %><span class="bl-tag">Founding price · <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left</span><% } %>
+          <% if (wave.wave && !hadFounding) { %><span class="bl-tag"><%= wave.label %> price · <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left</span><% } %>
           <h2>Annual</h2>
-          <div class="bl-price"><%= (wave.wave && !hadFounding) ? foundingPrice : annual %> <small>/year</small></div>
-          <p class="bl-meta"><% if (wave.wave && !hadFounding) { %>Locked in while you stay subscribed. Regular price is <%= annual %>.<% } else { %>Best value. Sales tax added where it applies.<% } %></p>
+          <div class="bl-price"><%= (wave.wave && !hadFounding) ? foundingPrice : annual %> <small><%= (wave.wave && !hadFounding && !wave.locked) ? 'first year' : '/year' %></small></div>
+          <p class="bl-meta"><% if (wave.wave && !hadFounding && wave.locked) { %>Locked in while you stay subscribed. Regular price is <%= annual %>.<% } else if (wave.wave && !hadFounding) { %>Then it renews at the standard <%= annual %>/year unless you cancel. We email you before it renews.<% } else { %>Best value. Sales tax added where it applies.<% } %></p>
           <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="annual"><button class="bl-btn" type="submit">Choose annual</button></form>
         </div>
       </div>

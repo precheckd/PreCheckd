@@ -47,3 +47,9 @@ Lapse: unfixed payment failure after a 14-day grace period, or cancellation.
 - 5C: candidate skill-test credits. 3 a month from the member-since day, no rollover; spent only when a NEW skill test is started
   (continuing, recruiter-requested, role, title, finalist and custom tests are free); unopened expired invites refund. "Request more"
   (one open at a time) is approved by hand at /credit-requests and adds never-expiring bonus credits. Enforced only while BILLING_ENABLED.
+
+## Pricing change (Nov 15)
+- Standard recruiter price: $99/month, $799/year (was $59/$499). Prices are made in Stripe by lookup key; if the amount in code differs from an existing price, a new price is created and the key moves to it.
+- Four annual steps, 1,000 recruiters: FOUNDERS (first 250) $249 x100, $349 x150, price LOCKED while subscribed. EARLY ACCESS (next 750) $449 x250, $549 x500, first year only, then renews at $799 (standard annual price + one-time Stripe coupon, id precheckd_early_access_<cents>). Nothing locked for Early Access.
+- Monthly is always the standard $99. Founder/Early Access is annual only, once per person.
+- To do: confirm Stripe's renewal reminder email is on (the billing page promises an email before an Early Access renewal); lawyer list: auto-renewal disclosure, "regular price" wording.

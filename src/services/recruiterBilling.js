@@ -53,14 +53,15 @@ async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath
 
   // Hold the founding spot while they pay.
   if (choice.wave) {
-    recruiter.billing.founding = { wave: choice.wave, priceCents: plans.PLANS[choice.plan].cents, reservedAt: new Date(now), lockedAt: null };
+    recruiter.billing.founding = { wave: choice.wave, priceCents: st.priceCents, locked: choice.locked, reservedAt: new Date(now), lockedAt: null };
   } else if (!hadFounding(recruiter)) {
-    recruiter.billing.founding = { wave: null, priceCents: null, reservedAt: null, lockedAt: null };
+    recruiter.billing.founding = { wave: null, priceCents: null, locked: false, reservedAt: null, lockedAt: null };
   }
   recruiter.billing.status = recruiter.billing.status === 'none' ? 'incomplete' : recruiter.billing.status;
   await recruiter.save();
 
   const owner = { ownerType: 'recruiter', ownerId: String(recruiter._id) };
+  const discounts = choice.discountCents ? [{ coupon: await plans.ensureCoupon(stripe, choice.discountCents) }] : null;
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
@@ -69,7 +70,7 @@ async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath
     automatic_tax: { enabled: true },
     billing_address_collection: 'required',
     customer_update: { address: 'auto', name: 'auto' },
-    allow_promotion_codes: false,
+    ...(discounts ? { discounts } : { allow_promotion_codes: false }), // Stripe allows only one of the two
     metadata: owner,
     subscription_data: { metadata: owner },
     success_url: `${baseUrl}${successPath}${successPath.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`,
