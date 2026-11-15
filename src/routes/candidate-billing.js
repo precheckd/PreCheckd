@@ -8,7 +8,7 @@ const membership = require('../services/membership');
 const candidateBilling = require('../services/candidateBilling');
 const plans = require('../services/billingPlans');
 
-const base = () => process.env.BASE_URL || '';
+const base = () => process.env.APP_BASE_URL || 'https://precheckd.com';
 const money = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0 });
 
 async function loadCandidate(req, res) {

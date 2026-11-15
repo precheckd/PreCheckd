@@ -3,7 +3,7 @@
 // Sent from the webhook only when the status actually changes, and the webhook itself never repeats an event.
 const emailService = require('./emailService');
 
-const BASE = () => process.env.APP_BASE_URL || process.env.BASE_URL || 'https://precheckd.com';
+const BASE = () => process.env.APP_BASE_URL || 'https://precheckd.com';
 
 const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
 

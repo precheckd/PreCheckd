@@ -12,7 +12,7 @@ const JobPosting = require('../models/JobPosting');
 const publicJob = require('../services/publicJob');
 const testRequests = require('../services/testRequests');
 
-const base = () => process.env.BASE_URL || '';
+const base = () => process.env.APP_BASE_URL || 'https://precheckd.com';
 
 async function loadRecruiter(req, res) {
   if (!req.session.recruiterId) { res.redirect('/login'); return null; }
