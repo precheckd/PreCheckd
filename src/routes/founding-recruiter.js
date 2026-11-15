@@ -273,18 +273,21 @@ router.post('/verify-phone', async (req, res) => {
       });
     }
 
-    await Recruiter.findByIdAndUpdate(recruiterId, {
+    const updated = await Recruiter.findByIdAndUpdate(recruiterId, {
       isPhoneVerified: true,
       phoneVerifiedAt: new Date()
-    });
+    }, { new: true });
 
     req.session.phoneVerified = true;
     delete req.session.phoneVerificationCode;
     delete req.session.phoneVerificationExpires;
 
+    // With billing on, payment comes next (before the ID check); the page sends them to the plan page.
+    const membership = require('../services/membership');
     res.json({
       success: true,
-      message: 'Phone verified successfully'
+      message: 'Phone verified successfully',
+      paymentRequired: Boolean(updated && !membership.isMember(updated))
     });
   } catch (error) {
     console.error('Error verifying phone OTP:', error);
@@ -369,6 +372,11 @@ router.post('/create-identity-session', async (req, res) => {
     const recruiter = await Recruiter.findById(recruiterId);
     if (!recruiter) {
       return res.status(404).json({ error: 'Recruiter not found' });
+    }
+
+    // Payment comes before the ID check (each check costs us money).
+    if (!require('../services/membership').isMember(recruiter)) {
+      return res.status(402).json({ error: 'Choose a plan before verifying your identity.', paymentRequired: true });
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;

@@ -42,6 +42,7 @@
     <h1>My job postings</h1>
     <a class="rj-btn" href="/recruiter-jobs/new">Post a job</a>
   </div>
+  <% if (atLimit) { %><div style="background:#3a3320;border:1px solid #6b5d2a;color:#f2e6b8;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">You have <%= openLimit %> open postings, the most your plan includes. Close one to post another.</div><% } %>
   <form class="rj-digest" method="POST" action="/recruiter-jobs/digest" style="margin-bottom:1rem;color:#C7D1CF;font-size:0.9rem;">
     <label><input type="checkbox" name="digest" value="on" <%= digestOn ? 'checked' : '' %> onchange="this.form.submit()"> Email me a daily summary of new applicants</label>
     <noscript><button type="submit">Save</button></noscript>

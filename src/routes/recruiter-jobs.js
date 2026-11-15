@@ -42,6 +42,8 @@ function requireRecruiterLogin(req, res, next) {
   next();
 }
 router.use(requireRecruiterLogin);
+const membership = require('../services/membership');
+router.use(membership.requireRecruiterMember);
 
 // Only a fully verified, active, unsuspended recruiter can post.
 async function loadPostingRecruiter(req, res) {
@@ -94,7 +96,7 @@ router.get('/', async (req, res) => {
     // Drafts are a convenience: if they cannot be loaded the list of postings must still show.
     let drafts = [];
     try { drafts = await JobDraft.find({ recruiterId: recruiter._id }).sort({ updatedAt: -1 }); } catch (e) { console.error('Could not load drafts:', e.message); }
-    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, drafts, justPosted: req.query.posted === '1',
+    res.render('recruiter-jobs', { title: 'My Job Postings | PreCheckd', postings, applicantCounts, drafts, justPosted: req.query.posted === '1', atLimit: req.query.limit === '1', openLimit: membership.openLimit(recruiter),
       digestOn: recruiter.applicantDigestOptOut !== true, digestSaved: req.query.digest === '1' });
   } catch (error) {
     console.error('Error loading recruiter postings:', error);
@@ -153,6 +155,8 @@ router.get('/new', async (req, res) => {
   try {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
+    const openNow = (await JobPosting.find({ recruiterId: recruiter._id, status: 'open' })).filter((p) => publicJob.isOpenNow(p)).length;
+    if (openNow >= membership.openLimit(recruiter)) return res.redirect('/recruiter-jobs?limit=1');
     let draft = null;
     if (req.query.draft && /^[a-f0-9]{24}$/i.test(String(req.query.draft))) {
       draft = await JobDraft.findOne({ _id: req.query.draft, recruiterId: recruiter._id });
@@ -215,6 +219,8 @@ router.post('/new', async (req, res) => {
   try {
     const recruiter = await loadPostingRecruiter(req, res);
     if (!recruiter) return;
+    const openNow = (await JobPosting.find({ recruiterId: recruiter._id, status: 'open' })).filter((p) => publicJob.isOpenNow(p)).length;
+    if (openNow >= membership.openLimit(recruiter)) return res.redirect('/recruiter-jobs?limit=1');
     const skillChoices = await skillOptions();
     const skillLabels = new Map(skillChoices.map((o) => [o.key, o.label]));
     const { errors, value } = validatePosting(req.body, { skillLabels });

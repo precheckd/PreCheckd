@@ -46,7 +46,7 @@ function oneLine(s, max) {
 }
 
 function isFullyVerified(r) {
-  return Boolean(r && r.accountTier === 'standard' && r.isActive && !r.isSuspended && r.isPhoneVerified && r.isIdentityVerified);
+  return Boolean(r && r.accountTier === 'standard' && r.isActive && !r.isSuspended && r.isPhoneVerified && r.isIdentityVerified && require('./membership').isMember(r));
 }
 
 function companyOf(recruiter) {

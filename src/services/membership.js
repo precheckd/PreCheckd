@@ -60,3 +60,46 @@ function graceDaysLeft(account, now = new Date()) {
 }
 
 module.exports = { state, isMember, isLapsed, gateFact, graceDaysLeft };
+
+// ---- Recruiters -------------------------------------------------------------------------------------------
+
+const plansConfig = require('./billingPlans');
+
+// How many postings can be open at once: 5 in the plan plus any bought slots.
+function openLimit(recruiter) {
+  const extra = Number(recruiter && recruiter.billing && recruiter.billing.extraSlots) || 0;
+  return plansConfig.BASE_OPEN_POSTINGS + Math.max(0, extra);
+}
+
+// Express middleware for recruiter-only paid areas. Lets everyone through while billing is off.
+// Pages get sent to the plan page; API calls get a 402.
+function requireRecruiterMember(req, res, next) {
+  if (!billingConfig.enabled()) return next();
+  if (!req.session || !req.session.recruiterId) return next(); // the login check elsewhere handles this
+  const Recruiter = require('../models/Recruiter');
+  Recruiter.findById(req.session.recruiterId).then((r) => {
+    if (!r || isMember(r)) return next();
+    const wantsJson = req.xhr || (req.headers.accept || '').includes('application/json');
+    if (wantsJson) return res.status(402).json({ error: 'Your membership is not active.', needsPayment: true });
+    return res.redirect('/billing?needed=1');
+  }).catch(next);
+}
+
+// Postings by recruiters who stopped paying are hidden from the board and from job alerts.
+async function visiblePostings(postings) {
+  if (!billingConfig.enabled() || !postings.length) return postings;
+  const Recruiter = require('../models/Recruiter');
+  const ids = [...new Set(postings.map((p) => String(p.recruiterId)))];
+  const owners = await Recruiter.find({ _id: { $in: ids } }).select('billing');
+  const ok = new Set(owners.filter((r) => isMember(r)).map((r) => String(r._id)));
+  return postings.filter((p) => ok.has(String(p.recruiterId)));
+}
+
+async function postingVisible(posting) {
+  return (await visiblePostings([posting])).length === 1;
+}
+
+module.exports.openLimit = openLimit;
+module.exports.requireRecruiterMember = requireRecruiterMember;
+module.exports.visiblePostings = visiblePostings;
+module.exports.postingVisible = postingVisible;

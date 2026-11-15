@@ -136,7 +136,12 @@
     hideError();
     try {
       const code = new FormData(phoneForm).get('code');
-      await postJson('/api/founding-recruiter/verify-phone', { code });
+      const phoneResult = await postJson('/api/founding-recruiter/verify-phone', { code });
+      if (phoneResult && phoneResult.paymentRequired) {
+        // Billing is on: pick a plan and pay first; the plan page brings them back here for the ID check.
+        window.location.href = '/billing?needed=1&signup=1';
+        return;
+      }
       showStep('step-payment');
       await prepareIdentitySession();
     } catch (err) {
@@ -192,4 +197,10 @@
       showError(err.message || 'An error occurred during verification');
     }
   });
+
+  // Back from paying: go straight to the identity step.
+  if (new URLSearchParams(window.location.search).get('step') === 'identity') {
+    showStep('step-payment');
+    prepareIdentitySession();
+  }
 })();

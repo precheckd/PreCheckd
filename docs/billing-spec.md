@@ -22,6 +22,17 @@ Lapse: unfixed payment failure after a 14-day grace period, or cancellation.
 4. Billing page for both sides (plan, next charge, Stripe customer portal for card/cancel), receipts, failed-payment and grace-period emails (Resend), staff view.
 5. Add-ons: slot subscription items with tiered pricing; test-credit packs; then candidate test credits (roadmap item 10) which depend on this.
 
+## Status (Nov 14, 2026)
+- Phase 1 built (billing state, BILLING_ENABLED, lapsed-candidate page).
+- Phase 2 built, recruiter side: prices created in Stripe on first use by lookup key (`precheckd_recruiter_monthly|annual|founding_1|founding_2`), Checkout in subscription mode with automatic tax, founding spot held 35 minutes at checkout and locked when first paid, webhook handlers (idempotent by event id), recruiter gate (posting, applicants, candidate search/profiles, outreach email), 5-open-posting cap (+ bought slots later), postings of lapsed recruiters hidden from the board and job alerts, /billing page with Stripe customer portal, payment step before the ID check at signup.
+- Not yet: candidate fee + subscription (phase 3), receipts/failed-payment emails and staff view (phase 4), add-ons and credit packs (phase 5).
+
+## Stripe dashboard settings needed (once)
+1. Webhook endpoint `/webhooks/stripe` must send: checkout.session.completed, customer.subscription.created, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed.
+2. Settings > Tax: turn on Stripe Tax, set the business address and register where required.
+3. Settings > Billing > Customer portal: turn on, allow card update, invoices and cancel at end of period.
+4. Settings > Billing > Subscriptions and emails: failed-payment retries should run at least 14 days (our grace period), then cancel the subscription. Turn on Stripe's failed-payment and receipt emails until ours exist.
+
 ## Open items for Kent
 - Sales tax: turn on Stripe Tax?
 - Did anyone already pay through the old one-time founding checkout? How do they carry over?

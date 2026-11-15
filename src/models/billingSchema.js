@@ -19,8 +19,13 @@ const billingSchema = new mongoose.Schema({
   // Recruiters only: founding wave and the locked annual price in cents while subscribed.
   founding: {
     wave: { type: Number, default: null },
-    priceCents: { type: Number, default: null }
-  }
+    priceCents: { type: Number, default: null },
+    // reservedAt: a spot is held while the person is at Stripe Checkout (35 minutes). lockedAt: payment landed.
+    reservedAt: { type: Date, default: null },
+    lockedAt: { type: Date, default: null }
+  },
+  // Recruiters only: extra open-posting slots bought as an add-on (base plan includes 5).
+  extraSlots: { type: Number, default: 0 }
 }, { _id: false });
 
 module.exports = billingSchema;

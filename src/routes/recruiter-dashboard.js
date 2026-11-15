@@ -155,7 +155,7 @@ router.get('/requests', (req, res) => res.redirect('/connections'));
 // an accepted connection. Video and resume only render once fullAccessStatus
 // is 'granted' — the view itself shows a "Request Full Access" button when
 // it isn't, rather than this route gating the whole page on it.
-router.get('/requests/:id/candidate', async (req, res) => {
+router.get('/requests/:id/candidate', require('../services/membership').requireRecruiterMember, async (req, res) => {
   try {
     const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
 
@@ -235,7 +235,7 @@ router.post('/requests/:id/test', async (req, res) => {
 // the PreCheckd Certificate of Verification appended, instead of the raw
 // upload. Same access rule as the resume link it replaces: accepted
 // connection AND full access granted.
-router.get('/requests/:id/resume', async (req, res) => {
+router.get('/requests/:id/resume', require('../services/membership').requireRecruiterMember, async (req, res) => {
   try {
     const request = await ConnectionRequest.findById(req.params.id).populate('candidateId');
 

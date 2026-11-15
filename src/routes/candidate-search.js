@@ -30,6 +30,7 @@ function requireRecruiterLogin(req, res, next) {
 }
 
 router.use(requireRecruiterLogin);
+router.use(membership.requireRecruiterMember);
 
 // GET /candidate-search — the recruiter-side mirror of /recruiter-search.
 // One form, one Search button: the recruiter sets whatever criteria they

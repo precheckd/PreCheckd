@@ -266,6 +266,7 @@ app.use('/api/outside-interest', require('./routes/outside-interest'));
 app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/recruiter-jobs', require('./routes/recruiter-jobs'));
+app.use('/billing', require('./routes/billing'));
 app.use('/jobs', require('./routes/jobs'));
 app.use('/hire-confirm', require('./routes/hire-confirm'));
 app.use('/candidate-dashboard', candidateDashboardRoutes);

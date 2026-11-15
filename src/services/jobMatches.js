@@ -21,7 +21,7 @@ const off = () => process.env.DISABLE_JOB_NOTICES === 'true' || process.env.NODE
 const stillApplied = (a) => !(a.status === 'withdrawn' && a.withdrawnBy === 'requirement_change');
 
 async function openPostings(now = Date.now()) {
-  return (await JobPosting.find({ status: 'open' })).filter((p) => pub.isOpenNow(p, now));
+  return require('./membership').visiblePostings((await JobPosting.find({ status: 'open' })).filter((p) => pub.isOpenNow(p, now)));
 }
 
 function canApplyTo(candidate, skills, posting, now) {
@@ -58,6 +58,7 @@ async function sweepCandidate(candidate, { now = Date.now(), max = MAX_PER_SWEEP
 // A job was posted or changed: announce it to every candidate who qualifies.
 async function sweepPosting(posting, { now = Date.now() } = {}) {
   if (!pub.isOpenNow(posting, now)) return 0;
+  if (!(await require('./membership').postingVisible(posting))) return 0;
   const candidates = await Candidate.find({ openToOpportunities: { $ne: false }, isPhoneVerified: true, isIdentityVerified: true });
   let count = 0;
   for (const candidate of candidates) {

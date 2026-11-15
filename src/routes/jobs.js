@@ -3,6 +3,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
+const membership = require('../services/membership');
 const JobPosting = require('../models/JobPosting');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
@@ -33,7 +34,7 @@ router.get('/', async (req, res) => {
     const now = Date.now();
     const q = String(req.query.q || '').trim().slice(0, 100).toLowerCase();
     const arrangement = opt.ARRANGEMENTS.some((a) => a.code === req.query.arrangement) ? req.query.arrangement : '';
-    const all = (await JobPosting.find({ status: 'open' }).sort({ createdAt: -1 })).filter((p) => pub.isOpenNow(p, now));
+    const all = await membership.visiblePostings((await JobPosting.find({ status: 'open' }).sort({ createdAt: -1 })).filter((p) => pub.isOpenNow(p, now)));
     const matches = (j) => (!arrangement || j.arrangement === arrangement)
       && (!q || [j.title, j.hiringCompany, j.location, ...j.skills.map((s) => s.label)].join(' ').toLowerCase().includes(q));
     let rows = all.map((p) => ({ p, j: pub.publicShape(p) })).filter((r) => matches(r.j));
@@ -88,6 +89,7 @@ async function loadForApply(req, res) {
   const posting = await JobPosting.findById(req.params.id);
   if (!posting || posting.status === 'removed') { res.status(404).render('error', { title: 'Not found', message: 'We could not find that job.' }); return null; }
   const back = pub.pathOf(posting);
+  if (!(await membership.postingVisible(posting))) { res.redirect(back); return null; }
   if (!req.session || !req.session.candidateId) {
     if (req.session) req.session.returnTo = back;
     res.redirect('/login'); return null;
@@ -179,7 +181,7 @@ router.post('/:id/feedback-dispute', async (req, res) => {
 router.get('/sitemap.xml', async (req, res) => {
   try {
     const now = Date.now();
-    const open = (await JobPosting.find({ status: 'open' }).sort({ createdAt: -1 })).filter((p) => pub.isOpenNow(p, now));
+    const open = await membership.visiblePostings((await JobPosting.find({ status: 'open' }).sort({ createdAt: -1 })).filter((p) => pub.isOpenNow(p, now)));
     const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const urls = open.map((p) => `<url><loc>${esc(pub.BASE_URL() + pub.pathOf(p))}</loc><lastmod>${new Date(p.editedAt || p.createdAt).toISOString().slice(0, 10)}</lastmod></url>`);
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pub.BASE_URL() ? `<url><loc>${esc(pub.BASE_URL())}/jobs</loc></url>` : ''}${urls.join('')}</urlset>`);
@@ -199,7 +201,7 @@ router.get('/:id/:slug?', async (req, res) => {
     const j = pub.publicShape(posting);
     if (req.params.slug !== pub.slugOf(posting)) return res.redirect(301, j.path);
 
-    const open = pub.isOpenNow(posting);
+    const open = pub.isOpenNow(posting) && await membership.postingVisible(posting);
     const meta = pub.metaFor(j);
 
     // Who is looking: a candidate sees whether they qualify; a recruiter cannot apply.
