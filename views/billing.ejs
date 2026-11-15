@@ -66,7 +66,7 @@
           <span class="bl-special"><%= wave.locked ? 'Founding Member Special' : 'Early Access Special' %></span>
           <div class="bl-now"><%= foundingPrice %> <small><%= wave.locked ? '/year' : 'first year' %></small></div>
           <div class="bl-left">Only <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left at this price</div>
-          <p class="bl-meta"><% if (wave.locked) { %>Price locked in for as long as you stay subscribed.<% } else { %>Then it renews at the standard <%= annual %>/year unless you cancel. We email you before it renews.<% } %></p>
+          <p class="bl-meta"><% if (wave.locked) { %>Price locked in for as long as you stay subscribed. <strong style="color:#fff;letter-spacing:.04em;">FIRST 250 RECRUITERS ONLY.</strong><% } else { %>Then it renews at the standard <%= annual %>/year unless you cancel. We email you before it renews.<% } %></p>
           <div class="bl-ladder">
             <% ladder.forEach(function (l, i) { %><div class="<%= i === 0 ? 'bl-cur' : '' %>"><span><%= i === 0 ? 'Now' : 'Next' %> · <%= l.label %></span><span><%= l.price %> · <%= l.left %> left</span></div><% }) %>
             <div><span>After that · standard</span><span><%= annual %></span></div>
