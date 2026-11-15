@@ -98,9 +98,11 @@ async function confirmReturn({ stripe, candidate, sessionId, now = new Date() })
   if (session.payment_status !== 'paid') return { paid: false };
   const subId = typeof session.subscription === 'object' ? session.subscription.id : session.subscription;
   const sub = await stripe.subscriptions.retrieve(subId);
+  const before = require('./billingEmails').stateOf(candidate.billing);
   sync.applySubscription(candidate.billing, sub, now);
   recordFee(candidate, session.metadata, now);
   await candidate.save();
+  await require('./billingEmails').notifyChange('candidate', candidate, before);
   return { paid: candidate.billing.status === 'active' };
 }
 

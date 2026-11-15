@@ -528,6 +528,16 @@ router.get('/outside-us', async (req, res) => {
 });
 
 // Job-title test credits: recruiters get a monthly allowance (TEST_CREDITS_PER_MONTH); staff can top one up.
+// Billing at a glance: members by status, founding spots, payment trouble and cancellations.
+router.get('/billing-overview', async (req, res) => {
+  try {
+    res.render('internal-billing', { data: await require('../services/billingOverview').load(), enabled: require('../config/billing').enabled() });
+  } catch (error) {
+    console.error('Error loading billing overview:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 router.get('/test-credits', async (req, res) => {
   try {
     const TestRequest = require('../models/TestRequest');

@@ -3,6 +3,7 @@ const BillingEvent = require('../models/BillingEvent');
 const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const sync = require('./billingSync');
+const billingEmails = require('./billingEmails');
 
 const HANDLED = new Set([
   'checkout.session.completed',
@@ -43,11 +44,14 @@ const idOf = (v) => (v && typeof v === 'object' ? v.id : v) || null;
 async function apply(event, { stripe, now }) {
   const obj = event.data.object;
   let owner = null;
+  let before = { status: 'none', cancelAtPeriodEnd: false };
+  const snap = () => { if (owner) before = billingEmails.stateOf(owner.doc.billing); };
 
   if (event.type === 'checkout.session.completed') {
     if (obj.mode !== 'subscription' || !obj.subscription) return { note: 'not a subscription checkout' };
     owner = await findOwner(obj.metadata, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
+    snap();
     const sub = await stripe.subscriptions.retrieve(idOf(obj.subscription));
     sync.applySubscription(owner.doc.billing, sub, now);
     // The $79 verification fee rides on a candidate's first checkout.
@@ -55,6 +59,7 @@ async function apply(event, { stripe, now }) {
   } else if (event.type.startsWith('customer.subscription.')) {
     owner = await findOwner(obj.metadata, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
+    snap();
     // A stale event for an old subscription must not overwrite a newer one.
     const current = owner.doc.billing.subscriptionId;
     if (current && current !== obj.id && owner.doc.billing.status !== 'canceled' && owner.doc.billing.status !== 'none') return { note: 'stale subscription' };
@@ -63,12 +68,16 @@ async function apply(event, { stripe, now }) {
     if (!invoiceSubscriptionId(obj)) return { note: 'not a subscription invoice' };
     owner = await findOwner(null, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
+    snap();
     if (event.type === 'invoice.paid') sync.applyPaid(owner.doc.billing, obj);
     else sync.applyPaymentFailed(owner.doc.billing, now);
   }
 
   if (!owner) return { note: 'ignored' };
   await owner.doc.save();
+
+  // Tell them what changed (only on a real change of status; best effort).
+  await billingEmails.notifyChange(owner.type, owner.doc, before);
   return { ownerType: owner.type, ownerId: owner.doc._id };
 }
 

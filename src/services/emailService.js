@@ -276,6 +276,22 @@ async function sendCertExpiryReminderEmail(toEmail, firstName, slug, certs) {
 
 // A skills-test notice (results ready, review outcome, retake open, ...). `notice` is
 // { subject, headline, paragraphs[], button, reminder }. Never carries scores or review reasons.
+// Membership notices (started, payment trouble, cancelled, ended). Text comes from services/billingEmails.js.
+async function sendBillingNoticeEmail(toEmail, firstName, notice) {
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Membership</p>
+    <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${escapeHtml(notice.headline)}</h1>
+    <p style="margin:0 0 14px;">Hi ${escapeHtml(properName(firstName))},</p>
+    ${notice.paragraphs.map((t) => `<p style="margin:0 0 14px;">${escapeHtml(t)}</p>`).join('')}
+    ${emailButton(notice.url, notice.button)}`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: toEmail,
+    subject: notice.subject,
+    html: brandShell({ bodyHtml, preheader: notice.headline, footerHtml: 'You are receiving this because of your PreCheckd membership.' })
+  });
+}
+
 async function sendSkillNoticeEmail(toEmail, firstName, slug, notice) {
   const url = `${process.env.APP_BASE_URL || 'https://precheckd.com'}/candidate/${slug}/skills`;
   const bodyHtml = `
@@ -800,6 +816,7 @@ module.exports = {
   sendMessageDigestEmail,
   sendCertExpiryReminderEmail,
   sendSkillNoticeEmail,
+  sendBillingNoticeEmail,
   sendStaffAlertEmail,
   sendVerificationNoticeEmail,
   sendEmployerVerificationEmail,
