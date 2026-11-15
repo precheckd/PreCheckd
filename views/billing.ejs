@@ -17,6 +17,21 @@
   .bl-ghost { background: transparent; color: #F2F4F3; border: 1px solid #5b7a82; }
   .bl-meta { color: #C7D1CF; font-size: .9rem; }
   .bl-plan form { margin-top: .75rem; }
+
+  .bl-plan.bl-hero { border: 2px solid #2ECC71; background: #1b3a2b; box-shadow: 0 0 0 3px rgba(46,204,113,.18); text-align: center; }
+  .bl-special { display: inline-block; background: #E5252A; color: #fff; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; font-size: .95rem; padding: .35rem .8rem; border-radius: 4px; margin: .35rem 0 .2rem; }
+  .bl-was { position: relative; display: inline-block; font-size: 2rem; font-weight: 800; color: #C7D1CF; padding: 0 .6rem; margin: .5rem 0 .8rem; }
+  .bl-was::before, .bl-was::after { content: ''; position: absolute; left: -2px; right: -2px; top: 50%; height: 5px; background: #FF2A2A; border-radius: 3px; }
+  .bl-was::before { transform: rotate(18deg); } .bl-was::after { transform: rotate(-18deg); }
+  .bl-was small { font-size: 1rem; font-weight: 600; }
+  .bl-now { font-size: 3.2rem; font-weight: 900; line-height: 1; color: #2ECC71; margin: .35rem 0 .1rem; }
+  .bl-now small { font-size: 1.1rem; font-weight: 700; color: #F2F4F3; }
+  .bl-left { color: #FFD23F; font-weight: 800; font-size: 1.05rem; margin: .4rem 0; }
+  .bl-ladder { margin: .9rem 0 .3rem; border-top: 1px dashed #5b7a82; padding-top: .7rem; font-size: .9rem; text-align: left; }
+  .bl-ladder div { display: flex; justify-content: space-between; padding: .15rem 0; color: #C7D1CF; }
+  .bl-ladder .bl-cur { color: #fff; font-weight: 800; }
+  .bl-hero .bl-btn { width: 100%; font-size: 1.15rem; padding: .8rem 1rem; }
+  .bl-plans.bl-stack { grid-template-columns: 1fr; }
 </style>
 <div class="bl-wrap"><div class="bl-card">
   <h1>Membership</h1>
@@ -44,13 +59,28 @@
           <p class="bl-meta">Cancel any time. Sales tax added where it applies.</p>
           <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="monthly"><button class="bl-btn bl-ghost" type="submit">Choose monthly</button></form>
         </div>
-        <div class="bl-plan">
-          <% if (wave.wave && !hadFounding) { %><span class="bl-tag"><%= wave.label %> price · <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left</span><% } %>
+        <% if (wave.wave && !hadFounding) { %>
+        <div class="bl-plan bl-hero">
           <h2>Annual</h2>
-          <div class="bl-price"><%= (wave.wave && !hadFounding) ? foundingPrice : annual %> <small><%= (wave.wave && !hadFounding && !wave.locked) ? 'first year' : '/year' %></small></div>
-          <p class="bl-meta"><% if (wave.wave && !hadFounding && wave.locked) { %>Locked in while you stay subscribed. Regular price is <%= annual %>.<% } else if (wave.wave && !hadFounding) { %>Then it renews at the standard <%= annual %>/year unless you cancel. We email you before it renews.<% } else { %>Best value. Sales tax added where it applies.<% } %></p>
+          <div class="bl-was"><%= annual %> <small>/year</small></div><br>
+          <span class="bl-special"><%= wave.locked ? 'Founding Member Special' : 'Early Access Special' %></span>
+          <div class="bl-now"><%= foundingPrice %> <small><%= wave.locked ? '/year' : 'first year' %></small></div>
+          <div class="bl-left">Only <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left at this price</div>
+          <p class="bl-meta"><% if (wave.locked) { %>Price locked in for as long as you stay subscribed.<% } else { %>Then it renews at the standard <%= annual %>/year unless you cancel. We email you before it renews.<% } %></p>
+          <div class="bl-ladder">
+            <% ladder.forEach(function (l, i) { %><div class="<%= i === 0 ? 'bl-cur' : '' %>"><span><%= i === 0 ? 'Now' : 'Next' %> · <%= l.label %></span><span><%= l.price %> · <%= l.left %> left</span></div><% }) %>
+            <div><span>After that · standard</span><span><%= annual %></span></div>
+          </div>
+          <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="annual"><button class="bl-btn" type="submit">Claim this price</button></form>
+        </div>
+        <% } else { %>
+        <div class="bl-plan">
+          <h2>Annual</h2>
+          <div class="bl-price"><%= annual %> <small>/year</small></div>
+          <p class="bl-meta">Best value. Sales tax added where it applies.</p>
           <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="annual"><button class="bl-btn" type="submit">Choose annual</button></form>
         </div>
+        <% } %>
       </div>
     <% } %>
 

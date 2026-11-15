@@ -1,11 +1,11 @@
 // Recruiter prices and founding waves. Prices live in Stripe; we find them by lookup key and create
 // them the first time they are needed, so nobody has to click them together by hand.
 //
-// Standard price raised Nov 15 to $99/month and $799/year so the launch offers read as deep discounts (Kent).
+// Standard price set Nov 15 to $249/month and $1,999/year so the launch offers read as deep discounts (Kent).
 // Tax is added on top at checkout by Stripe Tax.
 const PLANS = {
-  recruiter_monthly: { key: 'precheckd_recruiter_monthly', name: 'PreCheckd Recruiter (monthly)', cents: 9900, interval: 'month' },
-  recruiter_annual: { key: 'precheckd_recruiter_annual', name: 'PreCheckd Recruiter (annual)', cents: 79900, interval: 'year' },
+  recruiter_monthly: { key: 'precheckd_recruiter_monthly', name: 'PreCheckd Recruiter (monthly)', cents: 24900, interval: 'month' },
+  recruiter_annual: { key: 'precheckd_recruiter_annual', name: 'PreCheckd Recruiter (annual)', cents: 199900, interval: 'year' },
   founding_1: { key: 'precheckd_recruiter_founding_1', name: 'PreCheckd Founding Recruiter (annual, first 100)', cents: 24900, interval: 'year' },
   founding_2: { key: 'precheckd_recruiter_founding_2', name: 'PreCheckd Founding Recruiter (annual, next 150)', cents: 34900, interval: 'year' },
   // Add-ons for recruiters. The slot price is graduated: slots 1-5 are $10 each, 6-10 $8 each, 11 and up $6 each, per month.

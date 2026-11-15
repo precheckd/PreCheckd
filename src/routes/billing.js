@@ -38,6 +38,13 @@ async function openCount(recruiter) {
   return (await JobPosting.find({ recruiterId: recruiter._id, status: 'open' })).filter((p) => publicJob.isOpenNow(p)).length;
 }
 
+// The price ladder shown on the page: every step still open, with spots left. A step that has filled is not shown.
+async function ladderView() {
+  const taken = await recruiterBilling.waveCounts();
+  return plans.WAVES.map((w) => ({ wave: w.wave, label: w.label, locked: w.locked, price: money(plans.waveCents(w)),
+    left: Math.max(0, w.size - (Number(taken[w.wave]) || 0)), size: w.size })).filter((w) => w.left > 0);
+}
+
 router.get('/', async (req, res) => {
   try {
     const recruiter = await loadRecruiter(req, res);
@@ -50,7 +57,7 @@ router.get('/', async (req, res) => {
       state, billing: recruiter.billing,
       graceDays: membership.graceDaysLeft(recruiter),
       needed: req.query.needed === '1', canceled: req.query.canceled === '1', paid: req.query.paid === '1', error: req.query.error || '',
-      wave: st, hadFounding: recruiterBilling.hadFounding(recruiter),
+      wave: st, ladder: await ladderView(), hadFounding: recruiterBilling.hadFounding(recruiter),
       monthly: money(plans.PLANS.recruiter_monthly.cents), annual: money(plans.PLANS.recruiter_annual.cents), foundingPrice: money(st.priceCents),
       limit: membership.openLimit(recruiter),
       addons: await addonView(recruiter),

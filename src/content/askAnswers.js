@@ -18,7 +18,7 @@ function costParagraphs(billingLive) {
   }
   return [
     'Browsing jobs is free. Candidates pay a one-time $79 verification fee, then $15 a month or $120 a year. The verification fee may be waived for early candidates, so check the signup page. A card is required at signup, and the fee is non-refundable once the ID check runs.',
-    'Recruiters pay $99 a month or $799 a year. That includes 5 open job postings at a time and 3 test credits a month. Extra job slots are $10 each a month (1 to 5), $8 each (6 to 10) and $6 each (11 or more). Extra test credits are $39 for 3.',
+    'Recruiters pay $249 a month or $1,999 a year. That includes 5 open job postings at a time and 3 test credits a month. Extra job slots are $10 each a month (1 to 5), $8 each (6 to 10) and $6 each (11 or more). Extra test credits are $39 for 3.',
     'The first 250 recruiters are Founders: a lower yearly rate, locked in while the membership stays active. The next 750 get Early Access, a reduced first year that then renews at the standard price. Spots left are shown on the recruiter signup page.'
   ];
 }

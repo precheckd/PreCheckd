@@ -49,7 +49,7 @@ Lapse: unfixed payment failure after a 14-day grace period, or cancellation.
   (one open at a time) is approved by hand at /credit-requests and adds never-expiring bonus credits. Enforced only while BILLING_ENABLED.
 
 ## Pricing change (Nov 15)
-- Standard recruiter price: $99/month, $799/year (was $59/$499). Prices are made in Stripe by lookup key; if the amount in code differs from an existing price, a new price is created and the key moves to it.
-- Four annual steps, 1,000 recruiters: FOUNDERS (first 250) $249 x100, $349 x150, price LOCKED while subscribed. EARLY ACCESS (next 750) $449 x250, $549 x500, first year only, then renews at $799 (standard annual price + one-time Stripe coupon, id precheckd_early_access_<cents>). Nothing locked for Early Access.
+- Standard recruiter price: $249/month, $1,999/year (was $59/$499; briefly $99/$799). Prices are made in Stripe by lookup key; if the amount in code differs from an existing price, a new price is created and the key moves to it.
+- Four annual steps, 1,000 recruiters: FOUNDERS (first 250) $249 x100, $349 x150, price LOCKED while subscribed. EARLY ACCESS (next 750) $449 x250, $549 x500, first year only, then renews at $1,999 (standard annual price + one-time Stripe coupon, id precheckd_early_access_<cents>). Nothing locked for Early Access.
 - Monthly is always the standard $99. Founder/Early Access is annual only, once per person.
 - To do: confirm Stripe's renewal reminder email is on (the billing page promises an email before an Early Access renewal); lawyer list: auto-renewal disclosure, "regular price" wording.

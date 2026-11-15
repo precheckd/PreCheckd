@@ -19,40 +19,40 @@ const now = new Date('2026-11-14T12:00:00Z');
 const secs = (d) => Math.floor(d.getTime() / 1000);
 
 (async () => {
-  await t('steps: Founders 100 at $249 and 150 at $349 (locked), Early Access 250 at $449 and 500 at $549 (first year), then standard $799', async () => {
+  await t('steps: Founders 100 at $249 and 150 at $349 (locked), Early Access 250 at $449 and 500 at $549 (first year), then standard $1,999', async () => {
     const w1 = plans.waveStatus({});
     assert.strictEqual(w1.wave, 1); assert.strictEqual(w1.plan, 'founding_1'); assert.strictEqual(w1.priceCents, 24900); assert.strictEqual(w1.spotsLeft, 100); assert.strictEqual(w1.locked, true); assert.strictEqual(w1.label, 'Founding');
     assert.strictEqual(plans.waveStatus({ 1: 99 }).spotsLeft, 1);
     const w2 = plans.waveStatus({ 1: 100, 2: 10 });
     assert.strictEqual(w2.wave, 2); assert.strictEqual(w2.priceCents, 34900); assert.strictEqual(w2.spotsLeft, 140);
     const w3 = plans.waveStatus({ 1: 100, 2: 150, 3: 5 });
-    assert.strictEqual(w3.wave, 3); assert.strictEqual(w3.priceCents, 44900); assert.strictEqual(w3.standardCents, 79900); assert.strictEqual(w3.spotsLeft, 245); assert.strictEqual(w3.locked, false); assert.strictEqual(w3.label, 'Early Access');
+    assert.strictEqual(w3.wave, 3); assert.strictEqual(w3.priceCents, 44900); assert.strictEqual(w3.standardCents, 199900); assert.strictEqual(w3.spotsLeft, 245); assert.strictEqual(w3.locked, false); assert.strictEqual(w3.label, 'Early Access');
     const w4 = plans.waveStatus({ 1: 100, 2: 150, 3: 250 });
     assert.strictEqual(w4.wave, 4); assert.strictEqual(w4.priceCents, 54900); assert.strictEqual(w4.spotsLeft, 500);
     const over = plans.waveStatus({ 1: 100, 2: 150, 3: 250, 4: 500 });
-    assert.strictEqual(over.wave, null); assert.strictEqual(over.priceCents, 79900);
+    assert.strictEqual(over.wave, null); assert.strictEqual(over.priceCents, 199900);
     assert.strictEqual(plans.WAVES.reduce((n, w) => n + w.size, 0), 1000);
   });
   await t('Early Access choice: standard annual price with a one-time discount; Founders are flagged locked', async () => {
     const early = plans.choosePlan({ interval: 'annual', status: plans.waveStatus({ 1: 100, 2: 150 }), hadFounding: false });
-    assert.deepStrictEqual(early, { plan: 'recruiter_annual', wave: 3, discountCents: 35000, locked: false });
+    assert.deepStrictEqual(early, { plan: 'recruiter_annual', wave: 3, discountCents: 155000, locked: false });
     assert.strictEqual(plans.choosePlan({ interval: 'annual', status: plans.waveStatus({}), hadFounding: false }).locked, true);
     assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: plans.waveStatus({ 1: 100, 2: 150 }), hadFounding: true }), { plan: 'recruiter_annual', wave: null });
   });
   await t('the first-year coupon is found or created once, as a one-time amount off', async () => {
     const made = [];
     const stripe = { coupons: { retrieve: async (id) => { if (made.length) return { id }; const e = new Error('x'); e.code = 'resource_missing'; throw e; }, create: async (c) => { made.push(c); return { id: c.id }; } } };
-    assert.strictEqual(await plans.ensureCoupon(stripe, 35000), 'precheckd_early_access_35000');
-    assert.strictEqual(made[0].duration, 'once'); assert.strictEqual(made[0].amount_off, 35000);
-    await plans.ensureCoupon(stripe, 35000); assert.strictEqual(made.length, 1);
+    assert.strictEqual(await plans.ensureCoupon(stripe, 155000), 'precheckd_early_access_155000');
+    assert.strictEqual(made[0].duration, 'once'); assert.strictEqual(made[0].amount_off, 155000);
+    await plans.ensureCoupon(stripe, 155000); assert.strictEqual(made.length, 1);
   });
   await t('a price whose amount has changed is replaced and the lookup key moves to the new one', async () => {
     plans.clearCache(); const made = [];
     const stripe = { prices: { list: async () => ({ data: [{ id: 'price_old', unit_amount: 5900 }] }), create: async (p) => { made.push(p); return { id: 'price_new' }; } } };
     assert.strictEqual(await plans.ensurePrice(stripe, 'recruiter_monthly'), 'price_new');
-    assert.strictEqual(made[0].unit_amount, 9900); assert.strictEqual(made[0].transfer_lookup_key, true);
+    assert.strictEqual(made[0].unit_amount, 24900); assert.strictEqual(made[0].transfer_lookup_key, true);
   });
-  await t('plan choice: monthly is always $99; founding is annual only and once per person', async () => {
+  await t('plan choice: monthly is always $249; founding is annual only and once per person', async () => {
     const st = plans.waveStatus({});
     assert.deepStrictEqual(plans.choosePlan({ interval: 'monthly', status: st, hadFounding: false }), { plan: 'recruiter_monthly', wave: null });
     assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: st, hadFounding: false }), { plan: 'founding_1', wave: 1, locked: true });
@@ -68,7 +68,7 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
     assert.strictEqual(await plans.ensurePrice(stripe, 'recruiter_monthly'), 'price_old');
     assert.strictEqual(await plans.ensurePrice(stripe, 'recruiter_annual'), 'price_new_precheckd_recruiter_annual');
     assert.strictEqual(created.length, 1);
-    assert.strictEqual(created[0].unit_amount, 79900); assert.strictEqual(created[0].recurring.interval, 'year'); assert.strictEqual(created[0].tax_behavior, 'exclusive');
+    assert.strictEqual(created[0].unit_amount, 199900); assert.strictEqual(created[0].recurring.interval, 'year'); assert.strictEqual(created[0].tax_behavior, 'exclusive');
     await plans.ensurePrice(stripe, 'recruiter_annual');
     assert.strictEqual(created.length, 1);
   });
@@ -167,7 +167,7 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
       checkout: { sessions: { create: async (a) => { args = a; return { url: 'https://stripe.test/pay2' }; } } } };
     const out = await recruiterBilling.startCheckout({ stripe: st, recruiter: r, interval: 'annual', baseUrl: 'https://precheckd.com', successPath: '/billing/return', cancelPath: '/billing', now });
     assert.strictEqual(out.wave, 3);
-    assert.deepStrictEqual(args.discounts, [{ coupon: 'precheckd_early_access_35000' }]);
+    assert.deepStrictEqual(args.discounts, [{ coupon: 'precheckd_early_access_155000' }]);
     assert.strictEqual('allow_promotion_codes' in args, false);
     assert.strictEqual(args.line_items[0].price, 'price_std');
     assert.strictEqual(r.billing.founding.wave, 3); assert.strictEqual(r.billing.founding.priceCents, 44900); assert.strictEqual(r.billing.founding.locked, false);
