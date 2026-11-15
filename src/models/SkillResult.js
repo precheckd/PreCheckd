@@ -64,6 +64,8 @@ const skillResultSchema = new mongoose.Schema({
   // Job-title tests only: the candidate has chosen to show this exact score on their profile.
   showOnProfile: { type: Boolean, default: false },
   held: { type: Boolean, default: false },
+  // Why OUR check held it (too fast for the score). CoderByte's own flags are in cheatingFlag / aiUsage.
+  heldReasons: { type: [String], default: [] },
   reviewDecision: { type: String, enum: [null, 'approved', 'rejected'], default: null },
   // One-shot flags so each bell notification is sent at most once per attempt.
   resultNotified: { type: Boolean, default: false },

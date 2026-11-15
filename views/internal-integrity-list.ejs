@@ -21,7 +21,7 @@
 <div class="ir-wrap">
   <a class="ir-back" href="/">&larr; Dashboard</a>
   <h1>Integrity Review</h1>
-  <p class="ir-sub">Attempts CoderByte flagged. Nothing here is visible to recruiters until you approve it. Oldest first.</p>
+  <p class="ir-sub">Attempts CoderByte flagged, or that we flagged as too fast for the score. Nothing here is visible to recruiters until you approve it. Oldest first.</p>
   <table class="ir-table">
     <thead><tr><th>Candidate</th><th>Test</th><th>Completed</th><th>Why held</th><th></th></tr></thead>
     <tbody>
@@ -30,7 +30,7 @@
           <td><%= x.candidate ? x.candidate.firstName + ' ' + x.candidate.lastName : 'Unknown' %></td>
           <td><%= x.assessment ? x.assessment.name : x.r.assessmentId %> <span style="color:#7A8B91">(<%= x.assessment && x.assessment.kind === 'title' ? 'job title' : 'skill' %>)</span></td>
           <td><%= x.r.completedAt ? x.r.completedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '' %></td>
-          <td><%= [x.r.cheatingFlag && !/not/i.test(x.r.cheatingFlag) ? 'Cheating: ' + x.r.cheatingFlag : null, x.r.aiUsage ? 'AI usage' : null].filter(Boolean).join(', ') %></td>
+          <td><%= [x.r.cheatingFlag && !/not/i.test(x.r.cheatingFlag) ? 'Cheating: ' + x.r.cheatingFlag : null, x.r.aiUsage ? 'AI usage' : null, (x.r.heldReasons || []).length ? 'Too fast for the score' : null].filter(Boolean).join(', ') %></td>
           <td><a href="/integrity-review/<%= x.r._id %>">Review</a></td>
         </tr>
       <% }) %>

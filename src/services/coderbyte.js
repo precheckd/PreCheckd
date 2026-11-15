@@ -110,7 +110,11 @@ function applyReport(result, assessment, report) {
   const cd = report.cheating_details || {};
   result.aiUsage = !!cd.ai_usage;
   result.tabLeaving = Number(cd.tab_leaving) || 0;
-  result.held = isFlagged(result.cheatingFlag) || result.aiUsage;
+  // Our own too-fast-for-the-score check (needs the answers, time and start/finish stamps, so it runs once complete).
+  const completing = String(report.status).toLowerCase() === 'completed';
+  if (completing && !result.completedAt) result.completedAt = new Date();
+  result.heldReasons = completing ? require('./integrityCheck').check(result, assessment) : [];
+  result.held = isFlagged(result.cheatingFlag) || result.aiUsage || result.heldReasons.length > 0;
   // Written answers are kept only for custom per-posting tests, as plain text (CoderByte sends HTML).
   result.freeForm = assessment.kind === 'custom' ? freeFormFrom(report.oe_details) : [];
   result.reportReady = report.report_ready !== false;

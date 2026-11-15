@@ -28,6 +28,7 @@
   <div class="ir-card"><dl class="ir-kv">
     <dt>CoderByte cheating flag</dt><dd class="<%= /not/i.test(result.cheatingFlag || 'not') ? '' : 'ir-bad' %>"><%= result.cheatingFlag || 'None' %></dd>
     <dt>AI usage</dt><dd class="<%= result.aiUsage ? 'ir-bad' : '' %>"><%= result.aiUsage ? 'Detected' : 'No' %></dd>
+    <dt>Our pace check</dt><dd class="<%= (result.heldReasons || []).length ? 'ir-bad' : '' %>"><%= (result.heldReasons || []).length ? result.heldReasons.join(' ') : 'Nothing unusual' %></dd>
     <dt>Tab leaves</dt><dd><%= result.tabLeaving %></dd>
     <dt>Time taken</dt><dd><%= result.timeTakenMinutes != null ? result.timeTakenMinutes + ' min' : 'Unknown' %><%= result.timeExpired ? ' (time expired)' : '' %></dd>
   </dl></div>

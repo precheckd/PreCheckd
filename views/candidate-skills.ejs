@@ -95,6 +95,7 @@
         <% } %>
       </div>
     <% } %>
+    <p style="color:#7A8B91;font-size:.88rem;margin:.25rem 0 .75rem;">Take every test on your own: no AI, no notes, no outside help. Results that look unusual are checked by our team before they are shown to anyone.</p>
     <% if (notice === 'no_credits') { %><div class="sk-banner wait">You're out of test credits for now. They reset on <%= credits.resetsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>, or you can ask for more below.</div><% } %>
     <% if (notice === 'credit_requested') { %><div class="sk-banner ok">Request sent. We'll look at it by hand and let you know.</div><% } %>
     <% if (notice === 'credit_open') { %><div class="sk-banner wait">You already have a request waiting.</div><% } %>
