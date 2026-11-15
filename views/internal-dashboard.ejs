@@ -199,6 +199,12 @@
       <div class="id-card-desc">Recruiter-requested job title tests. Top up a recruiter's monthly credits and see the latest requests.</div>
     </a>
 
+    <a class="id-card" href="/credit-requests">
+      <div class="id-card-title">Candidate Credit Requests</div>
+      <div class="id-card-desc">Candidates who ran out of monthly skill-test credits and asked for more. Approve by hand, with an optional kind note.</div>
+      <span class="id-card-stat <%= creditRequestCount > 0 ? 'id-stat-alert' : '' %>"><%= creditRequestCount %> waiting</span>
+    </a>
+
     <a class="id-card" href="/disputes">
       <div class="id-card-title">Dispute Inbox</div>
       <div class="id-card-desc">Recruiters replying to the automated "a report was filed" notice — your morning check for anything that needs a response.</div>

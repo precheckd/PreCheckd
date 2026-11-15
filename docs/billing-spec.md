@@ -41,3 +41,9 @@ Lapse: unfixed payment failure after a 14-day grace period, or cancellation.
 - Lapse for candidates: profile stays, testing and applying pause?
 - Refund and cancellation wording (Terms, lawyer list).
 - Stripe: which account, test keys, and webhook endpoint for the new events.
+
+## Status: phase 5 (add-ons and credits)
+- 5A/5B: recruiter posting slots (separate monthly subscription, graduated $10/$8/$6) and test-credit packs ($39 = 3).
+- 5C: candidate skill-test credits. 3 a month from the member-since day, no rollover; spent only when a NEW skill test is started
+  (continuing, recruiter-requested, role, title, finalist and custom tests are free); unopened expired invites refund. "Request more"
+  (one open at a time) is approved by hand at /credit-requests and adds never-expiring bonus credits. Enforced only while BILLING_ENABLED.

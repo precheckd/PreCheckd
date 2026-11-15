@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const membership = require('../services/membership');
+const credits = require('../services/candidateCredits');
 const Candidate = require('../models/Candidate');
 const SkillAssessment = require('../models/SkillAssessment');
 const SkillResult = require('../models/SkillResult');
@@ -119,6 +120,7 @@ router.get('/:slug/skills', async (req, res) => {
       }),
       achievementVisits: candidate.achievementVisits || 0,
       finished, processing, RETAKE_DAYS: skills.RETAKE_DAYS,
+      credits: await credits.summary(candidate),
       notice: req.query.notice || null,
       title: 'Skills | PreCheckd'
     });
@@ -128,14 +130,29 @@ router.get('/:slug/skills', async (req, res) => {
   }
 });
 
+router.post('/:slug/skills/credits/request', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
+    await credits.requestMore(candidate, req.body.amount, req.body.reason);
+    res.redirect(`/candidate/${req.params.slug}/skills?notice=credit_requested`);
+  } catch (e) {
+    if (['bad_amount', 'no_reason', 'open'].includes(e.code)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=credit_${e.code}`);
+    console.error('Error requesting credits:', e);
+    res.status(500).send('Server error');
+  }
+});
+
 router.post('/:slug/skills/start/:assessmentId', async (req, res) => {
   try {
     const candidate = await owned(req, res);
     if (!candidate) return;
     if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
-    const attempt = await skills.startAttempt(candidate, req.params.assessmentId);
+    const attempt = await skills.startAttempt(candidate, req.params.assessmentId, credits.hooks(candidate));
     res.redirect(attempt.inviteUrl);
   } catch (e) {
+    if (e.code === 'no_credits') return res.redirect(`/candidate/${req.params.slug}/skills?notice=no_credits`);
     if (e.code === 'manual') return res.redirect(`/candidate/${req.params.slug}/skills?notice=manual`);
     if (e.code === 'locked') return res.redirect(`/candidate/${req.params.slug}/skills?notice=locked`);
     if (e.code === 'retake_wait') return res.redirect(`/candidate/${req.params.slug}/skills?notice=wait`);

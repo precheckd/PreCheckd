@@ -39,6 +39,7 @@ function applySubscription(billing, sub, now = new Date()) {
   const end = periodEnd(sub);
 
   if (status === 'active') {
+    if (!billing.memberSince) billing.memberSince = new Date(now);
     billing.graceUntil = null;
     if (end) billing.currentPeriodEnd = end;
   } else if (status === 'past_due' || status === 'unpaid') {

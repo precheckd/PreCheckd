@@ -208,7 +208,7 @@ async function nextAllowed(candidateId, assessment) {
 }
 
 // Reuse a live invite, otherwise issue a fresh one. Throws with .code 'retake_wait' if too soon.
-async function startAttempt(candidate, assessmentId) {
+async function startAttempt(candidate, assessmentId, opts = {}) {
   const assessment = await SkillAssessment.findOne({ assessmentId, active: true });
   if (!assessment) { const e = new Error('Assessment not available'); e.code = 'not_found'; throw e; }
   if (assessment.tier === 'expert') {
@@ -227,7 +227,12 @@ async function startAttempt(candidate, assessmentId) {
   const live = await SkillResult.findOne({
     candidateId: candidate._id, assessmentId, status: { $in: ['invited', 'started'] }, expiresAt: { $gt: new Date() }
   }).sort({ invitedAt: -1 });
-  return live || coderbyte.inviteCandidate({ candidate, assessment });
+  if (live) return live;
+  // Credits (when on) are checked only when a brand new invite would be made; continuing a live one is free.
+  if (opts.beforeInvite) await opts.beforeInvite(assessment);
+  const created = await coderbyte.inviteCandidate({ candidate, assessment });
+  if (opts.afterInvite) await opts.afterInvite(created, assessment);
+  return created;
 }
 
 const LEVEL_ORDER = ['Foundational', 'Intermediate', 'Advanced', 'Expert'];

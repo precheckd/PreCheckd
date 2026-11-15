@@ -219,6 +219,8 @@ const candidateSchema = new mongoose.Schema({
   },
   billing: { type: billingSchema, default: () => ({}) },
   // Stripe Identity sessions created so far; capped at 2 so a non-refundable fee cannot be used to burn ID checks.
+  // Extra skill-test credits staff have granted over the years. They never expire and are spent after the monthly ones.
+  creditBonusGranted: { type: Number, default: 0 },
   idSessionsCreated: { type: Number, default: 0 },
   stripeVerificationSessionId: {
     type: String,

@@ -271,6 +271,7 @@ router.get('/', async (req, res) => {
     const catalogRequestCount = (await require('../models/CatalogRequest').aggregate([{ $match: { status: 'requested' } }, { $group: { _id: { k: '$kind', n: '$key' } } }])).length;
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
+    const creditRequestCount = await require('../models/CreditRequest').countDocuments({ status: 'open' });
     const customTestCount = (await require('../services/roleTests').customQueue()).length;
 
     const outsideUsCount = await require('../models/OutsideInterest').countDocuments({});
@@ -284,7 +285,7 @@ router.get('/', async (req, res) => {
       outsideUsCount,
       hireReviewCount,
       skillRequestCount,
-      customTestCount,
+      customTestCount, creditRequestCount,
       catalogRequestCount,
       verificationCount,
       verificationOpen: vcDigest.open,
@@ -556,6 +557,34 @@ router.get('/test-credits', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading test credits:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/credit-requests', async (req, res) => {
+  try {
+    const CreditRequest = require('../models/CreditRequest');
+    const Candidate = require('../models/Candidate');
+    const list = await CreditRequest.find({}).sort({ status: 1, createdAt: -1 }).limit(60);
+    const cands = new Map((await Candidate.find({ _id: { $in: list.map((r) => r.candidateId) } })).map((c) => [String(c._id), c]));
+    res.render('internal-credit-requests', {
+      notice: req.query.notice || null,
+      list: list.map((r) => { const c = cands.get(String(r.candidateId)); return { id: String(r._id), amount: r.amount, reason: r.reason, status: r.status,
+        grantedAmount: r.grantedAmount, staffNote: r.staffNote, createdAt: r.createdAt, who: c ? `${c.firstName} ${c.lastName || ''}`.trim() + ' · ' + c.email : '?' }; })
+    });
+  } catch (error) {
+    console.error('Error loading credit requests:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/credit-requests/:id', async (req, res) => {
+  try {
+    await require('../services/candidateCredits').decide(req.params.id, { grant: req.body.decision === 'decline' ? 0 : req.body.grant, note: req.body.note });
+    res.redirect('/credit-requests?notice=done');
+  } catch (error) {
+    if (error.code === 'closed') return res.redirect('/credit-requests?notice=closed');
+    console.error('Error deciding credit request:', error);
     res.status(500).send('Server error');
   }
 });

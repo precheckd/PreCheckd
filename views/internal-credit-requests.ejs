@@ -1,0 +1,34 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .cr-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; color: #1F363C; }
+  .cr-card form { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+  .cr-card input[type=text] { flex: 1; min-width: 12rem; padding: .4rem; }
+  .cr-note { color: #1F7A4C; font-weight: 600; margin-bottom: 1rem; }
+  .cr-meta { color: #7A8B91; font-size: .85rem; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Candidate Credit Requests</h1>
+  <p class="cr-meta">Approving adds bonus credits that never expire. The candidate gets a bell notice with your note.</p>
+  <% if (notice === 'done') { %><div class="cr-note">Saved.</div><% } %>
+  <% if (notice === 'closed') { %><div class="cr-note" style="color:#B42318;">That one was already decided.</div><% } %>
+  <% list.forEach((r) => { %>
+    <div class="cr-card">
+      <strong><%= r.who %></strong> asked for <%= r.amount %> <span class="cr-meta">· <%= r.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %> · <%= r.status %><% if (r.status === 'approved') { %> (<%= r.grantedAmount %> granted)<% } %></span>
+      <div>"<%= r.reason %>"</div>
+      <% if (r.staffNote) { %><div class="cr-meta">Your note: <%= r.staffNote %></div><% } %>
+      <% if (r.status === 'open') { %>
+        <form method="POST" action="/credit-requests/<%= r.id %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="number" name="grant" min="1" max="10" value="<%= r.amount %>" style="width:4.5rem;padding:.4rem;">
+          <input type="text" name="note" maxlength="500" placeholder="Optional kind note">
+          <button type="submit" name="decision" value="approve">Approve</button>
+          <button type="submit" name="decision" value="decline">Decline</button>
+        </form>
+      <% } %>
+    </div>
+  <% }) %>
+  <% if (!list.length) { %><p>No requests yet.</p><% } %>
+</div>

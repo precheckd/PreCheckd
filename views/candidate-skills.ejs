@@ -78,6 +78,27 @@
     <% } %>
     <% if (typeof graceDays !== 'undefined' && graceDays) { %><div class="sk-banner wait">Your last payment didn't go through. <a href="/candidate-billing" style="color:inherit;font-weight:600;">Update your card</a> within <%= graceDays %> day<%= graceDays === 1 ? '' : 's' %> to keep testing and applying.</div><% } %>
     <% if (notice === 'membership') { %><div class="sk-banner wait">Your membership isn't active, so testing is paused. <a href="/candidate-billing?needed=1" style="color:inherit;font-weight:600;">Renew it</a> and your tests are right where you left them.</div><% } %>
+    <% if (credits.enabled) { %>
+      <div class="sk-banner ok" style="background:#F7F9F8;color:#1F363C;border:1px solid #DCE4E2;">
+        <strong><%= credits.monthlyLeft %> of <%= credits.perMonth %> test credits left</strong>, resets <%= credits.resetsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %><% if (credits.bonusLeft > 0) { %> · plus <%= credits.bonusLeft %> bonus<% } %>.
+        <span style="color:#7A8B91;">Starting a new skill test uses one. Continuing a test, tests a recruiter asks you to take, and role and job title tests are free.</span>
+        <% if (credits.lastDecided && credits.lastDecided.staffNote && !credits.open) { %><div style="margin-top:.4rem;">Note from our team: <%= credits.lastDecided.staffNote %></div><% } %>
+        <% if (credits.open) { %>
+          <div style="margin-top:.5rem;">Your request for <%= credits.open.amount %> more is waiting for review.</div>
+        <% } else if (credits.left < 1) { %>
+          <form method="POST" action="/candidate/<%= candidate.slug %>/skills/credits/request" style="margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="number" name="amount" min="1" max="10" value="3" style="width:4.5rem;padding:.4rem;">
+            <input type="text" name="reason" maxlength="500" placeholder="Why do you need more?" required style="flex:1;min-width:12rem;padding:.4rem;">
+            <button type="submit">Request more</button>
+          </form>
+        <% } %>
+      </div>
+    <% } %>
+    <% if (notice === 'no_credits') { %><div class="sk-banner wait">You're out of test credits for now. They reset on <%= credits.resetsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>, or you can ask for more below.</div><% } %>
+    <% if (notice === 'credit_requested') { %><div class="sk-banner ok">Request sent. We'll look at it by hand and let you know.</div><% } %>
+    <% if (notice === 'credit_open') { %><div class="sk-banner wait">You already have a request waiting.</div><% } %>
+    <% if (notice === 'credit_bad_amount' || notice === 'credit_no_reason') { %><div class="sk-banner wait">Pick a number from 1 to <%= 10 %> and tell us briefly why.</div><% } %>
     <% if (notice === 'wait') { %><div class="sk-banner wait">That skill can't be retaken yet. The date it opens up is shown below.</div><% } %>
     <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. Your test will be ready within 1 business day, and we'll email you as soon as it is.</div><% } %>
     <% if (notice === 'locked') { %><div class="sk-banner wait">Pass the level below first and this one will unlock.</div><% } %>

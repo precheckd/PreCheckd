@@ -8,6 +8,8 @@ const billingSchema = new mongoose.Schema({
   plan: { type: String, enum: [null, 'monthly', 'annual'], default: null },
   status: { type: String, enum: ['none', 'incomplete', 'active', 'past_due', 'canceled', 'unpaid'], default: 'none' },
   currentPeriodEnd: { type: Date, default: null },
+  // First time the membership became active. Candidate test credits reset on this day each month.
+  memberSince: { type: Date, default: null },
   // Set when a payment fails: access continues until this moment (14 days), then the account lapses.
   graceUntil: { type: Date, default: null },
   cancelAtPeriodEnd: { type: Boolean, default: false },

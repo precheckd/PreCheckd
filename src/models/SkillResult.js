@@ -77,6 +77,8 @@ const skillResultSchema = new mongoose.Schema({
   // Custom (per-posting) tests only: the written answers, as plain text, for the recruiter who posted that job.
   freeForm: { type: [{ question: String, answer: String, _id: false }], default: [] },
   reportReady: { type: Boolean, default: false },
+  // Candidate test credit this attempt used when it was started (null while credits are off or it was free).
+  creditSpent: { type: String, enum: [null, 'monthly', 'bonus'], default: null },
   lastError: { type: String, default: null }
 }, { timestamps: true });
 
