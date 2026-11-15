@@ -85,8 +85,16 @@ async function resultsLanded(result) {
   const earned = await masterEarned(result);
   if (earned) { await deliver(c, earned.grandmaster ? 'skill_grandmaster' : 'skill_master', earned.label); return true; }
   const unlocked = await unlockedNext(result);
+  // Candidates are never shown results for job (role), finalist or custom tests, so "your results are ready" would
+  // lead them to an empty spot. Those tests still get their "ready to take" notice; only this one is skipped.
+  if (!unlocked && await resultsHiddenFromCandidate(result)) return true;
   await deliver(c, unlocked ? 'skill_unlocked' : 'skill_result', unlocked || name);
   return true;
+}
+
+async function resultsHiddenFromCandidate(result) {
+  const a = await SkillAssessment.findOne({ assessmentId: result.assessmentId });
+  return Boolean(a && (a.roleKey || a.kind === 'finalist' || a.kind === 'custom'));
 }
 
 // A passed Expert exam: Master, or Grandmaster for a perfect score. Null for anything else.
