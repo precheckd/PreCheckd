@@ -4,6 +4,7 @@ const Recruiter = require('../models/Recruiter');
 const Candidate = require('../models/Candidate');
 const sync = require('./billingSync');
 const billingEmails = require('./billingEmails');
+const addons = require('./recruiterAddons');
 
 const HANDLED = new Set([
   'checkout.session.completed',
@@ -47,7 +48,23 @@ async function apply(event, { stripe, now }) {
   let before = { status: 'none', cancelAtPeriodEnd: false };
   const snap = () => { if (owner) before = billingEmails.stateOf(owner.doc.billing); };
 
-  if (event.type === 'checkout.session.completed') {
+  const kind = obj.metadata && obj.metadata.kind;
+  if (event.type === 'checkout.session.completed' && kind === 'credit_pack') {
+    owner = await findOwner(obj.metadata, idOf(obj.customer));
+    if (!owner || owner.type !== 'recruiter') return { note: 'no owner' };
+    snap();
+    addons.fulfillPack(owner.doc, obj);
+  } else if (event.type === 'checkout.session.completed' && kind === 'slots') {
+    owner = await findOwner(obj.metadata, idOf(obj.customer));
+    if (!owner || owner.type !== 'recruiter' || !obj.subscription) return { note: 'no owner' };
+    snap();
+    addons.applySlotSubscription(owner.doc.billing, await stripe.subscriptions.retrieve(idOf(obj.subscription)));
+  } else if (event.type.startsWith('customer.subscription.') && obj.metadata && obj.metadata.kind === 'slots') {
+    owner = await findOwner(obj.metadata, idOf(obj.customer));
+    if (!owner || owner.type !== 'recruiter') return { note: 'no owner' };
+    snap();
+    addons.applySlotSubscription(owner.doc.billing, obj);
+  } else if (event.type === 'checkout.session.completed') {
     if (obj.mode !== 'subscription' || !obj.subscription) return { note: 'not a subscription checkout' };
     owner = await findOwner(obj.metadata, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
@@ -68,6 +85,9 @@ async function apply(event, { stripe, now }) {
     if (!invoiceSubscriptionId(obj)) return { note: 'not a subscription invoice' };
     owner = await findOwner(null, idOf(obj.customer));
     if (!owner) return { note: 'no owner' };
+    // An invoice for another subscription (the slots add-on, or an old one) says nothing about the membership.
+    const mainId = owner.doc.billing.subscriptionId;
+    if (mainId && invoiceSubscriptionId(obj) !== mainId) return { note: 'other subscription' };
     snap();
     if (event.type === 'invoice.paid') sync.applyPaid(owner.doc.billing, obj);
     else sync.applyPaymentFailed(owner.doc.billing, now);
@@ -78,6 +98,11 @@ async function apply(event, { stripe, now }) {
 
   // Tell them what changed (only on a real change of status; best effort).
   await billingEmails.notifyChange(owner.type, owner.doc, before);
+  // A membership that has ended takes the paid slots add-on with it.
+  const slotsB = owner.doc.billing.slots;
+  if (owner.type === 'recruiter' && owner.doc.billing.status === 'canceled' && slotsB && slotsB.subscriptionId && (slotsB.status === 'active' || slotsB.status === 'past_due')) {
+    try { await stripe.subscriptions.cancel(slotsB.subscriptionId); } catch (e) { console.error('Could not cancel slots add-on:', e.message); }
+  }
   return { ownerType: owner.type, ownerId: owner.doc._id };
 }
 

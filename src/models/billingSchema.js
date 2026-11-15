@@ -24,8 +24,18 @@ const billingSchema = new mongoose.Schema({
     reservedAt: { type: Date, default: null },
     lockedAt: { type: Date, default: null }
   },
-  // Recruiters only: extra open-posting slots bought as an add-on (base plan includes 5).
-  extraSlots: { type: Number, default: 0 }
+  // Recruiters only: extra open-posting slots bought as a separate monthly subscription (the plan includes 5).
+  slots: {
+    subscriptionId: { type: String, default: null },
+    itemId: { type: String, default: null },
+    quantity: { type: Number, default: 0 },
+    status: { type: String, default: 'none' }
+  },
+  // Recruiters only: job-title test credits bought in packs. They do not expire. Spent ones are counted from
+  // TestRequest rows (see services/testRequests.js), so this is the lifetime total bought.
+  testCreditsPurchased: { type: Number, default: 0 },
+  // Checkout sessions already turned into credits or slots, so a page reload plus a webhook cannot do it twice.
+  fulfilledSessions: { type: [String], default: [] }
 }, { _id: false });
 
 module.exports = billingSchema;

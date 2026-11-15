@@ -18,6 +18,8 @@ const testRequestSchema = new mongoose.Schema({
   respondedAt: { type: Date, default: null },
   resultId: { type: mongoose.Schema.Types.ObjectId, ref: 'SkillResult', default: null },
   completedAt: { type: Date, default: null },
+  // True when this request was paid for from a bought credit pack instead of the monthly allowance.
+  paidCredit: { type: Boolean, default: false },
   recruiterNotified: { type: Boolean, default: false }
 }, { timestamps: true });
 

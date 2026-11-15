@@ -7,6 +7,10 @@ const billingConfig = require('../config/billing');
 const membership = require('../services/membership');
 const recruiterBilling = require('../services/recruiterBilling');
 const plans = require('../services/billingPlans');
+const addons = require('../services/recruiterAddons');
+const JobPosting = require('../models/JobPosting');
+const publicJob = require('../services/publicJob');
+const testRequests = require('../services/testRequests');
 
 const base = () => process.env.BASE_URL || '';
 
@@ -18,6 +22,21 @@ async function loadRecruiter(req, res) {
 }
 
 const money = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0 });
+
+async function addonView(recruiter) {
+  const slots = recruiter.billing.slots || {};
+  const credits = await testRequests.credits(recruiter);
+  return {
+    slotQty: (slots.status === 'active' || slots.status === 'past_due') ? slots.quantity || 0 : 0,
+    slotCost: money(plans.slotMonthlyCents((slots.status === 'active' || slots.status === 'past_due') ? slots.quantity || 0 : 0)),
+    maxSlots: plans.MAX_EXTRA_SLOTS, packCost: money(plans.PLANS.recruiter_credit_pack.cents), perPack: plans.CREDITS_PER_PACK,
+    maxPacks: plans.MAX_PACKS_AT_ONCE, credits,
+  };
+}
+
+async function openCount(recruiter) {
+  return (await JobPosting.find({ recruiterId: recruiter._id, status: 'open' })).filter((p) => publicJob.isOpenNow(p)).length;
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -34,6 +53,8 @@ router.get('/', async (req, res) => {
       wave: st, hadFounding: recruiterBilling.hadFounding(recruiter),
       monthly: money(plans.PLANS.recruiter_monthly.cents), annual: money(plans.PLANS.recruiter_annual.cents), foundingPrice: money(st.priceCents),
       limit: membership.openLimit(recruiter),
+      addons: await addonView(recruiter),
+      notice: req.query.notice || '',
     });
   } catch (e) {
     console.error('Error loading billing page:', e);
@@ -86,6 +107,51 @@ router.post('/portal', async (req, res) => {
   } catch (e) {
     console.error('Error opening billing portal:', e.message);
     res.redirect('/billing?error=portal');
+  }
+});
+
+// POST /billing/slots  quantity=N — set the number of extra open-posting slots
+router.post('/slots', async (req, res) => {
+  try {
+    const recruiter = await loadRecruiter(req, res);
+    if (!recruiter) return;
+    if (!billingConfig.enabled()) return res.redirect('/billing');
+    const out = await addons.setSlots({ stripe, recruiter, quantity: req.body.quantity, openCount: await openCount(recruiter), baseUrl: base() });
+    if (out.url) return res.redirect(303, out.url);
+    res.redirect('/billing?notice=slots');
+  } catch (e) {
+    if (['not_member', 'bad_quantity', 'in_use'].includes(e.code)) return res.redirect('/billing?notice=' + e.code);
+    console.error('Error changing slots:', e);
+    res.redirect('/billing?error=checkout');
+  }
+});
+
+// POST /billing/packs  packs=N — buy job-title test credits
+router.post('/packs', async (req, res) => {
+  try {
+    const recruiter = await loadRecruiter(req, res);
+    if (!recruiter) return;
+    if (!billingConfig.enabled()) return res.redirect('/billing');
+    const out = await addons.startPackCheckout({ stripe, recruiter, packs: req.body.packs, baseUrl: base() });
+    res.redirect(303, out.url);
+  } catch (e) {
+    if (['not_member', 'bad_quantity'].includes(e.code)) return res.redirect('/billing?notice=' + e.code);
+    console.error('Error starting pack checkout:', e);
+    res.redirect('/billing?error=checkout');
+  }
+});
+
+// GET /billing/addon-return?session_id=... — back from Checkout for slots or packs
+router.get('/addon-return', async (req, res) => {
+  try {
+    const recruiter = await loadRecruiter(req, res);
+    if (!recruiter) return;
+    const sid = String(req.query.session_id || '');
+    const out = sid ? await addons.confirmReturn({ stripe, recruiter, sessionId: sid }) : { kind: '' };
+    res.redirect('/billing?notice=' + (out.kind === 'credit_pack' ? 'packs_done' : 'slots'));
+  } catch (e) {
+    console.error('Error confirming add-on payment:', e.message);
+    res.redirect('/billing');
   }
 });
 

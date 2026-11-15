@@ -65,9 +65,11 @@ module.exports = { state, isMember, isLapsed, gateFact, graceDaysLeft };
 
 const plansConfig = require('./billingPlans');
 
-// How many postings can be open at once: 5 in the plan plus any bought slots.
+// How many postings can be open at once: 5 in the plan plus slots bought as an add-on (while that add-on is paid up).
 function openLimit(recruiter) {
-  const extra = Number(recruiter && recruiter.billing && recruiter.billing.extraSlots) || 0;
+  const slots = recruiter && recruiter.billing && recruiter.billing.slots;
+  const live = slots && (slots.status === 'active' || slots.status === 'past_due');
+  const extra = live ? Number(slots.quantity) || 0 : 0;
   return plansConfig.BASE_OPEN_POSTINGS + Math.max(0, extra);
 }
 

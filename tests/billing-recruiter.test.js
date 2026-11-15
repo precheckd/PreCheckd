@@ -148,7 +148,8 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
 
   await t('5 open postings in the plan; bought slots add to it', async () => {
     assert.strictEqual(membership.openLimit({ billing: {} }), 5);
-    assert.strictEqual(membership.openLimit({ billing: { extraSlots: 3 } }), 8);
+    assert.strictEqual(membership.openLimit({ billing: { slots: { status: 'active', quantity: 3 } } }), 8);
+    assert.strictEqual(membership.openLimit({ billing: { slots: { status: 'canceled', quantity: 3 } } }), 5);
   });
   await t('postings of a lapsed recruiter are hidden; billing off hides nothing', async () => {
     Recruiter.find = () => ({ select: async () => [

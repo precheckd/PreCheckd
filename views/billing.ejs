@@ -54,6 +54,29 @@
       </div>
     <% } %>
 
+    <% if (state.status === 'active' || state.status === 'grace') { %>
+      <% const msgs = { slots: 'Your extra slots are updated.', packs_done: 'Thanks, your test credits are added.', not_member: 'Start your membership first.', bad_quantity: 'Please choose a valid number.', in_use: 'Close some postings first: you have more open than that.' }; %>
+      <% if (notice && msgs[notice]) { %><div class="bl-banner <%= (notice === 'slots' || notice === 'packs_done') ? 'bl-ok' : 'bl-warn' %>"><%= msgs[notice] %></div><% } %>
+      <div class="bl-plans" style="margin-top:1.5rem;">
+        <div class="bl-plan">
+          <h2>Extra open postings</h2>
+          <p class="bl-meta">Your plan includes 5. Add more by the month: $10 each for slots 1-5, $8 for 6-10, $6 from 11. Billed separately and prorated. You have <%= addons.slotQty %> extra now (<%= addons.slotCost %>/month).</p>
+          <form method="POST" action="/billing/slots">
+            <input type="number" name="quantity" min="0" max="<%= addons.maxSlots %>" value="<%= addons.slotQty %>" style="width:5rem;padding:.4rem;border-radius:6px;border:1px solid #5b7a82;background:#1F363C;color:#F2F4F3;">
+            <button class="bl-btn bl-ghost" type="submit"><%= addons.slotQty ? 'Update slots' : 'Add slots' %></button>
+          </form>
+        </div>
+        <div class="bl-plan">
+          <h2>Job title test credits</h2>
+          <p class="bl-meta">You get a monthly allowance. Need more? A pack of <%= addons.perPack %> is <%= addons.packCost %> and the credits never expire. You have <%= addons.credits.left %> left now.</p>
+          <form method="POST" action="/billing/packs">
+            <input type="number" name="packs" min="1" max="<%= addons.maxPacks %>" value="1" style="width:5rem;padding:.4rem;border-radius:6px;border:1px solid #5b7a82;background:#1F363C;color:#F2F4F3;">
+            <button class="bl-btn bl-ghost" type="submit">Buy packs</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
     <% if (billing.customerId) { %>
       <form method="POST" action="/billing/portal"><button class="bl-btn bl-ghost" type="submit">Manage card, invoices or cancel</button></form>
     <% } %>

@@ -39,13 +39,22 @@ async function expireOverdue(scope = {}, now = new Date()) {
   }
 }
 
+// Monthly allowance (plus any staff bonus) first; bought pack credits, which never expire, cover what is left.
+// Nothing is decremented anywhere: used is counted from TestRequest rows, so a declined or expired request
+// gives its credit back automatically, whichever kind it was.
 async function credits(recruiter) {
   const month = monthOf();
   await expireOverdue({ recruiterId: recruiter._id });
   const bonus = recruiter.testCreditBonus && recruiter.testCreditBonus.month === month ? (recruiter.testCreditBonus.amount || 0) : 0;
-  const total = monthlyCredits() + bonus;
-  const used = await TestRequest.countDocuments({ recruiterId: recruiter._id, month, status: { $in: HOLDING } });
-  return { total, used, left: Math.max(0, total - used), month };
+  const monthlyTotal = monthlyCredits() + bonus;
+  const monthlyUsed = await TestRequest.countDocuments({ recruiterId: recruiter._id, month, status: { $in: HOLDING }, paidCredit: { $ne: true } });
+  const bought = (recruiter.billing && recruiter.billing.testCreditsPurchased) || 0;
+  const boughtUsed = bought ? await TestRequest.countDocuments({ recruiterId: recruiter._id, status: { $in: HOLDING }, paidCredit: true }) : 0;
+  const paidThisMonth = bought ? await TestRequest.countDocuments({ recruiterId: recruiter._id, month, status: { $in: HOLDING }, paidCredit: true }) : 0;
+  const monthlyLeft = Math.max(0, monthlyTotal - monthlyUsed);
+  const boughtLeft = Math.max(0, bought - boughtUsed);
+  // "left of total" for this month: what they started the month with is the allowance plus pack credits not yet spent.
+  return { total: monthlyTotal + boughtLeft + paidThisMonth, used: monthlyUsed + paidThisMonth, left: monthlyLeft + boughtLeft, monthlyLeft, boughtLeft, month };
 }
 
 // Title tests a recruiter can pick from.
@@ -67,11 +76,13 @@ async function sendRequest(recruiter, candidate, assessmentId) {
   const skills = require('./skills');
   if (await skills.manualHold(candidate._id, assessment)) throw fail('manual', 'Unavailable');
   if (await skills.nextAllowed(candidate._id, assessment)) throw fail('recent', 'Took it recently');
-  if ((await credits(recruiter)).left < 1) throw fail('no_credits', 'No credits left this month');
+  const have = await credits(recruiter);
+  if (have.left < 1) throw fail('no_credits', 'No credits left this month');
+  const paidCredit = have.monthlyLeft < 1; // the monthly allowance goes first
 
   const sentAt = new Date();
   const request = await TestRequest.create({
-    recruiterId: recruiter._id, candidateId: candidate._id, assessmentId, month, sentAt,
+    recruiterId: recruiter._id, candidateId: candidate._id, assessmentId, month, sentAt, paidCredit,
     expiresAt: new Date(sentAt.getTime() + REQUEST_HOURS * HOUR)
   });
   // Generic bell and an email, no recruiter message text. Failures never undo the request.

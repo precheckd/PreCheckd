@@ -7,6 +7,10 @@ const PLANS = {
   recruiter_annual: { key: 'precheckd_recruiter_annual', name: 'PreCheckd Recruiter (annual)', cents: 49900, interval: 'year' },
   founding_1: { key: 'precheckd_recruiter_founding_1', name: 'PreCheckd Founding Recruiter (annual, first 100)', cents: 24900, interval: 'year' },
   founding_2: { key: 'precheckd_recruiter_founding_2', name: 'PreCheckd Founding Recruiter (annual, next 150)', cents: 34900, interval: 'year' },
+  // Add-ons for recruiters. The slot price is graduated: slots 1-5 are $10 each, 6-10 $8 each, 11 and up $6 each, per month.
+  recruiter_slot: { key: 'precheckd_recruiter_slot', name: 'PreCheckd extra open job posting slot (monthly)', interval: 'month', cents: 1000,
+    tiers: [{ up_to: 5, unit_amount: 1000 }, { up_to: 10, unit_amount: 800 }, { up_to: 'inf', unit_amount: 600 }] },
+  recruiter_credit_pack: { key: 'precheckd_recruiter_credit_pack', name: 'PreCheckd job title test credits (pack of 3)', cents: 3900, interval: null },
   // Candidates. `interval: null` is a one-time charge (the verification fee).
   candidate_monthly: { key: 'precheckd_candidate_monthly', name: 'PreCheckd Membership (monthly)', cents: 1500, interval: 'month' },
   candidate_annual: { key: 'precheckd_candidate_annual', name: 'PreCheckd Membership (annual)', cents: 12000, interval: 'year' },
@@ -23,6 +27,22 @@ const WAVES = [
 
 const RESERVE_MINUTES = 35;
 const BASE_OPEN_POSTINGS = 5;
+const CREDITS_PER_PACK = 3;
+const MAX_PACKS_AT_ONCE = 5;
+const MAX_EXTRA_SLOTS = 50;
+
+// Pure: monthly cost in cents of `qty` extra slots on the graduated price.
+function slotMonthlyCents(qty) {
+  let left = Math.max(0, Math.floor(Number(qty) || 0)), from = 0, total = 0;
+  for (const tier of PLANS.recruiter_slot.tiers) {
+    const upTo = tier.up_to === 'inf' ? Infinity : tier.up_to;
+    const inTier = Math.min(left, upTo - from);
+    if (inTier > 0) { total += inTier * tier.unit_amount; left -= inTier; }
+    from = upTo;
+    if (left <= 0) break;
+  }
+  return total;
+}
 
 // Pure: given how many spots are taken in each wave ({1: n, 2: n}), which wave is open and what is left.
 function waveStatus(taken = {}) {
@@ -56,11 +76,12 @@ async function ensurePrice(stripe, planName) {
   if (!price) {
     const spec = {
       currency: 'usd',
-      unit_amount: plan.cents,
       lookup_key: plan.key,
       tax_behavior: 'exclusive',
       product_data: { name: plan.name },
     };
+    if (plan.tiers) { spec.billing_scheme = 'tiered'; spec.tiers_mode = 'graduated'; spec.tiers = plan.tiers; }
+    else spec.unit_amount = plan.cents;
     if (plan.interval) spec.recurring = { interval: plan.interval };
     price = await stripe.prices.create(spec);
   }
@@ -80,4 +101,4 @@ function chooseCandidatePlan({ interval, foundingSpotsLeft, alreadyFounding, had
   return { plan, founding, feeDue };
 }
 
-module.exports = { PLANS, WAVES, FOUNDING_CANDIDATES, chooseCandidatePlan, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, clearCache };
+module.exports = { CREDITS_PER_PACK, MAX_PACKS_AT_ONCE, MAX_EXTRA_SLOTS, slotMonthlyCents, PLANS, WAVES, FOUNDING_CANDIDATES, chooseCandidatePlan, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, clearCache };
