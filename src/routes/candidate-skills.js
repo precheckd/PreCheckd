@@ -101,7 +101,7 @@ router.get('/:slug/skills', async (req, res) => {
     const finished = req.query.finished === '1';
     const processing = finished && !attempts.some((r) => r.status === 'completed' && Date.now() - r.completedAt < 600000);
     res.render('candidate-skills', {
-      candidate, cards,
+      candidate, cards, graceDays: membership.graceDaysLeft(candidate),
       skillCards: skillCardsOnly,
       ladders: ladderList, skillList, searchData,
       titleCards: cards.filter((c) => c.assessment.kind === 'title' && !c.assessment.roleKey),

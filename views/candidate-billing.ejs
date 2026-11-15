@@ -1,0 +1,64 @@
+<style>
+  .bl-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .bl-card { max-width: 640px; width: 100%; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 2rem; color: #F2F4F3; }
+  .bl-card h1 { font-size: 1.5rem; margin: 0 0 .5rem; }
+  .bl-card p { color: #C7D1CF; line-height: 1.5; }
+  .bl-banner { border-radius: 8px; padding: .75rem 1rem; margin: 0 0 1rem; }
+  .bl-warn { background: #3a3320; border: 1px solid #6b5d2a; color: #f2e6b8; }
+  .bl-ok { background: #1d3b2a; border: 1px solid #2c6b45; color: #bdecd0; }
+  .bl-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; }
+  @media (max-width: 560px) { .bl-plans { grid-template-columns: 1fr; } }
+  .bl-plan { border: 1px solid #3B5860; border-radius: 8px; padding: 1.1rem; background: #23404a; }
+  .bl-plan h2 { margin: 0 0 .25rem; font-size: 1.05rem; }
+  .bl-price { font-size: 1.6rem; font-weight: 700; margin: .25rem 0; }
+  .bl-price small { font-size: .85rem; font-weight: 400; color: #C7D1CF; }
+  .bl-tag { display: inline-block; background: #2ECC71; color: #10261b; border-radius: 999px; font-size: .75rem; font-weight: 700; padding: .15rem .6rem; margin-bottom: .4rem; }
+  .bl-btn { display: inline-block; background: #2ECC71; color: #10261b; border: 0; border-radius: 6px; padding: .6rem 1.1rem; font-weight: 700; cursor: pointer; font-size: 1rem; }
+  .bl-ghost { background: transparent; color: #F2F4F3; border: 1px solid #5b7a82; }
+  .bl-meta { color: #C7D1CF; font-size: .9rem; }
+  .bl-plan form { margin-top: .75rem; }
+</style>
+<div class="bl-wrap"><div class="bl-card">
+  <h1>Membership</h1>
+  <% if (!enabled) { %>
+    <p>Membership billing isn't switched on yet. Nothing is charged.</p>
+  <% } else { %>
+    <% if (needed) { %><div class="bl-banner bl-warn"><%= signup ? 'One step before your ID check: choose a plan.' : "Your membership isn't active. Renew it to take skill tests, apply to jobs and keep your profile visible." %></div><% } %>
+    <% if (canceled) { %><div class="bl-banner bl-warn">Checkout was cancelled. You have not been charged.</div><% } %>
+    <% if (error) { %><div class="bl-banner bl-warn">Something went wrong. Please try again, or contact support.</div><% } %>
+    <% if (paid && state.status === 'active') { %><div class="bl-banner bl-ok">Thanks, you're a member.</div><% } %>
+
+    <% if (state.status === 'active') { %>
+      <p>Your <%= billing.plan === 'annual' ? 'annual' : 'monthly' %> membership is active<% if (billing.currentPeriodEnd) { %> through <%= new Date(billing.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) %><% } %>.
+        <% if (billing.cancelAtPeriodEnd) { %>It will end then and won't renew.<% } else { %>It renews automatically.<% } %></p>
+      <% if (founding) { %><p class="bl-meta">Founding Candidate: no verification fee.</p><% } %>
+    <% } else if (state.status === 'grace') { %>
+      <div class="bl-banner bl-warn">Your last payment didn't go through. Update your card within <%= graceDays %> day<%= graceDays === 1 ? '' : 's' %> to keep your profile and tests active.</div>
+    <% } else { %>
+      <p>Browsing jobs is always free. A membership covers identity verification, skill tests and applying.</p>
+      <% if (founding || spotsLeft > 0) { %>
+        <div class="bl-banner bl-ok">Founding Candidate: no <%= feeAmount %> verification fee. <%= founding ? '' : spotsLeft + ' spot' + (spotsLeft === 1 ? '' : 's') + ' left.' %></div>
+      <% } else if (feeDue) { %>
+        <p class="bl-meta">New members pay a one-time <%= feeAmount %> verification fee with their first payment. It isn't refunded once your ID check has run.</p>
+      <% } %>
+      <div class="bl-plans">
+        <div class="bl-plan">
+          <h2>Monthly</h2>
+          <div class="bl-price"><%= monthly %> <small>/month</small></div>
+          <p class="bl-meta">Cancel any time. Sales tax added where it applies.</p>
+          <form method="POST" action="/candidate-billing/checkout"><input type="hidden" name="interval" value="monthly"><button class="bl-btn bl-ghost" type="submit">Choose monthly</button></form>
+        </div>
+        <div class="bl-plan">
+          <h2>Annual</h2>
+          <div class="bl-price"><%= annual %> <small>/year</small></div>
+          <p class="bl-meta">Best value. Sales tax added where it applies.</p>
+          <form method="POST" action="/candidate-billing/checkout"><input type="hidden" name="interval" value="annual"><button class="bl-btn" type="submit">Choose annual</button></form>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (billing.customerId) { %>
+      <form method="POST" action="/candidate-billing/portal"><button class="bl-btn bl-ghost" type="submit">Manage card, invoices or cancel</button></form>
+    <% } %>
+  <% } %>
+</div></div>

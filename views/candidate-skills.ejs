@@ -76,7 +76,8 @@
     <% } else if (finished) { %>
       <div class="sk-banner ok">Your results are in.</div>
     <% } %>
-    <% if (notice === 'membership') { %><div class="sk-banner wait">Your membership isn't active, so testing is paused. Renew it and your tests are right where you left them.</div><% } %>
+    <% if (typeof graceDays !== 'undefined' && graceDays) { %><div class="sk-banner wait">Your last payment didn't go through. <a href="/candidate-billing" style="color:inherit;font-weight:600;">Update your card</a> within <%= graceDays %> day<%= graceDays === 1 ? '' : 's' %> to keep testing and applying.</div><% } %>
+    <% if (notice === 'membership') { %><div class="sk-banner wait">Your membership isn't active, so testing is paused. <a href="/candidate-billing?needed=1" style="color:inherit;font-weight:600;">Renew it</a> and your tests are right where you left them.</div><% } %>
     <% if (notice === 'wait') { %><div class="sk-banner wait">That skill can't be retaken yet. The date it opens up is shown below.</div><% } %>
     <% if (notice === 'requested') { %><div class="sk-banner ok">Request received. Your test will be ready within 1 business day, and we'll email you as soon as it is.</div><% } %>
     <% if (notice === 'locked') { %><div class="sk-banner wait">Pass the level below first and this one will unlock.</div><% } %>

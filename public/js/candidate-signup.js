@@ -43,6 +43,11 @@
     });
     const data = await res.json();
     if (!res.ok) {
+      // Billing is on and they have not paid yet: the plan page brings them back to the ID check.
+      if (data.paymentRequired) {
+        window.location.href = '/candidate-billing?needed=1&signup=1';
+        return new Promise(() => {});
+      }
       throw new Error((data.error || (data.errors && data.errors[0].msg)) || 'Something went wrong');
     }
     return data;

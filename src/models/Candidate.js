@@ -218,6 +218,8 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
   billing: { type: billingSchema, default: () => ({}) },
+  // Stripe Identity sessions created so far; capped at 2 so a non-refundable fee cannot be used to burn ID checks.
+  idSessionsCreated: { type: Number, default: 0 },
   stripeVerificationSessionId: {
     type: String,
     default: null

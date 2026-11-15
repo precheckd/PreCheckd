@@ -7,7 +7,14 @@ const PLANS = {
   recruiter_annual: { key: 'precheckd_recruiter_annual', name: 'PreCheckd Recruiter (annual)', cents: 49900, interval: 'year' },
   founding_1: { key: 'precheckd_recruiter_founding_1', name: 'PreCheckd Founding Recruiter (annual, first 100)', cents: 24900, interval: 'year' },
   founding_2: { key: 'precheckd_recruiter_founding_2', name: 'PreCheckd Founding Recruiter (annual, next 150)', cents: 34900, interval: 'year' },
+  // Candidates. `interval: null` is a one-time charge (the verification fee).
+  candidate_monthly: { key: 'precheckd_candidate_monthly', name: 'PreCheckd Membership (monthly)', cents: 1500, interval: 'month' },
+  candidate_annual: { key: 'precheckd_candidate_annual', name: 'PreCheckd Membership (annual)', cents: 12000, interval: 'year' },
+  candidate_fee: { key: 'precheckd_candidate_verification_fee', name: 'PreCheckd verification fee (one time)', cents: 7900, interval: null },
 };
+
+// The first 1,000 candidates skip the $79 verification fee ("Founding Candidates"). The ID check still runs.
+const FOUNDING_CANDIDATES = 1000;
 
 const WAVES = [
   { wave: 1, size: 100, plan: 'founding_1' },
@@ -47,14 +54,15 @@ async function ensurePrice(stripe, planName) {
   const found = await stripe.prices.list({ lookup_keys: [plan.key], active: true, limit: 1 });
   let price = found.data && found.data[0];
   if (!price) {
-    price = await stripe.prices.create({
+    const spec = {
       currency: 'usd',
       unit_amount: plan.cents,
-      recurring: { interval: plan.interval },
       lookup_key: plan.key,
       tax_behavior: 'exclusive',
       product_data: { name: plan.name },
-    });
+    };
+    if (plan.interval) spec.recurring = { interval: plan.interval };
+    price = await stripe.prices.create(spec);
   }
   cache.set(planName, price.id);
   return price.id;
@@ -62,4 +70,14 @@ async function ensurePrice(stripe, planName) {
 
 function clearCache() { cache.clear(); }
 
-module.exports = { PLANS, WAVES, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, clearCache };
+// Pure: the first-checkout choices for a candidate. `feeDue` is true only for someone who has never been ID verified,
+// never paid the fee, and did not get a founding spot.
+function chooseCandidatePlan({ interval, foundingSpotsLeft, alreadyFounding, hadFee, idVerified }) {
+  if (interval !== 'monthly' && interval !== 'annual') return null;
+  const plan = interval === 'monthly' ? 'candidate_monthly' : 'candidate_annual';
+  const founding = alreadyFounding || foundingSpotsLeft > 0;
+  const feeDue = !founding && !hadFee && !idVerified;
+  return { plan, founding, feeDue };
+}
+
+module.exports = { PLANS, WAVES, FOUNDING_CANDIDATES, chooseCandidatePlan, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, clearCache };

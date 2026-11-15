@@ -553,6 +553,11 @@ router.post('/create-identity-session', async (req, res) => {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
+    // Payment comes before the ID check (each check costs us money).
+    if (!require('../services/membership').isMember(candidate)) {
+      return res.status(402).json({ error: 'Choose a plan before verifying your identity.', paymentRequired: true });
+    }
+
     if (MOCK_IDENTITY) {
       console.log(`[MOCK IDENTITY] Skipping real Stripe session for ${candidate.email}`);
       return res.json({
@@ -565,6 +570,21 @@ router.post('/create-identity-session', async (req, res) => {
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     const stripe = require('stripe')(stripeKey);
+
+    // Reuse a session they have not touched yet (a page refresh must not use up an attempt).
+    if (candidate.stripeVerificationSessionId) {
+      try {
+        const existing = await stripe.identity.verificationSessions.retrieve(candidate.stripeVerificationSessionId);
+        if (existing.status === 'requires_input' && !existing.last_error) {
+          return res.json({ success: true, clientSecret: existing.client_secret, sessionId: existing.id });
+        }
+      } catch (e) { /* fall through and make a new one */ }
+    }
+    // The fee is not refunded once the check has run, so the number of checks is capped.
+    if ((candidate.idSessionsCreated || 0) >= 2) {
+      return res.status(403).json({ error: 'You have used both ID check attempts. Please contact support and we will look at it with you.' });
+    }
+    candidate.idSessionsCreated = (candidate.idSessionsCreated || 0) + 1;
 
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: 'document',

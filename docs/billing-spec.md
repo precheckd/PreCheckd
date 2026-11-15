@@ -25,7 +25,8 @@ Lapse: unfixed payment failure after a 14-day grace period, or cancellation.
 ## Status (Nov 14, 2026)
 - Phase 1 built (billing state, BILLING_ENABLED, lapsed-candidate page).
 - Phase 2 built, recruiter side: prices created in Stripe on first use by lookup key (`precheckd_recruiter_monthly|annual|founding_1|founding_2`), Checkout in subscription mode with automatic tax, founding spot held 35 minutes at checkout and locked when first paid, webhook handlers (idempotent by event id), recruiter gate (posting, applicants, candidate search/profiles, outreach email), 5-open-posting cap (+ bought slots later), postings of lapsed recruiters hidden from the board and job alerts, /billing page with Stripe customer portal, payment step before the ID check at signup.
-- Not yet: candidate fee + subscription (phase 3), receipts/failed-payment emails and staff view (phase 4), add-ons and credit packs (phase 5).
+- Phase 3 built, candidate side: $15/month or $120/year plus the one-time $79 fee in one Checkout (fee waived for the first 1,000 'Founding Candidates', spot held 35 minutes and kept for life once paid; never charged to someone already ID-verified or who paid before), payment before the ID check (the signup page sends unpaid candidates to /candidate-billing and back to the ID step), ID checks capped at 2 sessions (untouched sessions are reused), renewal/grace banners on the skills page, same webhooks.
+- Not yet: receipts/failed-payment emails and staff view (phase 4), add-ons and credit packs (phase 5).
 
 ## Stripe dashboard settings needed (once)
 1. Webhook endpoint `/webhooks/stripe` must send: checkout.session.completed, customer.subscription.created, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed.
