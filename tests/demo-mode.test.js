@@ -99,5 +99,10 @@ function get(port, method, path, headers = {}) {
     assert(/turned off in the demo/.test(b));
   });
 
+  await t('the demo keeps its sessions in its own database', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '../src/app.js'), 'utf8');
+    assert(/enabled\(\) \? \{ dbName: process\.env\.MONGODB_DB_NAME \} : \{\}/.test(src));
+  });
+
   console.log(fail ? 'fail=' + fail : 'fail=0'); process.exit(fail ? 1 : 0);
 })();

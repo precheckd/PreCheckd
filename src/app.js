@@ -64,8 +64,11 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
-  store: new MongoStore({ 
-    mongoUrl: process.env.MONGODB_URI
+  // The demo keeps its sessions inside its own database (its login may only touch that one). Production is left
+  // exactly as it was, so nobody is logged out by this change.
+  store: new MongoStore({
+    mongoUrl: process.env.MONGODB_URI,
+    ...(require('./config/demo').enabled() ? { dbName: process.env.MONGODB_DB_NAME } : {})
   }),
   resave: false,
   saveUninitialized: false,
