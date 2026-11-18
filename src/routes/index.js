@@ -106,6 +106,10 @@ router.get('/skills-explained', (req, res) => {
   res.render('skills-explained', { pageTitle: 'PreCheckd - How Skill Levels Work' });
 });
 
+router.get('/founder', (req, res) => {
+  res.render('founder', { pageTitle: 'PreCheckd - From the Founder' });
+});
+
 router.get('/privacy', (req, res) => {
   res.render('privacy', { pageTitle: 'PreCheckd - Privacy Policy' });
 });
