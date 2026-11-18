@@ -303,6 +303,7 @@ router.post('/requests/:id/request-full-access', async (req, res) => {
       request.fullAccessRequestedAt = new Date();
       request.fullAccessExpiresAt = new Date(Date.now() + FULL_ACCESS_WINDOW_MS);
       await request.save();
+      await require('../services/demoApprovals').grantFullAccess(request); // demo only: granted on the spot
       const fullRec = await Recruiter.findById(req.session.recruiterId).catch(() => null);
       notify('candidate', request.candidateId._id, 'full_access_requested', `${fullRec ? fullRec.firstName + ' ' + fullRec.lastName : 'A recruiter'} requested full access to your video and resume`, '/connections?tab=requests');
     }

@@ -1,3 +1,4 @@
+require('./config/demo').lockDown();
 const path = require('path');
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
@@ -74,6 +75,8 @@ app.use(session({
     maxAge: 30 * 24 * 60 * 60 * 1000
   }
 }));
+
+app.use(require('./middleware/demoMode').demoMode());
 
 app.use('/webhooks', webhookRoutes);
 
@@ -223,6 +226,8 @@ app.use((req, res, next) => {
 if (process.env.NODE_ENV !== 'production') {
   app.use('/internal', internalRoutes);
 }
+
+if (require('./config/demo').enabled()) app.use('/', require('./routes/demo'));
 
 app.use(require('./middleware/outcomeGate').outcomeGate({ adminHost: ADMIN_HOSTNAME }));
 

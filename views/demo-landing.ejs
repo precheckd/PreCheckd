@@ -1,0 +1,22 @@
+<%# page title: PreCheckd Demo %>
+<div class="legal-page">
+  <h1 class="page-title">Try PreCheckd</h1>
+  <p class="updated-date">A live demo with sample data. Nothing here is real, and nothing you do is saved.</p>
+
+  <div class="content-card">
+    <h2>See it as a recruiter</h2>
+    <p>Search verified candidates, look at their tested skill levels, send a connection request and ask for full access. In the demo, requests are approved on the spot so you can see what comes next.</p>
+    <form method="post" action="/demo/recruiter"><button type="submit" class="btn btn-large btn-primary">Try the recruiter demo</button></form>
+
+    <h2>See it as a candidate</h2>
+    <p>Browse open jobs the way a verified candidate does and see how a job posting reads.</p>
+    <form method="post" action="/demo/candidate"><button type="submit" class="btn btn-large btn-secondary">Try the candidate demo</button></form>
+  </div>
+
+  <div class="content-card" style="text-align:center;">
+    <h2>Ready for the real thing?</h2>
+    <p>Founding spots are limited, and the founding price is locked in for as long as you stay.</p>
+    <p><a href="<%= signupUrl %>" class="btn btn-large btn-primary">Start your founding spot</a></p>
+    <p>Looking for work? <a href="<%= candidateSignupUrl %>">Get verified as a candidate</a>.</p>
+  </div>
+</div>

@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./src/config/demo').lockDown();
 const app = require('./src/app');
 const { connectDatabase } = require('./src/config/database');
 const { startMessageDigestJob } = require('./src/jobs/messageDigestJob');
@@ -16,6 +17,8 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`PreCheckd app listening on port ${PORT}`);
   });
+  // The demo never sends email or runs reminders; a nightly script resets its data instead.
+  if (require('./src/config/demo').enabled()) return;
   startMessageDigestJob();
   startCertExpiryJob();
   startSkillRemindersJob();

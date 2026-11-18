@@ -343,6 +343,13 @@
   </style>
 </head>
 <body data-stripe-key="<%= stripePublishableKey %>">
+<% if (typeof demoMode !== 'undefined' && demoMode) { %>
+<div style="background:#1B8A4B;color:#fff;padding:10px 16px;text-align:center;font-size:15px;line-height:1.5;">
+  <strong>This is a demo with sample data.</strong> Nothing here is real and changes are not saved.
+  <a href="<%= demoSignupUrl %>" style="background:#fff;color:#1B8A4B;padding:4px 14px;border-radius:6px;font-weight:700;text-decoration:none;margin-left:10px;display:inline-block;">Start your founding spot</a>
+  <a href="/demo" style="color:#fff;text-decoration:underline;margin-left:12px;">Demo home</a>
+</div>
+<% } %>
 
 <header>
   <div class="header-container">
@@ -499,7 +506,7 @@
   </div>
 </footer>
 
-<% const _cp = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; if (!(_cp === '/ask' || _cp.indexOf('/ask/') === 0 || _cp.indexOf('/internal') === 0)) { %>
+<% let _cp = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; if (typeof demoMode !== 'undefined' && demoMode) { _cp = '/ask'; } if (!(_cp === '/ask' || _cp.indexOf('/ask/') === 0 || _cp.indexOf('/internal') === 0)) { %>
   <%- include('../partials/chat-widget') %>
 <% } %>
 

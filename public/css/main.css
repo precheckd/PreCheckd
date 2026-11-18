@@ -373,6 +373,11 @@ a:hover { color: #4ADE80; }
   text-decoration: underline;
 }
 
+/* Buttons that are links keep their own text color and no underline inside legal-style pages. */
+.legal-page a.btn { text-decoration: none; }
+.legal-page a.btn-primary { color: #1F363C; }
+.legal-page a.btn-secondary { color: #4ADE80; }
+
 .legal-page strong {
   color: #F2F4F3;
 }

@@ -14,6 +14,7 @@
     "assign-mail-aliases": "node scripts/assign-mail-aliases.js",
     "mail-alias": "node scripts/mail-alias.js",
     "seed-demo-mail": "node scripts/seed-demo-mail.js",
+    "demo:reset": "node scripts/demo-reset.js",
     "test-chat": "node scripts/test-chat.js"
   },
   "dependencies": {
