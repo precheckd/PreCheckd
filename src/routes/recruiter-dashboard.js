@@ -200,6 +200,7 @@ router.get('/requests/:id/candidate', require('../services/membership').requireR
         introVideoUrl: candidate.introVideoUrl,
         interviewVideos: candidate.interviewVideos || []
       } : null,
+      interviewRubric: require('../content/interviewRubric'),
       resumeUrl: hasFullAccess && candidate.resumeUrl ? `/recruiter-dashboard/requests/${request._id}/resume` : null,
       title: `${candidate.firstName} ${candidate.lastName} | PreCheckd`
     });

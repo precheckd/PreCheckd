@@ -199,9 +199,27 @@
           <p class="detail-title" style="margin-bottom: 0.5rem;">Video Introduction</p>
           <video src="<%= video.introVideoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E; margin-bottom: 1.25rem;"></video>
         <% } %>
-        <% (video.interviewVideos || []).filter(function(v) { return v.videoUrl; }).forEach(function(v) { %>
+        <% const answered = (video.interviewVideos || []).filter(function(v) { return v.videoUrl; }); %>
+        <% if (answered.length && typeof interviewRubric !== 'undefined') { %>
+          <p class="rubric-note" style="max-width: 640px; font-size: 0.85rem; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 6px; padding: 0.6rem 0.8rem; margin: 0 0 1rem;"><strong>Example rubric (for you only).</strong> <%= interviewRubric.DISCLAIMER %></p>
+        <% } %>
+        <% answered.forEach(function(v) { const rb = typeof interviewRubric !== 'undefined' ? interviewRubric.RUBRIC[v.questionId] : null; %>
           <p class="detail-title" style="margin-bottom: 0.5rem;"><%= v.question %></p>
-          <video src="<%= v.videoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E; margin-bottom: 1.25rem;"></video>
+          <video src="<%= v.videoUrl %>" controls style="width: 100%; max-width: 480px; border-radius: 8px; background: #0E1B1E; margin-bottom: 0.6rem;"></video>
+          <% if (rb) { %>
+          <details class="rubric" style="max-width: 640px; margin-bottom: 1.25rem; font-size: 0.88rem;">
+            <summary style="cursor: pointer; font-weight: 600;">Example rubric: <%= rb.competency %></summary>
+            <table style="border-collapse: collapse; width: 100%; margin-top: 0.5rem;">
+              <% rb.anchors.forEach(function(a) { %>
+              <tr><td style="vertical-align: top; padding: 0.3rem 0.6rem 0.3rem 0; font-weight: 700; white-space: nowrap;"><%= a.score %></td><td style="padding: 0.3rem 0;"><%= a.text %></td></tr>
+              <% }); %>
+            </table>
+            <p style="margin: 0.5rem 0 0.2rem; font-weight: 600;">What to listen for</p>
+            <ul style="margin: 0; padding-left: 1.2rem;"><% rb.listenFor.forEach(function(l) { %><li><%= l %></li><% }); %></ul>
+            <p style="margin: 0.5rem 0 0.2rem; font-weight: 600;">If the answer is vague, ask</p>
+            <ul style="margin: 0; padding-left: 1.2rem;"><% interviewRubric.PROBES.forEach(function(q) { %><li><%= q %></li><% }); %></ul>
+          </details>
+          <% } else { %><div style="margin-bottom: 1.25rem;"></div><% } %>
         <% }); %>
         <% if (resumeUrl) { %>
           <a href="<%= resumeUrl %>" class="resume-link">Download Verified Resume (PDF)</a>
