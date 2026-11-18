@@ -296,6 +296,13 @@
           throw new Error(data.error || 'Something went wrong. Please try again.');
         }
 
+        if (data.demoApprovedId) {
+          document.getElementById('connect-section').innerHTML =
+            '<span class="status-badge status-accepted">Request Accepted</span>' +
+            '<p style="color: #8FA6AC; font-size: 0.85rem; margin-top: 0.5rem;">In the demo, requests are accepted instantly. In the real product the candidate decides.</p>' +
+            '<p style="margin-top: 0.75rem;"><a href="/recruiter-dashboard/requests/' + data.demoApprovedId + '/candidate" style="color: #4ADE80; font-weight: 600;">View the full profile &rarr;</a></p>';
+          return;
+        }
         document.getElementById('connect-section').innerHTML =
           '<span class="status-badge status-pending">Request Sent</span>' +
           '<p style="color: #8FA6AC; font-size: 0.85rem; margin-top: 0.5rem;">' +

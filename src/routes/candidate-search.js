@@ -320,13 +320,13 @@ router.post('/:anonId/connect', async (req, res) => {
       note: trimmedNote,
       initiatedBy: 'recruiter'
     });
-    await require('../services/demoApprovals').approveConnection(candidate._id, req.session.recruiterId); // demo only: approved on the spot
+    const demoApproved = await require('../services/demoApprovals').approveConnection(candidate._id, req.session.recruiterId); // demo only: approved on the spot
     {
       const rec = await Recruiter.findById(req.session.recruiterId).catch(() => null);
       notify('candidate', candidate._id, 'connect_request', `${rec ? rec.firstName + ' ' + rec.lastName : 'A recruiter'} wants to connect`, '/connections?tab=requests');
     }
 
-    res.json({ success: true, alreadySent: false });
+    res.json({ success: true, alreadySent: false, demoApprovedId: demoApproved ? String(demoApproved._id) : null });
   } catch (error) {
     console.error('Error creating recruiter-initiated connection request:', error);
     res.status(500).json({ error: 'Failed to send connection request' });

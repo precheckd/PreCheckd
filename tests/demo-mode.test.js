@@ -104,5 +104,12 @@ function get(port, method, path, headers = {}) {
     assert(/enabled\(\) \? \{ dbName: process\.env\.MONGODB_DB_NAME \} : \{\}/.test(src));
   });
 
+  await t('the connect page shows the instant approval in the demo', () => {
+    const fs = require('fs'); const p = require('path');
+    assert(/demoApprovedId: demoApproved/.test(fs.readFileSync(p.join(__dirname, '../src/routes/candidate-search.js'), 'utf8')));
+    const v = fs.readFileSync(p.join(__dirname, '../views/candidate-search-profile.ejs'), 'utf8');
+    assert(/data\.demoApprovedId/.test(v) && /Request Accepted/.test(v));
+  });
+
   console.log(fail ? 'fail=' + fail : 'fail=0'); process.exit(fail ? 1 : 0);
 })();
