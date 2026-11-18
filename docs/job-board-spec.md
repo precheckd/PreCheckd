@@ -259,3 +259,10 @@ Tests: `node tests/text-scan.test.js`, `posting-validation.test.js`, `posting-lo
 - **Early survey.** A recruiter who ends a connection within 14 days of it starting triggers the candidate's survey 3 days after the ending.
 - **Recruiter dispute path: not built, on purpose.** A recruiter only ever sees "A connection was ended." with no reason, so there is nothing to dispute. If staff act against a recruiter (suspension, an outreach pause), the existing Dispute Inbox is the path.
 - **Not built:** retention period for endings and surveys (lawyer list), per-recruiter termination-rate screen.
+
+## Finalist (second-stage) tests (built Nov 17)
+- A posting can have finalist topics: none, or exactly 3 of 5 (Logic, Problem solving, Time management, Attention to detail, Numerical reasoning). Set on the posting form (Requirements step) or on the applicants page; locked once the first finalist invite is sent. The 10 combined CoderByte tests are SkillAssessment kind 'finalist'.
+- Up to 5 finalist slots per posting (FINALIST_SLOTS). A slot is held while an invite is sent, accepted or completed; declined, expired (72 hours) and integrity-rejected invites give it back. No extra charge, no recruiter credits, no candidate credits.
+- Model FinalistTest, service src/services/finalistTests.js. Candidate accepts or declines on the Skills page; the score and per-topic scores go to the recruiter on the applicants page.
+- Nobody is rejected for not finishing unless the recruiter chooses: the applicants page shows a Keep / Reject notice. Auto-reject is a per-posting switch, OFF by default; when on, the fixed reason is "The finalist assessment was not completed." (rejection reason `finalist_incomplete`, never in the normal menus).
+- Not yet built: a candidate who took the same combo test within 60 days cannot be sent it again (the recruiter sees a message).

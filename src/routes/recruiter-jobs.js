@@ -29,6 +29,8 @@ const publicJob = require('../services/publicJob');
 const { sendJobPostedEmail, sendJobEditedEmail, sendJobClosedEmail } = require('../services/emailService');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
+const finalistTests = require('../services/finalistTests');
+const finalistContent = require('../content/finalistTopics');
 
 function requireRecruiterLogin(req, res, next) {
   if (!req.session.recruiterId) {
@@ -75,6 +77,7 @@ function formLocals(extra) {
     minLevels: opt.MIN_LEVELS, educationLevels: opt.EDUCATION_LEVELS, clearanceOptions: opt.CLEARANCE_OPTIONS,
     certOptions: CATALOG.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)),
     states: US_STATES, limits: opt.LIMITS, standard, payBench: require('../content/payBenchmarks').clientTable(),
+    finalistTopics: finalistContent.TOPICS, finalistSlots: finalistTests.FINALIST_SLOTS, finalistLocked: false,
     isEdit: false, withdrawPrompt: 0, draftId: '', startStep: 0, action: '/recruiter-jobs/new', backHref: '/recruiter-jobs', heading: 'Post a job', submitLabel: 'Post this job',
     ...extra,
   };
@@ -242,7 +245,7 @@ router.post('/new', async (req, res) => {
       }));
     }
 
-    const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location) });
+    const posting = await JobPosting.create({ recruiterId: recruiter._id, source: 'precheckd', ...docFromValue(value, location), finalistTopics: value.finalistTopics || [] });
     if (/^[a-f0-9]{24}$/i.test(String(req.body._draftId || ''))) {
       try { await JobDraft.deleteOne({ _id: req.body._draftId, recruiterId: recruiter._id }); } catch (e) { console.error('Draft cleanup failed:', e.message); }
     }
@@ -280,7 +283,7 @@ router.get('/:id/edit', async (req, res) => {
     if (posting.status !== 'open') return res.status(409).render('recruiter-jobs-locked', { title: 'Edit Job | PreCheckd', notEditable: true });
     const skillChoices = await skillOptions();
     res.render('recruiter-job-form', editLocals(posting, {
-      errors: {}, form: formFromPosting(posting), skillChoices,
+      errors: {}, form: formFromPosting(posting), skillChoices, finalistLocked: await finalistTests.isLocked(posting),
     }));
   } catch (error) {
     console.error('Error loading edit form:', error);
@@ -347,21 +350,30 @@ router.post('/:id/edit', async (req, res) => {
     if (!posting) return;
     if (posting.status !== 'open') return res.status(409).render('recruiter-jobs-locked', { title: 'Edit Job | PreCheckd', notEditable: true });
 
+    // Once a finalist has been invited the topics are fixed, whatever the form says.
+    const finalistLocked = await finalistTests.isLocked(posting);
+    if (finalistLocked) req.body.finalistTopics = Array.from(posting.finalistTopics || []);
     const r = await checkEdit(req, posting);
     if (Object.keys(r.errors).length) {
-      return res.status(400).render('recruiter-job-form', editLocals(posting, { errors: r.errors, form: req.body, skillChoices: r.skillChoices }));
+      return res.status(400).render('recruiter-job-form', editLocals(posting, { errors: r.errors, form: req.body, skillChoices: r.skillChoices, finalistLocked }));
     }
 
-    if (!r.parts.length) return res.redirect(`/recruiter-jobs/${posting._id}?saved=nochange`);
+    // The finalist topics are not part of what applicants see, so changing only them never notifies anyone.
+    const topicsChanged = !finalistLocked && JSON.stringify(r.value.finalistTopics || []) !== JSON.stringify(Array.from(posting.finalistTopics || []));
+    if (!r.parts.length) {
+      if (topicsChanged) { posting.finalistTopics = r.value.finalistTopics || []; await posting.save(); return res.redirect(`/recruiter-jobs/${posting._id}?saved=1`); }
+      return res.redirect(`/recruiter-jobs/${posting._id}?saved=nochange`);
+    }
 
     // Withdrawing people is never silent: the recruiter confirms the count first.
     if (r.impact.withdraw.length && !confirmed(req.body.confirmWithdraw)) {
       return res.status(409).render('recruiter-job-form', editLocals(posting, {
-        errors: {}, form: req.body, skillChoices: r.skillChoices, withdrawPrompt: r.impact.withdraw.length,
+        errors: {}, form: req.body, skillChoices: r.skillChoices, withdrawPrompt: r.impact.withdraw.length, finalistLocked,
       }));
     }
 
     posting.set(r.next);
+    if (topicsChanged) posting.finalistTopics = r.value.finalistTopics || [];
     if (!r.location.areaRule) posting.areaRule = undefined;
     posting.editedAt = new Date();
     posting.edits = [...posting.edits, { at: posting.editedAt, parts: r.parts }].slice(-30);
@@ -391,6 +403,8 @@ router.get('/:id/applicants', async (req, res) => {
       applicants: apps.filter((a) => a.candidateId).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)),
       stages: STAGE_LABEL, reasons: REJECTION_REASONS, live: ACTIVE, error: req.query.error || '', moved: req.query.moved || '',
       queue: { waiting: await applicantQueue.waitingCount(posting._id), limit: applicantQueue.LIMIT },
+      finalist: await finalistTests.overview(posting).catch((e) => { console.error('Finalist overview failed:', e.message); return finalistTests.emptyOverview(posting); }), finalistTopics: finalistContent.TOPICS, finalistLabel: finalistContent.label,
+      finalistMsg: req.query.fin || '',
     });
   } catch (error) {
     console.error('Error loading applicants:', error);
@@ -410,6 +424,80 @@ router.post('/:id/applicants/:appId/stage', async (req, res) => {
     res.redirect(r.ok ? `${back}?moved=1` : `${back}?error=${encodeURIComponent(r.error)}`);
   } catch (error) {
     console.error('Error moving applicant:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// ---- finalist (second-stage) tests -------------------------------------------------------------
+// Friendly text for the codes finalistTests.js throws.
+const FINALIST_ERRORS = {
+  not_found: 'We could not find that applicant.', not_active: 'That applicant is no longer in play.', closed: 'This posting is closed.',
+  no_topics: 'Choose the 3 finalist topics first.', open: 'That applicant already has a finalist invite.',
+  no_slots: `All ${finalistTests.FINALIST_SLOTS} finalist slots are in use. One comes back when a finalist declines or runs out of time.`,
+  no_test: 'That finalist test is not available yet. We have been told.', manual: 'This finalist test needs a quick check from our team before it can be sent to that candidate.',
+  recent: 'That candidate took this same finalist test recently, so it cannot be sent again yet.', invalid: 'Choose exactly 3 topics.',
+  locked: 'The topics are locked once the first finalist invite is sent.', decided: 'You already decided about that applicant.',
+};
+const finBack = (posting, key, error) => `/recruiter-jobs/${posting._id}/applicants?${error ? 'error=' + encodeURIComponent(error) : 'fin=' + key}`;
+
+// POST /recruiter-jobs/:id/finalist/topics — pick the 3 topics (only until the first invite goes out)
+router.post('/:id/finalist/topics', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    try { await finalistTests.setTopics(posting, req.body.finalistTopics); } catch (e) {
+      if (FINALIST_ERRORS[e.code]) return res.redirect(finBack(posting, '', e.code === 'invalid' ? FINALIST_ERRORS.invalid : FINALIST_ERRORS[e.code]));
+      throw e;
+    }
+    res.redirect(finBack(posting, 'topics'));
+  } catch (error) {
+    console.error('Error saving finalist topics:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/finalist/auto-reject — OFF unless the recruiter turns it on here
+router.post('/:id/finalist/auto-reject', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    await finalistTests.setAutoReject(posting, req.body.on === '1');
+    res.redirect(finBack(posting, req.body.on === '1' ? 'auto_on' : 'auto_off'));
+  } catch (error) {
+    console.error('Error saving finalist auto-reject:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/applicants/:appId/finalist — invite one applicant to the finalist test
+router.post('/:id/applicants/:appId/finalist', async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    const posting = await loadOwnPosting(req, res);
+    if (!posting || !recruiter) return;
+    try { await finalistTests.send(recruiter, posting, req.params.appId); } catch (e) {
+      if (FINALIST_ERRORS[e.code]) return res.redirect(finBack(posting, '', FINALIST_ERRORS[e.code]));
+      throw e;
+    }
+    res.redirect(finBack(posting, 'sent'));
+  } catch (error) {
+    console.error('Error sending finalist invite:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/finalist/:reqId/decide — keep or reject someone who did not finish (the recruiter chooses)
+router.post('/:id/finalist/:reqId/decide', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    try { await finalistTests.decide(posting, req.params.reqId, String(req.body.choice || '')); } catch (e) {
+      if (FINALIST_ERRORS[e.code]) return res.redirect(finBack(posting, '', FINALIST_ERRORS[e.code]));
+      throw e;
+    }
+    res.redirect(finBack(posting, req.body.choice === 'reject' ? 'rejected' : 'kept'));
+  } catch (error) {
+    console.error('Error recording finalist decision:', error);
     res.status(500).send('Server error');
   }
 });

@@ -107,7 +107,7 @@ async function withdrawApplication(app, { by, note = '' }, now = new Date()) {
 // A recruiter moves an applicant along the fixed pipeline. Rejecting needs an area from the fixed list (the
 // candidate sees it); it stops the shared access but keeps the connection. Hired and
 // rejected are final in v1. Returns { ok, error? }.
-async function moveStage(app, posting, stage, { reason } = {}, now = new Date()) {
+async function moveStage(app, posting, stage, { reason, finalistIncomplete = false } = {}, now = new Date()) {
   if (!STAGE_LABEL[stage]) return { ok: false, error: 'Pick a stage.' };
   if (!ACTIVE.includes(app.status)) return { ok: false, error: 'This applicant can no longer be moved.' };
   if (app.status === stage) return { ok: false, error: 'They are already at that stage.' };
@@ -115,7 +115,7 @@ async function moveStage(app, posting, stage, { reason } = {}, now = new Date())
   if (stage === 'rejected') {
     rejection = byCode(reason);
     if (!rejection || rejection.legacy) return { ok: false, error: 'Choose an area for them to work on.' };
-    if (!allowedFor(rejection, app.status, { roleTest: Boolean(app.roleTestResult) })) return { ok: false, error: 'That area does not fit this applicant (it needs an interview, a screening, or a role test they took). Choose another.' };
+    if (!allowedFor(rejection, app.status, { roleTest: Boolean(app.roleTestResult), finalistIncomplete })) return { ok: false, error: 'That area does not fit this applicant (it needs an interview, a screening, or a role test they took). Choose another.' };
   }
   app.status = stage;
   app.stageChangedAt = now;

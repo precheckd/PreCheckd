@@ -281,4 +281,12 @@ t('several mistakes are all reported at once', () => {
   }
 });
 
+t('finalist topics are optional: none, or exactly 3 of the 5', () => {
+  assert.deepStrictEqual(run({}).value.finalistTopics, []);
+  assert.deepStrictEqual(run({ finalistTopics: ['time', 'logic', 'problem'] }).value.finalistTopics, ['logic', 'problem', 'time']);
+  assert.match(only({ finalistTopics: ['logic', 'time'] }, 'finalistTopics'), /exactly 3/);
+  only({ finalistTopics: ['logic', 'time', 'problem', 'detail'] }, 'finalistTopics');
+  only({ finalistTopics: ['logic', 'time', 'juggling'] }, 'finalistTopics');
+});
+
 console.log(`\n${n} tests passed`);

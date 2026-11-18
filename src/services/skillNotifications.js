@@ -35,6 +35,8 @@ const COPY = {
     paragraphs: [`You asked to be tested on ${n}, and the test is now available.`], button: 'Take the test' }),
   skill_test_request: (n, who) => ({ bell: `${who} asked you to take the ${n} test`, subject: `${who} asked you to take a test`, headline: 'A recruiter asked you to take a test',
     paragraphs: [`${who} would like you to take the ${n} test. If you take it, your exact score goes to them. You have 72 hours to accept or decline, and declining is fine.`], button: 'See the request' }),
+  finalist_invite: (job, company) => ({ bell: `You're a finalist for ${job}. Take the finalist test within 72 hours`, subject: `You're a finalist for ${job}`, headline: `You're a finalist for ${job}`,
+    paragraphs: [`${company ? `${company} has` : 'The recruiter has'} moved you to the finalist round for ${job}. The next step is a short finalist assessment. It is on your Skills page, and you have 72 hours to start it. If you take it, your score goes to this recruiter. Declining is fine, and the recruiter decides what happens next.`], button: 'See the invite' }),
   role_test_ready: (n) => ({ bell: `Your ${n} test is ready`, subject: `Your ${n} test is ready`, headline: 'Your test for this job is ready',
     paragraphs: [`You applied, so the next step is a test built for this job (${n}). It is on your Skills page, and the recruiter sees your score when you finish. Once you start, your link stays open for ${Number(process.env.CODERBYTE_INVITE_DAYS) || 14} days.`], button: 'Take the test' }),
   role_test_waiting: (n, promise) => ({ bell: `Your ${n} test will be sent ${promise}`, subject: `Your ${n} test is on its way`, headline: 'Your test for this job is being prepared',
@@ -80,6 +82,7 @@ async function resultsLanded(result) {
   if (!(result.held && !result.reviewDecision)) require('./updates').sweepCandidateLater(c._id);
   try { await require('./testRequests').onResult(result); } catch (e) { console.error('[skills] test request update failed:', e.message); }
   try { await require('./roleTests').onResult(result); } catch (e) { console.error('[skills] role test update failed:', e.message); }
+  try { await require('./finalistTests').onResult(result); } catch (e) { console.error('[skills] finalist test update failed:', e.message); }
   if (result.held && !result.reviewDecision) { await deliver(c, 'skill_held', name); return true; }
   // Passing one rung of a ladder opens the next, so that notice replaces the plain "results ready" one.
   const earned = await masterEarned(result);

@@ -87,7 +87,6 @@
           <div style="margin-top:.5rem;">Your request for <%= credits.open.amount %> more is waiting for review.</div>
         <% } else if (credits.left < 1) { %>
           <form method="POST" action="/candidate/<%= candidate.slug %>/skills/credits/request" style="margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="number" name="amount" min="1" max="10" value="3" style="width:4.5rem;padding:.4rem;">
             <input type="text" name="reason" maxlength="500" placeholder="Why do you need more?" required style="flex:1;min-width:12rem;padding:.4rem;">
             <button type="submit">Request more</button>
@@ -121,6 +120,31 @@
             <div class="sk-meta">Your <strong><%= q.test %></strong> test is ready. The recruiter sees your score when you finish.</div>
           </div>
           <form method="POST" action="/candidate/<%= candidate.slug %>/skills/role-tests/<%= q.id %>/start" style="flex-shrink:0;"><button class="sk-btn" type="submit"><%= q.started ? 'Continue test' : 'Take the test' %></button></form>
+        </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (finalistInvites && finalistInvites.length) { %>
+    <div class="sk-card">
+      <h2>Finalist tests</h2>
+      <% finalistInvites.forEach((q) => { %>
+        <div class="sk-row" style="align-items:flex-start;">
+          <div>
+            <div class="sk-name"><%= q.job %><%= q.company ? ' · ' + q.company : '' %></div>
+            <div class="sk-meta">You're a finalist. The next step is a short assessment covering <strong><%= q.topics.join(', ') %></strong>.</div>
+            <% if (q.status === 'sent') { %>
+              <div class="sk-meta" style="margin-top:0.35rem;">Start by <%= q.expiresAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %>. If you take it, your score goes to this recruiter. Declining is fine, and the recruiter decides what happens next.</div>
+            <% } else { %>
+              <div class="sk-meta" style="margin-top:0.35rem;">You started it. Finish the test and your score goes to this recruiter.</div>
+            <% } %>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+            <form method="POST" action="/candidate/<%= candidate.slug %>/skills/finalist/<%= q.id %>/accept"><button class="sk-btn" type="submit"><%= q.status === 'sent' ? 'Take the test' : 'Continue test' %></button></form>
+            <% if (q.status === 'sent') { %>
+            <form method="POST" action="/candidate/<%= candidate.slug %>/skills/finalist/<%= q.id %>/decline"><button class="sk-btn alt" type="submit">Decline</button></form>
+            <% } %>
+          </div>
         </div>
       <% }) %>
     </div>

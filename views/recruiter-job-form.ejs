@@ -363,6 +363,17 @@
       </label>
       <% if (errors.clearance) { %><div class="jp-err"><%= errors.clearance %></div><% } %>
 
+      <span class="jp-label">Finalist test (optional)</span>
+      <p class="jp-muted" style="margin:0 0 .4rem;">Pick exactly 3 topics and you can invite up to <%= finalistSlots %> of your applicants to one short finalist assessment covering them. There is no extra charge. Candidates have 72 hours to start it, and a slot comes back if they decline or run out of time. Leave all unticked to skip this stage.</p>
+      <div class="jp-checks" id="jp-finalist">
+        <% finalistTopics.forEach(function(t) { %><label class="jp-check" style="margin:0;"><input type="checkbox" name="finalistTopics" value="<%= t.key %>" <%= has('finalistTopics', t.key) ? 'checked' : '' %> <%= finalistLocked ? 'disabled' : '' %>> <%= t.label %></label><% }); %>
+      </div>
+      <% if (finalistLocked) { %>
+        <% list(form.finalistTopics).forEach(function(k) { %><input type="hidden" name="finalistTopics" value="<%= k %>"><% }); %>
+        <div class="jp-muted">Locked: you have already invited a finalist, so the topics can't change.</div>
+      <% } %>
+      <% if (errors.finalistTopics) { %><div class="jp-err"><%= errors.finalistTopics %></div><% } %>
+
       <div class="jp-row">
         <label class="jp-field" style="margin:0;">Applications close
           <input type="date" name="closeDate" value="<%= val('closeDate') %>">

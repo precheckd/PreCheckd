@@ -18,6 +18,9 @@ const REJECTION_REASONS = [
     candidateText: 'The role is on hold or has changed.' },
   { code: 'no_response', label: 'We could not reach the candidate',
     candidateText: 'The employer was unable to reach you to continue.' },
+  // Only offered through the finalist-test notice (the applicant was invited and did not take it); never in the menu.
+  { code: 'finalist_incomplete', label: 'Did not complete the finalist assessment', finalistOnly: true,
+    candidateText: 'The finalist assessment was not completed.' },
 ];
 
 // No longer offered; kept so a rejection saved under an older code still reads correctly.
@@ -29,6 +32,6 @@ const LEGACY_REASONS = [
 
 const byCode = (c) => REJECTION_REASONS.concat(LEGACY_REASONS).find((r) => r.code === c) || null;
 // Reasons that can honestly apply to someone currently at this stage.
-const reasonsFor = (status, { roleTest = false } = {}) => REJECTION_REASONS.filter((r) => (!r.stages || r.stages.includes(status)) && (!r.needsRoleTest || roleTest));
-const allowedFor = (reason, status, { roleTest = false } = {}) => Boolean(reason && !reason.legacy && (!reason.stages || reason.stages.includes(status)) && (!reason.needsRoleTest || roleTest));
+const reasonsFor = (status, { roleTest = false } = {}) => REJECTION_REASONS.filter((r) => !r.finalistOnly && (!r.stages || r.stages.includes(status)) && (!r.needsRoleTest || roleTest));
+const allowedFor = (reason, status, { roleTest = false, finalistIncomplete = false } = {}) => Boolean(reason && !reason.legacy && (!reason.stages || reason.stages.includes(status)) && (!reason.needsRoleTest || roleTest) && (!reason.finalistOnly || finalistIncomplete));
 module.exports = { REJECTION_REASONS, LEGACY_REASONS, byCode, reasonsFor, allowedFor };

@@ -8,6 +8,7 @@ const SkillResult = require('../models/SkillResult');
 const skills = require('../services/skills');
 const SkillRequest = require('../models/SkillRequest');
 const testRequests = require('../services/testRequests');
+const finalistTests = require('../services/finalistTests');
 const ach = require('../services/achievements');
 const { ROLES } = require('../content/roles');
 const { levelName } = require('../utils/levelName');
@@ -108,6 +109,7 @@ router.get('/:slug/skills', async (req, res) => {
       titleCards: cards.filter((c) => c.assessment.kind === 'title' && !c.assessment.roleKey),
       titles,
       testRequests: await testRequests.pendingFor(candidate),
+      finalistInvites: await finalistTests.pendingFor(candidate),
       roleTests: await require('../services/roleTests').pendingFor(candidate),
       requests: await SkillRequest.find({ candidateId: candidate._id }).sort({ createdAt: -1 }),
       current: current.map((s) => {
@@ -207,6 +209,37 @@ router.post('/:slug/skills/test-requests/:id/decline', async (req, res) => {
   } catch (e) {
     if (e.code === 'expired' || e.code === 'not_found') return res.redirect(`/candidate/${req.params.slug}/skills?notice=req_closed`);
     console.error('Error declining test request:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+// A finalist (second-stage) invite from a recruiter. Accepting starts the test; the score goes to that recruiter.
+router.post('/:slug/skills/finalist/:id/accept', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    if (!membership.isMember(candidate)) return res.redirect(`/candidate/${req.params.slug}/skills?notice=membership`);
+    const attempt = await finalistTests.accept(candidate, req.params.id);
+    res.redirect(attempt.inviteUrl);
+  } catch (e) {
+    const back = (n) => res.redirect(`/candidate/${req.params.slug}/skills?notice=${n}`);
+    if (e.code === 'expired' || e.code === 'not_found') return back('req_closed');
+    if (e.code === 'retake_wait') return back('wait');
+    if (e.code === 'manual') return back('manual');
+    console.error('Error accepting finalist invite:', e);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/:slug/skills/finalist/:id/decline', async (req, res) => {
+  try {
+    const candidate = await owned(req, res);
+    if (!candidate) return;
+    await finalistTests.decline(candidate, req.params.id);
+    res.redirect(`/candidate/${req.params.slug}/skills?notice=req_declined`);
+  } catch (e) {
+    if (e.code === 'expired' || e.code === 'not_found') return res.redirect(`/candidate/${req.params.slug}/skills?notice=req_closed`);
+    console.error('Error declining finalist invite:', e);
     res.status(500).send('Server error');
   }
 });

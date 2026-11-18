@@ -246,6 +246,11 @@ function validatePosting(body, ctx) {
   v.clearance = clr || null;
   if (clr && !codes(opt.CLEARANCE_OPTIONS).includes(clr)) err('clearance', 'Choose a clearance level from the list.');
 
+  // Finalist test topics (optional): none, or exactly 3 of the 5 general topics.
+  const fin = require('../content/finalistTopics').validate(b.finalistTopics);
+  if (fin.error) err('finalistTopics', fin.error);
+  v.finalistTopics = fin.topics;
+
   // Dates
   const today = todayNewYork(now);
   const close = parseYmd(b.closeDate);

@@ -60,6 +60,7 @@ function formFromPosting(p) {
     requirementsAttested: yes(o.requirementsAttestedAt), outcomeAck: yes(o.outcomeAckAt),
     summary: o.summary, responsibilities: (o.responsibilities || []).join('\n'),
   };
+  if (o.finalistTopics && o.finalistTopics.length) f.finalistTopics = Array.from(o.finalistTopics);
   Object.keys(f).forEach((k) => { if (f[k] === undefined) delete f[k]; });
   return f;
 }

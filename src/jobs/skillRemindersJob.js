@@ -39,6 +39,7 @@ function startSkillRemindersJob() {
       .then((c) => console.log(`[jobs] verification cases: emailed=${c.emails} opened=${c.opened}`))
       .catch((err) => console.error('[jobs] verification cases failed:', err));
     require('../services/testRequests').expireOverdue().catch((err) => console.error('[jobs] test request expiry failed:', err));
+    require('../services/finalistTests').expireOverdue().catch((err) => console.error('[jobs] finalist test expiry failed:', err));
     runSkillReminders()
       .then((c) => console.log(`[jobs] skill reminders: retake=${c.retake} stale=${c.stale} expiring=${c.expiring}`))
       .catch((err) => console.error('[jobs] skill reminders failed:', err));

@@ -34,6 +34,11 @@ const jobPostingSchema = new mongoose.Schema({
   // Custom test (Junior..Expert postings): staff generate it in CoderByte from the job description and attach its id.
   customTestAssessmentId: { type: String, default: null },
   customTestRequestedAt: { type: Date, default: null },
+  // Finalist (second-stage) tests: exactly 3 of the 5 general topics (content/finalistTopics.js), or none for no
+  // finalist stage. Locked once the first finalist invite is sent. finalistAutoReject is OFF unless the recruiter
+  // turns it on; by default a person (the recruiter) decides about anyone who does not finish.
+  finalistTopics: { type: [String], default: [] },
+  finalistAutoReject: { type: Boolean, default: false },
   seniorityLabel: { type: String, required: true },                // derived from the skill levels, never typed
   hiringCompany: { type: String, required: true, maxlength: 100 },
   companyWebsite: { type: String, default: '', maxlength: 120 },

@@ -17,6 +17,10 @@ const JobPosting = require('../src/models/JobPosting');
 const SkillAssessment = require('../src/models/SkillAssessment');
 const CatalogRequest = require('../src/models/CatalogRequest');
 const JobApplication = require('../src/models/JobApplication');
+const FinalistTest = require('../src/models/FinalistTest');
+FinalistTest.find = () => { const p = Promise.resolve([]); p.sort = () => p; return p; };
+FinalistTest.exists = async () => null;
+FinalistTest.countDocuments = async () => 0;
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }

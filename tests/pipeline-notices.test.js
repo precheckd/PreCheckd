@@ -14,6 +14,10 @@ const qs = require('qs');
 const recruiterRecord = require('../src/services/recruiterRecord'); recruiterRecord.forRecruiter = async () => recruiterRecord.summarize([]); // no database in this test
 const JobPosting = require('../src/models/JobPosting');
 const JobApplication = require('../src/models/JobApplication');
+const FinalistTest = require('../src/models/FinalistTest');
+FinalistTest.find = () => { const p = Promise.resolve([]); p.sort = () => p; return p; };
+FinalistTest.exists = async () => null;
+FinalistTest.countDocuments = async () => 0;
 const JobNotice = require('../src/models/JobNotice');
 const ConnectionRequest = require('../src/models/ConnectionRequest');
 const TrackerApplication = require('../src/models/Application');
