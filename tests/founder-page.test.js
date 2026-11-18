@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 t('founder view renders', () => {
   return ejs.renderFile(path.join(root, 'views/founder.ejs'), {}, (err, html) => {
     assert(!err, err && err.message);
-    assert(/From the founder/.test(html) && /kent@precheckd\.com/.test(html));
+    assert(/From the founder/.test(html) && /kent@precheckd\.com/.test(html) && /href="\/founding-recruiter"/.test(html));
   });
 });
 t('route registered', () => assert(/router\.get\('\/founder'/.test(fs.readFileSync(path.join(root, 'src/routes/index.js'), 'utf8'))));
