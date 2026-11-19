@@ -82,6 +82,8 @@ app.use(session({
 app.use(require('./middleware/demoMode').demoMode());
 app.use(require('./services/sources').middleware());
 app.use('/go', require('./routes/go'));
+// precheckd.com/demo[/<tag>] is the friendly link to the demo; on the demo site itself /demo is its own home page.
+if (!require('./config/demo').enabled()) app.use('/demo', require('./routes/go'));
 
 app.use('/webhooks', webhookRoutes);
 

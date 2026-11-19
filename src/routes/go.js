@@ -1,8 +1,11 @@
-// Tagged links: precheckd.com/go/<tag> counts the visit and sends the visitor to the demo site.
+// Tagged links: precheckd.com/demo/<tag> (or /go/<tag>) counts the visit and sends the visitor to the demo site.
+// precheckd.com/demo with no tag just sends them there.
 const express = require('express');
 const sources = require('../services/sources');
 
 const router = express.Router();
+
+router.get('/', (req, res) => res.redirect(302, `${sources.demoUrl()}/demo`));
 
 router.get('/:src', async (req, res) => {
   const tag = sources.clean(req.params.src);

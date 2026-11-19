@@ -78,6 +78,16 @@ function appWith(mount) {
     delete process.env.DEMO_SITE_URL; s.close();
   });
 
+  await t('precheckd.com/demo and /demo/<tag> are the friendly links, and /go still works', async () => {
+    calls.length = 0;
+    const src = read('src/app.js');
+    assert(/if \(!require\('\.\/config\/demo'\)\.enabled\(\)\) app\.use\('\/demo', require\('\.\/routes\/go'\)\)/.test(src) && /app\.use\('\/go'/.test(src));
+    const { app } = appWith((a) => a.use('/demo', require('../src/routes/go'))); const s = app.listen(0); const port = s.address().port;
+    const plain = await request(port, 'GET', '/demo'); assert.strictEqual(plain.status, 302); assert.strictEqual(plain.headers.location, 'https://demo.precheckd.com/demo'); assert.strictEqual(calls.length, 0);
+    const tagged = await request(port, 'GET', '/demo/li-dm'); assert.strictEqual(tagged.status, 302); assert.strictEqual(calls.length, 1); assert.strictEqual(calls[0][0].src, 'li-dm');
+    s.close();
+  });
+
   await t('link-preview robots and HEAD requests are not counted', async () => {
     calls.length = 0;
     const { app } = appWith((a) => { a.use(sources.middleware()); a.use('/go', require('../src/routes/go')); }); const s = app.listen(0); const port = s.address().port;
