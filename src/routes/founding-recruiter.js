@@ -161,7 +161,8 @@ router.post('/signup', async (req, res) => {
       emailVerificationToken: emailToken,
       emailVerificationExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 hours
       domainVerifiedAt: domainVerifiedAt,
-      domainRegisteredYear: domainRegisteredYear
+      domainRegisteredYear: domainRegisteredYear,
+      source: (req.session && req.session.src) || null
     });
 
     await recruiter.save();

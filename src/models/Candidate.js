@@ -488,6 +488,8 @@ const candidateSchema = new mongoose.Schema({
     default: null
   },
 
+  // Which tagged link they arrived through (services/sources.js), if any.
+  source: { type: String, default: null },
   createdAt: {
     type: Date,
     default: Date.now

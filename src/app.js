@@ -80,6 +80,8 @@ app.use(session({
 }));
 
 app.use(require('./middleware/demoMode').demoMode());
+app.use(require('./services/sources').middleware());
+app.use('/go', require('./routes/go'));
 
 app.use('/webhooks', webhookRoutes);
 

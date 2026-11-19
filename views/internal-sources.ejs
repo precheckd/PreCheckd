@@ -1,0 +1,32 @@
+<style>
+  .sr-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-wrap h2 { color: #1F363C; font-size: 1.1rem; margin: 1.8rem 0 0.6rem; }
+  .sr-sub { color: #7A8B91; font-size: 0.9rem; margin-bottom: 1.2rem; line-height: 1.5; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; overflow: hidden; }
+  .sr-table th { text-align: left; background: #1F363C; color: #F2F4F3; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.7rem 1rem; }
+  .sr-table td { padding: 0.65rem 1rem; border-top: 1px solid #DCE4E2; color: #1F363C; font-size: 0.9rem; }
+  .sr-table code { background: #E8EEEC; padding: 1px 6px; border-radius: 4px; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Link sources</h1>
+  <p class="sr-sub">Last <%= data.days %> days. A visit is counted once per visitor and tag. Signups are accounts created by someone who arrived through that tag. Counts only: no names or addresses are stored for visits.</p>
+
+  <table class="sr-table">
+    <thead><tr><th>Tag</th><th>Demo visits</th><th>Site visits</th><th>Recruiter signups</th><th>Candidate signups</th></tr></thead>
+    <tbody>
+      <% data.rows.forEach((r) => { %><tr><td><code><%= r.src %></code></td><td><%= r.demo %></td><td><%= r.site %></td><td><%= r.recruiters %></td><td><%= r.candidates %></td></tr><% }) %>
+      <% if (!data.rows.length) { %><tr><td colspan="5">Nothing yet. Use a tagged link below.</td></tr><% } %>
+      <% if (data.rows.length) { %><tr><td><strong>Total</strong></td><td><strong><%= data.total.demo %></strong></td><td><strong><%= data.total.site %></strong></td><td><strong><%= data.total.recruiters %></strong></td><td><strong><%= data.total.candidates %></strong></td></tr><% } %>
+    </tbody>
+  </table>
+
+  <h2>How to tag a link</h2>
+  <p class="sr-sub">
+    To send someone to the demo: <code>https://precheckd.com/go/<em>tag</em></code>, for example <code>/go/li-dm</code> for LinkedIn messages or <code>/go/li-post</code> for a post.<br>
+    To send someone to any page of the main site: add <code>?src=<em>tag</em></code>, for example <code>https://precheckd.com/?src=li-profile</code>.<br>
+    A tag is 1 to 40 letters, numbers, dashes or underscores. Use a new tag for each place you want to measure.
+  </p>
+</div>

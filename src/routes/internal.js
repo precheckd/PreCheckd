@@ -539,6 +539,16 @@ router.get('/billing-overview', async (req, res) => {
   }
 });
 
+// Where visitors and signups come from (tagged links).
+router.get('/sources', async (req, res) => {
+  try {
+    res.render('internal-sources', { data: await require('../services/sources').overview() });
+  } catch (error) {
+    console.error('Error loading link sources:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 router.get('/test-credits', async (req, res) => {
   try {
     const TestRequest = require('../models/TestRequest');
