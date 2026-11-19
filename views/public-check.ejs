@@ -1,0 +1,62 @@
+<%# page title: Is This Recruiter Real? %>
+<style>
+  .pc-form { display: flex; gap: 0.75rem; margin: 1rem 0 0.5rem; }
+  .pc-form input { flex: 1; min-width: 0; padding: 0.8rem 0.9rem; border: 1px solid #4A6F7B; border-radius: 8px; font-size: 1rem; background: #24404A; color: #F2F4F3; }
+  .pc-form input::placeholder { color: #7A9096; }
+  .pc-form input:focus { outline: none; border-color: #2ECC71; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15); }
+  .pc-form button { flex-shrink: 0; }
+  .pc-results { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #3B5860; }
+  .pc-results.visible { display: block; }
+  .pc-row { padding: 0.45rem 0; line-height: 1.6; }
+  .pc-good { color: #4ADE80; font-weight: 600; }
+  .pc-warn { color: #FBBF24; font-weight: 600; }
+  .pc-error { color: #F87171; }
+  .pc-note { font-size: 0.85rem; color: #8FA6AC; font-style: italic; }
+  @media (max-width: 640px) { .pc-form { flex-direction: column; } }
+</style>
+<div class="legal-page">
+  <h1 class="page-title">Is this recruiter real?</h1>
+  <p class="updated-date">Check an email address before you reply, click or share anything.</p>
+
+  <div class="content-card">
+    <h2>Check a recruiter's email</h2>
+    <p>Paste the email address the recruiter used. We'll look at how long their email domain has existed and tell you whether the address belongs to a verified recruiter on PreCheckd.</p>
+    <form class="pc-form" id="public-check-form">
+      <input type="email" id="public-check-input" placeholder="name@company.com" autocomplete="off" required>
+      <button type="submit" id="public-check-btn" class="btn btn-primary">Check</button>
+    </form>
+    <div class="pc-results" id="public-check-results" aria-live="polite"></div>
+    <p class="pc-note">These are signals, not a verdict. A new domain or a free email address doesn't prove a scam, and an established one doesn't prove a recruiter is honest. We don't save the address you check.</p>
+  </div>
+
+  <div class="content-card">
+    <h2>Signs of a fake recruiter</h2>
+    <ul>
+      <li><strong>They ask for money.</strong> Real employers don't ask you to pay for equipment, training, background checks or software, and they don't send a check and ask you to send some back.</li>
+      <li><strong>The interview is only by chat.</strong> Interviews held entirely over Telegram, WhatsApp or text, with no call or video, are a common scam pattern.</li>
+      <li><strong>An offer with no real interview.</strong> Being hired within a day or two, with no one asking about your experience, is a red flag.</li>
+      <li><strong>The email doesn't match the company.</strong> A free address (like Gmail), or a domain that is almost the company's name but not quite, deserves a closer look.</li>
+      <li><strong>The email domain is brand new.</strong> Scam domains are often only days or weeks old.</li>
+      <li><strong>They want sensitive details early.</strong> A Social Security number, bank details or a copy of your ID before any real hiring step is a warning sign.</li>
+      <li><strong>Pressure and secrecy.</strong> "Reply today," "don't tell anyone," or a job that sounds too good for the work involved.</li>
+    </ul>
+
+    <h2>How to confirm a recruiter yourself</h2>
+    <ul>
+      <li>Find the company's own website and careers page, and check that the job is listed there.</li>
+      <li>Call the company's main number from its website, not a number in the email, and ask whether the recruiter works there.</li>
+      <li>Look the recruiter up on LinkedIn and see whether their profile is real, has history and matches the company.</li>
+      <li>Never click a link or open an attachment until you're confident the sender is real.</li>
+    </ul>
+
+    <h2>If you've been scammed or targeted</h2>
+    <p>You can report it to the FTC at <a href="https://reportfraud.ftc.gov" rel="noopener noreferrer" target="_blank">reportfraud.ftc.gov</a> and to the FBI's Internet Crime Complaint Center at <a href="https://www.ic3.gov" rel="noopener noreferrer" target="_blank">ic3.gov</a>. If you've sent money or bank details, contact your bank right away. You can also <a href="/fraud">report the sender to PreCheckd</a>.</p>
+  </div>
+
+  <div class="content-card">
+    <h2>Why PreCheckd exists</h2>
+    <p>On PreCheckd, every recruiter is verified before they can contact a candidate: identity, phone, email and company. That way you know who is on the other end before you share anything.</p>
+    <p><a href="/recruiter-search" class="btn btn-primary">Browse verified recruiters</a> &nbsp; <a href="/candidate-signup">Create a free candidate profile</a></p>
+  </div>
+</div>
+<script src="/js/public-check.js"></script>

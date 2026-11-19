@@ -62,6 +62,8 @@ const ADMIN_HOSTNAME = process.env.ADMIN_HOSTNAME || 'admin.precheckd.com';
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
+// robots.txt and sitemap.xml. In demo mode the demo guard (further down) serves its own "block everything" robots.txt.
+if (!require('./config/demo').enabled()) app.use('/', require('./routes/seo'));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
   // The demo keeps its sessions inside its own database (its login may only touch that one). Production is left
@@ -239,11 +241,11 @@ if (require('./config/demo').enabled()) app.use('/', require('./routes/demo'));
 app.use(require('./middleware/outcomeGate').outcomeGate({ adminHost: ADMIN_HOSTNAME }));
 
 app.get('/founding-recruiter-landing', (req, res) => {
-  res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Recruiters' });
+  res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Become a Verified Recruiter', metaDescription: 'Get verified once and stand out to candidates. Founding recruiters lock in a lower price and meet job seekers who have proven their skills.', canonicalUrl: (process.env.PUBLIC_BASE_URL || 'https://precheckd.com').replace(/\/$/, '') + '/recruiter-landing' });
 });
 
 app.get('/founding-recruiter', (req, res) => {
-  res.render('founding-recruiter', { pageTitle: 'PreCheckd - Founding Recruiter Signup' });
+  res.render('founding-recruiter', { pageTitle: 'PreCheckd - Founding Recruiter Signup', metaDescription: 'Sign up as a founding recruiter, verify your identity once, and lock in your price.', canonicalUrl: (process.env.PUBLIC_BASE_URL || 'https://precheckd.com').replace(/\/$/, '') + '/founding-recruiter' });
 });
 
 app.use('/verify', require('./routes/verify'));
@@ -289,6 +291,8 @@ app.use('/messages', messagesRoutes);
 app.use('/mail', require('./routes/mail'));
 app.use('/tracker', require('./routes/tracker'));
 app.use('/outreach', require('./routes/outreach'));
+// The public "Is this recruiter real?" page and its limited lookup (no account needed). Not part of the demo.
+if (!require('./config/demo').enabled()) app.use('/', require('./routes/public-check'));
 app.use('/', authRoutes);
 app.use('/', routes);
 app.use(notFoundHandler);

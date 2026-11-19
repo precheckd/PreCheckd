@@ -72,7 +72,8 @@ router.get('/:slug', async (req, res) => {
       emailSent: isOwner ? req.query.emailSent : undefined,
       viewCounts: viewCounts,
       pane: pane,
-      title: `${recruiter.firstName} ${recruiter.lastName} - Verified Recruiter | PreCheckd`
+      title: `${recruiter.firstName} ${recruiter.lastName} - Verified Recruiter | PreCheckd`,
+      ...require('../services/seo').recruiterMeta(recruiter)
     });
 
   } catch (err) {
