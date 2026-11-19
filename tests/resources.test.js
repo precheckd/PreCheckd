@@ -99,11 +99,14 @@ function appWithRoutes() {
       assert.strictEqual((await get(port, '/resources/not-a-real-guide')).status, 404);
     });
 
-    await t('footer links to the Resource center and Legal keeps only legal pages', async () => {
+    await t('footer: Resource center link, Report a scam in Legal, checker only in the hub', async () => {
       const r = await get(port, '/resources');
       assert(/<a href="\/resources">Resource center<\/a>/.test(r.body));
       const legal = r.body.split('<h3>Legal</h3>')[1].split('</ul>')[0];
       assert(/\/terms/.test(legal) && /\/privacy/.test(legal) && !/skills-explained/.test(legal));
+      assert(/href="\/fraud">Report a scam/.test(legal), 'Report a scam sits in Legal');
+      const links = r.body.split('<h3>Links</h3>')[1].split('</ul>')[0];
+      assert(!/\/fraud/.test(links) && !/is-this-recruiter-real/.test(links), 'checker lives in the Resource center, not the Links column');
     });
   } finally { server.close(); }
 

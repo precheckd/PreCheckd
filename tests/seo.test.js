@@ -161,12 +161,12 @@ const request = (port, method, p, body, headers = {}) => new Promise((resolve, r
     } finally { server.close(); }
   });
 
-  await t('the page renders, is indexable, and the link is in the footer', async () => {
+  await t('the page renders, is indexable, and is listed in the Resource center', async () => {
     const html = await ejs.renderFile(path.join(root, 'views/public-check.ejs'), {});
     assert(/Is this recruiter real\?/.test(html) && /id="public-check-form"/.test(html) && /reportfraud\.ftc\.gov/.test(html) && /public-check\.js/.test(html));
     const page = read('src/routes/public-check.js');
     assert(/canonicalUrl/.test(page) && !/noindex/.test(page));
-    assert(/href="\/is-this-recruiter-real"/.test(read('views/layouts/main.ejs')));
+    assert(read('src/content/resources.js').includes("href: '/is-this-recruiter-real'"), 'listed in the Resource center');
     const mounted = read('src/app.js');
     assert(/routes\/public-check/.test(mounted) && /routes\/seo/.test(mounted));
     assert(mounted.indexOf("routes/public-check") > mounted.indexOf('express.json()'), 'must be after body parsing');
