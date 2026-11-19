@@ -124,6 +124,44 @@ router.get('/founder', (req, res) => {
   res.render('founder', { pageTitle: 'PreCheckd - From the Founder', metaDescription: 'Why Kent Mayer built PreCheckd after finding hiring broken: fake recruiters, ignored applications, and resumes nobody can check.', canonicalUrl: canon('/founder') });
 });
 
+// Resource center: the hub and the guides in src/content/resources.js.
+const resources = require('../content/resources');
+const withPath = (g) => ({ slug: g.slug, title: g.title, summary: g.summary, path: resources.pathFor(g) });
+
+router.get('/resources', (req, res) => {
+  res.render('resources', {
+    pageTitle: 'Resource Center: Guides for Job Seekers | PreCheckd',
+    metaDescription: 'Plain-language guides on fake recruiters, ghost jobs and how to tell whether a job offer is real, plus a free recruiter email checker.',
+    canonicalUrl: canon('/resources'),
+    guides: resources.GUIDES.map(withPath),
+    extras: resources.EXTRAS,
+  });
+});
+
+router.get('/resources/:slug', (req, res, next) => {
+  const guide = resources.bySlug(req.params.slug);
+  if (!guide) return next();
+  const url = canon(resources.pathFor(guide));
+  const ld = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: guide.title,
+    description: guide.description,
+    dateModified: guide.updated,
+    mainEntityOfPage: url,
+    author: { '@type': 'Organization', name: 'PreCheckd' },
+    publisher: { '@type': 'Organization', name: 'PreCheckd' },
+  }).replace(/</g, '\\u003c');
+  res.render('resource-guide', {
+    pageTitle: guide.title + ' | PreCheckd',
+    metaDescription: guide.description,
+    canonicalUrl: url,
+    headExtra: '<script type="application/ld+json">' + ld + '</script>',
+    guide,
+    related: (guide.related || []).map(resources.bySlug).filter(Boolean).map(withPath),
+  });
+});
+
 router.get('/privacy', (req, res) => {
   res.render('privacy', { pageTitle: 'PreCheckd - Privacy Policy', metaDescription: 'What PreCheckd collects, what it keeps, and the choices you have.', canonicalUrl: canon('/privacy') });
 });

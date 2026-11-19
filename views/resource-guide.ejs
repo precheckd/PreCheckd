@@ -1,0 +1,40 @@
+<%# page title: set per guide by the route %>
+<%
+  // Guide text is our own, so a little markup (links, **bold**) is allowed in it.
+  const rich = (s) => String(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  const fmt = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+%>
+<div class="legal-page">
+  <p class="updated-date"><a href="/resources">&larr; Resource center</a></p>
+  <h1 class="page-title"><%= guide.title %></h1>
+  <p class="updated-date">Last updated <%= fmt(guide.updated) %></p>
+
+  <div class="content-card">
+    <p><%- rich(guide.intro) %></p>
+
+    <% guide.sections.forEach(function (s) { %>
+      <h2><%= s.h %></h2>
+      <% (s.p || []).forEach(function (para) { %><p><%- rich(para) %></p><% }); %>
+      <% if (s.ul && s.ul.length) { %>
+        <ul>
+          <% s.ul.forEach(function (li) { %><li><%- rich(li) %></li><% }); %>
+        </ul>
+      <% } %>
+    <% }); %>
+  </div>
+
+  <% if (related.length) { %>
+  <div class="content-card">
+    <h2>Related guides</h2>
+    <ul>
+      <% related.forEach(function (r) { %><li><a href="<%= r.path %>"><%= r.title %></a></li><% }); %>
+    </ul>
+  </div>
+  <% } %>
+
+  <div class="content-card">
+    <h2>Know who you're talking to</h2>
+    <p>Every recruiter on PreCheckd is verified before they can contact a candidate. You can also check any recruiter's email address for free.</p>
+    <p><a href="/is-this-recruiter-real" class="btn btn-primary">Check a recruiter's email</a> &nbsp; <a href="/candidate-signup">Create a free candidate profile</a></p>
+  </div>
+</div>

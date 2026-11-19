@@ -13,6 +13,7 @@ const STATIC_PATHS = [
   '/candidate-signup',
   '/is-this-recruiter-real',
   '/recruiter-search',
+  '/resources',
   '/skills-explained',
   '/founder',
   '/jobs',
@@ -46,6 +47,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 async function sitemapXml() {
   const urls = STATIC_PATHS.map((p) => BASE_URL() + (p === '/' ? '/' : p));
+  require('../content/resources').GUIDES.forEach((g) => urls.push(BASE_URL() + '/resources/' + g.slug));
   try {
     const recruiters = await Recruiter.find({
       isActive: true, isSuspended: { $ne: true }, accountTier: { $ne: 'unverified_claim' },

@@ -1,0 +1,42 @@
+<%# page title: PreCheckd - Resource Center %>
+<style>
+  .rc-list { list-style: none; padding: 0; margin: 0; }
+  .rc-list li { padding: 0.9rem 0; border-top: 1px solid #3B5860; margin: 0; }
+  .rc-list li:first-child { border-top: none; padding-top: 0.25rem; }
+  .rc-list a.rc-title { font-size: 1.1rem; font-weight: 600; }
+  .rc-list p { margin: 0.25rem 0 0; }
+</style>
+<div class="legal-page">
+  <h1 class="page-title">Resource center</h1>
+  <p class="updated-date">Plain-language guides for job seekers: fake recruiters, ghost jobs and offers you can trust.</p>
+
+  <div class="content-card">
+    <h2>Guides</h2>
+    <ul class="rc-list">
+      <% guides.forEach(function (g) { %>
+        <li>
+          <a class="rc-title" href="<%= g.path %>"><%= g.title %></a>
+          <p><%= g.summary %></p>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+
+  <div class="content-card">
+    <h2>Tools and explainers</h2>
+    <ul class="rc-list">
+      <% extras.forEach(function (x) { %>
+        <li>
+          <a class="rc-title" href="<%= x.href %>"><%= x.title %></a>
+          <p><%= x.summary %></p>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+
+  <div class="content-card">
+    <h2>Why PreCheckd exists</h2>
+    <p>Every recruiter on PreCheckd is verified before they can contact a candidate, so you know who is on the other end.</p>
+    <p><a href="/recruiter-search" class="btn btn-primary">Browse verified recruiters</a> &nbsp; <a href="/candidate-signup">Create a free candidate profile</a></p>
+  </div>
+</div>
