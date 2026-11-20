@@ -98,6 +98,10 @@ function candidateDoc({ n, first, last, email, persona, seniority, r, now, city 
     showSkillBreakdown: r() > 0.6,
     billing: { status: 'active', plan: 'monthly', memberSince: new Date(now - 60 * DAY), currentPeriodEnd: new Date(now + 20 * DAY) },
   };
+  // Every demo candidate shows as fully verified (keeps the random draws above unchanged).
+  doc.facialRecognitionVerifiedAt = new Date(now - 59 * DAY);
+  doc.workHistory.forEach((w) => { w.verified = true; });
+  doc.certifications.forEach((c) => { c.verified = true; });
   // Skills they were tested on; a few results are Developing, which recruiters never see.
   const levelPool = [['Foundational', 'Intermediate'], ['Intermediate', 'Advanced'], ['Advanced', 'Expert']][seniority];
   const results = [];
