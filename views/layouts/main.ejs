@@ -113,6 +113,16 @@
       flex-wrap: wrap;
     }
 
+
+    /* Logged-out top bar: quiet text links with one filled call to action. */
+    .nav-public { display: flex; align-items: center; gap: 1.75rem; }
+    .nav-link { color: #C9D8DB; text-decoration: none; font-weight: 500; font-size: 0.98rem; padding: 0.35rem 0; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+    .nav-link:hover { color: #fff; }
+    .nav-link.is-active { color: #fff; border-bottom-color: #2ECC71; }
+    .nav-cta { background: #2ECC71; color: #1F363C; padding: 0.65rem 1.3rem; border-radius: 6px; font-weight: 700; font-size: 0.98rem; text-decoration: none; transition: background 0.15s; }
+    .nav-cta:hover { background: #4ADE80; }
+    .nav-toggle { display: none; align-items: center; gap: 0.5rem; background: transparent; color: #4ADE80; border: 1px solid #2ECC71; border-radius: 6px; padding: 0.5rem 0.9rem; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+
     .nav-btn-outline {
       background: transparent;
       color: #4ADE80;
@@ -320,6 +330,15 @@
         gap: 0.75rem;
       }
 
+      .header-nav--public { display: contents; }
+      .header-container:has(.header-nav--public) { align-items: center; }
+      .header-container:has(.header-nav--public) .header-logo { width: auto; flex: 1 1 0; min-width: 0; }
+      .nav-toggle { display: inline-flex; }
+      .nav-public { display: none; flex-basis: 100%; width: 100%; flex-direction: column; align-items: stretch; gap: 0; border-top: 1px solid #3B5860; padding-top: 0.5rem; }
+      .nav-public.is-open { display: flex; }
+      .nav-link { padding: 0.85rem 0.25rem; border-bottom: 1px solid #2A4750; }
+      .nav-link.is-active { border-bottom-color: #2A4750; color: #4ADE80; }
+      .nav-cta { margin-top: 0.75rem; text-align: center; padding: 0.85rem 1rem; }
       .hdr-search { order: 3; flex: 1 1 100%; max-width: none; margin: 0; }
 
       .logo-icon {
@@ -372,7 +391,7 @@
         <input type="search" name="q" maxlength="100" placeholder="<%= hdrIsCandidate ? 'Search verified recruiters by name or company' : 'Search candidates by skill or title' %>" aria-label="<%= hdrIsCandidate ? 'Search recruiters' : 'Search candidates' %>">
       </form>
     <% } %>
-    <nav class="header-nav">
+    <nav class="header-nav<%= (typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug) || (typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug) || (typeof isAdminHost !== 'undefined' && isAdminHost) ? '' : ' header-nav--public' %>">
       <%
         const navLoggedInRecruiter = typeof loggedInRecruiterSlug !== 'undefined' && loggedInRecruiterSlug;
         const navLoggedInCandidate = typeof loggedInCandidateSlug !== 'undefined' && loggedInCandidateSlug;
@@ -456,11 +475,32 @@
       <% } else if (typeof isAdminHost !== 'undefined' && isAdminHost) { %>
         <a href="/" class="nav-btn-outline">Admin Home</a>
       <% } else { %>
-        <a href="/jobs" class="nav-btn-outline">Jobs</a>
-        <a href="/recruiter-search" class="nav-btn-outline">Browse Recruiters</a>
-        <a href="/recruiter-landing" class="nav-btn-outline">Recruiters</a>
-        <a href="/candidate-landing" class="nav-btn-outline">Candidates</a>
-        <a href="/login" class="nav-btn-outline">Log In</a>
+        <%
+          const pubPath = typeof currentPath !== 'undefined' ? String(currentPath) : '';
+          const pubOn = (h) => (pubPath === h || pubPath.startsWith(h + '/')) ? ' is-active' : '';
+        %>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-public">
+          <span>Menu</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div class="nav-public" id="nav-public">
+          <a href="/jobs" class="nav-link<%= pubOn('/jobs') %>">Jobs</a>
+          <a href="/recruiter-search" class="nav-link<%= pubOn('/recruiter-search') %>">Browse Recruiters</a>
+          <a href="/recruiter-landing" class="nav-link<%= pubOn('/recruiter-landing') %>">For Recruiters</a>
+          <a href="/candidate-landing" class="nav-link<%= pubOn('/candidate-landing') %>">For Candidates</a>
+          <a href="/login" class="nav-link nav-login<%= pubOn('/login') %>">Log In</a>
+          <a href="/#paths" class="nav-cta">Get started</a>
+        </div>
+        <script>
+          (function () {
+            var b = document.getElementById('nav-toggle'), p = document.getElementById('nav-public');
+            if (!b || !p) return;
+            b.addEventListener('click', function () {
+              var open = p.classList.toggle('is-open');
+              b.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+          })();
+        </script>
       <% } %>
     </nav>
   </div>
