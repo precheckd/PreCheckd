@@ -151,6 +151,11 @@
       }
     }
 
+    .trust-strip { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 1.25rem auto 1.75rem; padding: 0; list-style: none; }
+    .trust-strip li { display: flex; align-items: center; gap: 0.5rem; color: #C9D8DB; font-size: 0.92rem; }
+    .trust-strip svg { width: 18px; height: 18px; color: #2ECC71; flex: 0 0 auto; }
+    @media (max-width: 768px) { .trust-strip { flex-direction: column; align-items: flex-start; gap: 0.6rem; max-width: 320px; } }
+
     .ticker {
       display: flex;
       flex-wrap: wrap;
@@ -235,6 +240,13 @@
   <div class="hero-container">
     <h1 class="hero-title">Every recruiter verified. <span style="color:#2ECC71;">Every skill proven.</span></h1>
     <p class="hero-subtitle">The hiring marketplace where recruiters are ID-checked before they can contact you, and candidates prove their skills with real tests.</p>
+
+    <ul class="trust-strip" aria-label="Why you can trust PreCheckd">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ID checks by Stripe Identity</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Payments by Stripe</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Every message scanned for scams</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> We never sell your data</li>
+    </ul>
 
     <% if (typeof tickerItems !== 'undefined' && tickerItems.length > 0) { %>
       <div class="ticker" aria-label="PreCheckd activity">
