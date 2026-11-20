@@ -330,6 +330,7 @@ a:hover { color: #4ADE80; }
   margin-bottom: 2.5rem;
 }
 
+.legal-page .content-card + .content-card { margin-top: 1.5rem; }
 .legal-page .content-card {
   background: #2A4750;
   border: 1px solid #3B5860;
@@ -387,7 +388,8 @@ a:hover { color: #4ADE80; }
     padding: 2rem 1rem 3rem;
   }
 
-  .legal-page .content-card {
+  .legal-page .content-card + .content-card { margin-top: 1.5rem; }
+.legal-page .content-card {
     padding: 1.5rem;
   }
 

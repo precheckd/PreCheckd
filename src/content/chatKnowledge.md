@@ -97,8 +97,8 @@ Who can join:
 ## 9. Pricing
 
 ### CURRENT (ACTIVE until billing goes live)
-- Paid plans are not live yet. Founding recruiters currently verify at no cost and receive complimentary profile hosting for a limited introductory period.
-- For anything else on pricing, say plans are coming and point to hello@precheckd.com.
+- Recruiters and verified candidates pay a membership; exact prices are shown on the signup page before paying. The first 250 recruiters are Founders, with a lower yearly rate locked in while the membership stays active.
+- For anything else on pricing, point to the signup page or hello@precheckd.com.
 
 ### LAUNCH (NOT ACTIVE until billing goes live; swap this in then)
 - Candidates: a one-time verification fee of $79, then a membership of $15 per month or $120 per year. A card is required at signup. The verification fee is non-refundable once the ID check runs. Early candidates may have the verification fee waived; check the signup page.

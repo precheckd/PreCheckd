@@ -12,8 +12,8 @@ const FEEDBACK_LINE = 'When a recruiter passes on you, or closes a job without c
 function costParagraphs(billingLive) {
   if (!billingLive) {
     return [
-      'Paid plans are not live yet. Founding recruiters currently verify at no cost and get complimentary profile hosting for a limited introductory period.',
-      'Browsing jobs is free. Questions about future pricing: hello@precheckd.com.'
+      'Browsing jobs is free. Recruiters and verified candidates pay a membership. The first 250 recruiters are Founders, with a lower yearly rate locked in while the membership stays active.',
+      'Exact prices are shown on the signup page before you pay. Questions: hello@precheckd.com.'
     ];
   }
   return [

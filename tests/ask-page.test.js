@@ -49,7 +49,7 @@ t('the why-paying answer has no prices', () => {
 t('before billing, the cost answer shows no prices', () => {
   const cost = getAnswers({ billingLive: false }).find((x) => x.id === 'cost').paras.join(' ');
   assert.ok(!/\$\d/.test(cost));
-  assert.ok(cost.includes('not live yet'));
+  assert.ok(cost.includes('Founders') && !/no cost|nothing|complimentary/i.test(cost));
 });
 t('at launch, every price in the cost answer is in the chat assistant\'s launch block', () => {
   const cost = getAnswers({ billingLive: true }).find((x) => x.id === 'cost').paras.join(' ');
