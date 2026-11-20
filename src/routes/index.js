@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
 // better page, with no URL or link text changes needed anywhere.
 // recruiter-landing.ejs is left in place, unused, rather than deleted.
 router.get('/recruiter-landing', (req, res) => {
-  res.render('founding-recruiter-landing', {
+  res.render('recruiter-landing', {
     pageTitle: 'PreCheckd - Become a Verified Recruiter',
     metaDescription: 'Get verified once and stand out to candidates. Founding recruiters lock in a lower price and meet job seekers who have proven their skills.',
     canonicalUrl: canon('/recruiter-landing')

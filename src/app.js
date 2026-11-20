@@ -241,7 +241,7 @@ if (require('./config/demo').enabled()) app.use('/', require('./routes/demo'));
 app.use(require('./middleware/outcomeGate').outcomeGate({ adminHost: ADMIN_HOSTNAME }));
 
 app.get('/founding-recruiter-landing', (req, res) => {
-  res.render('founding-recruiter-landing', { pageTitle: 'PreCheckd - Become a Verified Recruiter', metaDescription: 'Get verified once and stand out to candidates. Founding recruiters lock in a lower price and meet job seekers who have proven their skills.', canonicalUrl: (process.env.PUBLIC_BASE_URL || 'https://precheckd.com').replace(/\/$/, '') + '/recruiter-landing' });
+  res.render('recruiter-landing', { pageTitle: 'PreCheckd - Become a Verified Recruiter', metaDescription: 'Get verified once and stand out to candidates. Founding recruiters lock in a lower price and meet job seekers who have proven their skills.', canonicalUrl: (process.env.PUBLIC_BASE_URL || 'https://precheckd.com').replace(/\/$/, '') + '/recruiter-landing' });
 });
 
 app.get('/founding-recruiter', (req, res) => {

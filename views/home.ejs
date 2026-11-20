@@ -45,9 +45,9 @@
 
     .hero-video { max-width: 880px; margin: 0 auto 2.5rem; position: relative; }
     .hero-video-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; padding: 0; border-radius: 12px; }
-    .hero-video-play span { position: absolute; left: calc(25% - 42px); top: calc(72% - 42px); width: 84px; height: 84px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.45); transition: transform 0.15s; }
+    .hero-video-play span { position: absolute; left: calc(25% - 4.75%); top: calc(72% - 8.45%); width: 9.5%; aspect-ratio: 1; min-width: 36px; border-radius: 50%; background: #2ECC71; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.45); transition: transform 0.15s; }
     .hero-video-play:hover span, .hero-video-play:focus-visible span { transform: scale(1.08); }
-    .hero-video-play svg { margin-left: 5px; }
+    .hero-video-play svg { margin-left: 5px; width: 40%; height: auto; }
     .hero-video.is-playing .hero-video-play { display: none; }
     .hero-video video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #0E1B1E; border: 1px solid #3B5860; box-shadow: 0 4px 16px rgba(0,0,0,0.35); display: block; }
 
@@ -233,8 +233,8 @@
   </style>
 
   <div class="hero-container">
-    <h1 class="hero-title">Welcome to Pre<span style="color:#2ECC71;">Checkd</span></h1>
-    <p class="hero-subtitle">Fixing hiring one verification at a time. Choose your path below.</p>
+    <h1 class="hero-title">Every recruiter verified. <span style="color:#2ECC71;">Every skill proven.</span></h1>
+    <p class="hero-subtitle">The hiring marketplace where recruiters are ID-checked before they can contact you, and candidates prove their skills with real tests.</p>
 
     <% if (typeof tickerItems !== 'undefined' && tickerItems.length > 0) { %>
       <div class="ticker" aria-label="PreCheckd activity">
@@ -273,22 +273,22 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
         </div>
         <h2 class="path-title">I'm a Recruiter</h2>
-        <p class="path-description">Build trust with verified candidates and access a curated network of job seekers ready to connect with you.</p>
+        <p class="path-description">Post jobs with built-in skill tests and reach candidates who know you are real.</p>
         <div class="path-benefits">
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
-            <span>Get verified in 24 hours</span>
+            <span>ID, phone and email verified</span>
           </div>
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
-            <span>Access verified candidates</span>
+            <span>Skill-tested applicants</span>
           </div>
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
             <span>Founder pricing for the first 250</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-large">Get Started</button>
+        <button class="btn btn-primary btn-large">Get started</button>
       </a>
 
       <!-- Candidate Path -->
@@ -297,22 +297,22 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
         </div>
         <h2 class="path-title">I'm a Job Seeker</h2>
-        <p class="path-description">Connect with verified recruiters you can trust. Build your verified profile and discover verified opportunities.</p>
+        <p class="path-description">Know who is contacting you. Prove your skills and apply to jobs from verified recruiters.</p>
         <div class="path-benefits">
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
-            <span>Browse verified recruiters</span>
+            <span>Every recruiter ID-checked</span>
           </div>
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
-            <span>Safe and secure hiring</span>
+            <span>Skill tests that show your level</span>
           </div>
           <div class="benefit-item">
             <span class="benefit-icon">✓</span>
-            <span>Get verified in 24 hours</span>
+            <span>Browsing jobs is free</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-large">Get Started</button>
+        <button class="btn btn-primary btn-large">Get started</button>
       </a>
     </div>
     </div>
