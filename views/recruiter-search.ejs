@@ -201,6 +201,15 @@
       font-size: 1rem;
     }
 
+    .prompt-state .prompt-lead { color: #C9D8DB; font-size: 1.05rem; margin-bottom: 1.75rem; }
+    .prompt-checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; max-width: 760px; margin: 0 auto 1.75rem; text-align: left; }
+    .prompt-checks div { background: #24404A; border: 1px solid #3B5860; border-radius: 8px; padding: 0.9rem 1rem; }
+    .prompt-checks strong { display: block; color: #4ADE80; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .prompt-checks span { color: #8FA6AC; font-size: 0.85rem; line-height: 1.35; display: block; }
+    .prompt-note { font-size: 0.9rem !important; }
+    .prompt-note a { color: #4ADE80; }
+    @media (max-width: 768px) { .prompt-checks { grid-template-columns: 1fr 1fr; } }
+
     .hidden {
       display: none !important;
     }
@@ -236,7 +245,14 @@
 
   <div class="prompt-state hidden" id="prompt-state">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <p>Search for a verified recruiter to get started.</p>
+    <p class="prompt-lead">Search by name, company or specialty to find a verified recruiter.</p>
+    <div class="prompt-checks" aria-label="What we verify">
+      <div><strong>Identity</strong><span>Government ID and selfie match</span></div>
+      <div><strong>Phone</strong><span>Confirmed by text message</span></div>
+      <div><strong>Email</strong><span>Confirmed work address</span></div>
+      <div><strong>Company</strong><span>Email domain matches the employer</span></div>
+    </div>
+    <p class="prompt-note">Got a message from someone claiming to be a recruiter? <a href="/is-this-recruiter-real">Check their email address</a>.</p>
   </div>
 
   <div class="empty-state hidden" id="empty-state">
