@@ -115,9 +115,19 @@
       if (kb && openBtn !== b) open(b, text);
     });
     b.addEventListener('blur', function () { if (openBtn === b && !pinned) close(); });
-    // On a form label the icon goes beside the label text, before the field it labels.
-    var ctrl = el.tagName === 'LABEL' ? el.querySelector('input, select, textarea') : null;
-    if (ctrl) el.insertBefore(b, ctrl); else el.appendChild(b);
+    
+    // On a form label the icon sits right after the label words. Labels are flex columns, so the words and the icon
+    // are wrapped together to keep them on one line.
+    var txt = null;
+    if (el.tagName === 'LABEL') {
+      for (var n = el.firstChild; n; n = n.nextSibling) { if (n.nodeType === 3 && n.nodeValue.trim()) { txt = n; break; } }
+    }
+    if (txt) {
+      var wrap = document.createElement('span');
+      el.insertBefore(wrap, txt);
+      wrap.appendChild(txt);
+      wrap.appendChild(b);
+    } else el.appendChild(b);
   }
 
   function init() {
