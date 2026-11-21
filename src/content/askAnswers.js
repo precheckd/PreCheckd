@@ -51,6 +51,16 @@ function getAnswers({ billingLive = false } = {}) {
       video: { file: 'ask-what-is-precheckd', poster: true }
     },
     {
+      id: 'signup',
+      q: 'How do I sign up?',
+      paras: [
+        'Candidate signup takes a few minutes. You enter your email, add your details, confirm your phone by text message, then complete the identity check with a government-issued photo ID and a live selfie. Last, you review everything and finish.',
+        'The video walks through each screen. Recruiters are verified separately, starting from the recruiter page.'
+      ],
+      links: [{ href: '/candidate-signup', label: 'Get verified' }, { href: '/recruiter-landing', label: 'I\'m a recruiter' }],
+      video: { file: 'Pre+Checkd+01+Candidate+Signup', poster: false }
+    },
+    {
       id: 'verification',
       q: 'How does verification work?',
       paras: [
