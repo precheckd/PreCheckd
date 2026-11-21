@@ -27,6 +27,9 @@
   .jp-certadd button:hover:not(:disabled) { background: #2ECC71; color: #10241A; }
   .jp-certadd button:disabled { opacity: 0.35; cursor: not-allowed; }
   .jp-sub + .jp-chips { margin-top: 0.7rem; }
+  .jp-howvid { margin: 0 0 1rem; background: #24404A; border: 1px solid #3B5860; border-radius: 8px; padding: 0.6rem 0.9rem; }
+  .jp-howvid summary { cursor: pointer; font-weight: 700; color: #F2F4F3; }
+  .jp-howvid video { display: block; width: 100%; aspect-ratio: 16 / 9; margin-top: 0.7rem; background: #1F363C; border-radius: 8px; }
   .jp-wiz { display: flex; gap: 1.5rem; align-items: flex-start; }
   .jp-main { flex: 1; min-width: 0; max-width: 820px; }
   .jp-nav { flex: 0 0 210px; position: sticky; top: 6rem; display: none; }
@@ -111,6 +114,15 @@
 <div class="jp-wrap"><div class="jp-inner">
   <a class="jp-back" href="<%= backHref %>">&larr; <%= isEdit ? 'Back to this posting' : 'My job postings' %></a>
   <h1 class="jp-sr"><%= heading %></h1>
+  <% if (!isEdit) { %>
+  <details class="jp-howvid">
+    <summary>Watch how to post a job</summary>
+    <video controls playsinline preload="none" aria-label="How to post a job on PreCheckd">
+      <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/Pre+Checkd+02+Post+A+Job.mp4" type="video/mp4">
+      Your browser can't play this video.
+    </video>
+  </details>
+  <% } %>
 
   <% if (errorKeys.length) { %>
     <div class="jp-errbox"><strong>Please fix <%= errorKeys.length === 1 ? 'one thing' : errorKeys.length + ' things' %> below:</strong>

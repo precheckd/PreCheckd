@@ -143,6 +143,16 @@ function getAnswers({ billingLive = false } = {}) {
       video: null
     },
     {
+      id: 'post-job',
+      q: 'How do I post a job?',
+      paras: [
+        'Posting is a short guided form in seven steps: describe the role, pick up to three skills, name the company, set the job details, show the pay, set requirements, then review and post. The system suggests skills from your description, and you confirm each one.',
+        'Pay is required, and so is the company\'s own website. Education and certifications you require are verified. You can also add an optional finalist test at no extra charge. The video walks through each step.'
+      ],
+      links: [{ href: '/recruiter-landing', label: 'For recruiters' }],
+      video: { file: 'Pre+Checkd+02+Post+A+Job', poster: false }
+    },
+    {
       id: 'failed-test',
       q: 'What if I fail a test?',
       paras: [
