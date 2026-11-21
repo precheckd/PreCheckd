@@ -171,7 +171,7 @@ function build(now = Date.now()) {
     ['jordan', 'technical-support-engineer', 'Pinecrest Software', [1, 'remote_in_area'], ['salary', 70000, 90000], sk([['manual-testing', 'Foundational'], ['linux', 'Foundational'], ['system-design', 'Foundational']]),
       'Help customers of our business software get unstuck, and turn what you learn into fixes. Remote for people living in the Carolinas or Virginia.',
       ['Answer technical tickets and calls from customers', 'Reproduce and document bugs for engineering', 'Write help articles from real cases']],
-    ['jordan', 'data-analyst-sql', 'Bluebird Credit Union', [1, 'hybrid'], ['hourly', 38, 48], sk([['sql', 'Intermediate'], ['tableau', 'Foundational'], ['excel', 'Intermediate']]),
+    ['taylor', 'data-analyst-sql', 'Bluebird Credit Union', [1, 'hybrid'], ['hourly', 38, 48], sk([['sql', 'Intermediate'], ['tableau', 'Foundational'], ['excel', 'Intermediate']]),
       'Contract-to-hire analyst for our lending team. You will turn loan data into dashboards the branch managers actually use.',
       ['Write SQL to answer questions from lending and risk', 'Build and maintain Tableau dashboards', 'Present findings to non-technical teams']],
     ['taylor', 'project-manager-agile', 'Summit Ridge Health', [4, 'hybrid'], ['salary', 100000, 125000], sk([['agile', 'Advanced'], ['spreadsheet', 'Intermediate']]),
