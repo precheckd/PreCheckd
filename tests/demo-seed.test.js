@@ -78,13 +78,14 @@ const t = async (n, f) => { try { await f(); console.log('ok -', n); } catch (e)
       collection: (n) => ({ deleteMany: async () => { wiped.push(n); } }),
     } });
     const names = ['Candidate', 'Recruiter', 'SkillResult', 'JobPosting', 'JobApplication', 'ConnectionRequest', 'FinalistTest'];
-    for (const n of names) { const M = require('../src/models/' + n); M.create = async (d) => { created[n] = (created[n] || 0) + 1; return { _id: oid(), ...d }; }; }
+    for (const n of names) { const M = require('../src/models/' + n); M.create = async (d) => { created[n] = (created[n] || 0) + 1; return { _id: oid(), ...d, save: async () => {} }; }; }
+    require('../src/models/ConnectionRequest').findOne = async () => null;
     require('../src/models/SkillAssessment').insertMany = async (d) => { created.SkillAssessment = d.length; };
     require('../src/services/skills').refreshSkillSummary = async () => {};
     const counts = await run(NOW);
     assert.deepStrictEqual(wiped, ['candidates', 'sessions']);
     assert.strictEqual(created.Candidate, 37); assert.strictEqual(created.Recruiter, 3); assert.strictEqual(created.JobPosting, 9);
-    assert.strictEqual(created.ConnectionRequest, 3); assert.strictEqual(counts.candidates, 37);
+    assert.strictEqual(created.ConnectionRequest, 3 + data.applications.length); assert.strictEqual(counts.candidates, 37);
     assert.strictEqual(created.FinalistTest, 3);
     assert.strictEqual(created.SkillResult, data.candidates.reduce((n, c) => n + c.results.length, 0));
   });

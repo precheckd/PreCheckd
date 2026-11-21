@@ -46,6 +46,7 @@ async function run(now = Date.now()) {
 
   const FinalistTest = require('../models/FinalistTest');
   const seen = {};
+  const createdApps = [];
   for (const a of data.applications) {
     const posting = postings[a.postingIx];
     const k = seen[a.postingIx] = (seen[a.postingIx] === undefined ? 0 : seen[a.postingIx] + 1);
@@ -54,6 +55,7 @@ async function run(now = Date.now()) {
     const score = data.jobTestScores[a.postingIx] && data.jobTestScores[a.postingIx][k];
     if (score !== undefined) Object.assign(doc, { roleTestStatus: 'done', roleTestResult: { score, takenAt: new Date(a.appliedAt.getTime() + 3600000), freeForm: [] } });
     const app = await JobApplication.create(doc);
+    createdApps.push({ app, posting });
     // Finalist tests on the first posting: one scored, one waiting, one that ran out of time (the recruiter decides).
     const fin = data.finalists[a.postingIx] && data.finalists[a.postingIx][k];
     if (fin) {
@@ -75,6 +77,23 @@ async function run(now = Date.now()) {
       fullAccessStatus: c.full ? 'granted' : 'none', fullAccessRequestedAt: c.full ? when : null, fullAccessRespondedAt: c.full ? when : null,
       contactShared: c.status === 'accepted' ? { candidate: { email: true, phone: true, sharedAt: when } } : undefined,
     });
+  }
+
+  // Applying opens a connection with the full profile granted (services/jobApplications.js), so each demo applicant
+  // gets one too, which is what puts "View profile" on the applicants page. Candidates already connected keep theirs.
+  const ConnReq = ConnectionRequest;
+  for (const { app, posting } of createdApps) {
+    let conn = await ConnReq.findOne({ candidateId: app.candidateId, recruiterId: posting.recruiterId });
+    if (!conn) {
+      const when = new Date(app.appliedAt);
+      conn = await ConnReq.create({
+        candidateId: app.candidateId, recruiterId: posting.recruiterId, note: ('Applied to ' + posting.title).slice(0, 500), status: 'accepted', initiatedBy: 'candidate',
+        createdAt: when, respondedAt: when, fullAccessStatus: 'granted', fullAccessRequestedAt: when, fullAccessRespondedAt: when,
+        contactShared: { candidate: { email: true, phone: true, sharedAt: when } },
+      });
+    }
+    app.connectionId = conn._id;
+    await app.save();
   }
 
   return { recruiters: data.recruiters.length, candidates: candidates.length, postings: postings.length, applications: data.applications.length, connections: data.connections.length };
