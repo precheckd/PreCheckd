@@ -153,6 +153,16 @@ function getAnswers({ billingLive = false } = {}) {
       video: { file: 'Pre+Checkd+02+Post+A+Job', poster: false }
     },
     {
+      id: 'review-applicants',
+      q: 'How do I review applicants?',
+      paras: [
+        'Open any posting\'s applicant count to see everyone who applied, with their stage and job test score. Everyone listed has already met every requirement, and you can open each person\'s full profile.',
+        'Move people through Applied, Screening, Interviewing, Offer and Hired. If someone is not a fit, you pick the reason, and the candidate sees it. You can also send finalist tests to up to five applicants. The video walks through each screen.'
+      ],
+      links: [{ href: '/recruiter-landing', label: 'For recruiters' }],
+      video: { file: 'Pre+Checkd+03+Review+Applicants', poster: false }
+    },
+    {
       id: 'failed-test',
       q: 'What if I fail a test?',
       paras: [

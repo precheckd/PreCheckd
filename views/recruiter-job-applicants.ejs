@@ -6,6 +6,9 @@
   .ja-inner { max-width: 1100px; width: 100%; color: #F2F4F3; }
   .ja-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
   .ja-inner h1 { font-size: 1.6rem; margin: 0 0 0.3rem; }
+  .ja-howvid { margin: 0 0 1rem; background: #24404A; border: 1px solid #3B5860; border-radius: 8px; padding: 0.6rem 0.9rem; }
+  .ja-howvid summary { cursor: pointer; font-weight: 700; color: #F2F4F3; }
+  .ja-howvid video { display: block; width: 100%; max-width: 720px; aspect-ratio: 16 / 9; margin-top: 0.7rem; background: #1F363C; border-radius: 8px; }
   .ja-sub { color: #C7D1CF; margin-bottom: 1.25rem; }
   .ja-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.7rem; }
   .ja-name { font-weight: 700; }
@@ -46,6 +49,13 @@
 <div class="ja-wrap"><div class="ja-inner">
   <a class="ja-back" href="/recruiter-jobs/<%= posting._id %>">&larr; Back to this posting</a>
   <h1>Applicants</h1>
+  <details class="ja-howvid">
+    <summary>Watch how to review applicants</summary>
+    <video controls playsinline preload="none" aria-label="How to review applicants on PreCheckd">
+      <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/Pre+Checkd+03+Review+Applicants.mp4" type="video/mp4">
+      Your browser can't play this video.
+    </video>
+  </details>
   <p class="ja-sub"><%= posting.title %> &middot; <%= posting.hiringCompany %>. Everyone here met every requirement. Their full profile, video and resume stay open to you until you decide not to move forward. The candidate sees the reason you pick, so choose the one that is true.</p>
   <p class="ja-sub" style="margin-top:-0.4rem;"><strong><%= queue.waiting %> of <%= queue.limit %></strong> waiting on a decision. New applications pause at <%= queue.limit %>. Moving someone to Screening does not clear a place; interviewing, hiring or not moving forward does.</p>
   <% if (moved) { %><div class="ja-ok">Updated. The candidate has been told.</div><% } %>
