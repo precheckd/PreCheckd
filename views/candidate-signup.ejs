@@ -247,6 +247,21 @@
     .hidden {
       display: none;
     }
+
+    .how-video {
+      margin: 0 0 1.75rem;
+    }
+    .how-video h2 {
+      font-size: 1.1rem;
+      margin: 0 0 0.75rem;
+    }
+    .how-video video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #1F363C;
+      border-radius: 10px;
+    }
   </style>
 
 <div class="page-wrap">
@@ -266,6 +281,16 @@
         <p class="intro-text">Verify your identity to start connecting with verified recruiters on PreCheckd.</p>
       <% } %>
     </div>
+
+    <% if (!recruiter && !(typeof alreadyVerified !== 'undefined' && alreadyVerified) && !(typeof verifyIdentityOnly !== 'undefined' && verifyIdentityOnly)) { %>
+    <div class="how-video">
+      <h2>Watch how signup works</h2>
+      <video controls playsinline preload="metadata" aria-label="How PreCheckd candidate signup works">
+        <source src="https://precheckd-marketing.s3.us-east-2.amazonaws.com/videos/Pre+Checkd+01+Candidate+Signup.mp4" type="video/mp4">
+        Your browser can't play this video.
+      </video>
+    </div>
+    <% } %>
 
     <p id="form-error" class="form-error hidden"></p>
 
