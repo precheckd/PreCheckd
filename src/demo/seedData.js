@@ -204,6 +204,7 @@ function build(now = Date.now()) {
       benefits: ['health', 'dental', 'vision', '401k_match', 'pto', 'paid_holidays'], goodFaithAt: new Date(now - (3 + i) * DAY),
       startDate: day(35 + i), startFirm: false, closeDate: endOfDay(30 + i * 3), requirementsAttestedAt: new Date(now - (3 + i) * DAY),
       summary, responsibilities, createdAt: new Date(now - (3 + i) * DAY),
+      finalistTopics: i === 0 ? ['logic', 'problem', 'detail'] : [],
     };
     return posting;
   });
@@ -228,7 +229,14 @@ function build(now = Date.now()) {
     { candidateIx: 14, status: 'pending', full: false, note: 'Would you be open to a conversation about a hybrid role in your area?' },
   ];
 
-  return { skillAssessments, recruiters, candidates, postings, applications, connections };
+  // Sample job test scores per posting (by applicant order) and finalist tests on the first posting.
+  const jobTestScores = { 0: [92, 85, 78, 71, 64], 1: [88, 81, 74, 69, 60, 55], 2: [95, 90, 83, 76, 70, 62, 58], 3: [86, 79, 72, 66, 59] };
+  const finalists = { 0: [
+    { status: 'completed', hoursAgo: 30, score: 88, topicScores: [{ key: 'logic', score: 90 }, { key: 'problem', score: 85 }, { key: 'detail', score: 89 }] },
+    { status: 'sent', hoursAgo: 20 },
+    { status: 'expired', hoursAgo: 100 },
+  ] };
+  return { skillAssessments, recruiters, candidates, postings, applications, connections, jobTestScores, finalists };
 }
 
 module.exports = { build, SKILLS, CITIES, PERSONAS, phone };

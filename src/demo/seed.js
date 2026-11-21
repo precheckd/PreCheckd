@@ -44,9 +44,27 @@ async function run(now = Date.now()) {
   const postings = [];
   for (const p of data.postings) { const { recruiterKey, ...doc } = p; postings.push(await JobPosting.create({ ...doc, recruiterId: recruiters[recruiterKey]._id })); }
 
+  const FinalistTest = require('../models/FinalistTest');
+  const seen = {};
   for (const a of data.applications) {
     const posting = postings[a.postingIx];
-    await JobApplication.create({ jobId: posting._id, candidateId: candidates[a.candidateIx]._id, recruiterId: posting.recruiterId, status: a.status, appliedAt: a.appliedAt, stageChangedAt: a.appliedAt });
+    const k = seen[a.postingIx] = (seen[a.postingIx] === undefined ? 0 : seen[a.postingIx] + 1);
+    const doc = { jobId: posting._id, candidateId: candidates[a.candidateIx]._id, recruiterId: posting.recruiterId, status: a.status, appliedAt: a.appliedAt, stageChangedAt: a.appliedAt };
+    // Sample job test scores on the first recruiter's postings, so the applicants table has something to sort by.
+    const score = data.jobTestScores[a.postingIx] && data.jobTestScores[a.postingIx][k];
+    if (score !== undefined) Object.assign(doc, { roleTestStatus: 'done', roleTestResult: { score, takenAt: new Date(a.appliedAt.getTime() + 3600000), freeForm: [] } });
+    const app = await JobApplication.create(doc);
+    // Finalist tests on the first posting: one scored, one waiting, one that ran out of time (the recruiter decides).
+    const fin = data.finalists[a.postingIx] && data.finalists[a.postingIx][k];
+    if (fin) {
+      const sentAt = new Date(now - fin.hoursAgo * 3600000);
+      await FinalistTest.create({
+        jobId: posting._id, applicationId: app._id, recruiterId: posting.recruiterId, candidateId: app.candidateId, assessmentId: 'demo-finalist',
+        topics: posting.finalistTopics, status: fin.status, sentAt, expiresAt: new Date(sentAt.getTime() + 72 * 3600000),
+        respondedAt: fin.status === 'sent' ? null : sentAt, completedAt: fin.status === 'completed' ? new Date(sentAt.getTime() + 7200000) : null,
+        score: fin.score === undefined ? null : fin.score, topicScores: fin.topicScores || [], recruiterNotified: true,
+      });
+    }
   }
 
   for (const c of data.connections) {
