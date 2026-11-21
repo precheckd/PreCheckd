@@ -18,7 +18,7 @@
   var JOB_FORM = /^\/recruiter-jobs\/(new|[a-f0-9]{24}\/edit)\/?$/;
   var TIPS = [
     { page: JOB_FORM, sel: 'h2', starts: '1. Description',
-      tip: 'Describe the role in your own words. We read this to suggest skills. No phone numbers, emails or links: candidates apply through PreCheckd only.' },
+      tip: 'Describe the role in your own words. Our system will parse this information to suggest applicable skills on the next page.' },
     { page: JOB_FORM, sel: 'h2', starts: '2. Job title and skills',
       tip: 'We suggest up to three skills from your description, and you confirm each one. Candidates prove these skills with tests, so you see results, not resume claims.' },
     { page: JOB_FORM, sel: 'h2', starts: '3. Company',
