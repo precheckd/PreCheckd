@@ -23,8 +23,10 @@
       tip: 'We suggest up to three skills from your description, and you confirm each one. Candidates prove these skills with tests, so you see results, not resume claims.' },
     { page: JOB_FORM, sel: 'h2', starts: '3. Company',
       tip: 'Candidates see the hiring company. Blind postings are not allowed, so people know who they are applying to.' },
-    { page: JOB_FORM, sel: 'h2', starts: '4. Job details',
-      tip: 'Work setting, openings and schedule. A street address stays private. Candidates only see the city.' },
+    { page: JOB_FORM, sel: 'label.jp-field', starts: 'Work setting',
+      tip: 'Remote in Area means the job is remote, but only people in certain states, or within a set distance of an address, can apply. Use it for tax, licensing or payroll rules, or when people come to the office for some things.' },
+    { page: JOB_FORM, sel: 'label.jp-field', starts: 'Street address',
+      tip: 'Candidates never see the street address, only the city and state. We use it to place the job on the map, so it shows up when candidates search near that location.' },
     { page: JOB_FORM, sel: 'h2', starts: '5. Pay',
       tip: 'Pay is required on every posting, so candidates know before they apply and no one wastes time on a job that does not fit.' },
     { page: JOB_FORM, sel: 'h2', starts: '6. Requirements',
@@ -113,7 +115,9 @@
       if (kb && openBtn !== b) open(b, text);
     });
     b.addEventListener('blur', function () { if (openBtn === b && !pinned) close(); });
-    el.appendChild(b);
+    // On a form label the icon goes beside the label text, before the field it labels.
+    var ctrl = el.tagName === 'LABEL' ? el.querySelector('input, select, textarea') : null;
+    if (ctrl) el.insertBefore(b, ctrl); else el.appendChild(b);
   }
 
   function init() {
