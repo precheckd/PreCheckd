@@ -1,12 +1,13 @@
 // Demo mode guard (see config/demo.js). Mounted right after the session, before anything else.
 const demo = require('../config/demo');
 
-// The only requests that change anything in the demo: signing in as a demo account, and the two access requests,
-// which the demo approves on the spot (see services/demoApprovals.js).
+// The only POSTs the demo accepts: signing in as a demo account, the two access requests (which the demo approves
+// on the spot, see services/demoApprovals.js), and the posting form's skill suggestions (saves nothing; capped per day).
 const ALLOWED = [
   /^\/demo\/(recruiter|candidate)$/,
   /^\/candidate-search\/[^/]+\/connect$/,
   /^\/recruiter-dashboard\/requests\/[a-f0-9]{24}\/request-full-access$/,
+  /^\/recruiter-jobs\/suggest$/,
 ];
 
 const MESSAGE = 'This is a demo with sample data, so that action is turned off here. Start your founding spot to use it for real.';

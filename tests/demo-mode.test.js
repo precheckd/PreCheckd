@@ -49,8 +49,8 @@ function get(port, method, path, headers = {}) {
     assert.strictEqual(api.status, 403); assert(JSON.parse(api.body).demo === true);
     assert.strictEqual((await get(port, 'POST', '/webhooks/stripe')).status, 404);
   });
-  await t('the demo logins and the two access requests are allowed', async () => {
-    for (const p of ['/demo/recruiter', '/demo/candidate', '/candidate-search/AB12CD/connect', '/recruiter-dashboard/requests/' + 'a'.repeat(24) + '/request-full-access']) {
+  await t('the demo logins, the two access requests and the skill suggestions are allowed', async () => {
+    for (const p of ['/demo/recruiter', '/demo/candidate', '/candidate-search/AB12CD/connect', '/recruiter-dashboard/requests/' + 'a'.repeat(24) + '/request-full-access', '/recruiter-jobs/suggest']) {
       const r = await get(port, 'POST', p); assert.strictEqual(r.status, 200, p); assert(/reached:/.test(r.body));
     }
   });

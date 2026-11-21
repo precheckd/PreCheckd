@@ -9,6 +9,8 @@ const API_URL = 'https://api.anthropic.com/v1/messages';
 const MAX_TEXT = 8000;
 const MAX_SKILLS = 3;                          // the form takes three skills
 const DAILY_LIMIT = Number(process.env.SUGGEST_DAILY_LIMIT) || 30;
+// The demo's lockdown removes ANTHROPIC_API_KEY, so the demo uses its own key (DEMO_SUGGEST_API_KEY) that only this file reads.
+const apiKey = () => process.env.ANTHROPIC_API_KEY || process.env.DEMO_SUGGEST_API_KEY || '';
 const used = new Map();                         // recruiterId -> { day, n }
 
 function allow(recruiterId, now = new Date()) {
@@ -72,11 +74,11 @@ async function suggest({ summary, responsibilities }, options, { recruiterId, fe
   const text = `${summary || ''}\n${Array.isArray(responsibilities) ? responsibilities.join('\n') : responsibilities || ''}`.trim().slice(0, MAX_TEXT);
   if (text.length < 40) return { error: 'short' };
   if (!allow(recruiterId)) return { error: 'limit' };
-  if (process.env.ANTHROPIC_API_KEY) {
+  if (apiKey()) {
     try {
       const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 15000);
       const res = await fetchImpl(API_URL, { method: 'POST', signal: ctl.signal,
-        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey(), 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({ model: MODEL, max_tokens: 400, temperature: 0, messages: [{ role: 'user', content: prompt(text, options) }] }) });
       clearTimeout(timer);
       if (res.ok) {
