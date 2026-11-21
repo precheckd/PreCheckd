@@ -114,7 +114,7 @@
       .then(function (d) {
         saving = false;
         if (d && d.ok && d.id) { draftField.value = d.id; if (fromStep && fromStep._saved) fromStep._saved.textContent = 'Draft saved'; var s = steps[nextStep]; if (s && s._saved) s._saved.textContent = 'Draft saved'; }
-        else if (d && d.error && fromStep._saved) { fromStep._saved.textContent = d.error; }
+        else if (d && d.error && !d.demo && fromStep._saved) { fromStep._saved.textContent = d.error; }
       })
       .catch(function () { saving = false; });
   }

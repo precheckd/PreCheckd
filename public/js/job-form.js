@@ -93,7 +93,7 @@
       const res = await fetch('/recruiter-jobs/suggest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: sumEl.value, responsibilities: respEl.value }) });
       const data = await res.json();
-      if (!res.ok) { note.textContent = 'Pick your skills above.'; note.hidden = false; return; }
+      if (!res.ok) { form.removeAttribute(lastKey); note.textContent = 'Pick your skills above.'; note.hidden = false; return; }
       const hasSkills = !!(data.skills && data.skills.length);
       $('jp-ai-ok').hidden = !(hasSkills && data.source === 'ai');
       if (hasSkills) fillSkills(data.skills);
