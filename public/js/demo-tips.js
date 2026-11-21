@@ -48,9 +48,12 @@
   style.textContent = css;
   document.head.appendChild(style);
 
-  var pop = null, openBtn = null, seq = 0;
+  var pop = null, openBtn = null, seq = 0, pinned = false, timer = null;
+  // Hover opens a note only with a real mouse; touch screens use tap. A click pins the note open.
+  var canHover = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
 
   function close() {
+    clearTimeout(timer); pinned = false;
     if (pop) { pop.remove(); pop = null; }
     if (openBtn) { openBtn.setAttribute('aria-expanded', 'false'); openBtn.removeAttribute('aria-describedby'); openBtn = null; }
   }
@@ -90,8 +93,26 @@
     b.textContent = 'i';
     b.addEventListener('click', function (ev) {
       ev.preventDefault(); ev.stopPropagation();
-      if (openBtn === b) close(); else open(b, text);
+      clearTimeout(timer);
+      if (openBtn === b && pinned) { close(); return; }
+      if (openBtn !== b) open(b, text);
+      pinned = true;
     });
+    if (canHover) {
+      b.addEventListener('mouseenter', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { if (openBtn !== b) open(b, text); }, 250);
+      });
+      b.addEventListener('mouseleave', function () {
+        clearTimeout(timer);
+        if (openBtn === b && !pinned) close();
+      });
+    }
+    b.addEventListener('focus', function () {
+      var kb = false; try { kb = b.matches(':focus-visible'); } catch (e) { /* older browsers: skip */ }
+      if (kb && openBtn !== b) open(b, text);
+    });
+    b.addEventListener('blur', function () { if (openBtn === b && !pinned) close(); });
     el.appendChild(b);
   }
 
