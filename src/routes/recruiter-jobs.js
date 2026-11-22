@@ -23,6 +23,7 @@ const { validateOutcome, recordOutcome, flagRepost } = require('../services/post
 const { OUTCOME_KINDS, NOT_FILLED_REASONS, CANCEL_REASONS } = require('../content/outcomeReasons');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const conversation = require('../utils/conversation');
+const connectionMatches = require('../services/connectionMatches');
 const outreach = require('../services/outreach');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const publicJob = require('../services/publicJob');
@@ -525,6 +526,8 @@ router.get('/:id', async (req, res) => {
       title: `${posting.title} | PreCheckd`, posting, standard, justPosted: req.query.posted === '1', outcomeDone: req.query.outcome === '1', saved: req.query.saved || '', withdrawn: parseInt(req.query.withdrawn, 10) || 0,
       applicantCount: await JobApplication.countDocuments({ jobId: posting._id, status: { $in: ACTIVE } }),
       shareUrl: `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`, sent: req.query.sent || '', sendError: req.query.sendError || '', emailed: req.query.emailed || '', emailError: req.query.emailError || '',
+      matches: posting.status === 'open' ? await connectionMatches.forPosting(req.session.recruiterId, posting) : { qualifying: [], invited: new Set() },
+      inviteResult: req.query.invited !== undefined ? { sent: parseInt(req.query.invited, 10) || 0, skipped: parseInt(req.query.skipped, 10) || 0 } : null,
       shareable: posting.status === 'open'
         ? (await ConnectionRequest.find({ recruiterId: req.session.recruiterId, status: 'accepted' }).populate('candidateId')).filter((c) => c.candidateId)
         : [],
@@ -584,6 +587,30 @@ router.post('/:id/outcome', async (req, res) => {
     res.redirect(`/recruiter-jobs/${posting._id}?outcome=1`);
   } catch (error) {
     console.error('Error recording outcome:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// POST /recruiter-jobs/:id/invite — invite connections who already meet every requirement to apply. The list is
+// recomputed on the server, so only people who still qualify get the invite.
+router.post('/:id/invite', async (req, res) => {
+  try {
+    const posting = await loadOwnPosting(req, res);
+    if (!posting) return;
+    const back = `/recruiter-jobs/${posting._id}`;
+    if (posting.status !== 'open') return res.redirect(`${back}?sendError=${encodeURIComponent('This job is closed.')}`);
+    const recruiter = await Recruiter.findById(req.session.recruiterId);
+    if (!recruiter) return res.redirect('/login');
+    const ids = [].concat(req.body.connectionIds || []).map(String);
+    const url = `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`;
+    const sendMessage = async (connection, body) => {
+      const ctx = await conversation.loadConversationContext({ type: 'recruiter', id: String(req.session.recruiterId) }, String(connection._id));
+      return ctx ? conversation.sendThreadMessage(ctx, body) : { error: 'Not a connection.' };
+    };
+    const r = await connectionMatches.invite(recruiter, posting, ids, { url, sendMessage });
+    res.redirect(`${back}?invited=${r.sent}&skipped=${r.skipped}#invite`);
+  } catch (error) {
+    console.error('Error inviting connections:', error);
     res.status(500).send('Server error');
   }
 });

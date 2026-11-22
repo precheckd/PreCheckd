@@ -50,7 +50,7 @@ function fake(Model, store) {
     if (!store.includes(this)) store.push(this); return this; } });
 }
 const postings = [], apps = [], conns = [], trackers = [], notes = [], candidates = [];
-fake(JobPosting, postings); fake(JobApplication, apps); fake(ConnectionRequest, conns); fake(TrackerApplication, trackers); fake(Candidate, candidates);
+fake(JobPosting, postings); fake(JobApplication, apps); fake(ConnectionRequest, conns); require('../src/models/JobInvite').find = async () => []; fake(TrackerApplication, trackers); fake(Candidate, candidates);
 Notification.create = async (d) => { notes.push(d); return d; };
 Recruiter.findById = async () => ({ _id: '507f1f77bcf86cd799439011', firstName: 'Pat', lastName: 'Lee', slug: 'pat-lee', isActive: true, isSuspended: false,
   accountTier: 'standard', isIdentityVerified: true, isPhoneVerified: true });
@@ -163,6 +163,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(html.includes('Ann Test') && html.includes(`/recruiter-dashboard/requests/${conns[0]._id}/candidate`));
     const detail = await (await get(`/recruiter-jobs/${job._id}`)).text();
     assert.ok(detail.includes('Applicants (1)'));
+    assert.ok(detail.includes('Connections who already qualify'));
   });
 
   await t('someone else\'s applicants page is not found', async () => {

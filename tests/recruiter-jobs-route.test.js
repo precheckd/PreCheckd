@@ -50,6 +50,7 @@ JobDraft.deleteOne = async (q) => { const i = drafts.findIndex((d) => String(d._
 Object.defineProperty(JobDraft.prototype, 'save', { value: async function () { return this; }, configurable: true, writable: true });
 JobApplication.find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 JobApplication.countDocuments = async () => 0;
+require('../src/models/JobInvite').find = async () => [];
 require('../src/models/ConnectionRequest').find = () => { const p = Promise.resolve([]); p.populate = async () => []; return p; };
 const catalogWrites = [];
 CatalogRequest.updateOne = async (...args) => { catalogWrites.push(args); return {}; };

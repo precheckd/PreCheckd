@@ -65,6 +65,24 @@
   </div>
 
   <% if (posting.status === 'open') { %>
+  <div class="jd-card" id="invite"><h2>Connections who already qualify</h2>
+    <% if (inviteResult) { %><div class="jd-ok"><%= inviteResult.sent %> invite<%= inviteResult.sent === 1 ? '' : 's' %> sent.<% if (inviteResult.skipped) { %> <%= inviteResult.skipped %> could not be sent (already invited, or no longer qualifying).<% } %></div><% } %>
+    <% if (matches.qualifying.length) { %>
+      <p>These connections meet every requirement and can apply right now. Each invite is a message with a link to this job.</p>
+      <form method="POST" action="/recruiter-jobs/<%= posting._id %>/invite">
+        <div style="margin:0.5rem 0 0.8rem;">
+          <% matches.qualifying.forEach(function(m) { %>
+            <label style="display:block;padding:0.25rem 0;color:#F2F4F3;"><input type="checkbox" name="connectionIds" value="<%= m.connection._id %>" checked> <%= m.candidate.firstName %> <%= m.candidate.lastName %></label>
+          <% }); %>
+        </div>
+        <button class="jd-edit" type="submit" style="border:0;cursor:pointer;margin:0;">Invite selected to apply</button>
+      </form>
+    <% } else { %>
+      <p class="jd-std">None of your connections meet every requirement yet, or you have already invited the ones who do.<% if (matches.invited.size) { %> You have invited <%= matches.invited.size %> to this job.<% } %></p>
+    <% } %>
+    <p class="jd-std">Only skills a candidate chooses to show count here, and anyone who is not open to opportunities is left out.</p>
+  </div>
+
   <div class="jd-card"><h2>Share this job</h2>
     <% if (sent === '1') { %><div class="jd-ok">Sent.</div><% } %>
     <% if (sendError) { %><p style="color:#FF8A8A;"><%= sendError %></p><% } %>
