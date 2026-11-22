@@ -16,6 +16,10 @@
   // Where each tip goes: a page (path pattern), the element to attach to (CSS selector plus the text it starts with),
   // and the text shown. Tips sit at the end of the matched element.
   var JOB_FORM = /^\/recruiter-jobs\/(new|[a-f0-9]{24}\/edit)\/?$/;
+  var REC_SIGNUP = /^\/founding-recruiter\/?$/;
+  var CAND_SIGNUP = /^\/candidate-signup\/?$/;
+  var CAND_SKILLS = /^\/candidate\/[^/]+\/skills\/?$/;
+  var BILLING = /^\/billing\/?$/;
   var TIPS = [
     { page: JOB_FORM, sel: 'h2', starts: '1. Description',
       tip: 'Describe the role in your own words. Our system will parse this information to suggest applicable skills on the next page.' },
@@ -34,7 +38,35 @@
     { page: JOB_FORM, sel: '.jp-label', starts: 'Finalist test',
       tip: 'Optional, and no extra charge. Pick three topics, then invite some of your applicants to one short assessment that covers them.' },
     { page: JOB_FORM, sel: 'h2', starts: 'Review and',
-      tip: 'Check everything on one screen. When applications close, you record how the job ended, which is how applicants find out what happened.' }
+      tip: 'Check everything on one screen. When applications close, you record how the job ended, which is how applicants find out what happened.' },
+
+    // Recruiter signup
+    { page: REC_SIGNUP, sel: 'h2', starts: '1. Your details',
+      tip: 'Every recruiter on PreCheckd is a verified person. We confirm your email, phone and ID so candidates know who they\u2019re dealing with.' },
+    { page: REC_SIGNUP, sel: 'h2', starts: '2. Verify your phone',
+      tip: 'We text you a code to confirm the number is yours.' },
+    { page: REC_SIGNUP, sel: 'h2', starts: '3. Identity verification',
+      tip: 'A one-time check of your government ID and a selfie, run by Stripe Identity. It proves you\u2019re a real person.' },
+
+    // Candidate signup
+    { page: CAND_SIGNUP, sel: 'label', starts: 'Resume',
+      tip: 'We read your resume to fill in your work history and education. You review everything before it\u2019s saved, or you can skip it and type it yourself.' },
+    { page: CAND_SIGNUP, sel: 'h2', starts: 'Verify your identity',
+      tip: 'A one-time check of your government ID and a selfie, run by Stripe Identity. It\u2019s what earns your verified badge.' },
+    { page: CAND_SIGNUP, sel: 'h2', starts: 'Review your details',
+      tip: 'Check what we pulled from your resume and fix anything that\u2019s wrong before you continue.' },
+
+    // Candidate skills and tests
+    { page: CAND_SKILLS, sel: 'h2', starts: 'Your skills',
+      tip: 'Tick Show on the skills recruiters can see. They see how many skills you\u2019ve been tested on and how many you show, never the hidden ones.' },
+    { page: CAND_SKILLS, sel: 'h2', starts: "Don't see your skill?",
+      tip: 'We build tests on request, usually within 1 business day, and email you when yours is ready.' },
+    { page: CAND_SKILLS, sel: 'h2', starts: 'Tell my recruiters',
+      tip: 'Your connections see a one-line update when you earn a certification, degree or skill level. Failed tests and hidden skills are never shared.' },
+
+    // Recruiter billing
+    { page: BILLING, sel: 'h2', starts: 'Extra open postings',
+      tip: 'Your plan covers 5 open postings at a time. Closing a posting frees its slot, so you only need extras if you want more open at once.' }
   ];
 
   var css = [
