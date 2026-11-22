@@ -166,6 +166,13 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).send('err
     assert.ok(detail.includes('Connections who already qualify'));
   });
 
+  await t('the owner can open the connections-who-qualify page', async () => {
+    asOwner();
+    const res = await get('/recruiter-jobs/matches');
+    const html = await res.text();
+    assert.strictEqual(res.status, 200); assert.ok(html.includes('Connections who may qualify'));
+  });
+
   await t('someone else\'s applicants page is not found', async () => {
     session = { recruiterId: '507f1f77bcf86cd799439099' };
     assert.strictEqual((await get(`/recruiter-jobs/${job._id}/applicants`)).status, 404);

@@ -108,6 +108,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /recruiter-jobs/matches — across all my open postings, which connections can apply now and have not been
+// invited (people who qualified after a posting went up, or connected since). Invite from here per posting.
+router.get('/matches', async (req, res) => {
+  try {
+    const recruiter = await loadPostingRecruiter(req, res);
+    if (!recruiter) return;
+    const postings = await JobPosting.find({ recruiterId: recruiter._id, status: 'open' }).sort({ createdAt: -1 });
+    // One skills lookup per candidate, shared across every posting.
+    const skillCache = new Map();
+    const loadSkills = (id, now) => { const k = String(id); if (!skillCache.has(k)) skillCache.set(k, connectionMatches.loadSkillFacts(id, now)); return skillCache.get(k); };
+    const groups = [];
+    for (const posting of postings) groups.push({ posting, ...(await connectionMatches.forPosting(recruiter._id, posting, { loadSkills })) });
+    res.render('recruiter-job-matches', {
+      title: 'Connections who may qualify | PreCheckd', groups,
+      inviteResult: req.query.invited !== undefined ? { jobId: String(req.query.job || ''), sent: parseInt(req.query.invited, 10) || 0, skipped: parseInt(req.query.skipped, 10) || 0 } : null,
+    });
+  } catch (error) {
+    console.error('Error finding connections who qualify:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET /recruiter-jobs/roles?q=devops — roles matching what the recruiter typed, with their skills.
 // testable: a skill test exists for it.
 router.get('/roles', async (req, res) => {
@@ -608,6 +630,7 @@ router.post('/:id/invite', async (req, res) => {
       return ctx ? conversation.sendThreadMessage(ctx, body) : { error: 'Not a connection.' };
     };
     const r = await connectionMatches.invite(recruiter, posting, ids, { url, sendMessage });
+    if (req.body.returnTo === 'matches') return res.redirect(`/recruiter-jobs/matches?invited=${r.sent}&skipped=${r.skipped}&job=${posting._id}#job-${posting._id}`);
     res.redirect(`${back}?invited=${r.sent}&skipped=${r.skipped}#invite`);
   } catch (error) {
     console.error('Error inviting connections:', error);

@@ -1,0 +1,40 @@
+<style>
+  .jd-wrap { flex: 1; padding: 2rem 1.5rem 4rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jd-inner { max-width: 820px; width: 100%; color: #F2F4F3; }
+  .jd-back { display: inline-block; margin-bottom: 1.25rem; color: #8FA6AC; font-size: 0.9rem; text-decoration: none; }
+  .jd-inner h1 { font-size: 1.75rem; margin: 0 0 0.3rem; }
+  .jd-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .jd-card h2 { font-size: 1.05rem; margin: 0 0 0.6rem; }
+  .jd-card p { color: #E8EBEA; line-height: 1.55; font-size: 0.95rem; }
+  .jd-std { color: #C7D1CF; font-size: 0.85rem; }
+  .jd-ok { background: #1E3B2C; border-left: 4px solid #2ECC71; color: #CFF3DD; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 0.8rem; }
+  .jd-edit { display: inline-block; background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.6rem 1.1rem; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+</style>
+<div class="jd-wrap"><div class="jd-inner">
+  <a class="jd-back" href="/recruiter-jobs">&larr; My job postings</a>
+  <h1>Connections who may qualify</h1>
+  <p class="jd-std">Across your open postings: connections who can apply right now and haven't been invited or applied. This catches people who qualified after a job went up, or who connected with you since. Only skills a candidate chooses to show count, and anyone who isn't open to opportunities is left out.</p>
+
+  <% if (!groups.length) { %>
+    <div class="jd-card"><p>You have no open postings.</p></div>
+  <% } %>
+  <% groups.forEach(function(g) { %>
+    <div class="jd-card" id="job-<%= g.posting._id %>">
+      <h2><a href="/recruiter-jobs/<%= g.posting._id %>" style="color:#F2F4F3;"><%= g.posting.title %></a> <span class="jd-std">&middot; <%= g.posting.hiringCompany %></span></h2>
+      <% if (inviteResult && inviteResult.jobId === String(g.posting._id)) { %><div class="jd-ok"><%= inviteResult.sent %> invite<%= inviteResult.sent === 1 ? '' : 's' %> sent.<% if (inviteResult.skipped) { %> <%= inviteResult.skipped %> could not be sent (already invited, or no longer qualifying).<% } %></div><% } %>
+      <% if (g.qualifying.length) { %>
+        <form method="POST" action="/recruiter-jobs/<%= g.posting._id %>/invite">
+          <input type="hidden" name="returnTo" value="matches">
+          <div style="margin:0.4rem 0 0.8rem;">
+            <% g.qualifying.forEach(function(m) { %>
+              <label style="display:block;padding:0.25rem 0;color:#F2F4F3;"><input type="checkbox" name="connectionIds" value="<%= m.connection._id %>" checked> <%= m.candidate.firstName %> <%= m.candidate.lastName %></label>
+            <% }); %>
+          </div>
+          <button class="jd-edit" type="submit">Invite selected to apply</button>
+        </form>
+      <% } else { %>
+        <p class="jd-std" style="margin:0;">No new connections qualify for this one right now.<% if (g.invited.size) { %> You have invited <%= g.invited.size %> to it.<% } %></p>
+      <% } %>
+    </div>
+  <% }); %>
+</div></div>

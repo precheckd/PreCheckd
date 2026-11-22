@@ -71,4 +71,4 @@ async function invite(recruiter, posting, connectionIds, { url, sendMessage, now
   return { sent, skipped: skipped + [...wanted].filter((id) => !qualifying.some((q) => String(q.connection._id) === id)).length };
 }
 
-module.exports = { forPosting, invite, qualifies, visibleSkills, MAX_PER_INVITE };
+module.exports = { forPosting, invite, qualifies, visibleSkills, loadSkillFacts, MAX_PER_INVITE };
