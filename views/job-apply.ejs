@@ -20,7 +20,7 @@
   <div class="ap-card">
     <strong>Before you apply, please know:</strong>
     <ul>
-      <li>Applying shares your <strong>full profile, video and resume</strong> with <%= posterName %>, and connects you with them. There is no separate resume or cover letter.</li>
+      <li>Applying shares your <strong>full profile, video and resume</strong> with <%= posterName %> for this job only, and connects you with them. There is no separate resume or cover letter. That access ends if you withdraw, they decline your application, or the job closes and you aren't chosen. You stay connected, and they would need to ask you for full access again.</li>
       <li>You are accepting the posted pay: <%= j.commissionOnly ? 'commission only' : money(j.baseMin) + ' to ' + money(j.baseMax) + per %>.</li>
       <li>You should expect to interview if they want to move forward.</li>
       <li>Applications close <%= fmtClose(j.closeDate) %>. You can withdraw any time before then.</li>
