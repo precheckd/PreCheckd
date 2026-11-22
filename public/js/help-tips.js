@@ -1,15 +1,15 @@
-// Demo tips: small yellow "i" buttons that explain what a page or section is doing. Loaded only on the demo site
-// (see layouts/main.ejs), so the real site never shows them. Each tip is one or two plain sentences.
-// Add ?tips=0 to any demo URL to hide them (for screenshots); ?tips=1 brings them back.
+// Help tips: small yellow "i" buttons that explain what a form or section is for. Loaded on every page (see layouts/main.ejs).
+// Each tip is one or two plain sentences and only explains; anything a person must know stays visible on the page.
+// Add ?tips=0 to any URL to hide them (for screenshots); ?tips=1 brings them back.
 (function () {
   'use strict';
 
   var off = false;
   try {
     var q = new URLSearchParams(window.location.search).get('tips');
-    if (q === '0') sessionStorage.setItem('demoTips', 'off');
-    if (q === '1') sessionStorage.removeItem('demoTips');
-    off = sessionStorage.getItem('demoTips') === 'off';
+    if (q === '0') sessionStorage.setItem('helpTips', 'off');
+    if (q === '1') sessionStorage.removeItem('helpTips');
+    off = sessionStorage.getItem('helpTips') === 'off';
   } catch (e) { off = q === '0'; }
   if (off) return;
 
@@ -38,11 +38,11 @@
   ];
 
   var css = [
-    '.demo-tip{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin:0 0 0 .5rem;padding:0;',
+    '.help-tip{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin:0 0 0 .5rem;padding:0;',
     'border:2px solid #F5C518;border-radius:50%;background:transparent;color:#F5C518;font:700 12px/1 Georgia,serif;cursor:pointer;vertical-align:middle;}',
-    '.demo-tip:hover,.demo-tip[aria-expanded="true"]{background:#F5C518;color:#1F363C;}',
-    '.demo-tip:focus-visible{outline:2px solid #F4F7F8;outline-offset:2px;}',
-    '.demo-tip-pop{box-sizing:border-box;position:absolute;z-index:2000;max-width:320px;width:max-content;padding:.7rem .9rem;background:#2A4750;color:#F4F7F8;',
+    '.help-tip:hover,.help-tip[aria-expanded="true"]{background:#F5C518;color:#1F363C;}',
+    '.help-tip:focus-visible{outline:2px solid #F4F7F8;outline-offset:2px;}',
+    '.help-tip-pop{box-sizing:border-box;position:absolute;z-index:2000;max-width:320px;width:max-content;padding:.7rem .9rem;background:#2A4750;color:#F4F7F8;',
     'border:1px solid #3B5860;border-left:4px solid #F5C518;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.4);',
     'font:400 14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-transform:none;letter-spacing:0;text-align:left;}'
   ].join('');
@@ -73,23 +73,23 @@
   function open(btn, text) {
     close();
     pop = document.createElement('div');
-    pop.className = 'demo-tip-pop';
-    pop.id = 'demo-tip-pop';
+    pop.className = 'help-tip-pop';
+    pop.id = 'help-tip-pop';
     pop.setAttribute('role', 'tooltip');
     pop.textContent = text;
     document.body.appendChild(pop);
     openBtn = btn;
     btn.setAttribute('aria-expanded', 'true');
-    btn.setAttribute('aria-describedby', 'demo-tip-pop');
+    btn.setAttribute('aria-describedby', 'help-tip-pop');
     place();
   }
 
   function addTip(el, text) {
-    if (el.querySelector(':scope > .demo-tip')) return;
+    if (el.querySelector(':scope > .help-tip')) return;
     var b = document.createElement('button');
     b.type = 'button';
-    b.className = 'demo-tip';
-    b.id = 'demo-tip-' + (++seq);
+    b.className = 'help-tip';
+    b.id = 'help-tip-' + (++seq);
     b.setAttribute('aria-label', 'What is this?');
     b.setAttribute('aria-expanded', 'false');
     b.textContent = 'i';
@@ -142,7 +142,7 @@
     });
   }
 
-  document.addEventListener('click', function (ev) { if (pop && !ev.target.closest('.demo-tip, .demo-tip-pop')) close(); });
+  document.addEventListener('click', function (ev) { if (pop && !ev.target.closest('.help-tip, .help-tip-pop')) close(); });
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
   window.addEventListener('resize', place);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
