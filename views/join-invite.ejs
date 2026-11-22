@@ -1,0 +1,34 @@
+<style>
+  .ji-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .ji-card { max-width: 640px; width: 100%; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 2rem; color: #F2F4F3; }
+  .ji-card h1 { font-size: 1.6rem; margin: 0 0 .5rem; }
+  .ji-card p, .ji-card li { color: #C7D1CF; line-height: 1.55; }
+  .ji-card ul { padding-left: 1.2rem; }
+  .ji-tag { display: inline-block; background: #F5C518; color: #1F363C; border-radius: 999px; font-size: .75rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: .2rem .7rem; margin-bottom: .6rem; }
+  .ji-btn { display: inline-block; background: #2ECC71; color: #10261b; border-radius: 6px; padding: .8rem 1.3rem; font-weight: 800; text-decoration: none; margin-top: .5rem; }
+  .ji-ghost { color: #8FE3B1; }
+</style>
+<div class="ji-wrap"><div class="ji-card">
+  <% if (state === 'ok') { %>
+    <span class="ji-tag">Founding invite</span>
+    <h1>You're invited to be a founding recruiter</h1>
+    <p>You've been given one of the first 100 founding spots. Your first year is free. After that it's $349 a year, and that price stays locked for as long as you remain a member.</p>
+    <ul>
+      <li>A card is required to start. Nothing is charged during your free year.</li>
+      <li>The deal: post at least 3 real jobs in your first 30 days, then keep at least 2 going. A job counts while it's open, or for 30 days after it closes as filled.</li>
+      <li>If that slips, we email you first and give you 30 days to fix it. If it's still not fixed, your card is charged $349 and your paid year begins.</li>
+      <li>Cancel any time during the free year and you won't be charged.</li>
+    </ul>
+    <p>Everyone on PreCheckd is identity-verified, recruiters included. You'll verify once when you sign up.</p>
+    <a class="ji-btn" href="/founding-recruiter">Create my account</a>
+    <p style="margin-top:1rem;font-size:.9rem;">Already have an account? <a class="ji-ghost" href="/login">Log in</a> and your invite will be waiting on your membership page.</p>
+  <% } else if (state === 'full') { %>
+    <h1>The founding spots are full</h1>
+    <p>All 100 invite-only spots have been claimed. You can still join as a founding recruiter at $349 a year, locked in.</p>
+    <a class="ji-btn" href="/founding-recruiter">Join as a founding recruiter</a>
+  <% } else { %>
+    <h1>This invite can't be used</h1>
+    <p>The link may have been typed wrong, or the invite was already used. Each invite works once.</p>
+    <p>If you were expecting one, reply to the email you got it from. You can also <a class="ji-ghost" href="/request-invite">request an invite</a>.</p>
+  <% } %>
+</div></div>

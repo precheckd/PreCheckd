@@ -204,6 +204,12 @@
       <div class="id-card-desc">Recruiter-requested job title tests. Top up a recruiter's monthly credits and see the latest requests.</div>
     </a>
 
+    <a class="id-card" href="/invites">
+      <div class="id-card-title">Founding Invites</div>
+      <div class="id-card-desc">The invite-only free year for the first 100 recruiters: make codes, approve requests, and see who is meeting the bar.</div>
+      <span class="id-card-stat <%= inviteRequestCount > 0 ? 'id-stat-alert' : '' %>"><%= inviteRequestCount %> waiting</span>
+    </a>
+
     <a class="id-card" href="/credit-requests">
       <div class="id-card-title">Candidate Credit Requests</div>
       <div class="id-card-desc">Candidates who ran out of monthly skill-test credits and asked for more. Approve by hand, with an optional kind note.</div>

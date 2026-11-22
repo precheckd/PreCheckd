@@ -19,8 +19,8 @@ async function waveCounts(now = new Date()) {
   return taken;
 }
 
-async function status(now) {
-  return plans.waveStatus(await waveCounts(now));
+async function status(now, opts) {
+  return plans.waveStatus(await waveCounts(now), opts);
 }
 
 function hadFounding(recruiter) {
@@ -42,9 +42,11 @@ async function ensureCustomer(stripe, recruiter) {
 }
 
 // Starts Checkout. Returns { url }. `interval` is 'monthly' or 'annual'.
-async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath, cancelPath, now = new Date() }) {
-  const st = await status(now);
-  const choice = plans.choosePlan({ interval, status: st, hadFounding: hadFounding(recruiter) });
+// `invite` (a usable FoundingInvite) turns this into the free founding year: annual $349 locked, with a 365-day trial.
+async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath, cancelPath, invite = null, now = new Date() }) {
+  const st = invite ? await status(now, { invite: true }) : await status(now);
+  if (invite && (!st.freeDays || hadFounding(recruiter))) { const e = new Error('The founding invite spots are full.'); e.code = 'invite_full'; throw e; }
+  const choice = plans.choosePlan({ interval: invite ? 'annual' : interval, status: st, hadFounding: hadFounding(recruiter) });
   if (!choice) { const e = new Error('Pick monthly or annual.'); e.code = 'bad_interval'; throw e; }
   if (recruiter.billing.status === 'active') { const e = new Error('Already subscribed.'); e.code = 'already_active'; throw e; }
 
@@ -61,6 +63,7 @@ async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath
   await recruiter.save();
 
   const owner = { ownerType: 'recruiter', ownerId: String(recruiter._id) };
+  if (invite) owner.inviteId = String(invite._id);
   const discounts = choice.discountCents ? [{ coupon: await plans.ensureCoupon(stripe, choice.discountCents) }] : null;
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -71,8 +74,10 @@ async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath
     billing_address_collection: 'required',
     customer_update: { address: 'auto', name: 'auto' },
     ...(discounts ? { discounts } : { allow_promotion_codes: false }), // Stripe allows only one of the two
+    // The free year is a trial; the card is always collected so the paid year can start by itself.
+    ...(invite ? { payment_method_collection: 'always' } : {}),
     metadata: owner,
-    subscription_data: { metadata: owner },
+    subscription_data: { metadata: owner, ...(invite ? { trial_period_days: choice.freeDays } : {}) },
     success_url: `${baseUrl}${successPath}${successPath.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}${cancelPath}`,
   });
@@ -84,14 +89,26 @@ async function confirmReturn({ stripe, recruiter, sessionId, now = new Date() })
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   if (!session || session.client_reference_id !== String(recruiter._id)) { const e = new Error('That payment is not yours.'); e.code = 'mismatch'; throw e; }
   if (session.mode !== 'subscription' || !session.subscription) { const e = new Error('Not a subscription.'); e.code = 'not_subscription'; throw e; }
-  if (session.payment_status !== 'paid') return { paid: false };
+  // A free-year trial has nothing to pay yet, so Stripe reports no_payment_required once the card is saved.
+  if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') return { paid: false };
   const subId = typeof session.subscription === 'object' ? session.subscription.id : session.subscription;
   const sub = await stripe.subscriptions.retrieve(subId);
   const before = require('./billingEmails').stateOf(recruiter.billing);
   sync.applySubscription(recruiter.billing, sub, now);
   await recruiter.save();
+  await startFreeYearIfInvited(recruiter, sub, session.metadata, now);
   await require('./billingEmails').notifyChange('recruiter', recruiter, before);
   return { paid: recruiter.billing.status === 'active' };
+}
+
+// When the checkout carried an invite, mark it used and begin the free-year tracking. Safe to run twice
+// (the return page and the webhook both call it).
+async function startFreeYearIfInvited(recruiter, sub, metadata, now = new Date()) {
+  const inviteId = metadata && metadata.inviteId;
+  if (!inviteId || !sub || sub.status !== 'trialing') return false;
+  const invite = await require('./foundingInvites').redeem(inviteId, recruiter._id, now);
+  if (!invite) return false;
+  return require('./freeYear').start(recruiter, invite, sub, now);
 }
 
 async function portalUrl({ stripe, recruiter, returnUrl }) {
@@ -100,4 +117,4 @@ async function portalUrl({ stripe, recruiter, returnUrl }) {
   return s.url;
 }
 
-module.exports = { waveCounts, status, startCheckout, confirmReturn, portalUrl, hadFounding };
+module.exports = { waveCounts, status, startCheckout, confirmReturn, portalUrl, hadFounding, startFreeYearIfInvited };

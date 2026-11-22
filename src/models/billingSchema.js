@@ -28,6 +28,22 @@ const billingSchema = new mongoose.Schema({
     reservedAt: { type: Date, default: null },
     lockedAt: { type: Date, default: null }
   },
+  // Recruiters only: the invite-only free year (a Stripe trial). Set when the invite is used; see services/freeYear.js.
+  // status: ok = meeting the bar, warned = missed it and inside the 30-day cure window, ended = free year over
+  // (the card was charged early because the bar was missed, or the year simply ran out).
+  freeYear: {
+    inviteId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    startedAt: { type: Date, default: null },
+    trialEnd: { type: Date, default: null },
+    status: { type: String, enum: [null, 'ok', 'warned', 'ended'], default: null },
+    postedMetAt: { type: Date, default: null },
+    warnedAt: { type: Date, default: null },
+    cureBy: { type: Date, default: null },
+    reminderSentAt: { type: Date, default: null },
+    reason: { type: String, default: null },
+    endedAt: { type: Date, default: null },
+    endedReason: { type: String, default: null }
+  },
   // Recruiters only: extra open-posting slots bought as a separate monthly subscription (the plan includes 5).
   slots: {
     subscriptionId: { type: String, default: null },

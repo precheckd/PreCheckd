@@ -105,7 +105,7 @@ Who can join:
 - Recruiters: no setup fee. Membership is $249 per month or $1,999 per year, including 5 open job postings at a time and 3 test credits per month.
 - Extra open job slots: $10 per slot per month for 1 to 5 extra, $8 each for 6 to 10, $6 each for 11 or more.
 - Extra test credits: $39 for 3.
-- Founders (the first 250 recruiters): the first 100 pay $249 per year and the next 150 pay $349 per year. That price stays locked for as long as the membership does not lapse. After a lapse (cancellation, or a payment problem not fixed within about 14 days) the standard price applies.
+- Founders (the first 250 recruiters): $349 per year. That price stays locked for as long as the membership does not lapse. After a lapse (cancellation, or a payment problem not fixed within about 14 days) the standard price applies.
 - Early Access (recruiters 251 to 1,000): the first year is discounted ($449 for the next 250, $549 for the next 500), then the membership renews at the standard $1,999 per year. Nothing is locked, and PreCheckd emails before the renewal. Spots left are shown on the signup page.
 - Do not state how many founding spots are left. Say "check the signup page".
 

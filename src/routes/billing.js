@@ -11,6 +11,8 @@ const addons = require('../services/recruiterAddons');
 const JobPosting = require('../models/JobPosting');
 const publicJob = require('../services/publicJob');
 const testRequests = require('../services/testRequests');
+const invites = require('../services/foundingInvites');
+const freeYear = require('../services/freeYear');
 
 const base = () => process.env.APP_BASE_URL || 'https://precheckd.com';
 
@@ -51,7 +53,16 @@ router.get('/', async (req, res) => {
     if (!recruiter) return;
     const st = await recruiterBilling.status();
     const state = membership.state(recruiter);
+    // A personal invite held for this visit (from the join link or typed in): the free founding year, if a spot is left.
+    let invite = null;
+    if (state.status !== 'active' && !recruiterBilling.hadFounding(recruiter) && req.session.inviteCode) {
+      const usable = await invites.findUsable(req.session.inviteCode);
+      const inv = usable ? await recruiterBilling.status(new Date(), { invite: true }) : null;
+      if (usable && inv && inv.freeDays) invite = { code: usable.code, spotsLeft: inv.spotsLeft };
+      else delete req.session.inviteCode;
+    }
     res.render('billing', {
+      invite, freeYear: await freeYear.progress(recruiter),
       pageTitle: 'Membership | PreCheckd',
       enabled: billingConfig.enabled(),
       state, billing: recruiter.billing,
@@ -75,14 +86,18 @@ router.post('/checkout', async (req, res) => {
     const recruiter = await loadRecruiter(req, res);
     if (!recruiter) return;
     if (!billingConfig.enabled()) return res.redirect('/billing');
+    // The free founding year is used only when the page's invite button was pressed and the code is still good.
+    const invite = req.body.invite === '1' && req.session.inviteCode ? await invites.findUsable(req.session.inviteCode) : null;
+    if (req.body.invite === '1' && !invite) return res.redirect('/billing?error=invite');
     const out = await recruiterBilling.startCheckout({
-      stripe, recruiter, interval: String(req.body.interval || ''), baseUrl: base(),
+      stripe, recruiter, interval: String(req.body.interval || ''), baseUrl: base(), invite,
       successPath: '/billing/return', cancelPath: '/billing?canceled=1',
     });
     res.redirect(303, out.url);
   } catch (e) {
     if (e.code === 'already_active') return res.redirect('/billing');
     if (e.code === 'bad_interval') return res.redirect('/billing?error=interval');
+    if (e.code === 'invite_full') return res.redirect('/billing?error=invite_full');
     console.error('Error starting checkout:', e);
     res.redirect('/billing?error=checkout');
   }
@@ -95,12 +110,28 @@ router.get('/return', async (req, res) => {
     if (!recruiter) return;
     const sid = String(req.query.session_id || '');
     if (sid) await recruiterBilling.confirmReturn({ stripe, recruiter, sessionId: sid });
+    if (membership.isMember(recruiter)) delete req.session.inviteCode;
     // Brand-new recruiters still owe the ID check; send them back to it.
     if (!recruiter.isIdentityVerified && membership.isMember(recruiter)) return res.redirect('/founding-recruiter?step=identity');
     res.redirect('/billing?paid=1');
   } catch (e) {
     console.error('Error confirming payment:', e.message);
     res.redirect('/billing?paid=1');
+  }
+});
+
+// POST /billing/invite  code=... — someone typed an invite code they were given
+router.post('/invite', async (req, res) => {
+  try {
+    const recruiter = await loadRecruiter(req, res);
+    if (!recruiter) return;
+    const invite = await invites.findUsable(req.body.code);
+    if (!invite) return res.redirect('/billing?error=invite');
+    req.session.inviteCode = invite.code;
+    res.redirect('/billing');
+  } catch (e) {
+    console.error('Error checking invite code:', e);
+    res.redirect('/billing?error=invite');
   }
 });
 

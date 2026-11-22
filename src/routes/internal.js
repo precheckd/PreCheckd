@@ -272,6 +272,7 @@ router.get('/', async (req, res) => {
     const skillRequestCount = (await SkillRequest.distinct('key', { status: { $in: ['requested', 'building'] } })).length;
 
     const creditRequestCount = await require('../models/CreditRequest').countDocuments({ status: 'open' });
+    const inviteRequestCount = await require('../models/FoundingInvite').countDocuments({ status: 'requested' });
     const customTestCount = (await require('../services/roleTests').customQueue()).length;
 
     const outsideUsCount = await require('../models/OutsideInterest').countDocuments({});
@@ -285,7 +286,7 @@ router.get('/', async (req, res) => {
       outsideUsCount,
       hireReviewCount,
       skillRequestCount,
-      customTestCount, creditRequestCount,
+      customTestCount, creditRequestCount, inviteRequestCount,
       catalogRequestCount,
       verificationCount,
       verificationOpen: vcDigest.open,
@@ -567,6 +568,62 @@ router.get('/test-credits', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading test credits:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/invites', async (req, res) => {
+  try {
+    const FoundingInvite = require('../models/FoundingInvite');
+    const Recruiter = require('../models/Recruiter');
+    const freeYear = require('../services/freeYear');
+    const invites = require('../services/foundingInvites');
+    const recruiterBilling = require('../services/recruiterBilling');
+    const rows = await FoundingInvite.find({}).sort({ createdAt: -1 }).limit(200);
+    const taken = (await recruiterBilling.waveCounts())[1] || 0;
+    const fyList = await Recruiter.find({ 'billing.freeYear.status': { $in: ['ok', 'warned', 'ended'] } }).sort({ 'billing.freeYear.startedAt': -1 }).limit(120);
+    const free = [];
+    for (const r of fyList) {
+      const fy = r.billing.freeYear;
+      const c = fy.status === 'ended' ? null : await freeYear.countsFor(r);
+      free.push({ email: r.email, name: `${r.firstName} ${r.lastName || ''}`.trim(), status: fy.status, startedAt: fy.startedAt, trialEnd: fy.trialEnd, cureBy: fy.cureBy,
+        reason: fy.reason, endedReason: fy.endedReason, posted: c ? c.posted : null, maintained: c ? c.maintained : null });
+    }
+    const row = (i) => ({ id: String(i._id), status: i.status, source: i.source, code: i.code, link: i.code ? invites.joinUrl(i.code) : '', note: i.note, name: i.name, email: i.email,
+      company: i.company, about: i.about, createdAt: i.createdAt, redeemedAt: i.redeemedAt });
+    res.render('internal-invites', {
+      notice: req.query.notice || null, taken, size: 100,
+      requests: rows.filter((i) => i.status === 'requested').map(row),
+      open: rows.filter((i) => i.status === 'open').map(row),
+      used: rows.filter((i) => ['redeemed', 'revoked', 'declined'].includes(i.status)).map(row),
+      free,
+    });
+  } catch (error) {
+    console.error('Error loading invites:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/invites/new', async (req, res) => {
+  try {
+    await require('../services/foundingInvites').createForStaff({ note: req.body.note, email: req.body.email });
+    res.redirect('/invites?notice=made');
+  } catch (error) {
+    console.error('Error making invite:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/invites/:id/:action(approve|decline|revoke)', async (req, res) => {
+  try {
+    const invites = require('../services/foundingInvites');
+    if (req.params.action === 'approve') await invites.approve(req.params.id, require('../services/emailService'));
+    else if (req.params.action === 'decline') await invites.decline(req.params.id);
+    else await invites.revoke(req.params.id);
+    res.redirect('/invites?notice=done');
+  } catch (error) {
+    if (error.code === 'closed') return res.redirect('/invites?notice=closed');
+    console.error('Error deciding invite:', error);
     res.status(500).send('Server error');
   }
 });

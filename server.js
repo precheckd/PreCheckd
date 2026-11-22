@@ -9,6 +9,7 @@ const { startWeeklyEmailJob } = require('./src/jobs/weeklyEmailJob');
 const { startApplicantDigestJob } = require('./src/jobs/applicantDigestJob');
 const { startOutcomeReminderJob } = require('./src/jobs/outcomeReminderJob');
 const { startConnectionSurveyJob } = require('./src/jobs/connectionSurveyJob');
+const { startFreeYearJob } = require('./src/jobs/freeYearJob');
 
 const PORT = process.env.PORT || 3000;
 
@@ -26,6 +27,7 @@ async function start() {
   startApplicantDigestJob();
   startOutcomeReminderJob();
   startConnectionSurveyJob();
+  startFreeYearJob();
 }
 
 start().catch((err) => {

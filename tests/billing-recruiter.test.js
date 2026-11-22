@@ -19,12 +19,17 @@ const now = new Date('2026-11-14T12:00:00Z');
 const secs = (d) => Math.floor(d.getTime() / 1000);
 
 (async () => {
-  await t('steps: Founders 100 at $249 and 150 at $349 (locked), Early Access 250 at $449 and 500 at $549 (first year), then standard $1,999', async () => {
-    const w1 = plans.waveStatus({});
-    assert.strictEqual(w1.wave, 1); assert.strictEqual(w1.plan, 'founding_1'); assert.strictEqual(w1.priceCents, 24900); assert.strictEqual(w1.spotsLeft, 100); assert.strictEqual(w1.locked, true); assert.strictEqual(w1.label, 'Founding');
-    assert.strictEqual(plans.waveStatus({ 1: 99 }).spotsLeft, 1);
-    const w2 = plans.waveStatus({ 1: 100, 2: 10 });
-    assert.strictEqual(w2.wave, 2); assert.strictEqual(w2.priceCents, 34900); assert.strictEqual(w2.spotsLeft, 140);
+  await t('steps: first 100 invite-only free year then $349 (locked), next 150 at $349, Early Access 250 at $449 and 500 at $549 (first year), then standard $1,999', async () => {
+    // The public never sees the invite-only step: it opens at the 150 founding spots.
+    const w2 = plans.waveStatus({});
+    assert.strictEqual(w2.wave, 2); assert.strictEqual(w2.plan, 'founding_2'); assert.strictEqual(w2.priceCents, 34900); assert.strictEqual(w2.spotsLeft, 150); assert.strictEqual(w2.locked, true); assert.strictEqual(w2.label, 'Founding'); assert.strictEqual(w2.freeDays, 0);
+    assert.strictEqual(plans.waveStatus({ 2: 140 }).spotsLeft, 10);
+    // An invite holder gets step 1: free for 365 days, then the locked $349.
+    const w1 = plans.waveStatus({}, { invite: true });
+    assert.strictEqual(w1.wave, 1); assert.strictEqual(w1.plan, 'founding_2'); assert.strictEqual(w1.priceCents, 34900); assert.strictEqual(w1.spotsLeft, 100); assert.strictEqual(w1.freeDays, 365); assert.strictEqual(w1.locked, true);
+    assert.strictEqual(plans.waveStatus({ 1: 99 }, { invite: true }).spotsLeft, 1);
+    assert.strictEqual(plans.waveStatus({ 1: 100 }, { invite: true }).wave, 2); // invite pool full: nothing special left
+    assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: w1, hadFounding: false }), { plan: 'founding_2', wave: 1, freeDays: 365, locked: true });
     const w3 = plans.waveStatus({ 1: 100, 2: 150, 3: 5 });
     assert.strictEqual(w3.wave, 3); assert.strictEqual(w3.priceCents, 44900); assert.strictEqual(w3.standardCents, 199900); assert.strictEqual(w3.spotsLeft, 245); assert.strictEqual(w3.locked, false); assert.strictEqual(w3.label, 'Early Access');
     const w4 = plans.waveStatus({ 1: 100, 2: 150, 3: 250 });
@@ -55,7 +60,7 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
   await t('plan choice: monthly is always $249; founding is annual only and once per person', async () => {
     const st = plans.waveStatus({});
     assert.deepStrictEqual(plans.choosePlan({ interval: 'monthly', status: st, hadFounding: false }), { plan: 'recruiter_monthly', wave: null });
-    assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: st, hadFounding: false }), { plan: 'founding_1', wave: 1, locked: true });
+    assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: st, hadFounding: false }), { plan: 'founding_2', wave: 2, locked: true });
     assert.deepStrictEqual(plans.choosePlan({ interval: 'annual', status: st, hadFounding: true }), { plan: 'recruiter_annual', wave: null });
     assert.strictEqual(plans.choosePlan({ interval: 'weekly', status: st, hadFounding: false }), null);
   });
@@ -150,11 +155,11 @@ const secs = (d) => Math.floor(d.getTime() / 1000);
       prices: { list: async () => ({ data: [{ id: 'price_f1' }] }) },
       checkout: { sessions: { create: async (a) => { args = a; return { url: 'https://stripe.test/pay' }; } } } };
     const out = await recruiterBilling.startCheckout({ stripe: st, recruiter: r, interval: 'annual', baseUrl: 'https://precheckd.com', successPath: '/billing/return', cancelPath: '/billing?canceled=1', now });
-    assert.strictEqual(out.url, 'https://stripe.test/pay'); assert.strictEqual(out.wave, 1);
+    assert.strictEqual(out.url, 'https://stripe.test/pay'); assert.strictEqual(out.wave, 2);
     assert.strictEqual(args.mode, 'subscription'); assert.deepStrictEqual(args.automatic_tax, { enabled: true });
     assert.strictEqual(args.client_reference_id, 'r2'); assert.strictEqual(args.subscription_data.metadata.ownerId, 'r2');
     assert.ok(args.success_url.endsWith('/billing/return?session_id={CHECKOUT_SESSION_ID}'));
-    assert.strictEqual(r.billing.founding.wave, 1); assert.strictEqual(r.billing.founding.priceCents, 24900); assert.ok(r.billing.founding.reservedAt);
+    assert.strictEqual(r.billing.founding.wave, 2); assert.strictEqual(r.billing.founding.priceCents, 34900); assert.ok(r.billing.founding.reservedAt);
     assert.strictEqual(r.billing.customerId, 'cus_new');
   });
   await t('checkout in Early Access: standard price, one-time coupon, no promo-code field, spot held as not locked', async () => {

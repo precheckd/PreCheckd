@@ -40,7 +40,9 @@
   <% } else { %>
     <% if (needed) { %><div class="bl-banner bl-warn">Your membership isn't active. Start or renew it to post jobs, search candidates and reach applicants.</div><% } %>
     <% if (canceled) { %><div class="bl-banner bl-warn">Checkout was cancelled. You have not been charged.</div><% } %>
-    <% if (error) { %><div class="bl-banner bl-warn">Something went wrong. Please try again, or contact support.</div><% } %>
+    <% if (error === 'invite') { %><div class="bl-banner bl-warn">That invite code isn't valid, or it was already used.</div>
+    <% } else if (error === 'invite_full') { %><div class="bl-banner bl-warn">The founding invite spots are full. You can still join below.</div>
+    <% } else if (error) { %><div class="bl-banner bl-warn">Something went wrong. Please try again, or contact support.</div><% } %>
     <% if (paid && state.status === 'active') { %><div class="bl-banner bl-ok">Thanks, you're a member.</div><% } %>
 
     <% if (state.status === 'active') { %>
@@ -48,10 +50,31 @@
         <% if (billing.cancelAtPeriodEnd) { %>It will end then and won't renew.<% } else { %>It renews automatically.<% } %></p>
       <% if (billing.founding && billing.founding.lockedAt && billing.founding.priceCents) { %><% if (billing.founding.locked) { %><p class="bl-meta">Founding recruiter: your price is locked at $<%= (billing.founding.priceCents / 100).toLocaleString('en-US') %>/year while you stay subscribed.</p><% } else { %><p class="bl-meta">Early Access: your first year was $<%= (billing.founding.priceCents / 100).toLocaleString('en-US') %>. After that it renews at the standard <%= annual %>/year.</p><% } %><% } %>
       <p class="bl-meta">Includes <%= limit %> open job postings at a time.</p>
+      <% if (freeYear) { %>
+        <div class="bl-banner <%= freeYear.status === 'warned' ? 'bl-warn' : 'bl-ok' %>" style="margin-top:1rem;">
+          <strong>Free founding year</strong> until <%= new Date(freeYear.trialEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %>, then $349 a year, locked in.<br>
+          Jobs posted: <%= freeYear.posted %> of <%= freeYear.postedTarget %><% if (!freeYear.postedMet && freeYear.postByDate) { %> (by <%= new Date(freeYear.postByDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>)<% } %>.
+          <% if (freeYear.postedMet) { %>Jobs maintained now: <%= freeYear.maintained %> (keep at least <%= freeYear.maintainedTarget %>).<% } %>
+          <% if (freeYear.status === 'warned' && freeYear.cureBy) { %><br><strong>Fix this by <%= new Date(freeYear.cureBy).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) %></strong> or your card is charged $349 and your paid year starts.<% } %>
+        </div>
+      <% } %>
     <% } else if (state.status === 'grace') { %>
       <div class="bl-banner bl-warn">Your last payment didn't go through. Update your card within <%= graceDays %> day<%= graceDays === 1 ? '' : 's' %> to keep your account active.</div>
     <% } else { %>
       <p>One plan, everything included: post up to 5 open jobs at a time, search verified candidates, and reach your applicants.</p>
+      <% if (invite) { %>
+        <div class="bl-plan bl-hero" style="text-align:left;">
+          <span class="bl-special" style="background:#F5C518;color:#1F363C;">Founding invite</span>
+          <div class="bl-now" style="margin-top:.6rem;">Free <small>for your first year</small></div>
+          <p class="bl-meta" style="color:#F2F4F3;">Then $349 a year, locked in for as long as you stay a member. Cancel any time during the free year and you won't be charged.</p>
+          <ul class="bl-meta" style="padding-left:1.2rem;line-height:1.55;">
+            <li>A card is required to start. Nothing is charged during the free year.</li>
+            <li>Post at least 3 real jobs in your first 30 days, then keep at least 2 going. A job counts while it is open, or for 30 days after it closes as filled.</li>
+            <li>If that slips, we email you first and give you 30 days to fix it. If it is still not fixed, your card is charged $349 and your paid year starts.</li>
+          </ul>
+          <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="annual"><input type="hidden" name="invite" value="1"><button class="bl-btn" type="submit">Start my free year</button></form>
+        </div>
+      <% } else { %>
       <div class="bl-plans">
         <div class="bl-plan">
           <h2>Monthly</h2>
@@ -82,6 +105,14 @@
         </div>
         <% } %>
       </div>
+      <% } %>
+      <details style="margin-top:1rem;"><summary class="bl-meta" style="cursor:pointer;">Have an invite code?</summary>
+        <form method="POST" action="/billing/invite" style="margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+          <input type="text" name="code" maxlength="12" autocomplete="off" placeholder="Invite code" style="flex:1;min-width:10rem;padding:.5rem;border-radius:6px;border:1px solid #5b7a82;background:#1F363C;color:#F2F4F3;">
+          <button class="bl-btn bl-ghost" type="submit">Use code</button>
+        </form>
+        <p class="bl-meta" style="margin-top:.6rem;"><a href="/request-invite" style="color:#8FE3B1;">Request an invite</a></p>
+      </details>
     <% } %>
 
     <% if (state.status === 'active' || state.status === 'grace') { %>

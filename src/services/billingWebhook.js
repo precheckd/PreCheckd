@@ -71,6 +71,7 @@ async function apply(event, { stripe, now }) {
     snap();
     const sub = await stripe.subscriptions.retrieve(idOf(obj.subscription));
     sync.applySubscription(owner.doc.billing, sub, now);
+    if (owner.type === 'recruiter' && obj.metadata && obj.metadata.inviteId) { await owner.doc.save(); await require('./recruiterBilling').startFreeYearIfInvited(owner.doc, sub, obj.metadata, now); }
     // The $79 verification fee rides on a candidate's first checkout.
     if (owner.type === 'candidate' && obj.payment_status === 'paid') require('./candidateBilling').recordFee(owner.doc, obj.metadata, now);
   } else if (event.type.startsWith('customer.subscription.')) {

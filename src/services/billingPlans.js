@@ -6,8 +6,8 @@
 const PLANS = {
   recruiter_monthly: { key: 'precheckd_recruiter_monthly', name: 'PreCheckd Recruiter (monthly)', cents: 24900, interval: 'month' },
   recruiter_annual: { key: 'precheckd_recruiter_annual', name: 'PreCheckd Recruiter (annual)', cents: 199900, interval: 'year' },
-  founding_1: { key: 'precheckd_recruiter_founding_1', name: 'PreCheckd Founding Recruiter (annual, first 100)', cents: 24900, interval: 'year' },
-  founding_2: { key: 'precheckd_recruiter_founding_2', name: 'PreCheckd Founding Recruiter (annual, next 150)', cents: 34900, interval: 'year' },
+  // The one Founders price ($349/year, locked while subscribed). The first 100 get it after a free year (invite only).
+  founding_2: { key: 'precheckd_recruiter_founding_2', name: 'PreCheckd Founding Recruiter (annual)', cents: 34900, interval: 'year' },
   // Add-ons for recruiters. The slot price is graduated: slots 1-5 are $10 each, 6-10 $8 each, 11 and up $6 each, per month.
   recruiter_slot: { key: 'precheckd_recruiter_slot', name: 'PreCheckd extra open job posting slot (monthly)', interval: 'month', cents: 1000,
     tiers: [{ up_to: 5, unit_amount: 1000 }, { up_to: 10, unit_amount: 800 }, { up_to: 'inf', unit_amount: 600 }] },
@@ -21,11 +21,14 @@ const PLANS = {
 // The first 1,000 candidates skip the $79 verification fee ("Founding Candidates"). The ID check still runs.
 const FOUNDING_CANDIDATES = 1000;
 
-// Four steps, 1,000 recruiters in all (Kent, Nov 15). Steps 1-2 are the FOUNDERS (first 250): their yearly price is
-// locked for as long as they stay subscribed. Steps 3-4 are EARLY ACCESS: a lower first-year price (the standard annual
-// price with a one-time discount in Stripe), then they renew at the standard price. Nothing is locked for them.
+// Four steps, 1,000 recruiters in all. Steps 1-2 are the FOUNDERS (first 250): $349 a year, locked for as long as they stay
+// subscribed. Step 1 is INVITE ONLY (Kent, Nov 21): the first 100 get their first year free (a Stripe trial, card on file)
+// and only through a personal invite code, so the public sees $349 from day one (step 2). Steps 3-4 are EARLY ACCESS: a
+// lower first-year price (the standard annual price with a one-time discount in Stripe), then they renew at the standard
+// price. Nothing is locked for them.
+const FREE_YEAR_DAYS = 365;
 const WAVES = [
-  { wave: 1, size: 100, plan: 'founding_1', locked: true, label: 'Founding' },
+  { wave: 1, size: 100, plan: 'founding_2', locked: true, label: 'Founding', inviteOnly: true, freeDays: FREE_YEAR_DAYS },
   { wave: 2, size: 150, plan: 'founding_2', locked: true, label: 'Founding' },
   { wave: 3, size: 250, plan: 'recruiter_annual', introCents: 44900, locked: false, label: 'Early Access' },
   { wave: 4, size: 500, plan: 'recruiter_annual', introCents: 54900, locked: false, label: 'Early Access' },
@@ -52,15 +55,17 @@ function slotMonthlyCents(qty) {
 }
 
 // Pure: given how many spots are taken in each wave ({1: n, 2: n}), which wave is open and what is left.
-function waveStatus(taken = {}) {
+// Invite-only steps are skipped unless `invite` is true (the visitor holds a valid invite).
+function waveStatus(taken = {}, { invite = false } = {}) {
   for (const w of WAVES) {
+    if (w.inviteOnly && !invite) continue;
     const used = Number(taken[w.wave]) || 0;
     if (used < w.size) {
       return { wave: w.wave, plan: w.plan, priceCents: waveCents(w), standardCents: PLANS.recruiter_annual.cents,
-        locked: w.locked, label: w.label, spotsLeft: w.size - used, size: w.size };
+        locked: w.locked, label: w.label, spotsLeft: w.size - used, size: w.size, freeDays: w.freeDays || 0 };
     }
   }
-  return { wave: null, plan: null, priceCents: PLANS.recruiter_annual.cents, standardCents: PLANS.recruiter_annual.cents, locked: false, label: null, spotsLeft: 0, size: 0 };
+  return { wave: null, plan: null, priceCents: PLANS.recruiter_annual.cents, standardCents: PLANS.recruiter_annual.cents, locked: false, label: null, spotsLeft: 0, size: 0, freeDays: 0 };
 }
 
 // Pure: which plan a recruiter gets for the interval they picked. Founding price is annual only, and only for
@@ -70,6 +75,7 @@ function choosePlan({ interval, status, hadFounding }) {
   if (interval !== 'annual') return null;
   if (status.wave && !hadFounding) {
     const choice = { plan: status.plan, wave: status.wave };
+    if (status.freeDays) choice.freeDays = status.freeDays;
     // Early Access: standard annual price, first invoice reduced by a one-time coupon.
     if (!status.locked) { choice.discountCents = status.standardCents - status.priceCents; choice.locked = false; } else choice.locked = true;
     return choice;
@@ -126,4 +132,4 @@ function chooseCandidatePlan({ interval, foundingSpotsLeft, alreadyFounding, had
   return { plan, founding, feeDue };
 }
 
-module.exports = { CREDITS_PER_PACK, MAX_PACKS_AT_ONCE, MAX_EXTRA_SLOTS, slotMonthlyCents, PLANS, WAVES, FOUNDING_CANDIDATES, chooseCandidatePlan, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, ensureCoupon, clearCache, waveCents };
+module.exports = { FREE_YEAR_DAYS, CREDITS_PER_PACK, MAX_PACKS_AT_ONCE, MAX_EXTRA_SLOTS, slotMonthlyCents, PLANS, WAVES, FOUNDING_CANDIDATES, chooseCandidatePlan, RESERVE_MINUTES, BASE_OPEN_POSTINGS, waveStatus, choosePlan, ensurePrice, ensureCoupon, clearCache, waveCents };

@@ -280,6 +280,7 @@ app.use('/api/outside-interest', require('./routes/outside-interest'));
 app.use('/api/saved-recruiters', savedRecruitersRoutes);
 app.use('/recruiter-dashboard', recruiterDashboardRoutes);
 app.use('/recruiter-jobs', require('./routes/recruiter-jobs'));
+app.use('/', require('./routes/founding-invite'));
 app.use('/billing', require('./routes/billing'));
 app.use('/candidate-billing', require('./routes/candidate-billing'));
 app.use('/jobs', require('./routes/jobs'));

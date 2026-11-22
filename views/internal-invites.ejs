@@ -1,0 +1,78 @@
+<style>
+  .sr-wrap { max-width: 980px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .sr-wrap h2 { color: #1F363C; font-size: 1.15rem; margin: 1.8rem 0 .6rem; }
+  .sr-back { color: #1F7A4C; font-size: 0.9rem; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+  .cr-card { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: .9rem 1.2rem; margin-bottom: .8rem; color: #1F363C; }
+  .cr-card form { display: inline-flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; margin-right: .4rem; }
+  .cr-card input[type=text] { flex: 1; min-width: 12rem; padding: .4rem; }
+  .cr-note { color: #1F7A4C; font-weight: 600; margin-bottom: 1rem; }
+  .cr-meta { color: #7A8B91; font-size: .85rem; }
+  .iv-link { font-family: ui-monospace, Menlo, monospace; font-size: .85rem; word-break: break-all; }
+  .iv-bad { color: #B42318; font-weight: 600; }
+  table.iv { width: 100%; border-collapse: collapse; font-size: .9rem; color: #1F363C; }
+  table.iv th, table.iv td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #DCE4E2; vertical-align: top; }
+</style>
+<div class="sr-wrap">
+  <a class="sr-back" href="/">&larr; Dashboard</a>
+  <h1>Founding Invites</h1>
+  <p class="cr-meta">The invite-only free year: first 100 recruiters, a Stripe trial with a card on file, then $349 a year locked. <strong><%= taken %> of <%= size %></strong> spots taken (counted when someone starts checkout, and held 35 minutes).</p>
+  <% if (notice === 'made' || notice === 'done') { %><div class="cr-note">Saved.</div><% } %>
+  <% if (notice === 'closed') { %><div class="cr-note iv-bad">That one was already decided.</div><% } %>
+
+  <h2>Make a code</h2>
+  <div class="cr-card">
+    <form method="POST" action="/invites/new">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="note" maxlength="300" placeholder="Who is it for? (your note)">
+      <input type="text" name="email" maxlength="160" placeholder="Their email (optional)">
+      <button type="submit">Make code</button>
+    </form>
+    <div class="cr-meta">Single use. Send them the link it makes.</div>
+  </div>
+
+  <h2>Requests waiting (<%= requests.length %>)</h2>
+  <% requests.forEach((r) => { %>
+    <div class="cr-card">
+      <strong><%= r.name %></strong> &middot; <%= r.email %> <span class="cr-meta">&middot; <%= new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+      <div><%= r.company || 'No company given' %><% if (r.about) { %> &mdash; "<%= r.about %>"<% } %></div>
+      <form method="POST" action="/invites/<%= r.id %>/approve"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit">Approve and email the link</button></form>
+      <form method="POST" action="/invites/<%= r.id %>/decline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit">Decline (no email)</button></form>
+    </div>
+  <% }) %>
+  <% if (!requests.length) { %><p class="cr-meta">No requests waiting.</p><% } %>
+
+  <h2>Open codes (<%= open.length %>)</h2>
+  <% open.forEach((r) => { %>
+    <div class="cr-card">
+      <strong><%= r.code %></strong> <span class="cr-meta">&middot; <%= r.source === 'request' ? 'approved request from ' + r.name + ' (' + r.email + ')' : 'made by you' %><% if (r.note) { %> &middot; <%= r.note %><% } %><% if (r.source === 'staff' && r.email) { %> &middot; <%= r.email %><% } %></span>
+      <div class="iv-link"><%= r.link %></div>
+      <form method="POST" action="/invites/<%= r.id %>/revoke"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit">Revoke</button></form>
+    </div>
+  <% }) %>
+  <% if (!open.length) { %><p class="cr-meta">No open codes.</p><% } %>
+
+  <h2>Free-year recruiters (<%= free.length %>)</h2>
+  <% if (free.length) { %>
+  <table class="iv">
+    <tr><th>Recruiter</th><th>Status</th><th>Started</th><th>Free until</th><th>Posted</th><th>Maintained</th><th>Notes</th></tr>
+    <% free.forEach((f) => { %>
+      <tr>
+        <td><%= f.name %><br><span class="cr-meta"><%= f.email %></span></td>
+        <td class="<%= f.status === 'warned' ? 'iv-bad' : '' %>"><%= f.status %></td>
+        <td><%= f.startedAt ? new Date(f.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '' %></td>
+        <td><%= f.trialEnd ? new Date(f.trialEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '' %></td>
+        <td><%= f.posted === null ? '-' : f.posted + ' of 3' %></td>
+        <td><%= f.maintained === null ? '-' : f.maintained + ' (need 2)' %></td>
+        <td><% if (f.status === 'warned') { %>Fix by <%= new Date(f.cureBy).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %> (<%= f.reason %>)<% } else if (f.status === 'ended') { %><%= f.endedReason %><% } %></td>
+      </tr>
+    <% }) %>
+  </table>
+  <% } else { %><p class="cr-meta">Nobody has started a free year yet.</p><% } %>
+
+  <h2>Used, revoked and declined</h2>
+  <% used.forEach((r) => { %>
+    <div class="cr-meta" style="margin-bottom:.3rem;"><strong><%= r.code || '(no code)' %></strong> &middot; <%= r.status %><% if (r.source === 'request') { %> &middot; <%= r.name %> (<%= r.email %>)<% } else if (r.note) { %> &middot; <%= r.note %><% } %></div>
+  <% }) %>
+  <% if (!used.length) { %><p class="cr-meta">None yet.</p><% } %>
+</div>
