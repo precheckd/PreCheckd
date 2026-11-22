@@ -14,6 +14,7 @@ process.env.PUBLIC_BASE_URL = 'https://precheckd.com';
 const Recruiter = require('../src/models/Recruiter');
 const seo = require('../src/services/seo');
 const publicCheck = require('../src/services/publicCheck');
+require('../src/services/domainDns').check = async () => ({ mail: 'yes', web: 'yes' }); // no real DNS in tests
 
 // A tiny stand-in for the paid domain lookup, so nothing here touches the network.
 const axios = require('axios');

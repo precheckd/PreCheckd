@@ -22,15 +22,17 @@ async function checkDomainAge(domain) {
       return { verified: false, reason: 'no_creation_date' };
     }
 
+    const expiresStr = record?.expiresDate || record?.registryData?.expiresDate;
+    const expiresDate = expiresStr && !isNaN(new Date(expiresStr)) ? new Date(expiresStr) : null;
     const createdDate = new Date(createdDateStr);
     const registeredYear = createdDate.getFullYear();
     const ageInDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (ageInDays >= MINIMUM_DOMAIN_AGE_DAYS) {
-      return { verified: true, ageInDays, createdDate, registeredYear };
+      return { verified: true, ageInDays, createdDate, registeredYear, expiresDate };
     } else {
       console.log(`Domain ${domain} is only ${ageInDays} days old — leaving as pending`);
-      return { verified: false, reason: 'too_new', ageInDays };
+      return { verified: false, reason: 'too_new', ageInDays, expiresDate };
     }
   } catch (error) {
     console.error(`WHOIS lookup failed for ${domain}:`, error.message);

@@ -5,6 +5,8 @@
 const { checkDomainAge } = require('../utils/domainAgeCheck');
 const Recruiter = require('../models/Recruiter');
 const seo = require('./seo');
+const domainDns = require('./domainDns');
+const lookalike = require('./lookalike');
 
 const FREE_PROVIDERS = new Set([
   'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
@@ -58,15 +60,33 @@ async function domainAge(domain, now = Date.now()) {
   return value;
 }
 
+// Plain-English age: "5 days", "about 3 weeks", "about 8 months", "about 3 years".
+function ageText(days) {
+  if (days < 14) return days + (days === 1 ? ' day' : ' days');
+  if (days < 60) return 'about ' + Math.round(days / 7) + ' weeks';
+  if (days < 730) return 'about ' + Math.round(days / 30.4) + ' months';
+  return 'about ' + Math.floor(days / 365) + ' years';
+}
+
+// How much weight the age deserves: under a month is a strong warning, under six months a mild one.
+function ageBand(days) { return days < 30 ? 'very_new' : days < 180 ? 'recent' : 'established'; }
+
 // --- the check ------------------------------------------------------------------------------------------------
 async function run(email, domain) {
   const freeProvider = FREE_PROVIDERS.has(domain);
   let age = null;
+  let dns = null;
+  let similar = null;
   if (!freeProvider) {
-    const r = await domainAge(domain);
-    if (r && r.verified) age = { status: 'established', year: r.registeredYear, days: r.ageInDays };
-    else if (r && r.reason === 'too_new') age = { status: 'new', days: r.ageInDays };
-    else age = { status: 'unknown' };
+    const [r, d] = await Promise.all([domainAge(domain), domainDns.check(domain).catch(() => ({ mail: 'unknown', web: 'unknown' }))]);
+    dns = d;
+    similar = lookalike.check(domain);
+    if (r && (r.verified || r.reason === 'too_new') && typeof r.ageInDays === 'number') {
+      age = { status: r.verified ? 'established' : 'new', days: r.ageInDays, text: ageText(r.ageInDays), band: ageBand(r.ageInDays) };
+      if (r.createdDate) age.year = r.registeredYear;
+      // Only a long registration is worth showing; a short one proves nothing, so it is not mentioned.
+      if (r.expiresDate && r.expiresDate.getTime() - Date.now() >= 2 * 365 * 86400000) age.paidThrough = r.expiresDate.getFullYear();
+    } else age = { status: 'unknown' };
   }
 
   let verified = null;
@@ -81,7 +101,7 @@ async function run(email, domain) {
       profileUrl: '/recruiter/' + encodeURIComponent(account.slug),
     };
   }
-  return { email, domain, freeProvider, age, verified };
+  return { email, domain, freeProvider, age, dns, similar, verified };
 }
 
-module.exports = { parseEmail, allow, reset, run, FREE_PROVIDERS };
+module.exports = { parseEmail, allow, reset, run, ageText, ageBand, FREE_PROVIDERS };

@@ -27,12 +27,36 @@
     if (d.freeProvider) {
       html += '<div class="pc-row"><strong>Email provider (' + dom + '):</strong> <span class="pc-warn">a free email address.</span> Recruiters at real companies almost always write from a company address, so be extra careful and confirm the person another way.</div>';
     } else if (d.age) {
-      if (d.age.status === 'established') {
-        html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> registered in ' + esc(d.age.year) + '. An older domain is a good sign, but scammers can also copy real company names, so check the spelling.</div>';
-      } else if (d.age.status === 'new') {
-        html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> <span class="pc-warn">registered only ' + esc(d.age.days) + ' days ago.</span> Very new domains are a common sign of a scam.</div>';
-      } else {
+      if (d.age.status === 'unknown') {
         html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> <span class="pc-warn">we couldn\'t confirm when it was registered.</span> Treat it with caution.</div>';
+      } else {
+        var when = esc(d.age.text);
+        var tail = d.age.paidThrough ? ' It is paid up through ' + esc(d.age.paidThrough) + '.' : '';
+        if (d.age.band === 'very_new') {
+          html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> <span class="pc-warn">registered only ' + when + ' ago.</span> Very new domains are a common sign of a scam.</div>';
+        } else if (d.age.band === 'recent') {
+          html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> <span class="pc-warn">registered ' + when + ' ago.</span> Fairly new. Not a red flag on its own, but check the company\'s own website to confirm this is really theirs.' + tail + '</div>';
+        } else {
+          html += '<div class="pc-row"><strong>Domain (' + dom + '):</strong> registered ' + when + ' ago (' + esc(d.age.year) + '). An older domain is a good sign, but scammers can also copy real company names, so check the spelling.' + tail + '</div>';
+        }
+      }
+    }
+
+    if (!d.freeProvider && d.similar) {
+      var brand = esc(d.similar.brand);
+      html += d.similar.kind === 'uses_name'
+        ? '<div class="pc-row"><strong>Name:</strong> <span class="pc-warn">this domain uses the name ' + brand + ' with extra words added.</span> Real recruiters almost always write from the company\'s main domain. Confirm on the company\'s own website before you reply.</div>'
+        : '<div class="pc-row"><strong>Name:</strong> <span class="pc-warn">this domain looks a lot like ' + brand + ', but is not spelled the same.</span> Check the spelling carefully, and find the company\'s own careers page yourself.</div>';
+    }
+
+    if (!d.freeProvider && d.dns) {
+      if (d.dns.mail === 'no') {
+        html += '<div class="pc-row"><strong>Email:</strong> <span class="pc-warn">this domain isn\'t set up to receive email.</span> A real recruiter\'s company can be replied to. Be careful.</div>';
+      } else if (d.dns.mail === 'yes') {
+        html += '<div class="pc-row"><strong>Email:</strong> this domain is set up to receive email.</div>';
+      }
+      if (d.dns.web === 'no') {
+        html += '<div class="pc-row"><strong>Website:</strong> <span class="pc-warn">no website address is set up for this domain.</span> Most real companies have one.</div>';
       }
     }
 
