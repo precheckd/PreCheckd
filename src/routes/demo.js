@@ -1,5 +1,5 @@
 // Demo site entry (only mounted when DEMO_MODE=true): a landing page with two one-click sign-ins to the shared
-// sample accounts, so there are no passwords to hand out.
+// sample accounts, so there are no passwords to hand out. Each lands where a real login does: the member's own page.
 const express = require('express');
 const demo = require('../config/demo');
 const Recruiter = require('../models/Recruiter');
@@ -22,7 +22,7 @@ router.post('/demo/recruiter', async (req, res) => {
   if (!recruiter) return res.status(503).send('The demo is resetting. Try again in a minute.');
   delete req.session.candidateId;
   req.session.recruiterId = recruiter._id.toString();
-  res.redirect('/candidate-search');
+  res.redirect('/recruiter/' + recruiter.slug);
 });
 
 router.post('/demo/candidate', async (req, res) => {
@@ -30,7 +30,7 @@ router.post('/demo/candidate', async (req, res) => {
   if (!candidate) return res.status(503).send('The demo is resetting. Try again in a minute.');
   delete req.session.recruiterId;
   req.session.candidateId = candidate._id.toString();
-  res.redirect('/jobs');
+  res.redirect('/candidate/' + candidate.slug);
 });
 
 module.exports = router;
