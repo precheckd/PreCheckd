@@ -10,6 +10,7 @@ const BillingEvent = require('../src/models/BillingEvent');
 const cb = require('../src/services/candidateBilling');
 const webhook = require('../src/services/billingWebhook');
 const membership = require('../src/services/membership');
+require('../src/models/DeletedAccount').find = async () => [];
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }

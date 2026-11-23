@@ -107,6 +107,8 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'PreCheckd currently only supports recruiters with a US phone number.' });
     }
 
+    const before = await require('../services/accountDeletion').previous({ email, phone: normalizedPhone });
+    if (before && before.blocked) return res.status(400).json({ error: 'We cannot create an account with these details.' });
     const existingEmail = await Recruiter.findOne({ email });
     if (existingEmail) {
       // An unclaimed claim account (auto-created from a fraud report, no

@@ -43,8 +43,10 @@ async function ensureCustomer(stripe, candidate) {
 }
 
 async function startCheckout({ stripe, candidate, interval, baseUrl, successPath, cancelPath, now = new Date() }) {
+  // The waived verification fee is a one-time offer: a returning person who already had it pays it.
+  const prev = await require('./accountDeletion').previous({ email: candidate.email, phone: candidate.phone });
   const choice = plans.chooseCandidatePlan({
-    interval, foundingSpotsLeft: await foundingSpotsLeft(now), alreadyFounding: alreadyFounding(candidate),
+    interval, foundingSpotsLeft: prev && prev.hadWaivedFee ? 0 : await foundingSpotsLeft(now), alreadyFounding: alreadyFounding(candidate),
     hadFee: hadFee(candidate), idVerified: Boolean(candidate.isIdentityVerified),
   });
   if (!choice) { const e = new Error('Pick monthly or annual.'); e.code = 'bad_interval'; throw e; }

@@ -45,6 +45,8 @@ async function ensureCustomer(stripe, recruiter) {
 // `invite` (a usable FoundingInvite) turns this into the free founding year: annual $349 locked, with a 365-day trial.
 async function startCheckout({ stripe, recruiter, interval, baseUrl, successPath, cancelPath, invite = null, now = new Date() }) {
   const st = invite ? await status(now, { invite: true }) : await status(now);
+  // A one-time offer: someone who deleted an account that had its free year can't claim another.
+  if (invite) { const prev = await require('./accountDeletion').previous({ email: recruiter.email, phone: recruiter.phone }); if (prev && prev.hadFreeYear) { const e = new Error('The founding invite spots are full.'); e.code = 'invite_full'; throw e; } }
   if (invite && (!st.freeDays || hadFounding(recruiter))) { const e = new Error('The founding invite spots are full.'); e.code = 'invite_full'; throw e; }
   const choice = plans.choosePlan({ interval: invite ? 'annual' : interval, status: st, hadFounding: hadFounding(recruiter) });
   if (!choice) { const e = new Error('Pick monthly or annual.'); e.code = 'bad_interval'; throw e; }

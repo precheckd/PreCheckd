@@ -1,0 +1,35 @@
+<style>
+  .ad-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .ad-card { max-width: 560px; width: 100%; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 2rem; color: #F2F4F3; align-self: flex-start; }
+  .ad-card h1 { font-size: 1.5rem; margin: 0 0 .5rem; }
+  .ad-card p, .ad-card li { color: #C7D1CF; line-height: 1.55; }
+  .ad-err { background: #3a2323; border: 1px solid #7a3a3a; color: #f2c4c4; border-radius: 8px; padding: .7rem 1rem; margin: 0 0 1rem; }
+  .ad-card label { display: block; margin: 1rem 0 .3rem; font-weight: 600; }
+  .ad-card input { width: 100%; padding: .65rem .8rem; border-radius: 6px; border: 1px solid #3B5860; background: #1F363C; color: #F2F4F3; box-sizing: border-box; }
+  .ad-btn { background: #c0392b; color: #fff; border: 0; border-radius: 6px; padding: .8rem 1.3rem; font-weight: 800; margin-top: 1.25rem; cursor: pointer; }
+  .ad-ghost { color: #C7D1CF; margin-left: 1rem; }
+</style>
+<div class="ad-wrap"><div class="ad-card">
+  <h1>Delete my account</h1>
+  <% if (error) { %><div class="ad-err"><%= error %></div><% } %>
+  <p>This permanently deletes your account and everything on it, right away. It can't be undone.</p>
+  <ul>
+    <% if (kind === 'recruiter') { %>
+      <li>Your job postings, connections, messages and notes are deleted.</li>
+    <% } else { %>
+      <li>Your profile, resume, videos, skill results, applications, connections and messages are deleted.</li>
+    <% } %>
+    <li>Your membership is cancelled and you won't be charged again. Stripe keeps its own payment records, and asks us to delete your saved card.</li>
+    <li>Your ID check images are removed from our verification partner.</li>
+    <li>If you come back later you start from scratch, including verifying your identity again.</li>
+  </ul>
+  <p>Messages you already sent may remain with the people who received them.</p>
+  <form method="POST" action="/account/delete">
+    <label for="password">Your password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <label for="confirm">Type DELETE to confirm</label>
+    <input id="confirm" name="confirm" type="text" autocomplete="off" required>
+    <button class="ad-btn" type="submit">Delete everything</button>
+    <a class="ad-ghost" href="/">Cancel</a>
+  </form>
+</div></div>

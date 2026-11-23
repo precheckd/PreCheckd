@@ -10,6 +10,7 @@ const FoundingInvite = require('../src/models/FoundingInvite');
 const Recruiter = require('../src/models/Recruiter');
 const JobPosting = require('../src/models/JobPosting');
 const emailService = require('../src/services/emailService');
+require('../src/models/DeletedAccount').find = async () => [];
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }

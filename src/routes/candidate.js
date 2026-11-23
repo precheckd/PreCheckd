@@ -237,6 +237,9 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       return res.status(400).json({ error: 'Please enter a valid phone number.' });
     }
 
+    const before = await require('../services/accountDeletion').previous({ email, phone: normalizedPhone });
+    if (before && before.blocked) return res.status(400).json({ error: 'We cannot create an account with these details.' });
+
     const existingEmail = await Candidate.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
