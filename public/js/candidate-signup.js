@@ -250,6 +250,12 @@
   const signupForm = document.getElementById('candidate-signup-form');
   let signupHadResume = false;
 
+  const liInput = document.getElementById('signup-linkedin');
+  const liNone = document.getElementById('signup-no-linkedin');
+  if (liInput && liNone) {
+    liNone.addEventListener('change', () => { liInput.disabled = liNone.checked; if (liNone.checked) liInput.value = ''; });
+  }
+
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();

@@ -936,6 +936,10 @@
       <% } %>
 
       <form id="edit-form" action="/candidate/<%= candidate.slug %>/edit" method="POST" enctype="multipart/form-data">
+        <label>LinkedIn profile <span class="label-hint">(we use it to help verify your work history)</span>
+          <input type="text" name="linkedinUrl" id="edit-linkedin" value="<%= candidate.linkedinUrl || '' %>" placeholder="linkedin.com/in/yourname" maxlength="200" <%= candidate.noLinkedin ? 'disabled' : '' %>>
+        </label>
+        <label class="checkbox-row"><input type="checkbox" name="noLinkedin" value="yes" id="edit-no-linkedin" <%= candidate.noLinkedin ? 'checked' : '' %> onchange="var i=document.getElementById('edit-linkedin');i.disabled=this.checked;if(this.checked)i.value='';"> I don't have LinkedIn</label>
         <label>Bio <span class="label-hint">(optional)</span>
           <textarea name="bio" placeholder="A short summary of your background..."><%= candidate.bio || '' %></textarea>
         </label>

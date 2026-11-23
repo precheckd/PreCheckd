@@ -323,6 +323,10 @@
         <input type="hidden" name="email" id="signup-email-hidden">
         <label>Phone <span class="label-hint">(you'll receive a verification text)</span><input type="tel" name="phone" placeholder="(555) 555-0123" required></label>
         <label>Password <span class="label-hint">(at least 8 characters)</span><input type="password" name="password" minlength="8" required></label>
+        <label>LinkedIn profile <span class="label-hint">(we use it to help verify your work history)</span>
+          <input type="text" name="linkedinUrl" id="signup-linkedin" placeholder="linkedin.com/in/yourname" maxlength="200">
+        </label>
+        <label class="checkbox-row"><input type="checkbox" name="noLinkedin" value="yes" id="signup-no-linkedin"> I don't have LinkedIn</label>
 
         <div class="resume-upload-box">
           <p><strong>Have a resume handy?</strong> Every job site makes you upload one, then re-type everything on it anyway. We think that's ridiculous — upload yours and we'll pull your work history and education automatically. You'll get a chance to review it before anything's saved. Prefer to type it manually? Skip this and you can add it later.</p>

@@ -230,6 +230,8 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
     }
 
     if (release.error) return res.status(400).json({ error: release.error });
+    const linkedin = require('../utils/linkedin').fromBody(req.body);
+    if (linkedin.error) return res.status(400).json({ error: linkedin.error });
 
     if (password.length < 8) {
       return res.status(400).json({ error: 'Password must be at least 8 characters.' });
@@ -275,6 +277,8 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       phone: normalizedPhone,
       passwordHash,
       releaseAuthorization: release.value,
+      linkedinUrl: linkedin.url,
+      noLinkedin: linkedin.none,
       termsAcceptedAt: new Date(),
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,

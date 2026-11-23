@@ -357,6 +357,14 @@ router.post('/:slug/edit', upload.fields([
     const submittedCertifications = parseJsonField(req.body.certifications);
 
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
+    {
+      const linkedin = require('../utils/linkedin').fromBody(req.body);
+      if (linkedin.error) {
+        return res.status(400).render('candidate-edit', { candidate, title: 'Edit Profile | PreCheckd', error: linkedin.error, missingRequirements: getMissingMatchingRequirements(candidate), ...formExtras(candidate) });
+      }
+      candidate.linkedinUrl = linkedin.url;
+      candidate.noLinkedin = linkedin.none;
+    }
 
     const photoFile = req.files?.profilePhoto?.[0];
     const resumeFile = req.files?.resume?.[0];

@@ -187,6 +187,9 @@ const candidateSchema = new mongoose.Schema({
     ip: { type: String, default: null },
   },
   // Needed only while a degree check is in progress; deleted when the last one closes (services/educationDob.js).
+  // Their LinkedIn profile (self-reported, not verified); noLinkedin is the explicit "I don't have one".
+  linkedinUrl: { type: String, default: null },
+  noLinkedin: { type: Boolean, default: false },
   verificationDob: { type: String, default: null },
   verificationPriorNames: { type: String, default: null },
   termsAcceptedAt: {
