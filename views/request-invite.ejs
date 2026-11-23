@@ -15,7 +15,7 @@
   <% if (done) { %>
     <div class="ri-ok">Thanks. We read every request ourselves. If a spot is available for you, we'll email you a personal link.</div>
   <% } else { %>
-    <p>The first 100 recruiters get a founding invite. Tell us a little about you and we'll get back to you by email.</p>
+    <p>Founding invites are limited to 100 recruiters, and we review each request personally. Tell us a little about you and we'll get back to you by email.</p>
     <% if (error) { %><div class="ri-err"><%= error %></div><% } %>
     <form method="POST" action="/request-invite">
       <label for="ri-name">Your name</label>
@@ -28,6 +28,7 @@
       <textarea id="ri-about" name="about" rows="3" maxlength="600"><%= form.about || '' %></textarea>
       <div class="ri-hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
       <button class="ri-btn" type="submit">Request my invite</button>
+      <p style="font-size:.85rem;margin-top:.8rem;">We only use these details to reply to your request.</p>
     </form>
   <% } %>
 </div></div>
