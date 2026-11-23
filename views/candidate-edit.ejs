@@ -961,6 +961,17 @@
           <div class="accordion-body">
             <div id="education-entries"></div>
             <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
+            <% if (typeof needsDob !== 'undefined' && needsDob) { %>
+            <div style="margin:.8rem 0;">
+              <label>Date of birth <span class="label-hint">(only needed if you list a degree)</span>
+                <input type="date" name="verificationDob" max="<%= new Date().toISOString().slice(0, 10) %>">
+              </label>
+              <p class="label-hint">Schools use your date of birth to find your record. We use it only to verify your education, and delete it when the check is finished.</p>
+              <label>Other names you studied under <span class="label-hint">(optional)</span>
+                <input type="text" name="verificationPriorNames" maxlength="120">
+              </label>
+            </div>
+            <% } %>
           </div>
         </details>
 
@@ -1051,6 +1062,7 @@
   window.PRECHECKD_EDUCATION_LEVELS = <%- JSON.stringify(educationLevels || []) %>;
   window.PRECHECKD_CANDIDATE_SLUG = <%- JSON.stringify(candidate.slug) %>;
 </script>
+<script src="/js/school-picker.js"></script>
 <script src="/js/candidate-edit.js"></script>
 <script>
 (function () {

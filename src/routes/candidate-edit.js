@@ -131,6 +131,7 @@ router.get('/:slug/edit', async (req, res) => {
     }
 
     res.render('candidate-edit', {
+      needsDob: !candidate.verificationDob,
       candidate,
       title: `Edit Profile | PreCheckd`,
       error: null,
@@ -379,6 +380,17 @@ router.post('/:slug/edit', upload.fields([
 
     candidate.workHistory = mergeEntries(submittedWorkHistory, candidate.workHistory, ['jobTitle', 'employerName', 'startDate']);
     candidate.educationHistory = mergeEducation(submittedEducationHistory, candidate.educationHistory);
+    {
+      const educationDob = require('../services/educationDob');
+      const clean = educationDob.validate(req.body.verificationDob);
+      if (clean) candidate.verificationDob = clean;
+      if (req.body.verificationPriorNames && String(req.body.verificationPriorNames).trim()) candidate.verificationPriorNames = String(req.body.verificationPriorNames).trim().slice(0, 120);
+      await require('../services/schools').link(candidate.educationHistory);
+      if (!educationDob.hasEducation(candidate)) { candidate.verificationDob = null; candidate.verificationPriorNames = null; }
+      if (educationDob.needsDob(candidate)) {
+        return res.status(400).render('candidate-edit', { candidate, title: 'Edit Profile | PreCheckd', error: 'Enter your date of birth so we can verify your degree.', missingRequirements: getMissingMatchingRequirements(candidate), needsDob: true, ...formExtras(candidate) });
+      }
+    }
     candidate.certifications = mergeEntries(submittedCertifications, candidate.certifications, ['name', 'credentialId'], ['name']);
     applySubmittedExpiry(candidate.certifications, submittedCertifications);
 

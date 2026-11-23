@@ -284,6 +284,8 @@ app.use('/', require('./routes/founding-invite'));
 app.use('/billing', require('./routes/billing'));
 app.use('/candidate-billing', require('./routes/candidate-billing'));
 app.use('/account', require('./routes/account-delete'));
+app.use('/api/schools', require('./routes/schools'));
+app.locals.releaseText = require('./services/releaseAuthorization').TEXT;
 app.use('/jobs', require('./routes/jobs'));
 app.use('/hire-confirm', require('./routes/hire-confirm'));
 app.use('/candidate-dashboard', candidateDashboardRoutes);

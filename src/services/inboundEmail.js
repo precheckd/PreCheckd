@@ -358,6 +358,7 @@ async function addSuppressions(addresses, reason, note) {
 async function handleDeliveryEvent(event) {
   if (event.type === 'email.bounced' && /permanent/i.test((event.data.bounce && event.data.bounce.type) || '')) {
     await addSuppressions(event.data.to, 'bounce', event.data.bounce.subType);
+    for (const to of event.data.to || []) { try { await require('./verificationCases').addressBounced(parseSender(to).address); } catch (e) { console.error('[inbound] bounce follow-up failed:', e.message); } }
     console.log(`[inbound] hard bounce suppressed (${(event.data.to || []).length} address)`);
   } else if (event.type === 'email.complained') {
     await addSuppressions(event.data.to, 'complaint');

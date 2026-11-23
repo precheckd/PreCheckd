@@ -29,6 +29,12 @@ const verificationCaseSchema = new mongoose.Schema({
     email: { type: String, default: '' },
     phone: { type: String, default: '' }
   },
+  // Where the contact came from: manual (staff typed it), guessed (a pattern address from the school directory that no
+  // person has answered yet) or confirmed (a person answered from it). A date of birth is sent only to a confirmed one.
+  contactStatus: { type: String, enum: ['manual', 'guessed', 'confirmed'], default: 'manual' },
+  schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', default: null },
+  // What the candidate authorized, as it stood when the case started.
+  authorization: { version: { type: Number, default: null }, typedName: { type: String, default: null }, acceptedAt: { type: Date, default: null } },
   status: { type: String, enum: ['outreach', 'with_candidate', 'verified', 'unable'], default: 'outreach', index: true },
   startedAt: { type: Date, default: Date.now },
   openedAt: { type: Date, default: null },                       // day 7: handed to the candidate

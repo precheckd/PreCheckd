@@ -14,6 +14,8 @@ const workHistorySchema = new mongoose.Schema({
 
 const educationHistorySchema = new mongoose.Schema({
   schoolName: { type: String, required: true },
+  // The school directory entry this was picked from (models/School). Null for a school typed in by hand.
+  schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', default: null },
   degree: { type: String, required: true },
   // Level the job apply gate reads (a higher level satisfies a lower one). Chosen by the candidate;
   // changing it makes a new, unverified entry. Entries saved before levels existed have none and fall
@@ -176,6 +178,17 @@ const candidateSchema = new mongoose.Schema({
   },
 
   // When they ticked the Terms / Privacy box at signup (null on older accounts).
+  // The electronic authorization signed at signup (services/releaseAuthorization.js): lets PreCheckd contact the
+  // employers and schools on the profile to confirm the facts. Kept as the signing record.
+  releaseAuthorization: {
+    version: { type: Number, default: null },
+    typedName: { type: String, default: null },
+    acceptedAt: { type: Date, default: null },
+    ip: { type: String, default: null },
+  },
+  // Needed only while a degree check is in progress; deleted when the last one closes (services/educationDob.js).
+  verificationDob: { type: String, default: null },
+  verificationPriorNames: { type: String, default: null },
   termsAcceptedAt: {
     type: Date,
     default: null

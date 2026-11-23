@@ -219,6 +219,7 @@ router.post('/login', async (req, res) => {
 router.post('/signup', upload.single('resume'), async (req, res) => {
   try {
     const { firstName, lastName, email, phone, password, acceptTerms } = req.body;
+    const release = require('../services/releaseAuthorization').record({ accepted: req.body.acceptRelease, typedName: req.body.releaseName, firstName, lastName, ip: req.ip });
 
     if (acceptTerms !== 'yes' && acceptTerms !== true) {
       return res.status(400).json({ error: 'Please agree to the Terms of Service and Privacy Policy to continue.' });
@@ -227,6 +228,8 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    if (release.error) return res.status(400).json({ error: release.error });
 
     if (password.length < 8) {
       return res.status(400).json({ error: 'Password must be at least 8 characters.' });
@@ -271,6 +274,7 @@ router.post('/signup', upload.single('resume'), async (req, res) => {
       email,
       phone: normalizedPhone,
       passwordHash,
+      releaseAuthorization: release.value,
       termsAcceptedAt: new Date(),
       emailVerifiedAt: null,
       emailVerificationToken: emailToken,
@@ -500,7 +504,7 @@ router.post('/save-profile-details', async (req, res) => {
       return res.status(400).json({ error: 'No active candidate session' });
     }
 
-    const { bio, workHistory, educationHistory, certifications } = req.body;
+    const { bio, workHistory, educationHistory, certifications, dob, priorNames } = req.body;
 
     const candidate = await Candidate.findById(candidateId);
     if (!candidate) {
@@ -510,6 +514,17 @@ router.post('/save-profile-details', async (req, res) => {
     candidate.bio = bio && bio.trim() ? bio.trim().slice(0, 1000) : null;
     candidate.workHistory = Array.isArray(workHistory) ? workHistory : [];
     candidate.educationHistory = Array.isArray(educationHistory) ? educationHistory : [];
+    {
+      // A date of birth is needed only to find a school record, so it is asked only when a degree is listed.
+      const educationDob = require('../services/educationDob');
+      if (candidate.educationHistory.length) {
+        const clean = educationDob.validate(dob);
+        if (!clean && !candidate.verificationDob) return res.status(400).json({ error: 'Enter a valid date of birth so we can verify your degree.' });
+        if (clean) candidate.verificationDob = clean;
+        candidate.verificationPriorNames = priorNames && String(priorNames).trim() ? String(priorNames).trim().slice(0, 120) : candidate.verificationPriorNames;
+      } else { candidate.verificationDob = null; candidate.verificationPriorNames = null; }
+      await require('../services/schools').link(candidate.educationHistory);
+    }
 
     if (Array.isArray(certifications)) {
       const existingByName = new Map(

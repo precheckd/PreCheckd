@@ -335,27 +335,30 @@ async function sendVerificationNoticeEmail(toEmail, firstName, caseId) {
 
 // Asks an employer or school to confirm one entry. Facts only, nothing sensitive requested. Replies go to
 // VERIFICATION_REPLY_TO (a mailbox staff read).
-async function sendEmployerVerificationEmail({ to, contactName, kind, candidateName, subject, detail, dates, attempt }) {
+async function sendEmployerVerificationEmail({ to, contactName, kind, candidateName, subject, detail, dates, attempt, authorizedOn = null, pdf = null, dob = null, priorNames = null, dobPending = false }) {
   const isWork = kind === 'workHistory';
   const lines = [
     `${candidateName} has asked PreCheckd to confirm the following${isWork ? ' employment' : ' education'} ${isWork ? 'with your organization' : 'at your institution'}:`
   ];
-  const factHtml = [[isWork ? 'Job title' : 'Degree', detail], ['Dates', dates], [isWork ? 'Employer' : 'School', subject]]
+  const factHtml = [[isWork ? 'Job title' : 'Degree', detail], ['Dates', dates], [isWork ? 'Employer' : 'School', subject], ['Date of birth', dob], ['Other names', priorNames]]
     .filter((r) => r[1]).map((r) => `<tr><td style="padding:2px 14px 2px 0;color:#5A6B70;">${escapeHtml(r[0])}</td><td style="padding:2px 0;font-weight:600;">${escapeHtml(r[1])}</td></tr>`).join('');
   const reply = process.env.VERIFICATION_REPLY_TO || 'verifications@precheckd.com';
   const bodyHtml = `
     <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1B7F4B;">Verification request</p>
     <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;color:#1F2A2E;">${isWork ? 'Can you confirm an employment record?' : 'Can you confirm an education record?'}</h1>
-    <p style="margin:0 0 14px;">${contactName ? `Hello ${escapeHtml(contactName)},` : 'Hello,'}</p>
+    <p style="margin:0 0 14px;">${contactName ? `Hello ${escapeHtml(contactName)},` : (isWork ? 'Hello,' : 'Dear Office of the Registrar,')}</p>
     <p style="margin:0 0 14px;">${escapeHtml(lines[0])}</p>
     <table style="margin:0 0 14px;font-size:15px;">${factHtml}</table>
     <p style="margin:0 0 14px;">Please reply to this email to say whether this is accurate${isWork ? ' (title and dates are all we need)' : ' (degree and graduation date are all we need)'}. We do not need salary, performance or any other personal details, and please do not send any.</p>
+    ${authorizedOn ? `<p style="margin:0 0 14px;">${escapeHtml(candidateName)} authorized this request electronically on ${escapeHtml(new Date(authorizedOn).toISOString().slice(0, 10))}.${pdf ? ' The signed authorization is attached.' : ''}</p>` : ''}
+    ${dobPending ? '<p style="margin:0 0 14px;">If you need a date of birth or another identifier to find the record, reply to this email and we will send it.</p>' : ''}
     <p style="margin:0 0 14px;">PreCheckd is a service that verifies the facts on a person's profile before recruiters see them. ${attempt > 1 ? 'This is a follow-up to our earlier request.' : ''}</p>`;
   return sendEmail({
     from: 'PreCheckd Verification <noreply@precheckd.com>',
     replyTo: reply,
     to,
     subject: `${isWork ? 'Employment' : 'Education'} verification request: ${candidateName}`,
+    ...(pdf ? { attachments: [{ filename: 'authorization.pdf', content: pdf }] } : {}),
     html: brandShell({ bodyHtml, preheader: 'A short fact check, reply to confirm', footerHtml: 'You are receiving this because a person listed your organization on their PreCheckd profile. Reply to this email if it reached you in error.' })
   });
 }

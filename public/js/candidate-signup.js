@@ -393,7 +393,10 @@
     const educationHistory = collectEducationEntries();
 
     try {
-      await postJson('/api/candidate/save-profile-details', { bio, workHistory, educationHistory });
+      const dob = document.getElementById('review-dob').value;
+      const priorNames = document.getElementById('review-prior-names').value.trim();
+      if (educationHistory.length && !dob) throw new Error('Enter your date of birth so we can verify your degree.');
+      await postJson('/api/candidate/save-profile-details', { bio, workHistory, educationHistory, dob, priorNames });
       proceedAfterReview();
     } catch (err) {
       showError(err.message);

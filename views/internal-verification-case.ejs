@@ -50,6 +50,18 @@
       <button class="vc-btn" type="submit">Save</button>
     </form>
     <% if (c.contact.phone) { %><p class="vc-sub" style="margin-top:0.6rem;">Call: <strong><%= c.contact.phone %></strong></p><% } %>
+    <% if (c.contact.email) { %>
+      <p class="vc-sub" style="margin-top:0.6rem;">Address: <strong><%= c.contactStatus === 'confirmed' ? 'confirmed (a person replied)' : c.contactStatus === 'guessed' ? 'guessed, not yet answered by a person' : 'typed by staff' %></strong>
+      <% if (c.category === 'educationHistory' && c.contactStatus !== 'confirmed') { %>
+        <form method="POST" action="/verification-cases/<%= c._id %>/confirm-contact" style="display:inline;margin-left:.6rem;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="vc-btn" type="submit">A person replied: confirm address</button>
+        </form>
+      <% } %></p>
+    <% } %>
+    <% if (c.category === 'educationHistory' && candidate && candidate.verificationDob) { %>
+      <p class="vc-sub" style="margin-top:0.6rem;">Date of birth (for a registrar who asks; deleted when the last degree check closes): <strong><%= candidate.verificationDob %></strong><%= candidate.verificationPriorNames ? ' | other names: ' + candidate.verificationPriorNames : '' %></p>
+    <% } %>
     <form method="POST" action="/verification-cases/<%= c._id %>/call" class="vc-row" style="margin-top:0.8rem;">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <select name="outcome"><% Object.keys(outcomes).forEach((k) => { %><option value="<%= k %>"><%= outcomes[k] %></option><% }) %></select>

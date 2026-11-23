@@ -12,6 +12,7 @@
     "weekly-emails": "node scripts/send-weekly-emails.js",
     "fix-name-case": "node scripts/fix-name-case.js",
     "assign-mail-aliases": "node scripts/assign-mail-aliases.js",
+    "import-schools": "node scripts/import-schools.js",
     "mail-alias": "node scripts/mail-alias.js",
     "seed-demo-mail": "node scripts/seed-demo-mail.js",
     "demo:reset": "node scripts/demo-reset.js",

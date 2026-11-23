@@ -778,6 +778,7 @@ router.post('/verification-cases/:id/:action', async (req, res) => {
     try {
       switch (req.params.action) {
         case 'contact': await vc.saveContact(c, { name: req.body.contactName, email: req.body.contactEmail, phone: req.body.contactPhone }); return back('saved');
+        case 'confirm-contact': await vc.confirmContact(c); return back('saved');
         case 'call': await vc.logCall(c, req.body.outcome); return back('logged');
         case 'note': await vc.note(c, req.body.note); return back('noted');
         case 'open': await vc.openNow(c); return back('opened');

@@ -333,6 +333,13 @@
 
         <label class="terms-accept"><input type="checkbox" name="acceptTerms" value="yes" required> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>, including that messages sent through PreCheckd are stored and automatically scanned.</span></label>
 
+        <div class="release-box" style="border:1px solid #3B5860;border-radius:8px;padding:.9rem 1rem;margin:1rem 0;">
+          <strong>Authorization to verify your history</strong>
+          <p style="font-size:.9rem;margin:.4rem 0;"><%= releaseText %></p>
+          <label class="terms-accept"><input type="checkbox" name="acceptRelease" value="yes" required> <span>I have read and agree to this authorization.</span></label>
+          <label>Type your full name as your electronic signature<input type="text" name="releaseName" autocomplete="name" required></label>
+        </div>
+
         <button type="submit" class="btn btn-primary">Continue</button>
       </form>
     </section>
@@ -378,6 +385,15 @@
         <div class="section-label">Education</div>
         <div id="education-entries"></div>
         <button type="button" id="add-education-entry" class="add-entry-btn">+ Add education</button>
+        <div id="dob-box" style="margin:.8rem 0;">
+          <label>Date of birth <span class="label-hint">(required if you list a degree)</span>
+            <input type="date" id="review-dob" name="dob" max="<%= new Date().toISOString().slice(0, 10) %>">
+          </label>
+          <p class="label-hint">Schools use your date of birth to find your record. We use it only to verify your education, and delete it when the check is finished.</p>
+          <label>Other names you studied under <span class="label-hint">(optional)</span>
+            <input type="text" id="review-prior-names" name="priorNames" maxlength="120">
+          </label>
+        </div>
 
         <div class="section-label">Certifications</div>
         <p class="cert-hint">If you have a credential ID for any of these, add it now — we'll use it to independently verify the certification. Don't have it handy? Leave it blank and add it later from your profile.</p>
@@ -428,6 +444,7 @@
   window.PRECHECKD_RECRUITER = <%- recruiter ? JSON.stringify({ slug: recruiter.slug, name: `${recruiter.firstName} ${recruiter.lastName}` }) : 'null' %>;
 </script>
 <script src="https://js.stripe.com/v3"></script>
+<script src="/js/school-picker.js"></script>
 <script src="/js/candidate-signup.js"></script>
 
 <%- include('partials/outside-us', { page: 'candidate-signup' }) %>

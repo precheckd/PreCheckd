@@ -88,9 +88,25 @@ async function start(candidate, category, index, contact = {}) {
   if (snap.verified) throw fail('already_verified', 'Already verified');
   const open = await VerificationCase.findOne({ candidateId: candidate._id, category, subject: snap.subject, detail: snap.detail, status: { $in: ['outreach', 'with_candidate'] } });
   if (open) throw fail('exists', 'A case is already open for this entry');
+  // A school picked from the directory brings its registrar address (unless staff typed one).
+  let schoolId = null; let contactStatus = 'manual'; let contactOut = k;
+  if (category === 'educationHistory') {
+    const entry = (candidate.educationHistory || [])[index];
+    const school = entry && entry.schoolId ? await require('../models/School').findById(entry.schoolId) : null;
+    if (school) {
+      schoolId = school._id;
+      if (!k.email && school.registrarEmail && school.emailStatus !== 'needs_research') {
+        contactOut = { ...k, email: school.registrarEmail, phone: k.phone || school.registrarPhone || '' };
+        contactStatus = school.emailStatus;
+      }
+    }
+  }
+  const authz = candidate.releaseAuthorization || {};
   const c = await VerificationCase.create({
     candidateId: candidate._id, category, subject: snap.subject, detail: snap.detail, dates: snap.dates,
-    contact: cleanContact(contact), status: 'outreach', startedAt: new Date(),
+    contact: contactOut, contactStatus, schoolId,
+    authorization: { version: authz.version || null, typedName: authz.typedName || null, acceptedAt: authz.acceptedAt || null },
+    status: 'outreach', startedAt: new Date(),
     steps: SCHEDULE.map((s) => ({ ...s, doneAt: null, note: '' }))
   });
   logLine(c, 'Case started');
@@ -145,9 +161,17 @@ async function runDue(now = Date.now()) {
       for (const s of emails) { s.doneAt = new Date(now); if (s !== latest) s.note = 'skipped'; }
       const cand = await Candidate.findById(c.candidateId);
       try {
+        const sendsDob = c.category === 'educationHistory' && c.contactStatus === 'confirmed' && cand && cand.verificationDob;
+        let pdf = null;
+        if (cand && c.authorization && c.authorization.acceptedAt) {
+          try { pdf = await require('./releaseAuthorization').pdfFor({ candidate: cand, kind: c.category, subject: c.subject, detail: c.detail, dates: c.dates, caseId: c._id }); } catch (e) { console.error('[verification] authorization PDF failed:', e.message); }
+        }
         await require('./emailService').sendEmployerVerificationEmail({
           to: c.contact.email, contactName: c.contact.name, kind: c.category, candidateName: cand ? `${cand.firstName} ${cand.lastName || ''}`.trim() : 'A PreCheckd member',
-          subject: c.subject, detail: c.detail, dates: c.dates, attempt: c.steps.filter((s) => s.type === 'email' && s.doneAt).length
+          subject: c.subject, detail: c.detail, dates: c.dates, attempt: c.steps.filter((s) => s.type === 'email' && s.doneAt).length,
+          authorizedOn: c.authorization && c.authorization.acceptedAt, pdf,
+          dob: sendsDob ? cand.verificationDob : null, priorNames: sendsDob ? cand.verificationPriorNames : null,
+          dobPending: c.category === 'educationHistory' && !sendsDob
         });
         logLine(c, `Emailed ${c.contact.email} (day ${latest.day})`);
         counts.emails++;
@@ -226,7 +250,28 @@ async function resolve(c, outcome) {
   await toCandidate(c, TEXT[outcome](c));
   c.turn = null;
   await c.save();
+  // The date of birth is deleted as soon as no degree check still needs it.
+  if (cand && c.category === 'educationHistory') { try { await require('./educationDob').purgeIfDone(cand); } catch (e) { console.error('[verification] DOB purge failed:', e.message); } }
   return c;
+}
+
+// Staff: a person answered from this address, so it is good and the date of birth may go to it.
+async function confirmContact(c) {
+  if (!c.contact.email) throw fail('invalid', 'No address to confirm');
+  c.contactStatus = 'confirmed';
+  logLine(c, 'Address confirmed: a person replied');
+  await c.save();
+  if (c.schoolId) await require('../models/School').updateOne({ _id: c.schoolId, registrarEmail: c.contact.email }, { $set: { emailStatus: 'confirmed', checkedAt: new Date() } });
+  return c;
+}
+
+// A hard bounce: the address is no good. The school goes back to research and open cases lose the address.
+async function addressBounced(address) {
+  const a = String(address || '').trim().toLowerCase();
+  if (!a) return;
+  await require('../models/School').updateMany({ registrarEmail: a }, { $set: { emailStatus: 'needs_research', checkedAt: new Date() } });
+  const open = await VerificationCase.find({ 'contact.email': a, status: 'outreach' });
+  for (const c of open) { c.contact.email = ''; c.contactStatus = 'manual'; logLine(c, `Email to ${a} bounced: find another address`); await c.save(); }
 }
 
 // ---- candidate side ----------------------------------------------------
@@ -382,4 +427,5 @@ async function sendDigest() {
   return d.calls + d.replies + d.contacts;
 }
 
-module.exports = { MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, keepFilesDays, retentionPhrase, setLegalHold, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };
+module.exports = {
+  confirmContact, addressBounced, MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, keepFilesDays, retentionPhrase, setLegalHold, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };
