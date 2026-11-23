@@ -58,7 +58,7 @@ const LIMITS = {
   maxSkills: 3,
   maxCertGroups: 3,
   maxCertsPerGroup: 5,
-  maxCloseDays: 45,       // applications-close date: at most about 45 days out
+  maxCloseDays: 60,       // applications-close date: at most 60 days out (was 45; raised Nov 22)
   maxStartDays: 365,
   payWidth: 1.25,         // base pay max may be at most 25% above min
   summaryMin: 50, summaryMax: 2000,

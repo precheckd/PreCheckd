@@ -257,7 +257,7 @@ function validatePosting(body, ctx) {
   if (!close) err('closeDate', 'Enter the date applications close.');
   else {
     const days = Math.round((close.utcMidnight - today.utcMidnight) / DAY);
-    // Editing: the posting may stay open through today, and the 45 days count from the day it was first posted
+    // Editing: the posting may stay open through today, and the 60 days count from the day it was first posted
     // (so a recruiter can extend a posting, but not keep it open forever).
     const editing = ctx.editing && ctx.editing.createdAt;
     const limitDays = editing ? Math.round((todayNewYork(new Date(ctx.editing.createdAt).getTime()).utcMidnight - today.utcMidnight) / DAY) + opt.LIMITS.maxCloseDays : opt.LIMITS.maxCloseDays;

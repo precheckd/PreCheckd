@@ -96,14 +96,14 @@ t('changedParts names what an edit changed', () => {
   assert.deepStrictEqual(edit({ education: 'master', baseMax: '124000' }).sort(), ['pay', 'requirements']);
 });
 
-t('editing mode close date: may stay today, may extend up to 45 days from the first posting, never the past', () => {
+t('editing mode close date: may stay today, may extend up to 60 days from the first posting, never the past', () => {
   const created = new Date(NOW);
   const e = (closeDate, now = NOW) => validatePosting(base({ closeDate, startDate: '2027-01-15' }), { ...ctx, now, editing: { createdAt: created } }).errors.closeDate;
-  assert.strictEqual(e('2026-12-06'), undefined);                       // 45 days after Oct 22
-  assert.ok(e('2026-12-07'));                                           // 46
+  assert.strictEqual(e('2026-12-21'), undefined);                       // 60 days after Oct 22
+  assert.ok(e('2026-12-22'));                                           // 61
   assert.strictEqual(e('2026-10-30', new Date('2026-10-30T15:00:00Z').getTime()), undefined); // closes today: still editable
   assert.ok(e('2026-10-29', new Date('2026-10-30T15:00:00Z').getTime())); // in the past
-  assert.strictEqual(e('2026-12-06', new Date('2026-11-20T15:00:00Z').getTime()), undefined); // limit counts from first posting, not from now
+  assert.strictEqual(e('2026-12-21', new Date('2026-11-20T15:00:00Z').getTime()), undefined); // limit counts from first posting, not from now
   // creating still needs a future day
   assert.ok(validatePosting(base({ closeDate: '2026-10-22' }), ctx).errors.closeDate);
 });

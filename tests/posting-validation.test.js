@@ -241,12 +241,12 @@ t('dates: helpers', () => {
   assert.strictEqual(parseMoney('$1,234.50'), 1234.5);
   assert.ok(Number.isNaN(parseMoney('12k')));
 });
-t('dates: close date must be 1 to 45 days out; start not before close', () => {
+t('dates: close date must be 1 to 60 days out; start not before close', () => {
   only({ closeDate: '' }, 'closeDate');
   only({ closeDate: '2026-10-22' }, 'closeDate'); // today
   only({ closeDate: '2026-10-01' }, 'closeDate');
-  only({ closeDate: '2026-12-07', startDate: '2026-12-20' }, 'closeDate'); // 46 days
-  assert.deepStrictEqual(run({ closeDate: '2026-12-06', startDate: '2026-12-20' }).errors, {}); // 45 days
+  only({ closeDate: '2026-12-22', startDate: '2027-01-05' }, 'closeDate'); // 61 days
+  assert.deepStrictEqual(run({ closeDate: '2026-12-21', startDate: '2027-01-05' }).errors, {}); // 60 days
   only({ closeDate: '2026-11-15', startDate: '2026-11-10' }, 'startDate');
   only({ startDate: '' }, 'startDate');
   only({ startDate: '2028-01-01' }, 'startDate');
