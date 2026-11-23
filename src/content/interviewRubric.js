@@ -3,7 +3,7 @@
 // is scored or stored by PreCheckd. It is not a validated assessment and does not predict job performance.
 // Keyed by questionId. Anchors run from 5 (highest) to 0-1.
 const DISCLAIMER = 'This is an example rubric, not a validated assessment, and it does not predict job performance. '
-  + 'Use it as a guide if it helps, and make your own decisions about candidates. Apply the same standard to every candidate, '
+  + 'Judge only what the candidate says, never their accent, appearance, delivery style, setting or equipment. Use it as a guide if it helps, and make your own decisions about candidates. Apply the same standard to every candidate, '
   + 'and rely on your live interview to confirm what you see here. PreCheckd does not score these answers.';
 
 const RUBRIC = {
@@ -14,7 +14,7 @@ const RUBRIC = {
       { score: '4', text: 'Adapted effectively; some initial resistance acknowledged; clear action steps; learning evident but not deeply reflected on.' },
       { score: '3', text: 'Eventually adapted but took time; focused on external factors; functional response without proactive problem-solving.' },
       { score: '2', text: 'Adapted reluctantly; blamed circumstances; minimal proactive effort; little evidence of learning.' },
-      { score: '0-1', text: 'Resisted change; blamed others; no forward movement; defensive tone.' },
+      { score: '0-1', text: 'Resisted change; blamed others; no forward movement or learning described.' },
     ],
     listenFor: ['Speed of reorientation', 'Whether they took agency or waited for direction', 'Evidence of learning, not just compliance'],
   },
@@ -36,7 +36,7 @@ const RUBRIC = {
       { score: '4', text: 'Clear description of what made it difficult; some self-awareness; found a workable solution; collaborated despite differences.' },
       { score: '3', text: 'Described the challenge and worked through it; limited reflection on their own role or what they learned.' },
       { score: '2', text: 'Focused mostly on what the other person did wrong; tolerated the relationship without real resolution; minimal collaboration.' },
-      { score: '0-1', text: 'Blamed the other person entirely; unresolved conflict; defensive or dismissive tone; no evidence of trying to understand their perspective.' },
+      { score: '0-1', text: 'Blamed the other person entirely; unresolved conflict; dismissed the other person\'s view; no evidence of trying to understand their perspective.' },
     ],
     listenFor: ['Whether they describe behaviors rather than attacking character', 'Curiosity about the other person\'s perspective', 'Acknowledgment of their own impact'],
   },
@@ -54,13 +54,13 @@ const RUBRIC = {
   5: {
     competency: 'Motivation and drive',
     anchors: [
-      { score: '5', text: 'Clear passion in the description; motivated by mastery, learning or purpose, not just titles or money; describes impact; shows ownership; explains why they care, not just why it was important.' },
-      { score: '4', text: 'Genuine accomplishment; a mix of intrinsic and extrinsic motivation; clear impact; engaged in telling it.' },
+      { score: '5', text: 'Clearly explains why it mattered to them; motivated by mastery, learning or purpose, not just titles or money; describes impact; shows ownership; explains why they care, not just why it was important.' },
+      { score: '4', text: 'Genuine accomplishment; a mix of intrinsic and extrinsic motivation; clear impact.' },
       { score: '3', text: 'Solid accomplishment; mostly extrinsic framing (money, recognition), or intrinsic but with limited depth; describes what happened more than why it mattered.' },
       { score: '2', text: 'Accomplishment feels hollow or is described without real engagement; deflects to team credit; unclear what they actually contributed.' },
-      { score: '0-1', text: 'Cynical or disconnected tone; struggles to name anything they are proud of; only external motivators surface.' },
+      { score: '0-1', text: 'Struggles to name anything they are proud of; only external motivators surface.' },
     ],
-    listenFor: ['Energy and authenticity', 'Whether pride comes from growth, impact or external recognition', 'Ownership versus luck or others\' help'],
+    listenFor: ['Whether they explain why it mattered to them', 'Whether pride comes from growth, impact or external recognition', 'Ownership versus luck or others\' help'],
   },
 };
 
