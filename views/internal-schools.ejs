@@ -1,0 +1,59 @@
+<style>
+  .sr-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .sr-wrap h1 { color: #1F363C; font-size: 1.6rem; margin-bottom: .4rem; }
+  .sr-wrap h2 { color: #1F363C; font-size: 1.1rem; margin: 2rem 0 .6rem; }
+  .sr-sub { color: #7A8B91; font-size: .9rem; line-height: 1.5; }
+  .sr-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .sr-stat { background: #F7F9F8; border: 1px solid #DCE4E2; border-radius: 8px; padding: .8rem 1.2rem; color: #1F363C; }
+  .sr-stat b { display: block; font-size: 1.5rem; }
+  .sr-btn { background: #1F7A4C; color: #fff; border: 0; border-radius: 6px; padding: .6rem 1.1rem; font-weight: 700; cursor: pointer; }
+  .sr-table { width: 100%; border-collapse: collapse; background: #F7F9F8; border: 1px solid #DCE4E2; }
+  .sr-table td, .sr-table th { padding: .5rem .8rem; border-top: 1px solid #DCE4E2; text-align: left; font-size: .9rem; color: #1F363C; }
+</style>
+<div class="sr-wrap">
+  <a href="/" style="color:#1F7A4C;font-size:.9rem;text-decoration:none;">&larr; Back</a>
+  <h1>School directory</h1>
+  <p class="sr-sub">Where degree verification requests go. Confirmed: a person replied or the address came from the school's own site. Guessed: a pattern address on a domain that accepts mail. Needs research: nothing usable yet.</p>
+  <div class="sr-stats">
+    <div class="sr-stat"><b><%= by.confirmed || 0 %></b>confirmed</div>
+    <div class="sr-stat"><b><%= by.guessed || 0 %></b>guessed</div>
+    <div class="sr-stat"><b><%= by.needs_research || 0 %></b>needs research</div>
+  </div>
+
+  <h2>Upload the scraper's file</h2>
+  <p class="sr-sub">Choose the CSV written by <code>scrape-schools.js</code>. Existing schools are updated, and a confirmed address is never replaced by a guess.</p>
+  <input type="file" id="csv-file" accept=".csv,text/csv">
+  <button class="sr-btn" id="csv-go" type="button">Import</button>
+  <p id="csv-status" class="sr-sub"><%= job.running ? 'An import is running...' : '' %></p>
+
+  <h2>Needs research (first 50)</h2>
+  <% if (!research.length) { %><p class="sr-sub">None.</p><% } else { %>
+  <table class="sr-table"><tr><th>School</th><th>Domain</th><th>Phone</th><th>Note</th></tr>
+    <% research.forEach(function (s) { %><tr><td><%= s.name %></td><td><%= s.domain %></td><td><%= s.registrarPhone %></td><td><%= s.notes %></td></tr><% }); %>
+  </table>
+  <% } %>
+</div>
+<script>
+(function () {
+  var token = <%- JSON.stringify(csrfToken) %>;
+  var status = document.getElementById('csv-status');
+  function poll() {
+    fetch('/schools/import/status').then(function (r) { return r.json(); }).then(function (j) {
+      if (j.running) { status.textContent = 'Importing ' + j.done + ' of ' + j.total + '...'; setTimeout(poll, 2000); }
+      else if (j.error) status.textContent = 'Import failed: ' + j.error;
+      else if (j.counts) { status.textContent = 'Done. Confirmed ' + j.counts.confirmed + ', guessed ' + j.counts.guessed + ', needs research ' + j.counts.needs_research + ', skipped ' + j.counts.skipped + '. Reload to see the totals.'; }
+    });
+  }
+  document.getElementById('csv-go').addEventListener('click', function () {
+    var f = document.getElementById('csv-file').files[0];
+    if (!f) { status.textContent = 'Choose a file first.'; return; }
+    f.text().then(function (text) {
+      return fetch('/schools/import', { method: 'POST', headers: { 'Content-Type': 'text/csv', 'x-csrf-token': token }, body: text });
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (x) {
+      if (!x.ok) { status.textContent = x.j.error || 'Upload failed.'; return; }
+      status.textContent = 'Started: ' + x.j.total + ' schools.'; poll();
+    }).catch(function () { status.textContent = 'Upload failed.'; });
+  });
+  <% if (job.running) { %>poll();<% } %>
+})();
+</script>

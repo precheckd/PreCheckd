@@ -6,7 +6,7 @@
 const dns = require('dns').promises;
 const School = require('../models/School');
 
-const domainOf = (website) => String(website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0].trim();
+const { domainOf } = require('../utils/schoolDomain');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 async function acceptsMail(domain, resolver = dns) {
@@ -19,26 +19,35 @@ async function classify(row, resolver = dns) {
   const name = String(row.name || '').trim();
   const domain = domainOf(row.website);
   const given = String(row.registrarEmail || '').trim().toLowerCase();
-  const out = { name, ipedsId: String(row.ipedsId || '').trim() || null, domain, registrarEmail: '', registrarPhone: String(row.registrarPhone || '').trim(), emailStatus: 'needs_research', sourceUrl: String(row.sourceUrl || '').trim() };
+  const out = { name, ipedsId: String(row.ipedsId || '').trim() || null, domain, registrarEmail: '', registrarPhone: String(row.registrarPhone || '').trim(), emailStatus: 'needs_research', sourceUrl: String(row.sourceUrl || '').trim(), notes: String(row.notes || '').trim().slice(0, 500) };
+  // A school that only takes verifications through the Clearinghouse gets no email at all: not even a guess.
+  if (String(row.clearinghouseOnly || '').toLowerCase() === 'yes') { out.notes = out.notes || 'uses Clearinghouse'; return out; }
   if (given && EMAIL_RE.test(given) && out.sourceUrl) { out.registrarEmail = given; out.emailStatus = 'confirmed'; }
   else if (domain && await acceptsMail(domain, resolver)) { out.registrarEmail = `registrar@${domain}`; out.emailStatus = 'guessed'; }
   return out;
 }
 
-async function importRows(rows, { resolver = dns, now = new Date() } = {}) {
+// Rows are classified (DNS lookups) ten at a time, then saved one by one. onProgress(done, total) is called as it goes.
+async function importRows(rows, { resolver = dns, now = new Date(), onProgress = () => {} } = {}) {
   const counts = { confirmed: 0, guessed: 0, needs_research: 0, skipped: 0 };
-  for (const row of rows) {
-    if (!String(row.name || '').trim()) { counts.skipped += 1; continue; }
-    const c = await classify(row, resolver);
-    const existing = (c.ipedsId && await School.findOne({ ipedsId: c.ipedsId })) || await School.findOne({ nameKey: School.keyOf(c.name) });
-    if (existing) {
-      if (existing.emailStatus === 'confirmed' && c.emailStatus !== 'confirmed') { counts.skipped += 1; continue; }
-      Object.assign(existing, c, { checkedAt: now });
-      await existing.save();
-    } else {
-      await School.create({ ...c, checkedAt: now });
+  let done = 0;
+  for (let i = 0; i < rows.length; i += 10) {
+    const batch = rows.slice(i, i + 10);
+    const classified = await Promise.all(batch.map((row) => (String(row.name || '').trim() ? classify(row, resolver) : null)));
+    for (const c of classified) {
+      done += 1;
+      if (!c) { counts.skipped += 1; continue; }
+      const existing = (c.ipedsId && await School.findOne({ ipedsId: c.ipedsId })) || await School.findOne({ nameKey: School.keyOf(c.name) });
+      if (existing) {
+        if (existing.emailStatus === 'confirmed' && c.emailStatus !== 'confirmed') { counts.skipped += 1; continue; }
+        Object.assign(existing, c, { checkedAt: now });
+        await existing.save();
+      } else {
+        await School.create({ ...c, checkedAt: now });
+      }
+      counts[c.emailStatus] += 1;
     }
-    counts[c.emailStatus] += 1;
+    onProgress(done, rows.length);
   }
   return counts;
 }

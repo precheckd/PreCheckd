@@ -691,6 +691,38 @@ router.post('/verify/:candidateId/case', async (req, res) => {
   }
 });
 
+// ---- School directory: upload the CSV from scripts/scrape-schools.js ----
+const schoolImportJob = { running: false, total: 0, done: 0, counts: null, error: null, startedAt: null };
+
+router.get('/schools', async (req, res) => {
+  try {
+    const School = require('../models/School');
+    const rows = await School.aggregate([{ $group: { _id: '$emailStatus', n: { $sum: 1 } } }]);
+    const by = Object.fromEntries(rows.map((r) => [r._id, r.n]));
+    const research = await School.find({ emailStatus: 'needs_research' }).sort({ name: 1 }).limit(50).select('name domain notes registrarPhone');
+    res.render('internal-schools', { pageTitle: 'School directory | PreCheckd', by, research, job: schoolImportJob });
+  } catch (error) {
+    console.error('Error loading school directory:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/schools/import/status', (req, res) => res.json(schoolImportJob));
+
+// The CSV arrives as the raw request body (the page reads the file in the browser). The import runs in the background
+// because a few thousand DNS lookups take longer than a web request should.
+router.post('/schools/import', express.text({ type: '*/*', limit: '15mb' }), (req, res) => {
+  if (schoolImportJob.running) return res.status(409).json({ error: 'An import is already running.' });
+  const rows = require('../utils/csv').parse(typeof req.body === 'string' ? req.body : '');
+  if (!rows.length || !('name' in rows[0])) return res.status(400).json({ error: 'That file has no rows, or no "name" column.' });
+  Object.assign(schoolImportJob, { running: true, total: rows.length, done: 0, counts: null, error: null, startedAt: new Date() });
+  require('../services/schoolImport').importRows(rows, { onProgress: (d) => { schoolImportJob.done = d; } })
+    .then((counts) => { schoolImportJob.counts = counts; })
+    .catch((e) => { console.error('School import failed:', e); schoolImportJob.error = e.message; })
+    .finally(() => { schoolImportJob.running = false; });
+  res.json({ started: true, total: rows.length });
+});
+
 router.get('/verification-cases', async (req, res) => {
   try {
     const vc = require('../services/verificationCases');
