@@ -100,8 +100,8 @@ function inviteNotice(code) {
     subject: 'Your PreCheckd founding invite',
     headline: 'You are invited to be a founding recruiter',
     paragraphs: [
-      'Thanks for asking. We saved you one of the first 100 founding spots: your first year is free, then $349 a year, locked in for as long as you stay a member.',
-      'A card is required, and nothing is charged during the free year as long as you post real jobs. The details are on the page the link opens. Your invite works once, and your code is ' + code + '.',
+      'Thanks for asking. We saved you one of the first 100 founding spots: your first year is free. After that it is $349 a year, renewing each year unless you cancel (we email you before it renews), and that price stays locked for as long as you remain a member.',
+      'A card is required to start. You will not be charged during the free year as long as you keep up the terms of the deal, which are on the page the link opens. Your invite works once, and your code is ' + code + '.',
     ],
     button: 'Claim my founding year',
     url: joinUrl(code),
