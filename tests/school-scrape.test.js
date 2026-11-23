@@ -46,9 +46,9 @@ const REG = `<html><body><h1>Registrar</h1><p>Degree verifications: <a href="mai
     assert.strictEqual(sc.decide(school, { email: 'verify@gmail.com' }, [{ url: 'u', mailtos: ['verify@gmail.com'], tels: [], text: '' }]).registrarEmail, ''); // not the school's domain
     assert.strictEqual(sc.decide(school, { email: 'x@registrar.state.edu' }, [{ url: 'u', mailtos: ['x@registrar.state.edu'], tels: [], text: '' }]).registrarEmail, 'x@registrar.state.edu'); // subdomain is fine
   });
-  await t('a Clearinghouse-only school is flagged and gets no email', () => {
+  await t('a school that prefers the Clearinghouse is flagged but keeps its address', () => {
     const r = sc.decide(school, { email: 'verify@state.edu', clearinghouseOnly: true, notes: '' }, pages);
-    assert.strictEqual(r.clearinghouseOnly, 'yes'); assert.strictEqual(r.registrarEmail, '');
+    assert.strictEqual(r.clearinghouseOnly, 'yes'); assert.strictEqual(r.registrarEmail, 'verify@state.edu'); assert(/Clearinghouse/.test(r.notes));
   });
 
   const web = { 'https://www.state.edu/robots.txt': 'User-agent: *\nDisallow: /secret', 'https://www.state.edu/': HOME, 'https://www.state.edu/registrar/': REG };
@@ -99,11 +99,12 @@ const REG = `<html><body><h1>Registrar</h1><p>Degree verifications: <a href="mai
     const rows = [{ name: 'Smith, "Big" College', ipedsId: '1' }];
     assert.deepStrictEqual(csv.parse(csv.stringify(rows, ['name', 'ipedsId'])), rows);
   });
-  await t('the importer never guesses an address for a Clearinghouse-only school, and keeps notes', async () => {
+  await t('the importer still tries a Clearinghouse-preferring school, and keeps the warning', async () => {
     const resolver = { resolveMx: async () => [{ exchange: 'mx', priority: 1 }] };
-    const r = await imp.classify({ name: 'CH U', website: 'ch.edu', clearinghouseOnly: 'yes', notes: 'uses Clearinghouse' }, resolver);
-    assert.strictEqual(r.emailStatus, 'needs_research'); assert.strictEqual(r.registrarEmail, ''); assert.strictEqual(r.notes, 'uses Clearinghouse');
-    assert.strictEqual((await imp.classify({ name: 'X', website: 'x.edu' }, resolver)).emailStatus, 'guessed');
+    const r = await imp.classify({ name: 'CH U', website: 'ch.edu', clearinghouseOnly: 'yes', notes: '' }, resolver);
+    assert.strictEqual(r.emailStatus, 'guessed'); assert.strictEqual(r.registrarEmail, 'registrar@ch.edu'); assert(/Clearinghouse/.test(r.notes));
+    const given = await imp.classify({ name: 'CH2', website: 'ch2.edu', registrarEmail: 'r@ch2.edu', sourceUrl: 'https://ch2.edu/r', clearinghouseOnly: 'yes', notes: 'prefers Clearinghouse' }, resolver);
+    assert.strictEqual(given.emailStatus, 'confirmed'); assert.strictEqual(given.notes, 'prefers Clearinghouse');
   });
   console.log(fail ? 'fail=' + fail : 'fail=0'); process.exit(fail ? 1 : 0);
 })();

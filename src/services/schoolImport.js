@@ -20,8 +20,8 @@ async function classify(row, resolver = dns) {
   const domain = domainOf(row.website);
   const given = String(row.registrarEmail || '').trim().toLowerCase();
   const out = { name, ipedsId: String(row.ipedsId || '').trim() || null, domain, registrarEmail: '', registrarPhone: String(row.registrarPhone || '').trim(), emailStatus: 'needs_research', sourceUrl: String(row.sourceUrl || '').trim(), notes: String(row.notes || '').trim().slice(0, 500) };
-  // A school that only takes verifications through the Clearinghouse gets no email at all: not even a guess.
-  if (String(row.clearinghouseOnly || '').toLowerCase() === 'yes') { out.notes = out.notes || 'uses Clearinghouse'; return out; }
+  // A school that prefers the Clearinghouse is kept as a note, so staff know a direct request may go unanswered.
+  if (String(row.clearinghouseOnly || '').toLowerCase() === 'yes' && !/clearinghouse/i.test(out.notes)) out.notes = ('prefers Clearinghouse ' + out.notes).trim();
   if (given && EMAIL_RE.test(given) && out.sourceUrl) { out.registrarEmail = given; out.emailStatus = 'confirmed'; }
   else if (domain && await acceptsMail(domain, resolver)) { out.registrarEmail = `registrar@${domain}`; out.emailStatus = 'guessed'; }
   return out;

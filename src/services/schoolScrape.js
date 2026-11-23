@@ -76,7 +76,7 @@ function pickPages(homepageHtml, origin) {
 // ---- the model ----
 const SYSTEM = `You read pages from a US college or university website and find how to send the registrar a request to verify a graduate's degree or enrollment.
 Reply with JSON only, no other text: {"email": string|null, "phone": string|null, "clearinghouseOnly": boolean, "notes": string}
-Rules: use ONLY what the pages say. The email must be copied exactly from the pages and be the registrar/records/verification address, not an unrelated office. If several addresses exist, prefer one for verifications, then the registrar or records office. clearinghouseOnly is true only if the pages say degree or enrollment verifications are handled through the National Student Clearinghouse (or another third party) and not by direct request. notes: at most 20 words, for example "web form only" or "uses Clearinghouse". If you cannot find a contact, use null.`;
+Rules: use ONLY what the pages say. The email must be copied exactly from the pages and be the registrar/records/verification address, not an unrelated office. If several addresses exist, prefer one for verifications, then the registrar or records office. clearinghouseOnly is true if the pages say degree or enrollment verifications are handled through the National Student Clearinghouse (or another third party) instead of, or in preference to, direct requests. Still return the registrar's email if the pages show one. notes: at most 20 words, for example "web form only" or "uses Clearinghouse". If you cannot find a contact, use null.`;
 
 function buildPrompt(school, pages) {
   const body = pages.map((p) => `PAGE ${p.url}\nEmails on page: ${p.mailtos.join(', ') || 'none'}\nPhones on page: ${p.tels.join(', ') || 'none'}\n${p.text}`).join('\n\n---\n\n');
@@ -100,7 +100,8 @@ function decide(school, ex, pages) {
   if (!ex) { row.notes = 'no usable answer'; return row; }
   row.notes = ex.notes || '';
   if (ex.phone) row.registrarPhone = ex.phone;
-  if (ex.clearinghouseOnly) { row.clearinghouseOnly = 'yes'; row.notes = row.notes || 'uses Clearinghouse'; return row; }
+  // A school that prefers the Clearinghouse is flagged but still gets its address: a direct, authorized request may be answered.
+  if (ex.clearinghouseOnly) { row.clearinghouseOnly = 'yes'; row.notes = row.notes || 'prefers Clearinghouse; a direct request may go unanswered'; }
   const dom = domainOf(school.website);
   const email = ex.email;
   if (email && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && dom && sameSite(email.split('@')[1], dom)) {

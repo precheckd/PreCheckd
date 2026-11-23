@@ -755,8 +755,9 @@ router.get('/verification-cases/:id', async (req, res) => {
     const candidate = await Candidate.findById(c.candidateId);
     const messages = await Message.find({ verificationCaseId: c._id }).sort({ sentAt: 1 });
     await Message.updateMany({ verificationCaseId: c._id, recipientType: 'system', readAt: null }, { readAt: new Date() });
+    const school = c.schoolId ? await require('../models/School').findById(c.schoolId).catch(() => null) : null;
     res.render('internal-verification-case', {
-      c, candidate, messages, day: vc.dayOf(c), action: vc.nextAction(c), openDay: vc.OPEN_DAY,
+      c, candidate, school, messages, day: vc.dayOf(c), action: vc.nextAction(c), openDay: vc.OPEN_DAY,
       outcomes: vc.OUTCOMES, notice: req.query.notice || null,
       retention: vc.retentionPhrase(),
       asks: { open: vc.TEXT.open(c), docs: vc.TEXT.docs(c) }
