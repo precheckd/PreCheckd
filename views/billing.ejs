@@ -85,7 +85,8 @@
         <% if (wave.wave && !hadFounding) { %>
         <div class="bl-plan bl-hero">
           <h2>Annual</h2>
-          <div class="bl-was"><%= annual %> <small>/year</small></div><br>
+          <div class="bl-meta" style="margin:.4rem 0 0;">Standard price</div>
+          <div class="bl-was" style="margin-top:.2rem;"><%= annual %> <small>/year</small></div><br>
           <span class="bl-special"><%= wave.locked ? 'Founding Member Special' : 'Early Access Special' %></span>
           <div class="bl-now"><%= foundingPrice %> <small><%= wave.locked ? '/year' : 'first year' %></small></div>
           <div class="bl-left">Only <%= wave.spotsLeft %> spot<%= wave.spotsLeft === 1 ? '' : 's' %> left at this price</div>
