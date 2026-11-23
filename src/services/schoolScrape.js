@@ -4,9 +4,12 @@
 const { domainOf } = require('../utils/schoolDomain');
 
 const USER_AGENT = 'PreCheckdSchoolDirectoryBot/1.0 (+https://precheckd.com; verifications@precheckd.com)';
-const GUESS_PATHS = ['/registrar', '/registrar/', '/records', '/student-records', '/registrar/contact', '/registrar/verification'];
+const GUESS_PATHS = ['/registrar', '/registrar/', '/records', '/student-records', '/registrar/contact', '/registrar/verification', '/enrollment-verification', '/degree-verification', '/office-of-the-registrar', '/registrar/enrollment-verification'];
+const GUESS_SUBDOMAINS = ['registrar', 'records'];
+const HUB_RE = /current.?students?|students?\b|offices?\b|a-z|directory|academics|services/i;
 const LINK_SCORES = [[/enrollment.?verif|degree.?verif|verification/i, 6], [/registrar/i, 5], [/records|transcript/i, 3]];
 const MAX_PAGES = 4;
+const MAX_TRIES = 12;
 const MAX_PAGE_CHARS = 6000;
 
 // ---- HTML helpers (no parser library: we only need text, links, mailto and tel) ----
@@ -57,19 +60,43 @@ function parseRobots(text) {
 }
 
 // ---- choosing pages ----
-function pickPages(homepageHtml, origin) {
+function scoredLinks(html, origin) {
   const host = new URL(origin).host.replace(/^www\./, '');
   const scored = new Map();
-  for (const l of links(homepageHtml, origin)) {
+  for (const l of links(html, origin)) {
     let u; try { u = new URL(l.href); } catch (e) { continue; }
     if (!/^https?:$/.test(u.protocol) || !(u.host.replace(/^www\./, '') === host || u.host.endsWith('.' + host))) continue;
     if (/\.(pdf|docx?|xlsx?|zip|png|jpe?g)$/i.test(u.pathname)) continue;
     const text = `${u.pathname} ${l.text}`;
-    const score = LINK_SCORES.reduce((s, [re, w]) => s + (re.test(text) ? w : 0), 0);
+    const score = LINK_SCORES.reduce((sum, [re, w]) => sum + (re.test(text) ? w : 0), 0);
     if (score > 0) scored.set(u.href, Math.max(score, scored.get(u.href) || 0));
   }
-  const picked = [...scored.entries()].sort((a, b) => b[1] - a[1]).map(([h]) => h).slice(0, MAX_PAGES);
-  for (const p of GUESS_PATHS) { if (picked.length >= MAX_PAGES) break; const h = new URL(p, origin).href; if (!picked.includes(h)) picked.push(h); }
+  return [...scored.entries()].sort((a, b) => b[1] - a[1]).map(([h]) => h);
+}
+
+// Pages that list the school's offices (students, A-Z, directory...): a second hop when the homepage itself has no registrar link.
+function hubLinks(html, origin, max = 2) {
+  const host = new URL(origin).host.replace(/^www\./, '');
+  const out = [];
+  for (const l of links(html, origin)) {
+    let u; try { u = new URL(l.href); } catch (e) { continue; }
+    if (!/^https?:$/.test(u.protocol) || !(u.host.replace(/^www\./, '') === host || u.host.endsWith('.' + host))) continue;
+    if (/\.(pdf|docx?|xlsx?|zip|png|jpe?g)$/i.test(u.pathname) || u.pathname === '/' || out.includes(u.href)) continue;
+    if (HUB_RE.test(`${u.pathname} ${l.text}`) && l.text.length < 40) out.push(u.href);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+// Guessed addresses to try after the links: common paths, then registrar./records. subdomains.
+function guessUrls(origin) {
+  const host = new URL(origin).host.replace(/^www\./, '');
+  return [...GUESS_PATHS.map((p) => new URL(p, origin).href), ...GUESS_SUBDOMAINS.map((sd) => `https://${sd}.${host}/`)];
+}
+
+function pickPages(homepageHtml, origin) {
+  const picked = scoredLinks(homepageHtml, origin).slice(0, MAX_PAGES);
+  for (const g of guessUrls(origin)) { if (picked.length >= MAX_PAGES) break; if (!picked.includes(g)) picked.push(g); }
   return picked;
 }
 
@@ -119,19 +146,43 @@ async function scrapeSchool(school, deps) {
   const failed = (why) => { const row = decide(school, null, []); row.notes = why; return { row, tally, error: why }; };
   if (!dom) return failed('no website');
   const origin = `https://${school.website.replace(/^https?:\/\//i, '').split(/[/?#]/)[0]}`;
-  const robots = await deps.robotsFor(origin);
-  const get = async (u) => { try { if (!robots.allowed(new URL(u).pathname)) return null; return await deps.fetchPage(u); } catch (e) { return null; } };
+  const tried = [];
+  const label = (o) => (o.host + o.pathname).replace(/\/$/, '').slice(0, 60);
+  const get = async (u) => {
+    let o; try { o = new URL(u); } catch (e) { return null; }
+    try {
+      const rb = await deps.robotsFor(o.origin);
+      if (!rb.allowed(o.pathname)) { tried.push(label(o) + ' blocked by robots.txt'); return null; }
+      const r = await deps.fetchPage(u);
+      if (!r || !r.ok) { tried.push(label(o) + ' ' + ((r && r.status) || 'failed')); return null; }
+      return r;
+    } catch (e) { tried.push(label(o) + ' error'); return null; }
+  };
   const home = await get(origin + '/');
-  if (!home || !home.ok) return failed('site unreachable');
-  const pages = [];
-  for (const u of pickPages(home.html, home.url || origin)) {
-    const p = await get(u);
-    if (p && p.ok) pages.push({ url: p.url || u, mailtos: mailtos(p.html), tels: tels(p.html), text: htmlToText(p.html).slice(0, MAX_PAGE_CHARS) });
+  if (!home) return failed('site unreachable: ' + (tried[0] || 'no answer'));
+  const base = home.url || origin;
+  let candidates = scoredLinks(home.html, base).slice(0, MAX_PAGES);
+  if (!candidates.length) {
+    // No registrar link on the homepage: look one level down, on the pages that list offices.
+    for (const hub of hubLinks(home.html, base)) {
+      const h = await get(hub);
+      if (h) for (const c of scoredLinks(h.html, h.url || hub)) if (!candidates.includes(c)) candidates.push(c);
+      if (candidates.length >= MAX_PAGES) break;
+    }
+    candidates = candidates.slice(0, MAX_PAGES);
   }
-  if (!pages.length) return failed('no registrar page found');
+  for (const g of guessUrls(base)) if (!candidates.includes(g)) candidates.push(g);
+  const pages = []; let attempts = 0;
+  for (const u of candidates) {
+    if (pages.length >= MAX_PAGES || attempts >= MAX_TRIES) break;
+    attempts += 1;
+    const p = await get(u);
+    if (p) pages.push({ url: p.url || u, mailtos: mailtos(p.html), tels: tels(p.html), text: htmlToText(p.html).slice(0, MAX_PAGE_CHARS) });
+  }
+  if (!pages.length) return failed(('no registrar page found; tried ' + tried.slice(0, 4).join(', ')).slice(0, 240));
   const res = await deps.callModel(SYSTEM, buildPrompt(school, pages));
   tally.inTokens = (res.usage && res.usage.input_tokens) || 0; tally.outTokens = (res.usage && res.usage.output_tokens) || 0;
   return { row: decide(school, parseModelJson(res.text), pages), tally, error: null };
 }
 
-module.exports = { USER_AGENT, htmlToText, links, mailtos, tels, parseRobots, pickPages, buildPrompt, parseModelJson, decide, scrapeSchool, SYSTEM };
+module.exports = { USER_AGENT, htmlToText, links, mailtos, tels, parseRobots, pickPages, scoredLinks, hubLinks, guessUrls, buildPrompt, parseModelJson, decide, scrapeSchool, SYSTEM };

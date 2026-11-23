@@ -64,9 +64,10 @@ async function main() {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 15000);
     try {
       const res = await fetch(url, { signal: ctl.signal, redirect: 'follow', headers: { 'User-Agent': scrape.USER_AGENT, Accept: 'text/html' } });
-      if (!res.ok || !/html/i.test(res.headers.get('content-type') || '')) return { ok: false };
+      if (!res.ok) return { ok: false, status: String(res.status) };
+      if (!/html/i.test(res.headers.get('content-type') || '')) return { ok: false, status: 'not a web page' };
       return { ok: true, html: (await res.text()).slice(0, 600000), url: res.url };
-    } catch (e) { return { ok: false }; } finally { clearTimeout(t); }
+    } catch (e) { return { ok: false, status: e && e.name === 'AbortError' ? 'timed out' : 'connection failed' }; } finally { clearTimeout(t); }
   };
   const robotsFor = async (origin) => {
     if (!robotsCache.has(origin)) {

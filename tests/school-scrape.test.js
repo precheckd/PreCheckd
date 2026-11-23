@@ -66,6 +66,17 @@ const REG = `<html><body><h1>Registrar</h1><p>Degree verifications: <a href="mai
     const r = await sc.scrapeSchool({ name: 'Gone U', ipedsId: '9', website: 'gone.edu' }, mkDeps({}));
     assert.strictEqual(r.row.registrarEmail, ''); assert(r.error);
   });
+  await t('a homepage with no registrar link is followed one level down, and failures say why', async () => {
+    const W = { 'https://hub.edu/': '<a href="/students">Current Students</a>', 'https://hub.edu/students': '<a href="https://registrar.hub.edu/verify">Registrar</a>',
+      'https://registrar.hub.edu/verify': REG.replace('state.edu', 'hub.edu').replace('State.edu', 'hub.edu') };
+    const deps = { fetchPage: async (u) => (W[u] ? { ok: true, html: W[u], url: u } : { ok: false, status: '404' }), robotsFor: async () => sc.parseRobots(''),
+      callModel: async () => ({ text: JSON.stringify({ email: 'verify@hub.edu', notes: '' }), usage: { input_tokens: 10, output_tokens: 5 } }) };
+    const r = await sc.scrapeSchool({ name: 'Hub U', ipedsId: '5', website: 'hub.edu' }, deps);
+    assert.strictEqual(r.row.registrarEmail, 'verify@hub.edu');
+    const none = await sc.scrapeSchool({ name: 'Bare U', ipedsId: '6', website: 'bare.edu' }, { ...deps, fetchPage: async (u) => (u === 'https://bare.edu/' ? { ok: true, html: '<p>hi</p>', url: u } : { ok: false, status: '403' }) });
+    assert(/no registrar page found; tried .*403/.test(none.row.notes), none.row.notes);
+    assert(sc.guessUrls('https://www.x.edu').includes('https://registrar.x.edu/'));
+  });
   await t('robots.txt disallow is respected', async () => {
     web['https://www.state.edu/robots.txt'] = 'User-agent: *\nDisallow: /';
     const r = await sc.scrapeSchool(school, mkDeps({ email: 'verify@state.edu' }));
