@@ -59,6 +59,7 @@
         </form>
       <% } %></p>
     <% } %>
+    <% if (candidate) { %><p class="vc-sub" style="margin-top:0.6rem;">LinkedIn (self-reported): <% if (candidate.linkedinUrl) { %><a href="<%= candidate.linkedinUrl %>" target="_blank" rel="noopener noreferrer"><%= candidate.linkedinUrl.replace('https://www.', '') %></a><% } else if (candidate.noLinkedin) { %><strong>says they don't have one</strong><% } else { %>not provided<% } %></p><% } %>
     <% if (typeof school !== 'undefined' && school && school.notes) { %><p class="vc-sub" style="margin-top:0.6rem;color:#B7791F;">School note: <strong><%= school.notes %></strong></p><% } %>
     <% if (c.category === 'educationHistory' && candidate && candidate.verificationDob) { %>
       <p class="vc-sub" style="margin-top:0.6rem;">Date of birth (for a registrar who asks; deleted when the last degree check closes): <strong><%= candidate.verificationDob %></strong><%= candidate.verificationPriorNames ? ' | other names: ' + candidate.verificationPriorNames : '' %></p>
