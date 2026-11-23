@@ -79,7 +79,7 @@
         <div class="bl-plan">
           <h2>Monthly</h2>
           <div class="bl-price"><%= monthly %> <small>/month</small></div>
-          <p class="bl-meta">Cancel any time. Sales tax added where it applies.</p>
+          <p class="bl-meta">Cancel any time. Full refund if you cancel within 7 days of your first paid charge. Sales tax added where it applies.</p>
           <form method="POST" action="/billing/checkout"><input type="hidden" name="interval" value="monthly"><button class="bl-btn bl-ghost" type="submit">Choose monthly</button></form>
         </div>
         <% if (wave.wave && !hadFounding) { %>
