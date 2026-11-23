@@ -524,6 +524,28 @@ async function sendSetupReminderEmail(candidate, { stage, remaining, total }) {
   });
 }
 
+// A recruiter's direct invite to apply for a job. Goes to the candidate's regular email right away (the message
+// itself stays on PreCheckd). Carries the same unsubscribe link as the weekly emails (weeklyEmailOptOut).
+async function sendJobInviteEmail(candidate, { recruiterName, company, title, url }) {
+  const base = process.env.APP_BASE_URL;
+  const unsubUrl = unsubscribeUrl(candidate._id.toString());
+  const settingsUrl = `${base}/candidate/${candidate.slug}/edit`;
+  const who = recruiterName ? `${weeklyEscape(recruiterName)}${company ? ` at ${weeklyEscape(company)}` : ''}` : 'A recruiter you are connected with';
+  const body = `<div style="margin-top:14px;background:#F2FAF5;border:1px solid #BFE8CF;border-radius:10px;padding:14px 16px;">
+      <div style="font-weight:700;font-size:17px;">${who} invited you to apply</div>
+      <p style="margin:8px 0 0;font-size:15px;">${weeklyEscape(title)}${company ? ` at ${weeklyEscape(company)}` : ''}</p>
+      ${weeklyButton(url, 'View the job')}
+    </div>
+    <p style="margin:14px 0 0;font-size:14px;">Your PreCheckd results already show you meet the requirements. The conversation stays on PreCheckd, where your verified identity protects you.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidate.email,
+    subject: `You've been invited to apply: ${title}`.slice(0, 150),
+    headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+    html: weeklyShell(candidate.firstName, '', body, unsubUrl, settingsUrl),
+  });
+}
+
 async function sendUnreadMessagesEmail(candidate, { fresh, totalUnread }) {
   const base = process.env.APP_BASE_URL;
   const unsubUrl = unsubscribeUrl(candidate._id.toString());
@@ -826,6 +848,7 @@ module.exports = {
   sendHireConfirmationEmail,
   sendOutcomeReminderEmail,
   sendUnreadMessagesEmail,
+  sendJobInviteEmail,
   sendSetupReminderEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,

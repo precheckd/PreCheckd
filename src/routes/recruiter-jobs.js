@@ -27,7 +27,7 @@ const connectionMatches = require('../services/connectionMatches');
 const outreach = require('../services/outreach');
 const { ensureMailAlias } = require('../utils/mailAlias');
 const publicJob = require('../services/publicJob');
-const { sendJobPostedEmail, sendJobEditedEmail, sendJobClosedEmail } = require('../services/emailService');
+const { sendJobPostedEmail, sendJobEditedEmail, sendJobClosedEmail, sendJobInviteEmail } = require('../services/emailService');
 const opt = require('../content/postingOptions');
 const standard = require('../content/postingStandardLines');
 const finalistTests = require('../services/finalistTests');
@@ -629,7 +629,7 @@ router.post('/:id/invite', async (req, res) => {
       const ctx = await conversation.loadConversationContext({ type: 'recruiter', id: String(req.session.recruiterId) }, String(connection._id));
       return ctx ? conversation.sendThreadMessage(ctx, body) : { error: 'Not a connection.' };
     };
-    const r = await connectionMatches.invite(recruiter, posting, ids, { url, sendMessage });
+    const r = await connectionMatches.invite(recruiter, posting, ids, { url, sendMessage, sendEmail: sendJobInviteEmail });
     if (req.body.returnTo === 'matches') return res.redirect(`/recruiter-jobs/matches?invited=${r.sent}&skipped=${r.skipped}&job=${posting._id}#job-${posting._id}`);
     res.redirect(`${back}?invited=${r.sent}&skipped=${r.skipped}#invite`);
   } catch (error) {
@@ -650,6 +650,11 @@ router.post('/:id/send', async (req, res) => {
     const url = `${publicJob.BASE_URL()}${publicJob.pathOf(posting)}`;
     const r = await conversation.sendThreadMessage(ctx, `I thought you might be interested in this job: ${posting.title} at ${posting.hiringCompany}. ${url}`);
     if (r.error) return res.redirect(`${back}?sendError=${encodeURIComponent(r.error)}`);
+    const to = ctx.other;
+    if (to && to.email && !to.weeklyEmailOptOut) {
+      const me = await Recruiter.findById(req.session.recruiterId);
+      try { await sendJobInviteEmail(to, { recruiterName: me ? [me.firstName, me.lastName].filter(Boolean).join(' ') : '', company: me && me.company, title: posting.title, url }); } catch (e) { console.error('Job email failed:', e.message); }
+    }
     res.redirect(`${back}?sent=1`);
   } catch (error) {
     console.error('Error sending job to a connection:', error);

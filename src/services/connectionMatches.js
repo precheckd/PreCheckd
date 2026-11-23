@@ -14,6 +14,8 @@ const { notify } = require('./notifications');
 
 const SHOWABLE = new Set(['Foundational', 'Intermediate', 'Advanced', 'Expert']);
 const MAX_PER_INVITE = 100;
+// Direct emails per recruiter per rolling day. Invites past this still reach the thread and the bell, just not the inbox.
+const MAX_EMAILS_PER_DAY = 50;
 
 // A withdrawal forced by a requirement change does not count as "already applied" (same rule as the job notices).
 const stillApplied = (a) => !(a.status === 'withdrawn' && a.withdrawnBy === 'requirement_change');
@@ -54,7 +56,12 @@ async function forPosting(recruiterId, posting, { now = Date.now(), loadSkills =
 
 // Sends the invite to each chosen connection that STILL qualifies (the list is recomputed here; the browser's
 // choice is never trusted). Returns { sent, skipped }.
-async function invite(recruiter, posting, connectionIds, { url, sendMessage, now = Date.now(), loadSkills } = {}) {
+async function invite(recruiter, posting, connectionIds, { url, sendMessage, sendEmail, now = Date.now(), loadSkills } = {}) {
+  let emailsLeft = MAX_EMAILS_PER_DAY;
+  if (sendEmail) {
+    try { emailsLeft -= await JobInvite.countDocuments({ recruiterId: recruiter._id, createdAt: { $gte: new Date(now - 24 * 3600 * 1000) } }); } catch (e) { /* count unavailable: use the full cap */ }
+  }
+  const recruiterName = [recruiter.firstName, recruiter.lastName].filter(Boolean).join(' ');
   const wanted = new Set((connectionIds || []).map(String));
   const { qualifying } = await forPosting(recruiter._id, posting, { now, loadSkills });
   let sent = 0;
@@ -67,8 +74,12 @@ async function invite(recruiter, posting, connectionIds, { url, sendMessage, now
     if (r && r.error) { await JobInvite.deleteOne({ postingId: posting._id, candidateId: candidate._id }); skipped += 1; continue; }
     await notify('candidate', candidate._id, 'job_invite', `A recruiter invited you to apply for ${posting.title}.`.slice(0, 200), url.replace(/^https?:\/\/[^/]+/, ''));
     sent += 1;
+    if (sendEmail && !candidate.weeklyEmailOptOut && candidate.email && emailsLeft > 0) {
+      emailsLeft -= 1;
+      try { await sendEmail(candidate, { recruiterName, company: recruiter.company, title: posting.title, url }); } catch (e) { console.error('Invite email failed:', e.message); }
+    }
   }
   return { sent, skipped: skipped + [...wanted].filter((id) => !qualifying.some((q) => String(q.connection._id) === id)).length };
 }
 
-module.exports = { forPosting, invite, qualifies, visibleSkills, loadSkillFacts, MAX_PER_INVITE };
+module.exports = { forPosting, invite, qualifies, visibleSkills, loadSkillFacts, MAX_PER_INVITE, MAX_EMAILS_PER_DAY };

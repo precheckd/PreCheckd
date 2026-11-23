@@ -14,11 +14,12 @@ const posting = { _id: 'p1', title: 'Support Engineer', hiringCompany: 'Acme', t
   status: 'open', closeDate: new Date(NOW + 20 * 86400000), skills: [{ key: 'linux', label: 'Linux', minLevel: 'Intermediate' }],
   education: null, certGroups: [], clearance: null, shift: 'flexible', arrangement: 'remote', startDate: null, startFirm: false }) };
 
-const person = (id, over = {}) => ({ _id: id, firstName: id, lastName: 'X', emailVerifiedAt: new Date(), isPhoneVerified: true, isIdentityVerified: true,
+const person = (id, over = {}) => ({ _id: id, firstName: id, email: id + '@example.com', lastName: 'X', emailVerifiedAt: new Date(), isPhoneVerified: true, isIdentityVerified: true,
   educationHistory: [], certifications: [], hiddenSkillKeys: [], shifts: [], ...over });
 const skillsOf = { good: [{ key: 'linux', label: 'Linux', level: 'Intermediate', takenAt: ago(30) }], low: [{ key: 'linux', label: 'Linux', level: 'Developing', takenAt: ago(30) }] };
 const loadSkills = async (id) => (id === 'low' ? skillsOf.low : id === 'none' ? [] : skillsOf.good);
 
+let counted = 0;
 let applied = [], invites = [], created = [], deleted = [], notes = [];
 const people = () => [person('good'), person('hider', { hiddenSkillKeys: ['linux'] }), person('low'), person('none'), person('away', { openToOpportunities: false }),
   person('unverified', { isIdentityVerified: false }), person('applied'), person('invited')];
@@ -27,6 +28,7 @@ const setup = () => {
   ConnectionRequest.find = () => ({ populate: async () => people().map((c) => ({ _id: 'c-' + c._id, candidateId: c })) });
   JobApplication.find = async () => applied;
   JobInvite.find = async () => invites;
+  JobInvite.countDocuments = async () => counted;
   JobInvite.create = async (d) => { created.push(d.candidateId); };
   JobInvite.deleteOne = async (q) => { deleted.push(q.candidateId); };
   Notification.create = async (n) => { notes.push(n); return n; };
@@ -65,6 +67,23 @@ const setup = () => {
     setup();
     const r = await cm.invite({ _id: 'r1' }, posting, [], { url: 'https://precheckd.com/jobs/x', now: NOW, loadSkills, sendMessage: async () => ({}) });
     assert.strictEqual(r.sent, 0); assert.deepStrictEqual(created, []);
+  });
+
+  await t('each invite also emails the candidate directly, unless opted out or past the daily cap', async () => {
+    setup(); counted = 0;
+    const mails = [];
+    const opts = { url: 'https://precheckd.com/jobs/x', now: NOW, loadSkills, sendMessage: async () => ({}), sendEmail: async (c, d) => { mails.push({ c: c._id, d }); } };
+    await cm.invite({ _id: 'r1', firstName: 'Ann', lastName: 'Lee', company: 'Acme' }, posting, ['c-good'], opts);
+    assert.strictEqual(mails.length, 1); assert.strictEqual(mails[0].d.recruiterName, 'Ann Lee'); assert.strictEqual(mails[0].d.company, 'Acme'); assert.strictEqual(mails[0].d.url, 'https://precheckd.com/jobs/x');
+    setup(); counted = cm.MAX_EMAILS_PER_DAY; mails.length = 0;
+    const r = await cm.invite({ _id: 'r1' }, posting, ['c-good'], opts);
+    assert.strictEqual(r.sent, 1); assert.strictEqual(mails.length, 0); // still invited in the thread, just no email
+    counted = 0;
+  });
+  await t('an email failure does not undo the invite', async () => {
+    setup(); counted = 0;
+    const r = await cm.invite({ _id: 'r1' }, posting, ['c-good'], { url: 'https://precheckd.com/jobs/x', now: NOW, loadSkills, sendMessage: async () => ({}), sendEmail: async () => { throw new Error('boom'); } });
+    assert.strictEqual(r.sent, 1);
   });
 
   console.log(fail ? 'fail=' + fail : 'fail=0'); process.exit(fail ? 1 : 0);
