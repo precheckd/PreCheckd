@@ -546,6 +546,28 @@ async function sendJobInviteEmail(candidate, { recruiterName, company, title, ur
   });
 }
 
+// Sent once, right after someone deletes their account, to the address they had. Nothing about the person is kept to
+// send it; there is no unsubscribe because it is a one-off receipt.
+async function sendAccountDeletedEmail(to, firstName) {
+  const body = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(firstName) || 'there')},</p>
+    <p style="margin:0 0 14px;">Your PreCheckd account has been deleted, and your membership is cancelled. You will not be charged again.</p>
+    <p style="margin:0 0 6px;font-weight:700;">What this means</p>
+    <ul style="margin:0 0 14px;padding-left:20px;">
+      <li>Your profile, files, videos, messages, skill results, applications and connections were deleted from our systems.</li>
+      <li>We asked our verification partner, Stripe, to erase your ID check images.</li>
+      <li>Copies in our backups are removed as the backups roll off, within 30 days.</li>
+      <li>Stripe keeps its own payment records, as the law requires. Messages you already sent may remain with the people who received them.</li>
+    </ul>
+    <p style="margin:0 0 14px;">This is the only email you will get from us about it, and we did not keep your address to send you anything else. If you ever come back, you would start fresh.</p>
+    <p style="margin:0;">Thank you for giving PreCheckd a try.</p>`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to,
+    subject: 'Your PreCheckd account has been deleted',
+    html: brandShell({ bodyHtml: body, footerHtml: 'This is a one-time confirmation. You will not receive further emails from PreCheckd.' }),
+  });
+}
+
 async function sendUnreadMessagesEmail(candidate, { fresh, totalUnread }) {
   const base = process.env.APP_BASE_URL;
   const unsubUrl = unsubscribeUrl(candidate._id.toString());
@@ -849,6 +871,7 @@ module.exports = {
   sendOutcomeReminderEmail,
   sendUnreadMessagesEmail,
   sendJobInviteEmail,
+  sendAccountDeletedEmail,
   sendSetupReminderEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,

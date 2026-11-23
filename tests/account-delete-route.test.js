@@ -9,12 +9,15 @@ const bcrypt = require('bcryptjs');
 const Candidate = require('../src/models/Candidate');
 const Recruiter = require('../src/models/Recruiter');
 const deletion = require('../src/services/accountDeletion');
+const emailService = require('../src/services/emailService');
+const mails = [];
+emailService.sendAccountDeletedEmail = async (to, name) => { mails.push({ to, name }); };
 
 let n = 0;
 async function t(name, fn) { await fn(); n++; console.log('ok  ' + name); }
 
 const hash = bcrypt.hashSync('correct horse', 4);
-const doc = { _id: '507f1f77bcf86cd799439011', email: 'a@x.com', passwordHash: hash };
+const doc = { _id: '507f1f77bcf86cd799439011', email: 'a@x.com', firstName: 'Ann', passwordHash: hash };
 Candidate.findById = async () => doc;
 Recruiter.findById = async () => doc;
 let deleted = [];
@@ -46,6 +49,7 @@ app.use('/account', require('../src/routes/account-delete'));
     const r = await post({ password: 'correct horse', confirm: 'DELETE' });
     assert.strictEqual(r.status, 302); assert.strictEqual(r.headers.get('location'), '/account/deleted');
     assert.deepStrictEqual(deleted, ['candidate']); assert.strictEqual(session.destroyed, true);
+    assert.deepStrictEqual(mails, [{ to: 'a@x.com', name: 'Ann' }]);
   });
   await t('a recruiter session deletes a recruiter account', async () => {
     deleted = []; session = { recruiterId: doc._id, destroy(cb) { cb(); } };
@@ -57,6 +61,7 @@ app.use('/account', require('../src/routes/account-delete'));
     deletion.deleteAccount = async () => { throw new Error('stripe down'); };
     const r = await post({ password: 'correct horse', confirm: 'DELETE' });
     assert.strictEqual(r.status, 500); assert((await r.text()).includes('nothing was removed'));
+    assert.strictEqual(mails.length, 2); // no confirmation for the failed one
   });
   await t('logged-out visitors are sent to log in', async () => {
     session = { destroy(cb) { cb(); } };

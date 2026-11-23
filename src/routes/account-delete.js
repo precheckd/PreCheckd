@@ -8,6 +8,7 @@ const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
 const deletion = require('../services/accountDeletion');
 const s3 = require('../utils/s3Upload');
+const emailService = require('../services/emailService');
 
 function who(req) {
   if (req.session.recruiterId) return { kind: 'recruiter', Model: Recruiter, id: req.session.recruiterId };
@@ -32,6 +33,8 @@ router.post('/delete', async (req, res) => {
     if (!doc.passwordHash || !(await bcrypt.compare(String(req.body.password || ''), doc.passwordHash))) return render('That password is not right.');
     try { await deletion.deleteAccount(w.kind, doc, { stripe, s3 }); }
     catch (e) { console.error('Account deletion failed:', e.message); return res.status(500).render('account-delete', { pageTitle: 'Delete my account | PreCheckd', kind: w.kind, error: 'We could not finish deleting your account, and nothing was removed. Please try again, or email us.' }); }
+    // The confirmation goes to the address they had; it is used once and not stored anywhere.
+    try { if (doc.email) await emailService.sendAccountDeletedEmail(doc.email, doc.firstName); } catch (e) { console.error('Deletion confirmation email failed:', e.message); }
     req.session.destroy(() => res.redirect('/account/deleted'));
   } catch (error) {
     console.error('Error deleting account:', error);
