@@ -66,6 +66,13 @@ const REG = `<html><body><h1>Registrar</h1><p>Degree verifications: <a href="mai
     const r = await sc.scrapeSchool({ name: 'Gone U', ipedsId: '9', website: 'gone.edu' }, mkDeps({}));
     assert.strictEqual(r.row.registrarEmail, ''); assert(r.error);
   });
+  await t('only a clear registrar box is confirmed; an office box is a guess; a personal address is not used', async () => {
+    const resolver = { resolveMx: async () => [{ exchange: 'mx', priority: 1 }] };
+    const row = (email) => ({ name: 'Z U', website: 'z.edu', registrarEmail: email, sourceUrl: 'https://z.edu/r' });
+    const reg = await imp.classify(row('records@z.edu'), resolver); assert.strictEqual(reg.emailStatus, 'confirmed');
+    const off = await imp.classify(row('admissions@z.edu'), resolver); assert.strictEqual(off.emailStatus, 'guessed'); assert.strictEqual(off.registrarEmail, 'admissions@z.edu'); assert(/not clearly/.test(off.notes));
+    const per = await imp.classify(row('giuseppe.salomone@z.edu'), resolver); assert.strictEqual(per.emailStatus, 'guessed'); assert.strictEqual(per.registrarEmail, 'registrar@z.edu'); assert(/giuseppe/.test(per.notes));
+  });
   await t('a homepage with no registrar link is followed one level down, and failures say why', async () => {
     const W = { 'https://hub.edu/': '<a href="/students">Current Students</a>', 'https://hub.edu/students': '<a href="https://registrar.hub.edu/verify">Registrar</a>',
       'https://registrar.hub.edu/verify': REG.replace('state.edu', 'hub.edu').replace('State.edu', 'hub.edu') };
@@ -114,7 +121,7 @@ const REG = `<html><body><h1>Registrar</h1><p>Degree verifications: <a href="mai
     const resolver = { resolveMx: async () => [{ exchange: 'mx', priority: 1 }] };
     const r = await imp.classify({ name: 'CH U', website: 'ch.edu', clearinghouseOnly: 'yes', notes: '' }, resolver);
     assert.strictEqual(r.emailStatus, 'guessed'); assert.strictEqual(r.registrarEmail, 'registrar@ch.edu'); assert(/Clearinghouse/.test(r.notes));
-    const given = await imp.classify({ name: 'CH2', website: 'ch2.edu', registrarEmail: 'r@ch2.edu', sourceUrl: 'https://ch2.edu/r', clearinghouseOnly: 'yes', notes: 'prefers Clearinghouse' }, resolver);
+    const given = await imp.classify({ name: 'CH2', website: 'ch2.edu', registrarEmail: 'registrar@ch2.edu', sourceUrl: 'https://ch2.edu/r', clearinghouseOnly: 'yes', notes: 'prefers Clearinghouse' }, resolver);
     assert.strictEqual(given.emailStatus, 'confirmed'); assert.strictEqual(given.notes, 'prefers Clearinghouse');
   });
   console.log(fail ? 'fail=' + fail : 'fail=0'); process.exit(fail ? 1 : 0);

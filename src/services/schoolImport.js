@@ -14,6 +14,16 @@ async function acceptsMail(domain, resolver = dns) {
   try { const mx = await resolver.resolveMx(domain); return Array.isArray(mx) && mx.length > 0; } catch (e) { return false; }
 }
 
+const REGISTRAR_BOX = /registrar|registra$|^reg$|^register$|^reg[-_.]|^reg(help|off)|records|recrds|verif|enroll|degree|univreg|credential|certif|^rar$|^ro\./i;
+const OFFICE_BOX = /admission|transcript|one-?stop|^hub$|husker|student|services|^help|^info$|^ask|^go$|^esc$|^ce$|ardocs/i;
+// 'registrar' = clearly the right box, 'office' = a general office box, null = looks personal or unclear.
+function roleOf(email) {
+  const local = String(email).split('@')[0];
+  if (REGISTRAR_BOX.test(local)) return 'registrar';
+  if (OFFICE_BOX.test(local)) return 'office';
+  return null;
+}
+
 // Returns { name, ipedsId, domain, registrarEmail, registrarPhone, emailStatus, sourceUrl } for one row.
 async function classify(row, resolver = dns) {
   const name = String(row.name || '').trim();
@@ -22,8 +32,16 @@ async function classify(row, resolver = dns) {
   const out = { name, ipedsId: String(row.ipedsId || '').trim() || null, domain, registrarEmail: '', registrarPhone: String(row.registrarPhone || '').trim(), emailStatus: 'needs_research', sourceUrl: String(row.sourceUrl || '').trim(), notes: String(row.notes || '').trim().slice(0, 500) };
   // A school that prefers the Clearinghouse is kept as a note, so staff know a direct request may go unanswered.
   if (String(row.clearinghouseOnly || '').toLowerCase() === 'yes' && !/clearinghouse/i.test(out.notes)) out.notes = ('prefers Clearinghouse ' + out.notes).trim();
-  if (given && EMAIL_RE.test(given) && out.sourceUrl) { out.registrarEmail = given; out.emailStatus = 'confirmed'; }
-  else if (domain && await acceptsMail(domain, resolver)) { out.registrarEmail = `registrar@${domain}`; out.emailStatus = 'guessed'; }
+  const found = given && EMAIL_RE.test(given) && out.sourceUrl;
+  const kind = found ? roleOf(given) : null;
+  // Only an address that is clearly a registrar / records / verification box is "confirmed" (and so may receive a date of birth).
+  // A general office box is kept as a guess for staff to check; anything that looks like a person's address is not used.
+  if (kind === 'registrar') { out.registrarEmail = given; out.emailStatus = 'confirmed'; }
+  else if (kind === 'office') { out.registrarEmail = given; out.emailStatus = 'guessed'; out.notes = (out.notes + ' | found on the site but not clearly the registrar: check before confirming').replace(/^ \| /, '').slice(0, 500); }
+  else if (domain && await acceptsMail(domain, resolver)) {
+    out.registrarEmail = `registrar@${domain}`; out.emailStatus = 'guessed';
+    if (found) out.notes = (`site lists ${given}, role unclear; ` + out.notes).slice(0, 500);
+  }
   return out;
 }
 
@@ -52,4 +70,4 @@ async function importRows(rows, { resolver = dns, now = new Date(), onProgress =
   return counts;
 }
 
-module.exports = { classify, importRows, domainOf, acceptsMail };
+module.exports = { roleOf, classify, importRows, domainOf, acceptsMail };
