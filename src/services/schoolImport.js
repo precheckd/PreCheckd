@@ -19,6 +19,7 @@ const OFFICE_BOX = /admission|transcript|one-?stop|^hub$|husker|student|services
 // 'registrar' = clearly the right box, 'office' = a general office box, null = looks personal or unclear.
 function roleOf(email) {
   const local = String(email).split('@')[0];
+  if (/public|financ|aid$|enrollmentservices/i.test(local)) return null; // public-records, financial-aid and general enrollment-services boxes are not the registrar
   if (REGISTRAR_BOX.test(local)) return 'registrar';
   if (OFFICE_BOX.test(local)) return 'office';
   return null;
