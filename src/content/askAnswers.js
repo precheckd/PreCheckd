@@ -69,7 +69,7 @@ function getAnswers({ billingLive = false } = {}) {
         'Jobs and degrees on your profile are checked too. We first try to confirm them with the employer or school, which takes about a week. If that does not work, we ask you for help, such as documents.'
       ],
       links: [{ href: '/safety', label: 'Safety Center' }],
-      video: { file: 'ask-how-verification-works', poster: false }
+      video: null // clip planned: ask-how-verification-works
     },
     {
       id: 'cost',
@@ -98,7 +98,7 @@ function getAnswers({ billingLive = false } = {}) {
         'You choose which skills recruiters can see. Recruiters never see a percentage for a skill test, and results older than 12 months show as needing a retake.'
       ],
       links: [{ href: '/skills-explained', label: 'Skills explained' }],
-      video: { file: 'ask-skill-levels', poster: false }
+      video: null // clip planned: ask-skill-levels
     },
     {
       id: 'privacy',
@@ -108,7 +108,7 @@ function getAnswers({ billingLive = false } = {}) {
         'We never sell your information and do not share it with third parties for marketing. A public verification page is optional, and it shows first name and last initial only.'
       ],
       links: [{ href: '/privacy', label: 'Privacy Policy' }],
-      video: { file: 'ask-who-sees-my-info', poster: false }
+      video: null // clip planned: ask-who-sees-my-info
     },
     {
       id: 'apply',
@@ -130,7 +130,7 @@ function getAnswers({ billingLive = false } = {}) {
         'If the feedback you were given is not true, for example you were never interviewed, you can report it from your application.'
       ],
       links: [],
-      video: { file: 'ask-no-hire', poster: false }
+      video: null // clip planned: ask-no-hire
     },
     {
       id: 'recruiters',

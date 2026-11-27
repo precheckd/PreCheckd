@@ -14,6 +14,7 @@ const STATIC_PATHS = [
   '/is-this-recruiter-real',
   '/recruiter-search',
   '/resources',
+  '/ask',
   '/skills-explained',
   '/founder',
   '/jobs',

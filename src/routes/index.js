@@ -45,10 +45,10 @@ router.get('/recruiter-search', async (req, res) => {
 });
 
 // Ask page: the live chat plus the question rows (text + optional video) from
-// src/content/askAnswers.js. noindex until the remaining Synthesia clips are in.
+// src/content/askAnswers.js. Indexable and listed in the sitemap.
 router.get('/ask', (req, res) => {
   const answers = require('../content/askAnswers').getAnswers({ billingLive: process.env.BILLING_LIVE === 'true' });
-  res.render('ask', { pageTitle: 'PreCheckd - Ask Us Anything', robotsMeta: 'noindex', answers });
+  res.render('ask', { pageTitle: 'PreCheckd - Ask Us Anything', metaDescription: 'Plain answers about how PreCheckd works: verification, skill tests, pricing, who sees your information and how recruiters post and review.', canonicalUrl: canon('/ask'), answers });
 });
 
 router.get('/candidate-landing', (req, res) => {
