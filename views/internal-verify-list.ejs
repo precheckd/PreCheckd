@@ -99,7 +99,7 @@
       <% candidates.forEach(function(c) { %>
         <a href="/verify/<%= c._id %>" class="candidate-row">
           <div>
-            <div class="candidate-name"><%= c.firstName %> <%= c.lastName %></div>
+            <div class="candidate-name"><%= c.firstName %> <%= c.lastName %><% if (conduct.has(String(c._id))) { %> <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid #FF6B6B;color:#FFB3B3;background:#5A2222;border-radius:999px;padding:0.05rem 0.5rem;">Conduct</span><% } %></div>
             <div class="candidate-email"><%= c.email %></div>
           </div>
           <div class="candidate-counts">

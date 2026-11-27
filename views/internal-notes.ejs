@@ -1,0 +1,56 @@
+<%# Find staff notes and accounts. Route: GET /notes %>
+<style>
+  .nt-wrap { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; }
+  .nt-inner { max-width: 900px; margin: 0 auto; color: #F2F4F3; }
+  .nt-back { color: #8FA6AC; font-size: 0.85rem; text-decoration: none; }
+  .nt-inner h1 { font-size: 1.5rem; margin: 0.5rem 0; }
+  .nt-sub { color: #C7D1CF; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem; }
+  .nt-search { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .nt-search input, .nt-search select { background: #2A4750; border: 1px solid #3B5860; border-radius: 6px; padding: 0.55rem 0.7rem; color: #F2F4F3; font-family: inherit; font-size: 0.95rem; }
+  .nt-search input { flex: 1; min-width: 220px; }
+  .nt-search button { background: #2ECC71; color: #10261A; border: 0; border-radius: 6px; padding: 0.55rem 1.2rem; font-weight: 700; cursor: pointer; }
+  .nt-h { font-size: 1rem; margin: 1.5rem 0 0.5rem; color: #C7D1CF; text-transform: uppercase; letter-spacing: 0.05em; }
+  .nt-row { display: block; background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; color: inherit; text-decoration: none; }
+  .nt-row:hover { border-color: #4ADE80; }
+  .nt-meta { color: #8FA6AC; font-size: 0.8rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .nt-text { margin-top: 0.2rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nt-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 999px; padding: 0.05rem 0.5rem; border: 1px solid #8FA6AC; color: #C7D1CF; }
+  .nt-tag.call { border-color: #4ADE80; color: #4ADE80; }
+  .nt-tag.conduct { border-color: #FF6B6B; color: #FFB3B3; background: #5A2222; }
+</style>
+<div class="nt-wrap"><div class="nt-inner">
+  <a class="nt-back" href="/">&larr; Dashboard</a>
+  <h1>Notes</h1>
+  <p class="nt-sub">Running staff notes on candidates, recruiters and verification cases. Search a name, email or company to open an account and add a note, or search the text of past notes. Staff only; deleted when the person deletes their account.</p>
+  <form class="nt-search" method="GET" action="/notes">
+    <input name="q" value="<%= q %>" placeholder="Name, email, company or words in a note" autofocus>
+    <select name="kind">
+      <option value="">All notes</option>
+      <% Object.keys(kinds).forEach(function (k) { %><option value="<%= k %>" <%= kind === k ? 'selected' : '' %>><%= kinds[k] %> only</option><% }); %>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+
+  <% if (result.people.length) { %>
+    <div class="nt-h">Accounts</div>
+    <% result.people.forEach(function (p) { %>
+      <a class="nt-row" href="/people/<%= p.type %>/<%= p.id %>">
+        <div><strong><%= p.name %></strong> <span style="color:#8FA6AC;">(<%= p.type %>)</span> <% if (p.conduct) { %><span class="nt-tag conduct">Conduct</span><% } %></div>
+        <div class="nt-meta"><%= p.detail %></div>
+      </a>
+    <% }); %>
+  <% } %>
+
+  <div class="nt-h"><%= q || kind ? 'Matching notes' : 'Latest notes' %></div>
+  <% if (!result.notes.length) { %><p class="nt-sub">No notes found.</p><% } %>
+  <% result.notes.forEach(function (n) { %>
+    <a class="nt-row" href="/people/<%= n.subjectType %>/<%= n.subjectId %>">
+      <div class="nt-meta">
+        <strong style="color:#F2F4F3;"><%= n.subjectName %></strong>
+        <span><%= new Date(n.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) %></span>
+        <% if (n.kind === 'conduct') { %><span class="nt-tag conduct">Conduct</span><% } else if (n.kind === 'call') { %><span class="nt-tag call">Call<%= n.outcome && outcomes[n.outcome] ? ': ' + outcomes[n.outcome] : '' %></span><% } %>
+      </div>
+      <div class="nt-text"><%= n.text.length > 280 ? n.text.slice(0, 280) + '…' : n.text %></div>
+    </a>
+  <% }); %>
+</div></div>

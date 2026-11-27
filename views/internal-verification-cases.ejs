@@ -21,7 +21,7 @@
     <tbody>
       <% rows.forEach((r) => { %>
         <tr>
-          <td><%= r.candidate %></td>
+          <td><%= r.candidate %><% if (conduct.has(r.candidateId)) { %> <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;border:1px solid #C0392B;color:#C0392B;border-radius:999px;padding:0.05rem 0.5rem;">Conduct</span><% } %></td>
           <td><%= r.kind %>: <%= r.subject %><%= r.detail ? ' (' + r.detail + ')' : '' %></td>
           <td><%= r.day %></td>
           <td class="sr-act <%= r.action.kind %>"><%= r.action.label %></td>

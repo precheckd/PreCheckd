@@ -244,7 +244,7 @@ const mkCand = (jobs, extra = {}) => new Candidate({ firstName: 'Ann', lastName:
   await t('the staff screen shows hold in red and the contact the candidate gave', async () => {
     const c = mkCand([mkJob({ contactChoice: 'hold' }), mkJob({ employerName: 'B', contactChoice: 'verify', manager: { name: 'Pat', email: 'pat@b.test' } })]);
     c._id = new mongoose.Types.ObjectId();
-    const html = await view('internal-verify-detail.ejs', { candidate: c, csrfToken: 'x', caseNotice: null, title: 't' });
+    const html = await view('internal-verify-detail.ejs', { candidate: c, csrfToken: 'x', caseNotice: null, title: 't', items: [], kinds: require('../src/services/staffNotes').KINDS, outcomes: require('../src/services/staffNotes').OUTCOMES, noteMsg: '', noteSaved: false, conductCount: 0 });
     assert(html.includes('DO NOT CONTACT')); assert(html.includes('pat@b.test'));
     assert(!/Start verification case[\s\S]*Held/.test(html.split('Held')[0] || ''));
   });

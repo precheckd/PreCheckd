@@ -1,0 +1,65 @@
+<%# Running staff notes for one account (and optionally one case). Staff only.
+    Locals: subjectType, subjectId, caseId ('' for the whole account), items, redirectTo, kinds, outcomes, noteMsg, noteSaved, csrfToken, heading %>
+<style>
+  .sn-panel { background: #2A4750; border: 1px solid #3B5860; border-radius: 10px; padding: 1.1rem 1.25rem; margin: 1.25rem 0; color: #F2F4F3; text-align: left; }
+  .sn-panel h2, .sn-panel h3 { font-size: 1.1rem; margin: 0 0 0.25rem; color: #F2F4F3; }
+  .sn-hint { color: #C7D1CF; font-size: 0.85rem; margin: 0 0 0.75rem; }
+  .sn-form { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+  .sn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .sn-form select, .sn-form textarea { background: #1F363C; border: 1px solid #3B5860; border-radius: 6px; padding: 0.5rem 0.6rem; color: #F2F4F3; font-family: inherit; font-size: 0.95rem; }
+  .sn-form textarea { width: 100%; min-height: 70px; resize: vertical; }
+  .sn-btn { background: #2ECC71; color: #10261A; border: 0; border-radius: 6px; padding: 0.5rem 1.1rem; font-weight: 700; cursor: pointer; }
+  .sn-msg { font-size: 0.9rem; margin-bottom: 0.6rem; color: #FFB3B3; }
+  .sn-msg.ok { color: #4ADE80; }
+  .sn-item { border-top: 1px solid #3B5860; padding: 0.6rem 0; }
+  .sn-meta { color: #8FA6AC; font-size: 0.8rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .sn-text { margin-top: 0.2rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+  .sn-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 999px; padding: 0.05rem 0.5rem; border: 1px solid #8FA6AC; color: #C7D1CF; }
+  .sn-tag.call { border-color: #4ADE80; color: #4ADE80; }
+  .sn-tag.conduct { border-color: #FF6B6B; color: #FFB3B3; background: #5A2222; }
+  .sn-item.is-conduct .sn-text { color: #FFD0D0; }
+  .sn-meta a { color: #4ADE80; text-decoration: none; }
+  .sn-none { color: #C7D1CF; font-size: 0.9rem; }
+</style>
+<div class="sn-panel" id="notes">
+  <h2><%= heading || 'Notes (staff only)' %></h2>
+  <p class="sn-hint">Facts only: what happened, and when. Never visible to the person. Deleted if they delete their account.</p>
+  <% if (noteMsg) { %><div class="sn-msg<%= noteSaved ? ' ok' : '' %>"><%= noteMsg %></div><% } %>
+  <form class="sn-form" method="POST" action="/notes">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="subjectType" value="<%= subjectType %>">
+    <input type="hidden" name="subjectId" value="<%= subjectId %>">
+    <input type="hidden" name="caseId" value="<%= caseId || '' %>">
+    <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+    <div class="sn-row">
+      <select name="kind" data-sn-kind>
+        <option value="note"><%= kinds.note %></option>
+        <option value="call"><%= kinds.call %> (log a call)</option>
+        <option value="conduct"><%= kinds.conduct %> (possible improper behavior)</option>
+      </select>
+      <select name="outcome" data-sn-outcome hidden>
+        <option value="">Outcome</option>
+        <% Object.keys(outcomes).forEach(function (k) { %><option value="<%= k %>"><%= outcomes[k] %></option><% }); %>
+      </select>
+    </div>
+    <textarea name="text" maxlength="2000" required placeholder="e.g. Called Dana in HR at Acme, confirmed dates, will email a letter Thursday"></textarea>
+    <div><button class="sn-btn" type="submit">Add note</button></div>
+  </form>
+  <% if (!items.length) { %><p class="sn-none">No notes yet.</p><% } %>
+  <% items.forEach(function (n) { %>
+    <div class="sn-item<%= n.kind === 'conduct' ? ' is-conduct' : '' %>">
+      <div class="sn-meta">
+        <span><%= new Date(n.at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) %></span>
+        <% if (n.kind === 'conduct') { %><span class="sn-tag conduct">Conduct</span><% } else if (n.kind === 'call') { %><span class="sn-tag call">Call<%= n.outcome && outcomes[n.outcome] ? ': ' + outcomes[n.outcome] : '' %></span><% } else if (n.kind === 'log') { %><span class="sn-tag">Case log</span><% } %>
+        <% if (n.caseLabel && n.caseId) { %><a href="/verification-cases/<%= n.caseId %>"><%= n.caseLabel %></a><% } %>
+      </div>
+      <div class="sn-text"><%= n.text %></div>
+    </div>
+  <% }); %>
+  <script>
+    (function () {
+      var panel = document.currentScript.parentNode, kind = panel.querySelector('[data-sn-kind]'), out = panel.querySelector('[data-sn-outcome]');
+      kind.addEventListener('change', function () { out.hidden = kind.value !== 'call'; });
+    })();
+  </script>
+</div>

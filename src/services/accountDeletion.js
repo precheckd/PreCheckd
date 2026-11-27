@@ -83,6 +83,7 @@ async function deleteAccount(kind, doc, { stripe, s3 } = {}) {
   await M('ConnectionRequest').deleteMany({ _id: { $in: connIds } });
   for (const [model, field] of ownedLinks) await M(model).deleteMany({ [field]: id });
   for (const model of OWNER_KEYED) await M(model).deleteMany({ ownerId: id });
+  await M('StaffNote').deleteMany({ subjectType: kind, subjectId: id }); // staff notes go with the account
 
   await DeletedAccount.create(tombstone);
   await doc.constructor.deleteOne({ _id: id });

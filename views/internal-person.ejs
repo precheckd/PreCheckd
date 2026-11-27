@@ -1,0 +1,33 @@
+<%# One account's staff page: who they are, any conduct flag, and the whole running timeline. Route: GET /people/:type/:id %>
+<style>
+  .pp-wrap { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; }
+  .pp-inner { max-width: 800px; margin: 0 auto; color: #F2F4F3; }
+  .pp-back { color: #8FA6AC; font-size: 0.85rem; text-decoration: none; }
+  .pp-inner h1 { font-size: 1.5rem; margin: 0.5rem 0 0.25rem; }
+  .pp-sub { color: #C7D1CF; font-size: 0.95rem; line-height: 1.6; }
+  .pp-flag { background: #5A2222; border: 1px solid #FF6B6B; color: #FFD0D0; border-radius: 8px; padding: 0.7rem 1rem; margin: 1rem 0; font-weight: 600; }
+  .pp-links { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.75rem 0; }
+  .pp-links a, .pp-links button { color: #4ADE80; text-decoration: none; font-size: 0.9rem; background: none; border: 0; cursor: pointer; padding: 0; font-family: inherit; }
+  .pp-links button.danger { color: #FFB3B3; }
+</style>
+<div class="pp-wrap"><div class="pp-inner">
+  <a class="pp-back" href="/notes">&larr; Notes</a>
+  <h1><%= doc.firstName %> <%= doc.lastName || '' %> <span style="color:#8FA6AC;font-size:0.9rem;font-weight:400;">(<%= type %>)</span></h1>
+  <p class="pp-sub">
+    <%= doc.email %><% if (type === 'recruiter' && doc.company) { %> &middot; <%= doc.company %><% } %>
+    <% if (doc.createdAt) { %> &middot; joined <%= new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %><% } %>
+    <% if (type === 'recruiter' && doc.isSuspended) { %> &middot; <strong style="color:#FFB3B3;">suspended</strong><% } %>
+  </p>
+  <% if (conductCount > 0) { %><div class="pp-flag">Conduct notes on file: <%= conductCount %>. Read the timeline below before taking any action.</div><% } %>
+  <div class="pp-links">
+    <% if (type === 'candidate') { %><a href="/verify/<%= doc._id %>">Verification screen</a><% } %>
+    <% if (type === 'recruiter') { %>
+      <form method="POST" action="/recruiter/<%= doc._id %>/<%= doc.isSuspended ? 'unsuspend' : 'suspend' %>" style="display:inline;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="redirectTo" value="/people/recruiter/<%= doc._id %>">
+        <button type="submit" class="<%= doc.isSuspended ? '' : 'danger' %>"><%= doc.isSuspended ? 'Unsuspend this recruiter' : 'Suspend this recruiter' %></button>
+      </form>
+    <% } %>
+  </div>
+  <%- include('partials/internal-notes-panel', { subjectType: type, subjectId: String(doc._id), caseId: '', items, redirectTo: '/people/' + type + '/' + doc._id, kinds, outcomes, noteMsg, noteSaved, csrfToken, heading: 'Running notes (staff only)' }) %>
+</div></div>

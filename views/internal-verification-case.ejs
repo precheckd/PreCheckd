@@ -135,13 +135,12 @@
     <% } %>
   </div>
 
+  <% if (conduct) { %><div style="background:#FBE9E9;border:1px solid #C0392B;color:#7B1F1F;border-radius:8px;padding:0.7rem 1rem;margin:1rem 0;font-weight:600;">Conduct notes are on file for this candidate. <a href="/people/candidate/<%= c.candidateId %>">Open their page</a> before acting.</div><% } %>
+  <%- include('partials/internal-notes-panel', { subjectType: 'candidate', subjectId: String(c.candidateId), caseId: String(c._id), items: notes, redirectTo: '/verification-cases/' + c._id, kinds: noteKinds, outcomes: noteOutcomes, noteMsg, noteSaved, csrfToken, heading: 'Notes on this case (staff only)' }) %>
+  <p class="vc-sub" style="margin:0 0 1rem;"><a href="/people/candidate/<%= c.candidateId %>">All notes for this candidate</a></p>
+
   <div class="vc-card">
-    <h2>Notes and history (staff only)</h2>
-    <form method="POST" action="/verification-cases/<%= c._id %>/note" class="vc-row" style="margin-bottom:0.8rem;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input name="note" placeholder="Add a note, e.g. spoke to Dana in HR, calling back Thursday" style="flex:1;min-width:260px;">
-      <button class="vc-btn" type="submit">Add</button>
-    </form>
+    <h2>History</h2>
     <div class="vc-log">
       <% c.log.slice().reverse().forEach((l) => { %><div><%= l.at.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %> &mdash; <%= l.text %></div><% }) %>
     </div>

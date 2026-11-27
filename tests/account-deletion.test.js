@@ -11,7 +11,7 @@ const calls = [];
 const M = (n) => require(`../src/models/${n}`);
 const names = ['Application', 'CreditRequest', 'FinalistTest', 'JobApplication', 'JobInvite', 'JobNotice', 'SkillRequest', 'SkillResult', 'TestRequest',
   'ProfileView', 'SavedRecruiter', 'JobPosting', 'JobDraft', 'OutreachMessage', 'OutreachBlock', 'BillingEvent', 'FeedItem', 'InboundEmail', 'MailAlias',
-  'MailBlock', 'MailMessage', 'MailReport', 'Notification', 'PageView', 'RelationshipNote', 'VerificationCase', 'CatalogRequest', 'FraudReport', 'FoundingInvite', 'Message', 'ConnectionRequest'];
+  'MailBlock', 'MailMessage', 'MailReport', 'Notification', 'PageView', 'RelationshipNote', 'VerificationCase', 'CatalogRequest', 'FraudReport', 'FoundingInvite', 'Message', 'ConnectionRequest', 'StaffNote'];
 let msgs = [];
 const connId = new mongoose.Types.ObjectId();
 for (const n of names) {

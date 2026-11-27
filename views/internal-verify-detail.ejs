@@ -138,6 +138,9 @@
       <%= cn === 'exists' ? 'A case is already open for that entry.' : cn === 'already_verified' ? 'That entry is already verified.' : cn === 'bad_email' ? 'That email does not look right.' : cn === 'on_hold' ? 'The candidate asked us not to contact that employer yet.' : 'Could not start a case for that entry.' %>
     </div><% } %>
 
+    <% if (conductCount > 0) { %><div style="background:#5A2222;border:1px solid #FF6B6B;color:#FFD0D0;border-radius:8px;padding:0.7rem 1rem;margin:0 0 1rem;font-weight:600;">Conduct notes on file: <%= conductCount %>. See the notes below.</div><% } %>
+    <%- include('partials/internal-notes-panel', { subjectType: 'candidate', subjectId: String(candidate._id), caseId: '', items, redirectTo: '/verify/' + candidate._id, kinds, outcomes, noteMsg, noteSaved, csrfToken, heading: 'Running notes (staff only)' }) %>
+
     <div class="internal-section">
       <h3>Work History</h3>
       <% if (candidate.workHistory.length === 0) { %>
