@@ -6,6 +6,7 @@
 // DISABLE_JOBS=true turns the in-process timer off.
 const { runWeeklyRecap, runUnreadMessagesEmail } = require('../services/weeklyEmails');
 const { runSetupReminders } = require('../services/setupReminders');
+const { runJobContactReminders } = require('../services/jobContactReminders');
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 const STARTUP_DELAY_MS = 90 * 1000;
@@ -22,6 +23,8 @@ function startWeeklyEmailJob() {
       const unread = await runUnreadMessagesEmail();
       const setup = await runSetupReminders();
       console.log(`[jobs] setup reminders: sent=${setup.sent || 0}`);
+      const jc = await runJobContactReminders();
+      console.log(`[jobs] job contact nudges: bells=${jc.bells}, emails=${jc.emails}`);
       console.log(`[jobs] weekly emails check: recap sent=${recap.sent || 0}, unread email sent=${unread.sent || 0}`);
     } catch (err) {
       console.error('[jobs] weekly emails failed:', err);

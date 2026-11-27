@@ -42,6 +42,7 @@ router.get('/:slug/setup', requireCandidateLogin, async (req, res) => {
       candidate,
       progress,
       identityDone: Boolean(candidate.isIdentityVerified),
+      jobContactsMissing: require('../services/jobContacts').missingCount(candidate),
       title: 'Set up your profile | PreCheckd'
     });
   } catch (error) {

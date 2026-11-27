@@ -1,0 +1,115 @@
+<%# Who can confirm your jobs. One block per job; three choice cards each. Rules and wording: src/services/jobContacts.js. %>
+<style>
+  .jc-content { flex: 1; padding: 2rem 1.5rem; background: #1F363C; min-height: 100vh; display: flex; justify-content: center; }
+  .jc-container { max-width: 860px; width: 100%; }
+  .jc-container h1 { font-size: 1.75rem; color: #F2F4F3; margin-bottom: 0.5rem; }
+  .jc-lead { color: #C7D1CF; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem; }
+  .jc-back { color: #4ADE80; text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; }
+  .jc-banner { border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.95rem; }
+  .jc-banner.ok { background: #1F4A37; border: 1px solid #4ADE80; color: #F2F4F3; }
+  .jc-banner.err { background: #3A2020; border: 1px solid #FF8A8A; color: #FFB3B3; }
+  .jc-job { background: #2A4750; border: 1px solid #3B5860; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .jc-job-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
+  .jc-job-title { color: #F2F4F3; font-weight: 700; font-size: 1.1rem; }
+  .jc-job-sub { color: #C7D1CF; font-size: 0.9rem; }
+  .jc-done { color: #4ADE80; font-weight: 600; font-size: 0.9rem; }
+  .jc-hint { color: #C7D1CF; font-size: 0.9rem; margin: 0.9rem 0 0.6rem; }
+  .jc-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .jc-card { display: flex; flex-direction: column; gap: 0.4rem; background: #1F363C; border: 1px solid #3B5860; border-radius: 8px; padding: 0.9rem 1rem; cursor: pointer; transition: border-color 0.1s, background 0.1s; }
+  .jc-card:hover { border-color: #4ADE80; }
+  .jc-card strong { color: #F2F4F3; font-size: 1rem; }
+  .jc-card span.jc-blurb { color: #C7D1CF; font-size: 0.88rem; line-height: 1.45; flex: 1; }
+  .jc-card .jc-pick { display: flex; align-items: center; gap: 0.5rem; color: #F2F4F3; font-weight: 600; font-size: 0.9rem; margin-top: 0.3rem; }
+  .jc-card input { width: 1.05rem; height: 1.05rem; accent-color: #2ECC71; }
+  .jc-card.is-selected { background: #1F4A37; border-color: #4ADE80; box-shadow: 0 0 0 1px #4ADE80; }
+  /* The hold choice is red all the time so it cannot be picked by accident. */
+  .jc-card.jc-hold { border-color: #FF8A8A; background: #3A2020; }
+  .jc-card.jc-hold strong { color: #FFB3B3; }
+  .jc-card.jc-hold:hover { border-color: #FF6B6B; }
+  .jc-card.jc-hold input { accent-color: #FF6B6B; }
+  .jc-card.jc-hold.is-selected { background: #5A2222; border-color: #FF6B6B; box-shadow: 0 0 0 1px #FF6B6B; }
+  .jc-fields { margin-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .jc-fields label { display: flex; flex-direction: column; gap: 0.25rem; color: #C7D1CF; font-size: 0.85rem; }
+  .jc-fields input { background: #1F363C; border: 1px solid #3B5860; border-radius: 6px; padding: 0.55rem 0.7rem; color: #F2F4F3; font-size: 0.95rem; font-family: inherit; }
+  .jc-fields input:focus { outline: 2px solid #4ADE80; outline-offset: 1px; }
+  .jc-fields-note { grid-column: 1 / -1; color: #8FA6AC; font-size: 0.82rem; }
+  .jc-holdnote { margin-top: 1rem; color: #FFB3B3; font-size: 0.9rem; }
+  .jc-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 1.5rem 0 3rem; }
+  .jc-save { background: #2ECC71; color: #10261A; border: 0; border-radius: 6px; padding: 0.7rem 1.6rem; font-weight: 700; font-size: 1rem; cursor: pointer; }
+  .jc-skip { color: #C7D1CF; font-size: 0.9rem; }
+  @media (max-width: 720px) { .jc-cards, .jc-fields { grid-template-columns: 1fr; } .jc-content { padding: 1.25rem 1rem; } }
+</style>
+
+<%
+  const jobs = candidate.workHistory || [];
+  const pst = (typeof posted !== 'undefined' && posted) ? posted : null;
+  const open = jobs.filter(function (j) { return !j.verified; });
+%>
+<div class="jc-content">
+  <div class="jc-container">
+    <a class="jc-back" href="/candidate/<%= candidate.slug %>/setup">&larr; Back</a>
+    <h1>Who can confirm your jobs?</h1>
+    <p class="jc-lead">Verified jobs stand out to recruiters. For each job below, tell us how we may verify it, and give us a contact who can confirm your title and dates: a manager, someone in HR, or a coworker who knows. It is optional. If you leave a job blank, we verify it by hand and it can take longer.</p>
+
+    <% if (saved) { %><div class="jc-banner ok">Saved.</div><% } %>
+    <% if (error) { %><div class="jc-banner err"><%= error %></div><% } %>
+
+    <% if (jobs.length === 0) { %>
+      <p class="jc-lead">You have not added any jobs yet. <a href="/candidate/<%= candidate.slug %>/edit" style="color:#4ADE80;">Add your work history</a> and come back here.</p>
+    <% } else if (open.length === 0) { %>
+      <p class="jc-lead">All of your jobs are verified. Nothing to do here.</p>
+    <% } else { %>
+    <form method="POST" action="/candidate/<%= candidate.slug %>/job-contacts">
+      <% open.forEach(function (job, n) {
+           const fp = fingerprint(job);
+           const p = pst && pst['job_' + n + '_fp'] !== undefined ? { choice: pst['job_' + n + '_choice'] || null, name: pst['job_' + n + '_name'] || '', email: pst['job_' + n + '_email'] || '', phone: pst['job_' + n + '_phone'] || '' } : null;
+           const choice = p ? p.choice : job.contactChoice;
+           const m = p ? p : (job.manager || {});
+      %>
+      <div class="jc-job" data-job>
+        <input type="hidden" name="job_<%= n %>_fp" value="<%= fp %>">
+        <div class="jc-job-head">
+          <div>
+            <div class="jc-job-title"><%= job.jobTitle %></div>
+            <div class="jc-job-sub"><%= job.employerName %> &middot; <%= job.startDate || '?' %> to <%= job.endDate || 'present' %></div>
+          </div>
+        </div>
+        <p class="jc-hint">How should we verify this job?</p>
+        <div class="jc-cards">
+          <% ['verify', 'verify_reference', 'hold'].forEach(function (key) { %>
+            <label class="jc-card<%= key === 'hold' ? ' jc-hold' : '' %><%= choice === key ? ' is-selected' : '' %>">
+              <strong><%= choices[key].label %></strong>
+              <span class="jc-blurb"><%= choices[key].blurb %></span>
+              <span class="jc-pick"><input type="radio" name="job_<%= n %>_choice" value="<%= key %>" <%= choice === key ? 'checked' : '' %>> <%= key === 'hold' ? 'Hold off' : 'Choose this' %></span>
+            </label>
+          <% }); %>
+        </div>
+        <div class="jc-fields" data-fields <%= choice === 'hold' ? 'hidden' : '' %>>
+          <label>Name<input name="job_<%= n %>_name" maxlength="120" value="<%= m.name || '' %>" placeholder="Manager, HR contact or coworker" autocomplete="off"></label>
+          <label>Work email<input name="job_<%= n %>_email" type="email" maxlength="200" value="<%= m.email || '' %>" placeholder="name@company.com" autocomplete="off"></label>
+          <label>Phone (optional)<input name="job_<%= n %>_phone" maxlength="40" value="<%= m.phone || '' %>" placeholder="Best number to reach them" autocomplete="off"></label>
+          <div class="jc-fields-note">Use their work email, not a personal one. We only ask them to confirm your title and dates, and we never show their name or details on your page. If you leave this blank, we verify the job by hand.</div>
+        </div>
+        <div class="jc-holdnote" data-holdnote <%= choice === 'hold' ? '' : 'hidden' %>>We will not contact anyone at <%= job.employerName %> until you change this. This job stays unverified.</div>
+      </div>
+      <% }); %>
+      <div class="jc-actions">
+        <button type="submit" class="jc-save">Save</button>
+        <a class="jc-skip" href="/candidate/<%= candidate.slug %>/setup">Skip for now</a>
+      </div>
+    </form>
+    <% } %>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('[data-job]').forEach(function (box) {
+    var fields = box.querySelector('[data-fields]'), note = box.querySelector('[data-holdnote]');
+    box.querySelectorAll('input[type=radio]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        box.querySelectorAll('.jc-card').forEach(function (c) { c.classList.toggle('is-selected', c.contains(r) && r.checked); });
+        var hold = r.value === 'hold';
+        fields.hidden = hold; note.hidden = !hold;
+      });
+    });
+  });
+</script>

@@ -118,6 +118,13 @@ async function gatherRecap(candidate, now) {
       path: `/candidate/${candidate.slug}/edit`
     });
   }
+  const jobsMissing = require('./jobContacts').missingCount(candidate);
+  if (jobsMissing > 0) {
+    todo.push({
+      text: `Tell us who can confirm ${jobsMissing === 1 ? 'your job' : `your ${jobsMissing} jobs`} (a manager, HR contact or coworker) so ${jobsMissing === 1 ? 'it gets' : 'they get'} verified faster.`,
+      path: `/candidate/${candidate.slug}/job-contacts`
+    });
+  }
   if (candidate.isPhoneVerified && candidate.isIdentityVerified && !candidate.publicVerifyPage) {
     todo.push({
       text: 'Your public verification page is off. Turn it on to get a verified email signature you can copy into Gmail or Outlook.',

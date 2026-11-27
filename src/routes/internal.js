@@ -683,7 +683,7 @@ router.post('/verify/:candidateId/case', async (req, res) => {
     });
     res.redirect(`/verification-cases/${created._id}`);
   } catch (error) {
-    if (['no_entry', 'already_verified', 'exists', 'bad_email'].includes(error.code)) {
+    if (['no_entry', 'already_verified', 'exists', 'bad_email', 'on_hold'].includes(error.code)) {
       return res.redirect(`/verify/${req.params.candidateId}?case=${error.code}`);
     }
     console.error('Error starting verification case:', error);

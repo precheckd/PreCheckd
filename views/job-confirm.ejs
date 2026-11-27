@@ -1,0 +1,60 @@
+<%# One-time page for a contact to confirm a job. Route: src/routes/job-confirm.js %>
+<style>
+  .jf-wrap { flex: 1; padding: 3rem 1.5rem; background: #1F363C; min-height: 70vh; display: flex; justify-content: center; }
+  .jf-inner { max-width: 600px; width: 100%; color: #F2F4F3; }
+  .jf-card { background: #2A4750; border: 1px solid #3B5860; border-radius: 8px; padding: 1.5rem; }
+  .jf-card h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .jf-card p { color: #C7D1CF; line-height: 1.6; margin-bottom: 0.9rem; }
+  .jf-facts { width: 100%; margin: 0.5rem 0 1.1rem; border-collapse: collapse; }
+  .jf-facts td { padding: 0.4rem 0; border-bottom: 1px solid #3B5860; }
+  .jf-facts td:first-child { color: #8FA6AC; width: 7rem; }
+  .jf-facts td:last-child { font-weight: 600; }
+  .jf-choice { display: block; background: #1F363C; border: 1px solid #3B5860; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 0.6rem; cursor: pointer; }
+  .jf-choice:hover { border-color: #4ADE80; }
+  .jf-choice input { margin-right: 0.6rem; accent-color: #2ECC71; }
+  .jf-more { margin: 0.4rem 0 1rem 1.9rem; display: grid; gap: 0.5rem; }
+  .jf-more input[type=text] { background: #1F363C; border: 1px solid #3B5860; border-radius: 6px; padding: 0.55rem 0.7rem; color: #F2F4F3; font-size: 0.95rem; font-family: inherit; width: 100%; }
+  .jf-btn { background: #2ECC71; color: #10261C; border: 0; border-radius: 6px; padding: 0.7rem 1.4rem; font-weight: 700; font-size: 1rem; cursor: pointer; }
+  .jf-err { background: #3A2020; border: 1px solid #FF8A8A; color: #FFB3B3; border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 1rem; }
+  .jf-small { color: #8FA6AC; font-size: 0.85rem; }
+</style>
+<div class="jf-wrap"><div class="jf-inner"><div class="jf-card">
+<% if (state === 'invalid') { %>
+  <h1>Link not found</h1><p>This link is not valid. If you think this is a mistake, you can ignore the email it came from.</p>
+<% } else if (state === 'closed') { %>
+  <h1>Thank you</h1><p>This request has already been taken care of, so nothing more is needed from you.</p>
+<% } else if (state === 'done') { %>
+  <h1>Thank you</h1><p>Your answer has been recorded. We only use it to confirm this record.</p>
+<% } else { %>
+  <h1>Can you confirm this job?</h1>
+  <p>A PreCheckd member listed this job and asked us to confirm it. Please tell us whether it is accurate. Title and dates are all we need.</p>
+  <table class="jf-facts">
+    <tr><td>Name</td><td><%= info.name %></td></tr>
+    <tr><td>Job title</td><td><%= info.title %></td></tr>
+    <tr><td>Employer</td><td><%= info.employer %></td></tr>
+    <tr><td>Dates</td><td><%= info.dates %></td></tr>
+  </table>
+  <% if (error) { %><div class="jf-err"><%= error %></div><% } %>
+  <form method="POST" action="/confirm-job/<%= token %>">
+    <label class="jf-choice"><input type="radio" name="answer" value="accurate"> Yes, this is accurate</label>
+    <label class="jf-choice"><input type="radio" name="answer" value="different"> Some of it is different</label>
+    <div class="jf-more" id="jf-more" hidden>
+      <input type="text" name="correctedTitle" maxlength="200" placeholder="The correct job title (if different)">
+      <input type="text" name="correctedDates" maxlength="200" placeholder="The correct dates (if different)">
+    </div>
+    <label class="jf-choice"><input type="radio" name="answer" value="cannot"> I can't confirm this</label>
+    <% if (info.wantsReference) { %>
+      <p style="margin-top:1rem;"><strong style="color:#F2F4F3;">One more question.</strong> The person also asked whether you would be willing to be a reference for them. Answering yes only records it for them and for us; nothing is shown publicly.</p>
+      <label class="jf-choice"><input type="radio" name="referenceWilling" value="yes"> Yes, I would be willing</label>
+      <label class="jf-choice"><input type="radio" name="referenceWilling" value="no"> No</label>
+    <% } %>
+    <p class="jf-small">We never publish your name. Please don't send salary, performance or other personal details.</p>
+    <button class="jf-btn" type="submit">Send my answer</button>
+  </form>
+  <script>
+    document.querySelectorAll('input[name=answer]').forEach(function (r) {
+      r.addEventListener('change', function () { document.getElementById('jf-more').hidden = r.value !== 'different'; });
+    });
+  </script>
+<% } %>
+</div></div></div>

@@ -335,7 +335,7 @@ async function sendVerificationNoticeEmail(toEmail, firstName, caseId) {
 
 // Asks an employer or school to confirm one entry. Facts only, nothing sensitive requested. Replies go to
 // VERIFICATION_REPLY_TO (a mailbox staff read).
-async function sendEmployerVerificationEmail({ to, contactName, kind, candidateName, subject, detail, dates, attempt, authorizedOn = null, pdf = null, dob = null, priorNames = null, dobPending = false }) {
+async function sendEmployerVerificationEmail({ to, contactName, kind, candidateName, subject, detail, dates, attempt, authorizedOn = null, pdf = null, dob = null, priorNames = null, dobPending = false, confirmUrl = null }) {
   const isWork = kind === 'workHistory';
   const lines = [
     `${candidateName} has asked PreCheckd to confirm the following${isWork ? ' employment' : ' education'} ${isWork ? 'with your organization' : 'at your institution'}:`
@@ -351,6 +351,7 @@ async function sendEmployerVerificationEmail({ to, contactName, kind, candidateN
     <p style="margin:0 0 14px;">${escapeHtml(lines[0])}</p>
     <table style="margin:0 0 14px;font-size:15px;">${factHtml}</table>
     <p style="margin:0 0 14px;">Please reply to this email to say whether this is accurate${isWork ? ' (title and dates are all we need)' : ' (degree and graduation date are all we need)'}. We do not need salary, performance or any other personal details, and please do not send any.</p>
+    ${confirmUrl ? `<p style="margin:0 0 14px;">Prefer a quick form? You can confirm it here, no account needed:</p>${emailButton(confirmUrl, 'Confirm this record')}` : ''}
     <p style="margin:0 0 14px;">You can also reach us at ${escapeHtml(phone)}. Calls to and from this number are recorded.</p>
     ${authorizedOn ? `<p style="margin:0 0 14px;">${escapeHtml(candidateName)} authorized this request electronically on ${escapeHtml(new Date(authorizedOn).toISOString().slice(0, 10))}.${pdf ? ' The signed authorization is attached.' : ''}</p>` : ''}
     ${dobPending ? '<p style="margin:0 0 14px;">If you need a date of birth or another identifier to find the record, reply to this email and we will send it.</p>' : ''}
@@ -524,6 +525,28 @@ async function sendSetupReminderEmail(candidate, { stage, remaining, total }) {
     html: brandShell({
       bodyHtml: body,
       footerHtml: `You get this email because you started a PreCheckd candidate account.<br>
+        <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these reminders and the weekly emails.`
+    })
+  });
+}
+
+// One email, about three days after signup, if a job still has no contact and no answer on the "who can confirm" page.
+async function sendJobContactReminderEmail(candidate, { count }) {
+  const base = process.env.APP_BASE_URL;
+  const unsubUrl = unsubscribeUrl(candidate._id.toString());
+  const url = `${base}/candidate/${candidate.slug}/job-contacts`;
+  const body = `<p style="margin:0 0 14px;">Hi ${weeklyEscape(properName(candidate.firstName))},</p>
+    <p style="margin:0 0 6px;">Verified jobs stand out to recruiters. ${count === 1 ? 'One of your jobs' : `${count} of your jobs`} still ${count === 1 ? 'has' : 'have'} no contact who can confirm ${count === 1 ? 'it' : 'them'}.</p>
+    <p style="margin:0 0 6px;">Tell us a manager, an HR contact or a coworker who can confirm your title and dates. It takes a minute, and you can tell us to hold off contacting any employer.</p>
+    ${weeklyButton(url, 'Add who can confirm')}`;
+  return sendEmail({
+    from: 'PreCheckd <noreply@precheckd.com>',
+    to: candidate.email,
+    subject: 'Get your jobs verified faster',
+    headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+    html: brandShell({
+      bodyHtml: body,
+      footerHtml: `You get this email because you have a PreCheckd candidate account.<br>
         <a href="${unsubUrl}" style="color:#6B7B80;">Unsubscribe</a> from these reminders and the weekly emails.`
     })
   });
@@ -878,6 +901,7 @@ module.exports = {
   sendJobInviteEmail,
   sendAccountDeletedEmail,
   sendSetupReminderEmail,
+  sendJobContactReminderEmail,
   sendFraudReportThankYouEmail,
   sendLookupNudgeEmail,
   sendAdminLoginAlertEmail,

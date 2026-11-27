@@ -39,6 +39,18 @@
     </table>
   </div>
 
+  <% if (c.managerAnswer && c.managerAnswer.answeredAt) { %>
+  <div class="vc-card">
+    <h2>The contact answered on the confirm page</h2>
+    <p class="vc-sub"><strong><%= ({ accurate: 'Says it is accurate', different: 'Says some of it is different', cannot: 'Cannot confirm it' })[c.managerAnswer.answer] %></strong>
+      <%= c.managerAnswer.answeredAt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></p>
+    <% if (c.managerAnswer.correctedTitle) { %><p class="vc-sub">Title they gave: <strong><%= c.managerAnswer.correctedTitle %></strong></p><% } %>
+    <% if (c.managerAnswer.correctedDates) { %><p class="vc-sub">Dates they gave: <strong><%= c.managerAnswer.correctedDates %></strong></p><% } %>
+    <% if (c.managerAnswer.referenceWilling !== null && c.managerAnswer.referenceWilling !== undefined) { %><p class="vc-sub">Reference: <strong><%= c.managerAnswer.referenceWilling ? 'willing' : 'not willing' %></strong></p><% } %>
+    <p class="vc-sub" style="margin-top:0.6rem;">The answer did not change the profile. Check it, then close the case as verified or unable.</p>
+  </div>
+  <% } %>
+
   <% if (c.status === 'outreach' || c.status === 'with_candidate') { %>
   <div class="vc-card">
     <h2>Who to contact</h2>

@@ -10,6 +10,15 @@ const workHistorySchema = new mongoose.Schema({
   endDate: { type: String, default: null }, // null means current
   verified: { type: Boolean, default: false },
   verifiedAt: { type: Date, default: null },
+  // Who can confirm this job, chosen by the candidate on the "who can confirm your jobs" page (services/jobContacts.js).
+  // contactChoice: 'verify' (confirm title and dates), 'verify_reference' (also ask if they would be a reference) or
+  // 'hold' (do not contact this employer yet). Null means not answered yet. Blank manager = verified by hand by staff.
+  contactChoice: { type: String, enum: [null, 'verify', 'verify_reference', 'hold'], default: null },
+  manager: {
+    name: { type: String, default: '' },
+    email: { type: String, default: '' },
+    phone: { type: String, default: '' },
+  },
 }, { _id: false });
 
 const educationHistorySchema = new mongoose.Schema({
@@ -321,6 +330,13 @@ const candidateSchema = new mongoose.Schema({
     completedAt: { type: Date, default: null },
     // Setup reminder emails already sent ('d1', 'd3', 'd7'); see services/setupReminders.js.
     remindersSent: { type: [String], default: [] }
+  },
+
+  // Nudges about the "who can confirm your jobs" page: one bell notice and one email, each sent once
+  // (services/jobContactReminders.js).
+  jobContactNudge: {
+    bellAt: { type: Date, default: null },
+    emailAt: { type: Date, default: null }
   },
 
   // Whether this candidate shows up in recruiters' candidate search.

@@ -27,7 +27,7 @@ const PRIVATE_PATHS = [
   '/api/', '/internal', '/demo', '/go/', '/webhooks',
   '/candidate-dashboard', '/candidate-billing', '/candidate-search',
   '/recruiter-dashboard', '/recruiter-jobs', '/safety', '/mail', '/messages',
-  '/connections', '/tracker', '/verify', '/fraud', '/candidate/',
+  '/connections', '/tracker', '/verify', '/fraud', '/candidate/', '/confirm-job',
 ];
 
 // A recruiter profile belongs in search only when the account is real and fully checked.

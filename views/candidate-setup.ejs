@@ -63,6 +63,15 @@
       <% } %>
     <% }); %>
 
+    <% const jcMissing = (typeof jobContactsMissing !== 'undefined') ? jobContactsMissing : 0; %>
+    <% if (jcMissing > 0) { %>
+      <div class="setup-step" style="margin-top:1.25rem;">
+        <div class="mark" style="border-style:dashed;">+</div>
+        <div class="txt"><strong>Optional: who can confirm your jobs?</strong><span>Name a manager, HR contact or coworker for <%= jcMissing === 1 ? 'your job' : 'each of your ' + jcMissing + ' jobs' %> so we can verify <%= jcMissing === 1 ? 'it' : 'them' %> faster. Verified jobs stand out to recruiters.</span></div>
+        <a class="setup-btn" href="/candidate/<%= candidate.slug %>/job-contacts">Add contacts</a>
+      </div>
+    <% } %>
+
     <% if (progress.complete) { %>
       <form id="sharing-redo" style="display:none" class="setup-sharing" method="POST" action="/candidate/<%= candidate.slug %>/setup/sharing">
         <label>

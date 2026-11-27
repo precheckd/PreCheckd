@@ -953,6 +953,9 @@
           <div class="accordion-body">
             <div id="work-entries"></div>
             <button type="button" id="add-work-entry" class="add-entry-btn">+ Add work experience</button>
+            <% if (candidate.workHistory && candidate.workHistory.some(function (j) { return !j.verified; })) { %>
+              <p class="cert-hint" style="margin-top:0.9rem;">Want your jobs verified faster? <a href="/candidate/<%= candidate.slug %>/job-contacts" style="color:#4ADE80;font-weight:600;">Tell us who can confirm them</a> (a manager, HR contact or coworker).</p>
+            <% } %>
           </div>
         </details>
 

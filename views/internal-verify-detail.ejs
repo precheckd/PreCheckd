@@ -135,7 +135,7 @@
   <div class="internal-wrapper">
     <% const cn = locals.caseNotice; %>
     <% if (cn) { %><div class="internal-section" style="color:#F3C97A;">
-      <%= cn === 'exists' ? 'A case is already open for that entry.' : cn === 'already_verified' ? 'That entry is already verified.' : cn === 'bad_email' ? 'That email does not look right.' : 'Could not start a case for that entry.' %>
+      <%= cn === 'exists' ? 'A case is already open for that entry.' : cn === 'already_verified' ? 'That entry is already verified.' : cn === 'bad_email' ? 'That email does not look right.' : cn === 'on_hold' ? 'The candidate asked us not to contact that employer yet.' : 'Could not start a case for that entry.' %>
     </div><% } %>
 
     <div class="internal-section">
@@ -149,6 +149,15 @@
               <div class="entry-title"><%= job.jobTitle %></div>
               <div class="entry-sub"><%= job.employerName %></div>
               <div class="entry-dates"><%= job.startDate %> — <%= job.endDate || 'Present' %></div>
+              <% if (!job.verified) { %>
+                <% if (job.contactChoice === 'hold') { %>
+                  <div class="entry-sub" style="color:#C0392B;font-weight:700;">DO NOT CONTACT: the candidate asked us not to contact this employer yet.</div>
+                <% } else if (job.contactChoice) { %>
+                  <div class="entry-sub">Candidate's choice: <%= job.contactChoice === 'verify_reference' ? 'verify and ask about a reference' : 'verify only' %><%= job.manager && job.manager.email ? ' | contact: ' + (job.manager.name ? job.manager.name + ', ' : '') + job.manager.email + (job.manager.phone ? ', ' + job.manager.phone : '') : ' | no contact given (verify by hand)' %></div>
+                <% } else { %>
+                  <div class="entry-sub">Candidate has not said who can confirm this job.</div>
+                <% } %>
+              <% } %>
             </div>
             <form class="toggle-form" method="POST" action="/verify/<%= candidate._id %>/toggle">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -158,14 +167,14 @@
                 <%= job.verified ? '✓ Verified — click to undo' : 'Mark Verified' %>
               </button>
             </form>
-            <% if (!job.verified) { %>
+            <% if (!job.verified && job.contactChoice !== 'hold') { %>
             <details class="case-start"><summary>Start verification case</summary>
               <form method="POST" action="/verify/<%= candidate._id %>/case">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="category" value="workHistory">
                 <input type="hidden" name="index" value="<%= index %>">
                 <input name="contactName" placeholder="Contact name (optional)">
-                <input name="contactEmail" type="email" placeholder="HR / registrar email (optional)">
+                <input name="contactEmail" type="email" placeholder="<%= job.manager && job.manager.email ? 'Leave blank to use the candidate\'s contact' : 'HR / registrar email (optional)' %>">
                 <input name="contactPhone" placeholder="Phone (optional)">
                 <button type="submit" class="toggle-btn is-pending">Start case</button>
               </form>

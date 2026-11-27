@@ -86,8 +86,17 @@ async function start(candidate, category, index, contact = {}) {
   const k = cleanContact(contact);
   if (k.email && !looksLikeEmail(k.email)) throw fail('bad_email', 'That email does not look right');
   if (snap.verified) throw fail('already_verified', 'Already verified');
+  const entry = (candidate[category] || [])[index];
+  // The candidate said not to contact this employer yet.
+  if (category === 'workHistory' && entry && entry.contactChoice === 'hold') throw fail('on_hold', 'The candidate asked us not to contact this employer yet');
   const open = await VerificationCase.findOne({ candidateId: candidate._id, category, subject: snap.subject, detail: snap.detail, status: { $in: ['outreach', 'with_candidate'] } });
   if (open) throw fail('exists', 'A case is already open for this entry');
+  // The contact the candidate named (manager, HR or a coworker) is used unless staff typed one.
+  let fromCandidate = false;
+  if (category === 'workHistory' && entry && entry.manager && entry.manager.email && !k.email) {
+    k.name = k.name || entry.manager.name || ''; k.email = String(entry.manager.email).toLowerCase(); k.phone = k.phone || entry.manager.phone || '';
+    fromCandidate = true;
+  }
   // A school picked from the directory brings its registrar address (unless staff typed one).
   let schoolId = null; let contactStatus = 'manual'; let contactOut = k;
   if (category === 'educationHistory') {
@@ -105,11 +114,16 @@ async function start(candidate, category, index, contact = {}) {
   const c = await VerificationCase.create({
     candidateId: candidate._id, category, subject: snap.subject, detail: snap.detail, dates: snap.dates,
     contact: contactOut, contactStatus, schoolId,
+    wantsReference: category === 'workHistory' && Boolean(entry && entry.contactChoice === 'verify_reference'),
     authorization: { version: authz.version || null, typedName: authz.typedName || null, acceptedAt: authz.acceptedAt || null },
     status: 'outreach', startedAt: new Date(),
     steps: SCHEDULE.map((s) => ({ ...s, doneAt: null, note: '' }))
   });
   logLine(c, 'Case started');
+  if (fromCandidate) {
+    logLine(c, `Contact came from the candidate (${c.contact.email})${require('./jobContacts').isFreeMail(c.contact.email) ? ': heads up, this is a personal email address, not a work one' : ''}`);
+    if (c.wantsReference) logLine(c, 'Candidate also asked us to ask whether this contact would be a reference');
+  }
   await toCandidate(c, TEXT.start(c));
   await c.save();
   return c;
@@ -139,6 +153,7 @@ const dueSteps = (c, now) => (c.status === 'outreach' ? c.steps.filter((s) => !s
 function nextAction(c, now = Date.now()) {
   if (['verified', 'unable'].includes(c.status)) return { label: 'Closed', kind: 'closed' };
   if (c.turn === 'staff') return { label: 'Candidate replied: your turn', kind: 'reply' };
+  if (c.managerAnswer && c.managerAnswer.answeredAt) return { label: 'The contact answered on the confirm page: review it and close the case', kind: 'reply' };
   if (c.status === 'with_candidate') return { label: 'Waiting on the candidate', kind: 'wait' };
   const due = dueSteps(c, now);
   const call = due.find((s) => s.type === 'call');
@@ -171,7 +186,8 @@ async function runDue(now = Date.now()) {
           subject: c.subject, detail: c.detail, dates: c.dates, attempt: c.steps.filter((s) => s.type === 'email' && s.doneAt).length,
           authorizedOn: c.authorization && c.authorization.acceptedAt, pdf,
           dob: sendsDob ? cand.verificationDob : null, priorNames: sendsDob ? cand.verificationPriorNames : null,
-          dobPending: c.category === 'educationHistory' && !sendsDob
+          dobPending: c.category === 'educationHistory' && !sendsDob,
+          confirmUrl: c.category === 'workHistory' ? confirmUrlFor(c) : null
         });
         logLine(c, `Emailed ${c.contact.email} (day ${latest.day})`);
         counts.emails++;
@@ -192,6 +208,52 @@ async function runDue(now = Date.now()) {
     await c.save();
   }
   return counts;
+}
+
+// ---- the one-time confirm page -------------------------------------------
+// The contact gets a link in the employer email. The token is the case id plus an HMAC of it, so every email in the
+// routine carries the same link and nothing extra is stored. It stops working when the case closes.
+const crypto = require('crypto');
+const tokenSig = (id) => crypto.createHmac('sha256', (process.env.SESSION_SECRET || 'dev-secret-key') + ':confirm-job').update(String(id)).digest('base64url').slice(0, 32);
+const confirmToken = (c) => `${c._id}.${tokenSig(c._id)}`;
+const confirmUrlFor = (c) => `${process.env.APP_BASE_URL || 'https://precheckd.com'}/confirm-job/${confirmToken(c)}`;
+function caseIdFromToken(token) {
+  const [id, sig] = String(token || '').split('.');
+  if (!/^[0-9a-f]{24}$/.test(id || '') || !sig) return null;
+  const want = Buffer.from(tokenSig(id)); const got = Buffer.from(sig);
+  return want.length === got.length && crypto.timingSafeEqual(want, got) ? id : null;
+}
+const clipText = (v, n) => String(v || '').trim().replace(/\s+/g, ' ').slice(0, n);
+
+// answer === undefined: just load what the page shows. Otherwise { answer, correctedTitle, correctedDates, referenceWilling }.
+// Returns { found, closed, already, needsAnswer, error, info }.
+async function answerManager(token, body, { now = new Date() } = {}) {
+  const id = caseIdFromToken(token);
+  if (!id) return { found: false };
+  const c = await VerificationCase.findById(id).catch(() => null);
+  if (!c || c.category !== 'workHistory') return { found: false };
+  const cand = await Candidate.findById(c.candidateId);
+  const info = { name: cand ? `${cand.firstName} ${cand.lastName || ''}`.trim() : 'A PreCheckd member', title: c.detail, employer: c.subject, dates: c.dates, wantsReference: Boolean(c.wantsReference) };
+  if (['verified', 'unable'].includes(c.status)) return { found: true, closed: true, info };
+  if (c.managerAnswer && c.managerAnswer.answeredAt) return { found: true, already: true, info };
+  if (body === undefined) return { found: true, info };
+  const answer = String(body.answer || '');
+  if (!['accurate', 'different', 'cannot'].includes(answer)) return { found: true, needsAnswer: true, info };
+  const correctedTitle = clipText(body.correctedTitle, 200); const correctedDates = clipText(body.correctedDates, 200);
+  if (answer === 'different' && !correctedTitle && !correctedDates) return { found: true, needsAnswer: true, error: 'Tell us what is different: the title, the dates, or both.', info };
+  const ref = c.wantsReference ? (body.referenceWilling === 'yes' ? true : body.referenceWilling === 'no' ? false : null) : null;
+  c.managerAnswer = { answer, correctedTitle: answer === 'different' ? correctedTitle : '', correctedDates: answer === 'different' ? correctedDates : '', referenceWilling: ref, answeredAt: now };
+  if (answer !== 'cannot') c.contactStatus = 'confirmed';
+  logLine(c, `The contact answered on the confirm page: ${answer === 'accurate' ? 'accurate' : answer === 'different' ? `different (${[correctedTitle && `title: ${correctedTitle}`, correctedDates && `dates: ${correctedDates}`].filter(Boolean).join('; ')})` : 'cannot confirm'}${ref === true ? '; willing to be a reference' : ref === false ? '; not willing to be a reference' : ''}`);
+  await c.save();
+  try {
+    await require('./emailService').sendStaffAlertEmail({
+      subject: 'A contact answered a job verification', headline: 'A contact answered on the confirm page',
+      paragraphs: [`${info.name}, ${info.title} at ${info.employer}: ${answer}.`],
+      buttonUrl: `https://${process.env.ADMIN_HOSTNAME || 'admin.precheckd.com'}/verification-cases/${c._id}`, buttonLabel: 'Open the case'
+    });
+  } catch (e) { console.error('[verification] staff alert failed:', e.message); }
+  return { found: true, answered: true, info };
 }
 
 // ---- staff actions -----------------------------------------------------
@@ -428,4 +490,5 @@ async function sendDigest() {
 }
 
 module.exports = {
+  confirmToken, confirmUrlFor, caseIdFromToken, answerManager,
   confirmContact, addressBounced, MAX_FILES_PER_MESSAGE, MAX_FILES_PER_CASE, keepFilesDays, retentionPhrase, setLegalHold, sniff, fileFor, deleteFile, purgeOldFiles, OPEN_DAY, SCHEDULE, OUTCOMES, TEXT, start, saveContact, dayOf, dueSteps, nextAction, runDue, logCall, note, openNow, staffReply, resolve, thread, candidateReply, inboxRows, digestSummary, sendDigest };

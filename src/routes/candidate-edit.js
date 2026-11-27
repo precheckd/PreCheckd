@@ -403,6 +403,7 @@ router.post('/:slug/edit', upload.fields([
     applySubmittedExpiry(candidate.certifications, submittedCertifications);
 
     let resumeParseError = null;
+    let importedJobs = false;
     if (resumeFile) {
       try {
         const resumeUrl = await uploadResume(candidate._id.toString(), resumeFile);
@@ -419,6 +420,7 @@ router.post('/:slug/edit', upload.fields([
             verified: false,
             verifiedAt: null
           }));
+          importedJobs = candidate.workHistory.length > 0;
         }
         if (candidate.educationHistory.length === 0) {
           candidate.educationHistory = parsed.educationHistory.map((edu) => ({
@@ -457,7 +459,8 @@ router.post('/:slug/edit', upload.fields([
       });
     }
 
-    res.redirect(`/candidate/${candidate.slug}`);
+    // Jobs just came in from the resume: ask who can confirm them while it is fresh (optional, they can skip).
+    res.redirect(importedJobs ? `/candidate/${candidate.slug}/job-contacts` : `/candidate/${candidate.slug}`);
   } catch (error) {
     console.error('Error saving candidate edit:', error);
     res.status(500).send('Server error');

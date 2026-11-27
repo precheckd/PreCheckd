@@ -33,6 +33,16 @@ const verificationCaseSchema = new mongoose.Schema({
   // person has answered yet) or confirmed (a person answered from it). A date of birth is sent only to a confirmed one.
   contactStatus: { type: String, enum: ['manual', 'guessed', 'confirmed'], default: 'manual' },
   schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', default: null },
+  // Work cases only. The candidate asked us to also ask this contact if they would be a reference, and what the contact
+  // answered on the one-time confirm page (/confirm-job/:token). The answer never verifies anything by itself: staff read it.
+  wantsReference: { type: Boolean, default: false },
+  managerAnswer: {
+    answer: { type: String, enum: [null, 'accurate', 'different', 'cannot'], default: null },
+    correctedTitle: { type: String, default: '' },
+    correctedDates: { type: String, default: '' },
+    referenceWilling: { type: Boolean, default: null },
+    answeredAt: { type: Date, default: null }
+  },
   // What the candidate authorized, as it stood when the case started.
   authorization: { version: { type: Number, default: null }, typedName: { type: String, default: null }, acceptedAt: { type: Date, default: null } },
   status: { type: String, enum: ['outreach', 'with_candidate', 'verified', 'unable'], default: 'outreach', index: true },
