@@ -177,6 +177,15 @@
     .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; }
     .hero-actions .btn-secondary { text-decoration: none; }
     .hero-note { color: #8FA6AC; font-size: 0.9rem; margin-top: 1rem; }
+
+    .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 2rem; }
+    .shots .shot:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 640px; margin: 0 auto; }
+    .shot { margin: 0; }
+    .shot img { width: 100%; height: auto; display: block; border: 1px solid #3B5860; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2); }
+    .shot figcaption { color: #C7D1CF; font-size: 0.95rem; line-height: 1.6; margin-top: 0.75rem; text-align: center; }
+    .shot figcaption strong { color: #F2F4F3; display: block; font-size: 1.05rem; margin-bottom: 0.15rem; }
+    .shots-note { color: #8FA6AC; font-size: 0.85rem; text-align: center; margin-top: 1.5rem; }
+    @media (max-width: 768px) { .shots { grid-template-columns: 1fr; } }
   </style>
   <div class="hero-section">
     <h1 class="hero-title">Know who is really contacting you</h1>
@@ -207,6 +216,21 @@
         <p class="prop-text">Your contact details are only shared when you apply or accept a connection request.</p>
       </div>
     </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">See it in action</h2>
+    <div class="shots">
+      <figure class="shot">
+        <img src="/img/screens/candidate-profile.png" alt="A candidate profile showing verified skill levels and verification status" loading="lazy">
+        <figcaption><strong>Your verified profile</strong>Skill levels from real tests, plus the checks that prove you are who you say you are.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="/img/screens/verification-page.png" alt="A public verification page for a candidate" loading="lazy">
+        <figcaption><strong>A page you can send anyone</strong>Share one link that shows your verified identity, certifications, degrees and experience. You choose what it shows.</figcaption>
+      </figure>
+    </div>
+    <p class="shots-note">Screenshots are from the demo site, using sample accounts.</p>
   </div>
 
   <div class="section">
