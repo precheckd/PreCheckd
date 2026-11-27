@@ -150,6 +150,9 @@ function build(now = Date.now()) {
   casey.doc.workArrangement = ['hybrid', 'remote'];
   casey.doc.bio = 'DevOps engineer with 7+ years of experience. This is the sample candidate account for the PreCheckd demo.';
   casey.isDemoCandidate = true;
+  // The demo is read-only, so nobody can switch the public verification page on. Ship it on, with every section shown.
+  casey.doc.publicVerifyPage = true;
+  casey.doc.publicSections = { certifications: true, degrees: true, jobTitles: true };
   candidates.push(casey);
 
   const day = (n) => new Date(Date.UTC(new Date(now + n * DAY).getUTCFullYear(), new Date(now + n * DAY).getUTCMonth(), new Date(now + n * DAY).getUTCDate()));
