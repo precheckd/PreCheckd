@@ -134,6 +134,8 @@ function build(now = Date.now()) {
     bio: 'Sample recruiter for the PreCheckd demo.', accountTier: 'standard', isActive: true, isPhoneVerified: true, isIdentityVerified: true,
     phoneVerifiedAt: new Date(now - 90 * DAY), identityVerifiedAt: new Date(now - 90 * DAY), emailVerifiedAt: new Date(now - 90 * DAY),
     domainVerifiedAt: new Date(now - 90 * DAY), termsAcceptedAt: new Date(now - 90 * DAY),
+    // Without this the demo recruiters show "Pending verification" with four open postings, which contradicts itself.
+    facialRecognitionVerifiedAt: new Date(now - 90 * DAY),
     billing: { status: 'active', plan: 'annual', memberSince: new Date(now - 90 * DAY), currentPeriodEnd: new Date(now + 270 * DAY),
       founding: { wave: 1, priceCents: 24900, locked: true, lockedAt: new Date(now - 90 * DAY) } },
   }));
